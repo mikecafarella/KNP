@@ -10,7 +10,7 @@
             "description": "all parameters are instances of 'Human'.",
             "programming task": "The targets are 'value'",
             "targets": "all arguments.P31",
-            "code_trait": "_is",
+            "function": "_is",
             "value": ["Q5"]
         }
     ],

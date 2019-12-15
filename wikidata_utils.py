@@ -45,7 +45,7 @@ def get_claims(entity_id, property_id=None):
     if(not property_id):
         return claims['claims']
     else:
-        return claims['claims'][property_id]
+        return claims['claims'].get(property_id)
 
 def get_qualifiers_datavalues(entity_id, property_id, qualifier_pid):
     """Get 'datavalue' of a qualifier for claims."""

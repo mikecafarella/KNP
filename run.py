@@ -20,16 +20,16 @@ def get_targets(targets, arguments, data):
         return None
          
 
-def get_code_trait_function(func_name):
-    return getattr(code_traits, func_name)
+def get_function(func_name):
+    return getattr(functions, func_name)
 
 
 def invoke_conditions_ok(invoke_conditions, arguments, data):
     for invoke_condition in invoke_conditions:
         targets = get_targets(invoke_condition['targets'], arguments, data)
-        code_trait_function = get_code_trait_function(invoke_condition['code_trait'])
+        function = get_function(invoke_condition['function'])
         value = invoke_condition.get('value')
-        if(not code_trait_function(value, targets)):
+        if(not function(value, targets)):
             return False
     return True
 
@@ -37,7 +37,7 @@ def invoke_conditions_ok(invoke_conditions, arguments, data):
 if __name__ == '__main__':
     import argparse
     from traits import traits_utils
-    from traits import code_traits 
+    from traits import functions 
     import os
     import json
 
