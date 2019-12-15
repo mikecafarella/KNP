@@ -1,0 +1,26 @@
+{
+    "labels": {
+        "en": {
+            "language": "en",
+            "value": "MinTimeSpan"
+        }
+    },
+    "invoke conditions":[
+        {
+            "description": "All arguments has data related to time.",
+            "prgramming task": "All targets has field 'value'.",
+            "targets": "all arguments",
+            "code_traits": "has_field",
+            "value": ["P585"]
+        }
+    ],
+    "constraints":[
+        {
+            "description": "The time span of all arguments should be greater than or eqaul to 'value'.",
+            "programming task": "The range of the targets should be greater than or eqaul to 'value'.",
+            "targets": "all arguments.P585",
+            "code_traits": "range_length_ge",
+            "value": "5Y"
+        }
+    ]
+}

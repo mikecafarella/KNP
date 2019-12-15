@@ -1,0 +1,18 @@
+{
+    "labels": {
+        "en": {
+            "language": "en",
+            "value": "LineChart"
+        }
+    },
+    "invoke conditions":[
+        
+    ],
+    "constraints":[
+        {
+            "description": "The output should be a 2 dimentional line chart.",
+            "programming task": "The function described in'code_traits' is used.",
+            "code_traits": "plot_line_chart"
+        }
+    ]
+}

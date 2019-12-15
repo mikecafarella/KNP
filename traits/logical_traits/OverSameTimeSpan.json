@@ -1,0 +1,25 @@
+{
+    "labels": {
+        "en": {
+            "language": "en",
+            "value": "OverSameTimeSpan"
+        }
+    },
+    "invoke conditions":[
+        {
+            "description": "The arguments are compared over the same time.",
+            "programming task": "All the targets have filed of 'value'.",
+            "targets": "all arguments",
+            "code_traits": "has_field",
+            "value": ["P585"]
+        }
+    ],
+    "constraints":[
+        {
+            "description": "The arguments are over the same time span.",
+            "programming task": "The first and last element of all targets are the same",
+            "targets": "all arguments.P585",
+            "code_traits": "same_start_end"
+        }
+    ]
+}

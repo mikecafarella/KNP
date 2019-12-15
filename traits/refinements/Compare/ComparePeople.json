@@ -1,0 +1,18 @@
+{
+    "labels": {
+        "en": {
+            "language": "en",
+            "value": "ComparePeople"
+        }
+    },
+    "invoke conditions":[
+        {
+            "description": "all parameters are instances of 'Human'.",
+            "programming task": "The targets are 'value'",
+            "targets": "all arguments.P31",
+            "code_trait": "_is",
+            "value": ["Q5"]
+        }
+    ],
+    "constraints":[]
+}

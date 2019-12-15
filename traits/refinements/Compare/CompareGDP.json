@@ -1,0 +1,32 @@
+{
+    "labels": {
+        "en": {
+            "language": "en",
+            "value": "CompareGDP"
+        }
+    },
+    "description": "One refinement trait for Compare, when the argumetns are GDP values.",
+    "invoke conditions":[
+        {
+            "description": "The arguments are GDP related properties.",
+            "programming task": "The targets are 'value'",
+            "targets": "last property of all arguments",
+            "code_trait": "_is",
+            "value": ["P2131", "P2131", "P4010", "P2299"]
+        }
+    ],
+    "constraints":[
+        {
+            "description": "The GDP values should be in the same currency.",
+            "programming task": "The targets share the 'same_unit'.",
+            "targets": "all arguments",
+            "code_trait": "same_unit"
+        },
+        {
+            "description": "The GDP values should be inflation adjusted.",
+            "programming task": "The targets are 'inflation_adjusted'",
+            "targets": "all arguments",
+            "code_trait": "inflation_adjusted"
+        }
+    ]
+}
