@@ -5,7 +5,7 @@
             "value": "MinTimeSpan"
         }
     },
-    "invoke conditions":[
+    "pre-conditions":[
         {
             "description": "All arguments has data related to time.",
             "prgramming task": "All targets has field 'value'.",

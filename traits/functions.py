@@ -45,6 +45,14 @@ def _is(value, targets):
             return False
     return True
 
+def is_type(value, targets):
+    if(not targets):
+        return False
+    for target in targets:
+        if(not isinstance(target, eval(value))):
+            return False
+    return True
+
 def range_limit(value, targets):
     """Return True if all targets """
     pass

@@ -8,7 +8,7 @@ def get_targets(targets, arguments, data):
         if(targets == "all arguments"):
             rst = []
             for argument_data in data:
-                rst.extend(wu.get_datavalues_from_snaks(argument_data))
+                rst.extend(wu.get_mainsnak_datavalues_from_snaks(argument_data))
             return rst
         if(targets.startswith("all arguments") and "." in targets):
             property_id = targets.split(".")[1]
@@ -23,15 +23,34 @@ def get_targets(targets, arguments, data):
 def get_function(func_name):
     return getattr(functions, func_name)
 
-
-def invoke_conditions_ok(invoke_conditions, arguments, data):
-    for invoke_condition in invoke_conditions:
-        targets = get_targets(invoke_condition['targets'], arguments, data)
-        function = get_function(invoke_condition['function'])
-        value = invoke_condition.get('value')
+def pre_conditions_ok(pre_conditions, arguments, data):
+    """Check pre-conditions of a trait."""
+    for pre_condition in pre_conditions:
+        targets = get_targets(pre_condition['targets'], arguments, data)
+        function = get_function(pre_condition['function'])
+        value = pre_condition.get('value')
         if(not function(value, targets)):
             return False
     return True
+
+def modify(constraint, arguments, data):
+    raise ValueError("Not implemented yet!")
+
+
+def apply_constraints(constraints, arguments, data):
+    """ Apply constraints of a trait."""
+    for constraint in constraints:
+        targets = get_targets(constraint['targets'], arguments, data)
+        function = get_function(constraint['function'])
+        value = constraint.get('value')
+        if(not function(value, targets)):
+            constraints, arguments, data = modify(constraint, arguments, data)
+        log_msg("Constraint: <{}> is satisfied.".format(constraint['description']))
+    return (constraints, arguments, data)
+
+
+def log_msg(msg):
+    print("log: " + msg)
 
 
 if __name__ == '__main__':
@@ -40,6 +59,7 @@ if __name__ == '__main__':
     from traits import functions 
     import os
     import json
+    import random
 
     parser = argparse.ArgumentParser(description="Takes in a knowledge program, and execute.")
     parser.add_argument('KP', nargs='+', help="The knowledge program, surround an argument by '' if there is space in it.")
@@ -81,10 +101,29 @@ if __name__ == '__main__':
     for refinement in os.listdir(directory):
         with open(os.path.join(directory, refinement), 'r') as f:
             refinement_data = json.load(f)
-        invoke_conditions = refinement_data['invoke conditions']
-        if(not invoke_conditions_ok(invoke_conditions, arguments, data)):
+        refinement = refinement.split('.')[0]  # Get rid of .json, making output clear
+        pre_conditions = refinement_data['pre-conditions']
+        if(not pre_conditions_ok(pre_conditions, arguments, data)):
             continue 
-        print("{} check passed.".format(refinement))
+        log_msg("{}'s pre-conditions satisfied.".format(refinement))
+
+        # Apply constraints of the refinement
+        log_msg("Now apply constraints of {}.".format(refinement))
+        constraints = refinement_data['constraints']
+        constraints, arguments, data = apply_constraints(constraints, arguments, data)
+
+        # Randomly pick logic_traits and policy_traits
+        log_msg("Start randomly picking logic/policy traits....")
+        picked_traits = set()
+
+        trait = traits_utils.Traits[random.randint(0, len(traits_utils.Traits) - 1)]
+        while(trait in picked_traits):
+            trait = traits_utils.Traits[random.randint(0, len(traits_utils.Traits) - 1)]
+        picked_traits.add(trait)
+        log_msg("{} is picked.".format(trait))
+        with open(os.path.join('traits', trait), 'r') as f:
+            trait_data = json.load(f)
+        print(trait_data)
 
 
 

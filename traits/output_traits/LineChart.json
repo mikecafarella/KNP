@@ -5,14 +5,19 @@
             "value": "LineChart"
         }
     },
-    "invoke conditions":[
-        
+    "pre-conditions":[
+        {
+            "descriptions": "The inputs are all arrays.",
+            "targets": "all final inputs",
+            "function": "is_type",
+            "value": "list"
+        }
     ],
     "constraints":[
         {
             "description": "The output should be a 2 dimentional line chart.",
-            "programming task": "The function described in'code_traits' is used.",
-            "function": "plot_line_chart"
+            "programming task": "The function described in'code' is used.",
+            "code": "plot_line_chart"
         }
     ]
 }

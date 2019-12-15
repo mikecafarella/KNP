@@ -6,7 +6,7 @@
         }
     },
     "description": "One refinement trait for Compare, when the argumetns are GDP values.",
-    "invoke conditions":[
+    "pre-conditions":[
         {
             "description": "The arguments are GDP related properties.",
             "programming task": "The targets are 'value'",

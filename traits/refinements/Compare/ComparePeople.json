@@ -5,7 +5,7 @@
             "value": "ComparePeople"
         }
     },
-    "invoke conditions":[
+    "pre-conditions":[
         {
             "description": "all parameters are instances of 'Human'.",
             "programming task": "The targets are 'value'",
