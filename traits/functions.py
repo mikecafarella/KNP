@@ -16,13 +16,13 @@ def same_unit(_, targets):
     if(not targets):
         return True
     try:
-        unit = targets[0]['value']['unit']
+        unit = targets[0][0]['value']['unit']
+        for target in targets:
+            for t in target:
+                if(t['value']['unit'] != unit):
+                    return False
     except:
-        raise TypeError("Target is not a 'datavalue' of 'quantity' 'datatype'.")
-
-    for target in targets:
-        if(target['value']['unit'] != unit):
-            return False
+        return False
     return True
 
 
@@ -37,10 +37,14 @@ def _is(value, targets):
     """
     if(not targets):
         return False
+    # print(value)
+    
     for target in targets:
-        if(isinstance(target, dict)):
-            # it's 'datavalue'
-            target = wu.get_value_from_datavalue(target)[0]
+        # print(target)
+        if(isinstance(target, list)):
+            # [[argument_data_1], [], ...]
+            (target, ) = wu.get_value_from_datavalue(target)
+        # print(target)
         if(target not in value):
             return False
     return True
@@ -53,9 +57,21 @@ def is_type(value, targets):
             return False
     return True
 
-def range_limit(value, targets):
-    """Return True if all targets """
-    pass
+def exist(_, targets):
+    if(not targets):
+        return False
+    for target in targets:
+        if(target is None):
+            return False
+    return True
+
+
+
+def range_length_le(value, targets):
+    return True
+
+def range_length_ge(value, targets):
+    return True
 
 def inflation_adjusted(_, targets):
     return True

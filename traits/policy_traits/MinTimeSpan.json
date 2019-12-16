@@ -9,9 +9,8 @@
         {
             "description": "All arguments has data related to time.",
             "prgramming task": "All targets has field 'value'.",
-            "targets": "all arguments",
-            "function": "has_field",
-            "value": ["P585"]
+            "targets": "all arguments.P585",
+            "function": "exist"
         }
     ],
     "constraints":[
@@ -20,7 +19,7 @@
             "programming task": "The range of the targets should be greater than or eqaul to 'value'.",
             "targets": "all arguments.P585",
             "function": "range_length_ge",
-            "value": "5Y"
+            "value": "1Y"
         }
     ]
 }

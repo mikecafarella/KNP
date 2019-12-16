@@ -6,16 +6,18 @@ def get_targets(targets, arguments, data):
         if(targets == 'last property of all arguments'):
             return [argument[-1] for argument in arguments]
         if(targets == "all arguments"):
+            # get the datavalues
             rst = []
             for argument_data in data:
-                rst.extend(wu.get_mainsnak_datavalues_from_snaks(argument_data))
+                rst.append(wu.get_mainsnak_datavalues_from_snaks(argument_data))
             return rst
         if(targets.startswith("all arguments") and "." in targets):
+            # get the datavalues
             property_id = targets.split(".")[1]
             rst = []
             for argument_data in data:
-                rst.extend(wu.get_datavalues_for_a_property(argument_data, property_id))
-            return wu.get_value_from_datavalue(rst)
+                rst.append(wu.get_datavalues_for_a_property(argument_data, property_id))
+            return rst
     except:
         return None
          
@@ -45,8 +47,15 @@ def apply_constraints(constraints, arguments, data):
         value = constraint.get('value')
         if(not function(value, targets)):
             constraints, arguments, data = modify(constraint, arguments, data)
-        log_msg("Constraint: <{}> is satisfied.".format(constraint['description']))
-    return (constraints, arguments, data)
+        log_msg("Constraint: <{}> is applied.".format(constraint['description']))
+    return (arguments, data)
+
+
+def continue_apply_traits(current_traits):
+    if(len(current_traits) > 0):
+        return False
+    return True
+
 
 
 def log_msg(msg):
@@ -103,27 +112,54 @@ if __name__ == '__main__':
             refinement_data = json.load(f)
         refinement = refinement.split('.')[0]  # Get rid of .json, making output clear
         pre_conditions = refinement_data['pre-conditions']
+        log_msg("Check {}'s pre-conditions.".format(refinement))
         if(not pre_conditions_ok(pre_conditions, arguments, data)):
+            log_msg("{}'s pre-conditions are not met.".format(refinement))
             continue 
-        log_msg("{}'s pre-conditions satisfied.".format(refinement))
+        log_msg("{}'s pre-conditions are met.".format(refinement))
 
         # Apply constraints of the refinement
         log_msg("Now apply constraints of {}.".format(refinement))
         constraints = refinement_data['constraints']
-        constraints, arguments, data = apply_constraints(constraints, arguments, data)
+        arguments, data = apply_constraints(constraints, arguments, data)
 
         # Randomly pick logic_traits and policy_traits
         log_msg("Start randomly picking logic/policy traits....")
         picked_traits = set()
+        contradicting_traits = set()
 
-        trait = traits_utils.Traits[random.randint(0, len(traits_utils.Traits) - 1)]
-        while(trait in picked_traits):
+        while(continue_apply_traits(picked_traits) and len(picked_traits) + len(contradicting_traits) < len(traits_utils.Traits)):
             trait = traits_utils.Traits[random.randint(0, len(traits_utils.Traits) - 1)]
-        picked_traits.add(trait)
-        log_msg("{} is picked.".format(trait))
-        with open(os.path.join('traits', trait), 'r') as f:
-            trait_data = json.load(f)
-        print(trait_data)
+            while(trait in picked_traits or trait in contradicting_traits):
+                trait = traits_utils.Traits[random.randint(0, len(traits_utils.Traits) - 1)]
+            
+            log_msg("{} is picked.".format(trait.split(".")[0]))
+            with open(os.path.join('traits', trait), 'r') as f:
+                trait_data = json.load(f)
+            # print(trait_data)
+            if(not pre_conditions_ok(trait_data['pre-conditions'], arguments, data)):
+                log_msg("{}'s pre-conditions are not met.".format(trait.split(".")[0]))
+                contradicting_traits.add(trait)
+                continue
+            log_msg("{}'s pre-conditions are met. Now apply its constraints.".format(trait.split(".")[0]))
+            arguments, data = apply_constraints(trait_data['constraints'], arguments, data)
+            picked_traits.add(trait)
 
-
-
+        # Randomly pick output_traits
+        log_msg("Start randomly picking output traits....")
+        contradicting_traits = set()
+        while(len(contradicting_traits) < len(traits_utils.Output_Traits)):
+            trait = traits_utils.Output_Traits[random.randint(0, len(traits_utils.Output_Traits) - 1)]
+            while(trait in contradicting_traits):
+                trait = traits_utils.Output_Traits[random.randint(0, len(traits_utils.Output_Traits) - 1)]
+            log_msg("{} is picked.".format(trait.split(".")[0]))
+            with open(os.path.join('traits', trait), 'r') as f:
+                trait_data = json.load(f)
+            if(not pre_conditions_ok(trait_data['pre-conditions'], arguments, data)):
+                log_msg("{}'s pre-conditions are not met.".format(trait.split(".")[0]))
+                contradicting_traits.add(trait)
+                continue
+            log_msg("{}'s pre-conditions are met. Now produce output.".format(trait.split(".")[0]))
+            break
+        
+        # prepare data for the output

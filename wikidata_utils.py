@@ -84,7 +84,8 @@ def get_datavalues_for_a_property(data, property_id):
         
 
 def get_value_from_datavalue(datavalues):
-    # print(datavalues)
+    # datavalues should be of type list/tuple
+    # print(type(datavalues))
     rst = []
     for datavalue in datavalues:
         # print(datavalue)

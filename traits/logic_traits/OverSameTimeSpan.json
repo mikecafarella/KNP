@@ -7,19 +7,18 @@
     },
     "pre-conditions":[
         {
-            "description": "The arguments are compared over the same time.",
-            "programming task": "All the targets have filed of 'value'.",
-            "targets": "all arguments",
-            "function": "has_field",
-            "value": ["P585"]
+            "description": "All arguments has data related to time.",
+            "prgramming task": "All targets has field 'value'.",
+            "targets": "all arguments.P585",
+            "function": "exist"
         }
     ],
     "constraints":[
         {
             "description": "The arguments are over the same time span.",
             "programming task": "The first and last element of all targets are the same",
-            "function": "all arguments.P585",
-            "code_traits": "same_start_end"
+            "targets": "all arguments.P585",
+            "function": "same_start_end"
         }
     ]
 }
