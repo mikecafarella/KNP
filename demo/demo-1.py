@@ -169,12 +169,12 @@ class MustBeSameKGAttrConstraint(RefinementConstraint):
         # Again, pretty basic logic
         return len(set(map(lambda x: x[1], ps)) == 1
 
-class ShouldRunConstraint(RefinementConstraint):
+class ShouldDoPlottingConstraint(RefinementConstraint):
     """This constraint means a particular action should be taken"""
-    def __init__(self, particularAction):
-        self.particularAction = particularAction
+    def __init__(self):
+        pass
 
-    def testConcreteMethod(self, concreteMethod):
+    def testConcreteMethod(self):
         return ctsPlot in concreteMethod.actionsImplemented
     
 
@@ -186,7 +186,7 @@ class ComparingTwoThings(Refinement):
 class ComparingGDP(Refinement):
     def __init__(self):
         Refinement.__init__(self, "Mike", "Comparing GDP means making a time series",
-                            (ShouldRunConstraint(ctsPlot)))
+                            (ShouldDoPlottingConstraint))
 
 
 #
