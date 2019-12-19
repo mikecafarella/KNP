@@ -179,7 +179,7 @@ userCode = (compare, [(us, gdp), (canada, gdp)])
 # This method stands in for "The Compiler"
 #
 #
-def compile(userCode):
+def kgcompile(userCode):
     # This is straightforward.  We need to pick a concrete method.
     concreteMethod = Plot()
 
@@ -195,4 +195,15 @@ def compile(userCode):
     parameterTransformers = (lambda x: x.v, lambda x: x.v)
     
     return (userCode, concreteMethod, refinements, parameterTransformers)
+
+
+
+compiledProgram = kgcompile(userCode)
+
+metrics = computeQualityMetrics(compiledProgram)
+
+userFacingResult = executeCompiledProgram(compiledProgram)
+
+render(userFacingResult)
+
 
