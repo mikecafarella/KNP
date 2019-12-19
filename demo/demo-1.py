@@ -173,3 +173,26 @@ class ComparingTwoThings(Refinement):
     
 
 userCode = (compare, [(us, gdp), (canada, gdp)])
+
+
+#
+# This method stands in for "The Compiler"
+#
+#
+def compile(userCode):
+    # This is straightforward.  We need to pick a concrete method.
+    concreteMethod = Plot()
+
+    # We return a set of zero or more refinements that are applicable to the user code
+    refinements = (ComparingTwoThings())
+
+    #
+    # We return a list of transformers, one for each parameter in the concrete method.
+    #
+    # A transformer is a function applied to the parameter supplied in the user code, which
+    # turns the usercode parameter into something that can be supplied to the concrete method.
+    #
+    parameterTransformers = (lambda x: x.v, lambda x: x.v)
+    
+    return (userCode, concreteMethod, refinements, parameterTransformers)
+
