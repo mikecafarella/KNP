@@ -66,11 +66,18 @@ class Compare(Action):
     def __init__(self):
         Action.__init__(self, "Compare")
 
+class CreateTimeSeriesPlot(Action):
+    def __init__(self):
+        Action.__init__(self, "CreateTimeSeriesPlot")
+
 class Transmit(Action):
     def __init__(self):
         Transmit.__init__(self, "Transmit")
 
-ag = (Compare(), Transmit())
+compare = Compare()
+xmit = Transmit()
+ctsPlot = CreateTimeSeriesPlot()
+ag = (compare, xmit, ctsPlot)
 
 
 #################################################
@@ -116,32 +123,37 @@ class RefinementConstraint:
 
     def testParameterConstraint(p):
         """This method is invoked for every parameter sent to a method. It returns True if constraint is satisfied"""
-        raise NotImplementedError()
+        return True
 
     def testAllParametersConstraintOnValue(ps):
         """This method is invoked once for all the parameters sent to a method. It returns True if constraint is satisfied"""
-        raise NotImplementedError()
+        return True
 
     def testAllParametersConstraintOnReference(ps):
         """This method is invoked once for all the parameters sent to a method. It returns True if constraint is satisfied"""
-        raise NotImplementedError()
-        
+        return True
+
+    def testAction(self, a):
+        """Does the user's code end up running a particular Action?"
+        return True
+
+    #
+    # What about "gdp is a time series, where time should be on the x-axis"?
+    #
+
+    #
+    # What about "comparing two individuals should show a table of key/val pairs"?
+    #
 
 class SameTypeConstraint(RefinementConstraint):
     """This constraint means that all parameters must have the same basic type"""
     def __init__(self):
         pass
 
-    def testParameterConstraint(p):
-        return True
-
     def testAllParametersConstraintOnValue(ps):
         """Test that all the parameters have the same basic type"""
         # This is the logic that a crowd worker might type in.  But it's pretty basic, so maybe we add it right away
         return len(set(map(lambda x: x.t, ps)) == 1
-
-    def testAllParametersConstraintOnReference(ps):
-        return True
     
 
 class MustBeSameKGAttrConstraint(RefinementConstraint):
@@ -149,21 +161,29 @@ class MustBeSameKGAttrConstraint(RefinementConstraint):
     def __init__(self):
         pass
 
-    def testParameterConstraint(p):
-        return True
-
-    def testAllParametersConstraintOnValue(ps):
-        return True
-
     def testAllParametersConstraintOnReference(ps):
         """Test that all the parameters are named via the same attribute"""
         # Again, pretty basic logic
         return len(set(map(lambda x: x[1], ps)) == 1
 
+class ShouldRunConstraint(RefinementConstraint):
+    """This constraint means a particular action should be taken"""
+    def __init__(self, particularAction):
+        self.particularAction = particularAction
+
+    def testAction(self, candidateAction):
+        return candidateAction is self.particularAction
+    
 
 class ComparingTwoThings(Refinement):
     def __init__(self):
         Refinement.__init__(self, "Mike", "Comparing two things", (SameTypeConstraint(), MustBeSameKGAttrConstraint()))
+
+
+class ComparingGDP(Refinement):
+    def __init__(self):
+        Refinement.__init__(self, "Mike", "Comparing GDP means making a time series",
+                            (ShouldRunConstraint(ctsPlot)))
 
 
 #
