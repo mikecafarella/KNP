@@ -186,7 +186,18 @@ class ComparingTwoThings(Refinement):
 class ComparingGDP(Refinement):
     def __init__(self):
         Refinement.__init__(self, "Mike", "Comparing GDP means making a time series",
-                            (ShouldDoPlottingConstraint))
+                            (ShouldDoPlottingConstraint,
+                             ShouldHaveSameCurrencyConstraint,
+                             ShouldBeInflationAdjustedConstraint))
+
+#
+# THINK: What can the parameter transfomer do?
+# 1 Match user code parameters unambiguously to an entity in the KG
+# 2 Match parameters from the user's code to slots in the concrete method
+# 3 Fill in missing slots in the concrete method
+# 4 Convert data types as needed
+# 5 Apply transformation functions to the user's code (adjustInflation(), or chose data indices [1970:])
+#
 
 
 #
