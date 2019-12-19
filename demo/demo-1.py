@@ -86,24 +86,27 @@ ag = (compare, xmit, ctsPlot)
 #
 ####################################################
 class ConcreteMethod:
-    def __init__(self, name, numArgs, fn):
+    def __init__(self, name, numArgs, fn, actionsImplemented):
         self.name = name
         self.numArgs = numArgs
         self.fn = fn
+        self.actionsImplemented
 
 class Plot(ConcreteMethod):
     def __init__(self):
         ConcreteMethod.__init__(self,
                                 "Plot",
                                 2,
-                                lambda x, y: "Plot(" + str(x) + ", " + str(y) + ")")
+                                lambda x, y: "Plot(" + str(x) + ", " + str(y) + ")",
+                                (ctsPlot))
 
 class Transmit(ConcreteMethod):
     def __init__(self):
         ConcreteMethod.__init__(self,
                                 "Transmit",
                                 3,
-                                lambda x, y, z: "Transmit(" + str(x) + ", " + str(y) + "," + str(z) + ")")
+                                lambda x, y, z: "Transmit(" + str(x) + ", " + str(y) + "," + str(z) + ")",
+                                ())
 
 
 #################################################
@@ -133,8 +136,8 @@ class RefinementConstraint:
         """This method is invoked once for all the parameters sent to a method. It returns True if constraint is satisfied"""
         return True
 
-    def testAction(self, a):
-        """Does the user's code end up running a particular Action?"
+    def testConcreteMethod(self, concreteMethod):
+        """Evaluate a logical test on the chosen concrete method"""
         return True
 
     #
@@ -171,8 +174,8 @@ class ShouldRunConstraint(RefinementConstraint):
     def __init__(self, particularAction):
         self.particularAction = particularAction
 
-    def testAction(self, candidateAction):
-        return candidateAction is self.particularAction
+    def testConcreteMethod(self, concreteMethod):
+        return ctsPlot in concreteMethod.actionsImplemented
     
 
 class ComparingTwoThings(Refinement):
