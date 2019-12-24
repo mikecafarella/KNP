@@ -1,10 +1,12 @@
 import requests
-
+import pandas as pd
+from pandas.io.json import json_normalize
+import json
 
 _API_ROOT = "https://www.wikidata.org/w/api.php"
 
 def search_entity(search_string, type, limit=10):
-    """Search for a property."""
+    """Search for a entity."""
     params = {
         'action': 'wbsearchentities',
         'format': 'json',
@@ -47,52 +49,42 @@ def get_claims(entity_id, property_id=None):
     else:
         return claims['claims'].get(property_id)
 
-def get_qualifiers_datavalues(entity_id, property_id, qualifier_pid):
-    """Get 'datavalue' of a qualifier for claims."""
-    claims = get_claims(entity_id, property_id)
-    values = claims[property_id]
-    return get_qualifiers_datavalues_from_snaks(values, qualifier_pid)
+def KG_data_to_dataset(KG_data):
+    """Transform KG data to a 'dataset'."""
+    raw_data = KG_data
+    # raw_data is a list of snaks
+    for i in range(len(raw_data)):
+        raw_data[i].pop('references', None)
+        raw_data[i].pop('qualifiers-order', None)
+        raw_data[i].pop('type', None)
+        raw_data[i].pop('rank', None)
+        raw_data[i].pop('id', None)
 
-def get_qualifiers_datavalues_from_snaks(snaks, qualifier_pid):
-    return [snak['qualifiers'][qualifier_pid][0]['datavalue'] for snak in snaks]
-    # TODO fix for a certain property of qualifers that has more than one snaks
-    # skip for now
+    data_frame = json_normalize(raw_data)
+    # print(data_frame.columns)
+    # print(data_frame)
+    data_frame = explode(data_frame)
+    # print(data_frame)
+    data_frame = flatten_dict(data_frame)
+    # print(data_frame)
+    return data_frame        
 
-def get_mainsnak_datavalues_from_snaks(snaks):
-    """snaks = [{'mainsnak':{'datavalue'}}, {}]."""
-    return [snak['mainsnak']['datavalue'] for snak in snaks]
+def explode(data_frame):
+    """Iterate all columns, and explode them if needed."""
+    for column in data_frame:
+        if(isinstance(data_frame[column].values[0], list) or (column.startswith("qualifiers.") and len(column.split("."))==2)):
+            data_frame = data_frame.explode(column).reset_index(drop=True)
+    return data_frame
 
-def get_datavalues_for_a_property(data, property_id):
-    # data can be {"id":, "labels":} or [{'mainsnak':{'datavalue'}}, {}]
-    if(not len(data)):
-        raise ValueError("Data is empty!")
-    try:
-        if('claims' in data):
-            ### data is a entity
-            snaks = data['claims'][property_id]
-            # print(snaks)
-            return get_datavalues_for_a_property(snaks, property_id)
-        elif(data[0]['mainsnak']['property'] == property_id):
-            # data = [{'mainsnak':{'datavalue'}}, {}]
-            return get_mainsnak_datavalues_from_snaks(data)
-        else:
-            # look at qualifiers
-            return get_qualifiers_datavalues_from_snaks(data, property_id)
-    except:
-        return None
-
-        
-
-def get_value_from_datavalue(datavalues):
-    # datavalues should be of type list/tuple
-    # print(type(datavalues))
-    rst = []
-    for datavalue in datavalues:
-        # print(datavalue)
-        if(datavalue['type'] == "wikibase-entityid"):
-            rst.append(datavalue['value']['id'])
-        elif(datavalue['type'] == 'time'):
-            rst.append(datavalue['value']['time'])
-        elif(datavalue['type'] == 'quantity'):
-            rst.append(datavalue['value']['amount'])
-    return rst
+def flatten_dict(data_frame):
+    for column in data_frame:
+        if(isinstance(data_frame[column].values[0], dict)):
+            tmp = json_normalize(data_frame[column].values[0], errors='ignore').add_prefix(column + ".")
+            for x in data_frame[column].values[1:]:
+                if(isinstance(x, dict)):
+                    t = json_normalize(x, errors='ignore').add_prefix(column + ".")
+                    tmp = pd.concat([tmp, t], sort=True)
+            tmp = tmp.reset_index(drop=True)
+            data_frame = data_frame.drop(columns=[column], axis=1)
+            data_frame = pd.concat([data_frame, tmp], axis=1, sort=True)
+    return data_frame
