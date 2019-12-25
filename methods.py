@@ -17,13 +17,13 @@ class Plot(ConcreteMethod):
                                 4,
                                 {1: lambda x: all(isinstance(y, (int, float)) for y in x), 
                                     2: lambda x: all(isinstance(y, (int, float)) for y in x),
-                                    3: lambda x: isinstance(x, string),
-                                    4: lambda x: isinstance(x, string)}
+                                    3: lambda x: isinstance(x, str),
+                                    4: lambda x: isinstance(x, str)}
                                 )
 
     @staticmethod
     def function(*args):
-        
+
         arg_1, arg_2, arg_3, arg_4 = args
         plt.plot(arg_1, arg_2)
         plt.xlabel(arg_3)

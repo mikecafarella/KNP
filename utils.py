@@ -2,6 +2,9 @@ import wikidata_utils as wu
 import json
 import methods
 import refinements
+from datetime import datetime
+import iso8601
+
 
 _KG = 'WikiData'
 
@@ -79,10 +82,11 @@ def get_slot_mapping(action, method, KG_datasets_and_entities, KG_references):
 
     # The slot mapping
     num_args = method.num_args
-    arg_1 = KG_params["Canada.GDP.mainsnak.datavalue.value.amount"]
-    arg_2 = KG_params["Canada.GDP.qualifiers.P585.datavalue.value.time"]
+    
+    arg_1 = KG_params[KG_references[0] + ".qualifiers.P585.datavalue.value.time"]
+    arg_2 = KG_params[KG_references[0] + ".mainsnak.datavalue.value.amount"]
     arg_3 = "time"
-    arg_4 = "Canada.GDP"
+    arg_4 = KG_references[0]
     mapped_data = [arg_1, arg_2, arg_3, arg_4]
     return mapped_data
 
@@ -94,5 +98,5 @@ def get_parameter_transformers(mapped_data, method):
     for arg in mapped_data:
         pass
     # hard-code
-    transformers = [lambda x: x, lambda x: x,lambda x: x, lambda x: x]
+    transformers = [lambda l:[iso8601.parse_date(x[1:]).year for x in l], lambda l: [float(x) for x in l], lambda x: x, lambda x: x]
     return transformers
