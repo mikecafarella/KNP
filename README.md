@@ -10,6 +10,12 @@ source env/bin/activate
 pip3 install -r requirements.txt
 ```
 
+## Working Exampling
+```python
+python3 compiler.py Action Canada.GDP
+```
+"Action" could be anything. "Canada" can be replaced by any place such as USA.
+
 ## User Code
 
 The user code consists of text references to the Action, and KG paragmeters. E.g. Compare USA.GDP Canada.GDP.
