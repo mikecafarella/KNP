@@ -1,6 +1,14 @@
 # KNP
 
-This is mainly the place listing the design desicions for our demo system.
+This is mainly the place listing the design desicions and current progress for our demo system.
+
+## Requirements
+
+```python
+python3 -m venv env
+source env/bin/activate
+pip3 install -r requirements.txt
+```
 
 ## User Code
 
@@ -18,11 +26,11 @@ Currently slot mapping is hard-coded, but should be replaced in the future.
 
 ## Refinement
 
-The most important infomation in a refinment are constraints. 
+Currently we hard-code to pick Refinements.
 
 ## Data Transformation
 
-Once the compiler knows the slot mapping, it will transform the KG data to satisfy the input type requirement of the concrete method.
+Once the compiler knows the slot mapping, it will transform the KG data to satisfy the input type requirement of the concrete method. Currently it's hard-coded.
 
 
 
