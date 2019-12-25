@@ -2,6 +2,8 @@ def log_msg(msg):
     print("log: " + msg)
 
 import pandas as pd
+
+
 def kgpcompile(args):
 
     action = args.KP[0]
@@ -19,11 +21,12 @@ def kgpcompile(args):
 
     # Flatten the KG data into "Dataset" and "Entity"
     KG_datasets_and_entities = []
-    for data in KG_data:
+    for i in range(len(KG_data)):
+        data = KG_data[i]
         if(data['type'] == 'claims'):
-            KG_datasets_and_entities.append(utils.Dataset(data['data'], data['user_code']))
+            KG_datasets_and_entities.append(utils.Dataset(data['data'], KG_references[i]))
         elif(data['type'] == 'entity'):
-            KG_datasets_and_entities.append(utils.Entity(data['data'], data['user_code']))
+            KG_datasets_and_entities.append(utils.Entity(data['data'], KG_references[i]))
     # print(KG_datasets_and_entities[0].data_frame.columns)
     # print(KG_datasets_and_entities[0].data_frame['mainsnak.datavalue.value.amount'])
 
@@ -34,13 +37,21 @@ def kgpcompile(args):
     refinements = utils.get_refinements()  # TODO fill in function parameters
 
     # Slot mapping
-    slot_maping = utils.get_slot_mapping(action, method, KG_datasets_and_entities)
+    mapped_data = utils.get_slot_mapping(action, method, KG_datasets_and_entities, KG_references)
+    # print(type(mapped_data[1]))
 
     # Transform KG dataset to fit into the slots
-    parameter_transformers = utils.get_parameter_transformers(slot_maping)
+    parameter_transformers = utils.get_parameter_transformers(mapped_data, method)
+
+    return (args.KP, method, refinements, parameter_transformers, mapped_data)
 
 
-    return (args.KP, method, refinements, parameter_transformers)
+def execute_compiled_program(mapped_data, parameter_transformers, method):
+
+    for i in range(len(parameter_transformers)):
+        mapped_data[i] = parameter_transformers[i](mapped_data[i])
+
+    return method.function(*mapped_data)
 
 
 if __name__ == '__main__':
@@ -55,4 +66,10 @@ if __name__ == '__main__':
     parser.add_argument('KP', nargs='+', help="The knowledge program, surround an argument by '' if there is space in it.")
     args = parser.parse_args()
     
-    compiled_program = kgpcompile(args)
+    args.KP, method, refinements, parameter_transformers, mapped_data = kgpcompile(args)
+
+    user_facing_result = execute_compiled_program(mapped_data, parameter_transformers, method)
+
+
+
+
