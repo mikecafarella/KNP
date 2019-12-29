@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
+import pandas as pd
 
 class ConcreteMethod(object):
-    def __init__(self, name, num_args, type_checks):
+    def __init__(self, name, num_args, type_checks, actions_implemented):
         self.name = name
         self.type_checks = type_checks
         self.num_args = num_args
+        self.actions_implemented = actions_implemented
     
     def function(*args):
         pass
@@ -18,7 +20,8 @@ class Plot(ConcreteMethod):
                                 {1: lambda x: all(isinstance(y, (int, float)) for y in x), 
                                     2: lambda x: all(isinstance(y, (int, float)) for y in x),
                                     3: lambda x: isinstance(x, str),
-                                    4: lambda x: isinstance(x, str)}
+                                    4: lambda x: isinstance(x, str)},
+                                ["Show"]
                                 )
 
     @staticmethod
@@ -30,6 +33,21 @@ class Plot(ConcreteMethod):
         plt.ylabel(arg_4)
         plt.show()
 
+class PlotTwoLines(ConcreteMethod):
+    def __init__(self):
+        super().__init__("PlotTwoLines", 8, {}, ["Compare"])
+
+    @staticmethod
+    def function(*args):
+        
+        fig = plt.figure()
+        ax = plt.subplot(111)
+        ax.plot(args[0], args[1], label=args[2])
+        ax.plot(args[3], args[4], label=args[5])
+        plt.xlabel(args[-2])
+        plt.ylabel(args[-1])
+        ax.legend()
+        plt.show()
         
 
 

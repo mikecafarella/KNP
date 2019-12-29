@@ -4,9 +4,14 @@ import methods
 import refinements
 from datetime import datetime
 import iso8601
+import pandas as pd
 
 
 _KG = 'WikiData'
+
+
+def log_msg(msg):
+    print("log: " + msg)
 
 
 class Dataset(object):
@@ -53,12 +58,15 @@ def get_KG_data(IDs):
 def get_method():
     """Returns a ConcreteMethod."""
     # TODO
-    return methods.Plot()
+    method = methods.PlotTwoLines()
+    log_msg("The picked concrete method is {}.".format(type(method).__name__))
+    return method
 
 def get_refinements():
     """Returns a tuple of Refinements."""
     # TODO
-    return (refinements.ComparingTwoThings())
+    log_msg("The picked refinements are {}.".format(" ".join(((str(refinements.ComparingGDP()), )))))
+    return (refinements.ComparingGDP(), )
 
 def get_slot_mapping(action, method, KG_datasets_and_entities, KG_references):
     # TODO
@@ -81,22 +89,28 @@ def get_slot_mapping(action, method, KG_datasets_and_entities, KG_references):
     # print(list(KG_params.keys()))
 
     # The slot mapping
-    num_args = method.num_args
-    
-    arg_1 = KG_params[KG_references[0] + ".qualifiers.P585.datavalue.value.time"]
-    arg_2 = KG_params[KG_references[0] + ".mainsnak.datavalue.value.amount"]
-    arg_3 = "time"
-    arg_4 = KG_references[0]
-    mapped_data = [arg_1, arg_2, arg_3, arg_4]
-    return mapped_data
+    # num_args = method.num_args
+    KG_table = pd.DataFrame(data=KG_params)
 
-def get_parameter_transformers(mapped_data, method):
+    arg_0 = (KG_references[0] + ".qualifiers.P585.datavalue.value.time", True)
+    arg_1 = (KG_references[0] + ".mainsnak.datavalue.value.amount", True)
+    arg_2 = (KG_references[0], False)
+    arg_3 = (KG_references[1] + ".qualifiers.P585.datavalue.value.time", True)
+    arg_4 = (KG_references[1] + ".mainsnak.datavalue.value.amount", True)
+    arg_5 = (KG_references[1], False)
+    arg_x_label = ("time", False)
+    arg_y_label = ("GDP", False)
+    mapping = [arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_x_label, arg_y_label]
+    return (KG_table, mapping)
+
+def get_parameter_transformers(mapping, method):
 
     # type_checks = method.type_checks TODO
 
     transformers = []
-    for arg in mapped_data:
-        pass
+
     # hard-code
-    transformers = [lambda l:[iso8601.parse_date(x[1:]).year for x in l], lambda l: [float(x) for x in l], lambda x: x, lambda x: x]
+    transformers = [lambda l:[iso8601.parse_date(x[1:]).year for x in l], lambda l: [float(x) for x in l], lambda x: x, \
+                    lambda l:[iso8601.parse_date(x[1:]).year for x in l], lambda l: [float(x) for x in l], lambda x: x, \
+                    lambda x: x, lambda x: x]
     return transformers

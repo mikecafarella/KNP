@@ -1,5 +1,3 @@
-def log_msg(msg):
-    print("log: " + msg)
 
 import pandas as pd
 
@@ -37,22 +35,40 @@ def kgpcompile(args):
     refinements = utils.get_refinements()  # TODO fill in function parameters
 
     # Slot mapping
-    mapped_data = utils.get_slot_mapping(action, method, KG_datasets_and_entities, KG_references)
-    # print(type(mapped_data[1]))
+    KG_table, mapping = utils.get_slot_mapping(action, method, KG_datasets_and_entities, KG_references)
 
     # Transform KG dataset to fit into the slots
-    parameter_transformers = utils.get_parameter_transformers(mapped_data, method)
+    parameter_transformers = utils.get_parameter_transformers(mapping, method)
 
-    return (args.KP, method, refinements, parameter_transformers, mapped_data)
+    return (IDs, args.KP, method, refinements, parameter_transformers, mapping, KG_table)
 
 
-def execute_compiled_program(mapped_data, parameter_transformers, method):
+def execute_compiled_program(mapping, KG_table, parameter_transformers, method):
 
+    # Apply transformers onto the data
+    transformed_mapped_data = []
     for i in range(len(parameter_transformers)):
-        mapped_data[i] = parameter_transformers[i](mapped_data[i])
+        if(mapping[i][1]):
+            # Need to fetch the data from KG_table
+            data = KG_table[mapping[i][0]]
+        else:
+            data = mapping[i][0]
+        transformed_mapped_data.append(parameter_transformers[i](data))
 
-    return method.function(*mapped_data)
+    return method.function(*transformed_mapped_data)
 
+
+def compute_quality_metrics(IDs, KP, method, refinements, parameter_transformers, mapping, KG_table):
+
+    total_valid_constraint_count, total_invalid_constraint_count = 0, 0
+    for refinement in refinements:
+        valid_count, invalid_count = refinement.evaluate(IDs, method, mapping, KG_table, parameter_transformers)
+        total_valid_constraint_count += valid_count
+        total_invalid_constraint_count += invalid_count
+    print("Total valid constraint count is {}, total invalid constraint count it {}".format(total_valid_constraint_count, total_invalid_constraint_count))
+
+    
+    
 
 if __name__ == '__main__':
     import argparse
@@ -66,9 +82,14 @@ if __name__ == '__main__':
     parser.add_argument('KP', nargs='+', help="The knowledge program, surround an argument by '' if there is space in it.")
     args = parser.parse_args()
     
-    args.KP, method, refinements, parameter_transformers, mapped_data = kgpcompile(args)
+    # KGP compile
+    IDs, KP, method, refinements, parameter_transformers, mapping, KG_table = kgpcompile(args)
 
-    user_facing_result = execute_compiled_program(mapped_data, parameter_transformers, method)
+    # Computue quality
+    metrics = compute_quality_metrics(IDs, KP, method, refinements, parameter_transformers, mapping, KG_table)
+
+
+    user_facing_result = execute_compiled_program(mapping, KG_table, parameter_transformers, method)
 
 
 

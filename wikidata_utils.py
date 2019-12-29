@@ -58,7 +58,7 @@ def KG_data_to_dataset(KG_data):
         raw_data[i].pop('qualifiers-order', None)
         raw_data[i].pop('type', None)
         raw_data[i].pop('rank', None)
-        raw_data[i].pop('id', None)
+        # raw_data[i].pop('id', None)
 
     data_frame = json_normalize(raw_data)
     # print(data_frame.columns)
