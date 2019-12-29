@@ -14,13 +14,19 @@ def log_msg(msg):
     print("log: " + msg)
 
 
-class Dataset(object):
+class Dataset(dict):
     def __init__(self, KG_data, user_code=None):
         self.raw_data = KG_data
         self.user_code = user_code
         self.data_frame = wu.KG_data_to_dataset(KG_data)  # should be a DataFrame
+    
+    def __getitem__(self, column):
+        if(column == "columns"):
+            return self.data_frame.columns
+        return self.data_frame[column]
+    
 
-class Entity(object):
+class Entity(dict):
     def __init__(self, KG_data, user_code):
         self.user_code = user_code
         self.raw_data = KG_data
@@ -30,6 +36,9 @@ class Entity(object):
         self.properties = {}
         for pid, snaks in KG_data['claims'].items():
             self.properties[pid] = Dataset(snaks)
+    
+    def __getattr__(self, pid):
+        return self.properties[pid]
 
 
 def KG_references_to_ID(KG_references):
@@ -71,37 +80,24 @@ def get_refinements():
 def get_slot_mapping(action, method, KG_datasets_and_entities, KG_references):
     # TODO
 
-    # All avialable fields in the KG data
-    KG_params = {}
+    # All avialable fields in the KG data. KG_tables[user_code]
+    KG_tables = {}
     for data in KG_datasets_and_entities:
         user_code = data.user_code
-        if(isinstance(data, Entity)):
-            for pid in data.properties:
-                for column in data.properties[pid].data_frame.columns:
-                    KG_params[".".join([user_code, pid, column])] = data.properties[pid].data_frame[column].values
-        elif(isinstance(data, Dataset)):
-            for column in data.data_frame.columns:
-                KG_params[".".join([user_code, column])] = data.data_frame[column].values
-        else:
-            raise ValueError("Impossible data, neither entity nor dataset!")
-    
-    # print("Avaliable KG data:")
-    # print(list(KG_params.keys()))
+        KG_tables[user_code] = data
 
     # The slot mapping
-    # num_args = method.num_args
-    KG_table = pd.DataFrame(data=KG_params)
 
-    arg_0 = (KG_references[0] + ".qualifiers.P585.datavalue.value.time", True)
-    arg_1 = (KG_references[0] + ".mainsnak.datavalue.value.amount", True)
+    arg_0 = (KG_references[0], "qualifiers.P585.datavalue.value.time", True)
+    arg_1 = (KG_references[0], "mainsnak.datavalue.value.amount", True)
     arg_2 = (KG_references[0], False)
-    arg_3 = (KG_references[1] + ".qualifiers.P585.datavalue.value.time", True)
-    arg_4 = (KG_references[1] + ".mainsnak.datavalue.value.amount", True)
+    arg_3 = (KG_references[1], "qualifiers.P585.datavalue.value.time", True)
+    arg_4 = (KG_references[1], "mainsnak.datavalue.value.amount", True)
     arg_5 = (KG_references[1], False)
     arg_x_label = ("time", False)
     arg_y_label = ("GDP", False)
     mapping = [arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_x_label, arg_y_label]
-    return (KG_table, mapping)
+    return (KG_tables, mapping)
 
 def get_parameter_transformers(mapping, method):
 

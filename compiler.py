@@ -1,6 +1,6 @@
 
 import pandas as pd
-
+import utils
 
 def kgpcompile(args):
 
@@ -35,22 +35,22 @@ def kgpcompile(args):
     refinements = utils.get_refinements()  # TODO fill in function parameters
 
     # Slot mapping
-    KG_table, mapping = utils.get_slot_mapping(action, method, KG_datasets_and_entities, KG_references)
+    KG_tables, mapping = utils.get_slot_mapping(action, method, KG_datasets_and_entities, KG_references)
 
     # Transform KG dataset to fit into the slots
     parameter_transformers = utils.get_parameter_transformers(mapping, method)
 
-    return (IDs, args.KP, method, refinements, parameter_transformers, mapping, KG_table)
+    return (IDs, args.KP, method, refinements, parameter_transformers, mapping, KG_tables)
 
 
-def execute_compiled_program(mapping, KG_table, parameter_transformers, method):
+def execute_compiled_program(mapping, KG_tables, parameter_transformers, method):
 
     # Apply transformers onto the data
     transformed_mapped_data = []
     for i in range(len(parameter_transformers)):
-        if(mapping[i][1]):
-            # Need to fetch the data from KG_table
-            data = KG_table[mapping[i][0]]
+        if(mapping[i][-1]):
+            # Need to fetch the data from KG_tables
+            data = KG_tables[mapping[i][0]][mapping[i][1]]
         else:
             data = mapping[i][0]
         transformed_mapped_data.append(parameter_transformers[i](data))
@@ -58,14 +58,16 @@ def execute_compiled_program(mapping, KG_table, parameter_transformers, method):
     return method.function(*transformed_mapped_data)
 
 
-def compute_quality_metrics(IDs, KP, method, refinements, parameter_transformers, mapping, KG_table):
+def compute_quality_metrics(IDs, KP, method, refinements, parameter_transformers, mapping, KG_tables):
 
     total_valid_constraint_count, total_invalid_constraint_count = 0, 0
     for refinement in refinements:
-        valid_count, invalid_count = refinement.evaluate(IDs, method, mapping, KG_table, parameter_transformers)
+        valid_count, invalid_count = refinement.evaluate(IDs, method, mapping, KG_tables, parameter_transformers)
         total_valid_constraint_count += valid_count
         total_invalid_constraint_count += invalid_count
-    print("Total valid constraint count is {}, total invalid constraint count it {}".format(total_valid_constraint_count, total_invalid_constraint_count))
+    utils.log_msg("Total satisfied constraint count is {}, total unsatisfied constraint count it {}".format(total_valid_constraint_count, total_invalid_constraint_count))
+    if(total_invalid_constraint_count):
+        raise ValueError("There is satisfied constraints. Don't execute.")
 
     
     
@@ -75,7 +77,6 @@ if __name__ == '__main__':
     import os
     import json
     import random
-    import utils
 
     # Take user code
     parser = argparse.ArgumentParser(description="Takes in a knowledge program, and execute.")

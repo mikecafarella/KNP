@@ -9,12 +9,12 @@ class Refinement:
     def __str__(self):
         return type(self).__name__
 
-    def evaluate(self, IDs, method, mapping, KG_table, parameter_transformers):
+    def evaluate(self, IDs, method, mapping, KG_tables, parameter_transformers):
         """This method evaluates all the RefinementConstraint."""
         valid_count = 0
         invalid_count = 0
         for constraint in self.constraints:
-            v, inv = constraint.evaluate(IDs, method, mapping, KG_table, parameter_transformers)
+            v, inv = constraint.evaluate(IDs, method, mapping, KG_tables, parameter_transformers)
             valid_count += v
             invalid_count += inv
         return (valid_count, invalid_count)
@@ -25,12 +25,12 @@ class RefinementConstraint:
         pass
 
     @staticmethod
-    def test_parameter_constraint(mapping, KG_table, parameter_transformers):
+    def test_parameter_constraint(mapping, KG_tables, parameter_transformers):
         """This method is invoked for every parameter sent to a method. It returns True if constraint is satisfied"""
         pass
 
     @staticmethod
-    def test_all_parameters_constraint_on_value(mapping, KG_table, parameter_transformers):
+    def test_all_parameters_constraint_on_value(mapping, KG_tables, parameter_transformers):
         """This method is invoked once for all the parameters sent to a method. It returns True if constraint is satisfied"""
         pass
 
@@ -44,10 +44,10 @@ class RefinementConstraint:
         """Evaluate a logical test on the chosen concrete method"""
         pass
 
-    def evaluate(self, IDs, method, mapping, KG_table, parameter_transformers):
+    def evaluate(self, IDs, method, mapping, KG_tables, parameter_transformers):
         """Evaluate the constraints."""
-        t1 = self.test_parameter_constraint(mapping, KG_table, parameter_transformers)
-        t2 = self.test_all_parameters_constraint_on_value(mapping, KG_table, parameter_transformers)
+        t1 = self.test_parameter_constraint(mapping, KG_tables, parameter_transformers)
+        t2 = self.test_all_parameters_constraint_on_value(mapping, KG_tables, parameter_transformers)
         t3 = self.test_all_parameters_constraint_on_reference(IDs)
         t4 = self.test_concrete_method(method)
         t = (t1, t2, t3, t4)
@@ -73,7 +73,7 @@ class MustBeSameKGAttrConstraint(RefinementConstraint):
 #     """This constraint means that all parameters must have the same basic type."""
 
 #     @staticmethod
-#     def test_all_parameters_constraint_on_value(mapping, KG_table, parameter_transformers):
+#     def test_all_parameters_constraint_on_value(mapping, KG_tables, parameter_transformers):
 #         """Test that all the parameters have the same basic type"""
 #         # This is the logic that a crowd worker might type in.  But it's pretty basic, so maybe we add it right away
 #         return len(set(map(lambda x: type(x), ps))) == 1
@@ -83,12 +83,16 @@ class SameUnitConstraint(RefinementConstraint):
     """This constraint means that  parameters must have the same unit."""
 
     @staticmethod
-    def test_all_parameters_constraint_on_value(mapping, KG_table, parameter_transformers):
-        set_of_units = set()
-        for column in KG_table.columns:
-            if(column.endswith(".unit")):
-                set_of_units.update(KG_table[column].values)
-        return len(set_of_units) == 1        
+    def test_all_parameters_constraint_on_value(mapping, KG_tables, parameter_transformers):
+        try:
+            set_of_units = set()
+            for _, df in KG_tables.items():
+                for column in df['columns']:
+                    if(column.endswith(".unit")):
+                        set_of_units.update(df[column].values)
+            return len(set_of_units) == 1
+        except:
+            return False   
 
 
 class ShouldDoPlottingConstraint(RefinementConstraint):
