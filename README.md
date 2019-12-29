@@ -12,9 +12,9 @@ pip3 install -r requirements.txt
 
 ## Working Exampling
 ```python
-python3 compiler.py Action Canada.GDP
+python3 compiler.py Compare Canada.GDP China.GDP
 ```
-"Action" could be anything. "Canada" can be replaced by any place such as USA.
+Could be any countries.
 
 ## User Code
 
