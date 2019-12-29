@@ -65,9 +65,9 @@ def compute_quality_metrics(IDs, KP, method, refinements, parameter_transformers
         valid_count, invalid_count = refinement.evaluate(IDs, method, mapping, KG_tables, parameter_transformers)
         total_valid_constraint_count += valid_count
         total_invalid_constraint_count += invalid_count
-    utils.log_msg("Total satisfied constraint count is {}, total unsatisfied constraint count it {}".format(total_valid_constraint_count, total_invalid_constraint_count))
+    utils.log_msg("Total satisfied constraint count is {}, total unsatisfied constraint count is {}".format(total_valid_constraint_count, total_invalid_constraint_count))
     if(total_invalid_constraint_count):
-        raise ValueError("There is satisfied constraints. Don't execute.")
+        raise ValueError("There is unsatisfied constraints. Don't execute.")
 
     
     
