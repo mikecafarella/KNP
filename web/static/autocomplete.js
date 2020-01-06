@@ -1,6 +1,8 @@
 function handleInput() {
     var user_code = document.getElementById("user_code").value;
     if(!user_code.includes("(") || user_code.endsWith("(") || user_code.endsWith(".") || user_code.endsWith("|") || user_code.endsWith(")")){
+        $("#entity_list")
+          .empty()
         return;
     }
     var KG_params = user_code.substring(user_code.indexOf("(") + 1).split("|");

@@ -8,21 +8,26 @@ import compiler
 @app.route('/compiler', methods=['GET', 'POST'])
 def compiler_index():
     """Homepage of the compiler."""
-    if request.method == 'GET':
-        return render_template('compiler_index.html')
-    elif request.method == 'POST':
-        user_code = request.form['user_code']
-        try:
-            action, KG_references = check_and_split_user_code(user_code)
-        except:
-            return "Invalid user code!"
-        
-        IDs, KP, method, refinements, parameter_transformers, mapping, KG_table = compiler.kgpcompile(action, KG_references)
 
-        # Computue quality
-        evaluation_results, total_valid_constraint_count, total_invalid_constraint_count = compiler.compute_quality_metrics(IDs, KP, method, refinements, parameter_transformers, mapping, KG_table)
+    return render_template('compiler_index.html')
+    
 
-        return render_template('compiler_index.html', mapping=mapping, evaluation_results=evaluation_results)
+@app.route('/compiler/result', methods=['POST'])
+def compiler_result():
+
+    user_code = request.form['user_code']
+    try:
+        action, KG_references = check_and_split_user_code(user_code)
+    except:
+        return "Invalid user code!"
+    
+    IDs, KP, method, refinements, parameter_transformers, mappings, KG_table = compiler.kgpcompile(action, KG_references)
+
+    # Computue quality
+    evaluation_results, total_valid_constraint_count, total_invalid_constraint_count = compiler.compute_quality_metrics(IDs, KP, method, refinements, parameter_transformers, mappings, KG_table)
+
+    return render_template('compiler_result.html', mappings=mappings, evaluation_results=evaluation_results, user_code=user_code, method=method)
+
 
 
 def check_and_split_user_code(user_code):
