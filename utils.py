@@ -37,7 +37,7 @@ class Entity(dict):
         for pid, snaks in KG_data['claims'].items():
             self.properties[pid] = Dataset(snaks)
     
-    def __getattr__(self, pid):
+    def __getitem__(self, pid):
         return self.properties[pid]
 
 
@@ -64,12 +64,14 @@ def get_KG_data(IDs):
             raise ValueError('Not supporiting A.B.C yet!')
     return data
 
+
 def get_method():
     """Returns a ConcreteMethod."""
     # TODO
     method = methods.PlotTwoLines()
     log_msg("The picked concrete method is {}.".format(type(method).__name__))
     return method
+
 
 def get_refinements():
     """Returns a tuple of Refinements."""

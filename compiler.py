@@ -2,10 +2,7 @@
 import pandas as pd
 import utils
 
-def kgpcompile(args):
-
-    action = args.KP[0]
-    KG_references = args.KP[1:]
+def kgpcompile(action, KG_references):
 
     # Sanitiy check on Action
     # if(action not in traits_utils.Actions):
@@ -40,7 +37,7 @@ def kgpcompile(args):
     # Transform KG dataset to fit into the slots
     parameter_transformers = utils.get_parameter_transformers(mapping, method)
 
-    return (IDs, args.KP, method, refinements, parameter_transformers, mapping, KG_tables)
+    return (IDs, KG_references, method, refinements, parameter_transformers, mapping, KG_tables)
 
 
 def execute_compiled_program(mapping, KG_tables, parameter_transformers, method):
@@ -61,13 +58,17 @@ def execute_compiled_program(mapping, KG_tables, parameter_transformers, method)
 def compute_quality_metrics(IDs, KP, method, refinements, parameter_transformers, mapping, KG_tables):
 
     total_valid_constraint_count, total_invalid_constraint_count = 0, 0
+    evaluation_results = {}
     for refinement in refinements:
-        valid_count, invalid_count = refinement.evaluate(IDs, method, mapping, KG_tables, parameter_transformers)
-        total_valid_constraint_count += valid_count
-        total_invalid_constraint_count += invalid_count
+        evaluation_result = refinement.evaluate(IDs, method, mapping, KG_tables, parameter_transformers)
+        evaluation_results[str(refinement)] = evaluation_result
+        total_valid_constraint_count += list(evaluation_result.values()).count(True)
+        total_invalid_constraint_count += list(evaluation_result.values()).count(False)
+
+
     utils.log_msg("Total satisfied constraint count is {}, total unsatisfied constraint count is {}".format(total_valid_constraint_count, total_invalid_constraint_count))
-    if(total_invalid_constraint_count):
-        raise ValueError("There is unsatisfied constraints. Don't execute.")
+
+    return (evaluation_results, total_valid_constraint_count, total_invalid_constraint_count)
 
     
     
@@ -84,11 +85,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # KGP compile
-    IDs, KP, method, refinements, parameter_transformers, mapping, KG_table = kgpcompile(args)
+    action = args.KP[0]
+    KG_references = args.KP[1:]
+
+    IDs, KP, method, refinements, parameter_transformers, mapping, KG_table = kgpcompile(action, KG_references)
 
     # Computue quality
     metrics = compute_quality_metrics(IDs, KP, method, refinements, parameter_transformers, mapping, KG_table)
-
+    if metrics[-1]:
+        raise ValueError("There is unsatisfied constraints. Don't execute.")
 
     user_facing_result = execute_compiled_program(mapping, KG_table, parameter_transformers, method)
 

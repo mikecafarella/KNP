@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+    <head>
+    <title>KNP Compiler</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='autocomplete.js') }}"></script>
+    </head>
+    <body>
+        <main role="main" class="container">
+
+            <form method="POST" autocomplete="off" action="{{compiler}}" method="POST">
+                <input type="text" id="user_code" autocomplete="off" onkeyup="handleInput()" name="user_code" placeholder="knowledge program">
+                <!-- <select id="entity_list" autofocus></select> -->
+                <div id="entity_list"></div>
+            </form> 
+
+            <div id="mapping"></div>
+            {% for m in mapping %}
+                {{m}}
+            {% endfor %}
+            <div id="refinements"></div>
+            {% for refinement, evaluation_result in evaluation_results.items() %}
+                {{refinement}}
+                {{evaluation_result}}
+            {% endfor %}
+            <div id="method"></div>
+            <div id="result">
+
+            </div>
+
+
+        </main>           
+    </body>
+</html>

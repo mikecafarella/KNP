@@ -5,24 +5,31 @@ class Refinement:
         self.author = author
         self.name = name
         self.constraints = constraints
+        self.evaluation_results = {}
     
     def __str__(self):
         return type(self).__name__
 
     def evaluate(self, IDs, method, mapping, KG_tables, parameter_transformers):
         """This method evaluates all the RefinementConstraint."""
-        valid_count = 0
-        invalid_count = 0
+
         for constraint in self.constraints:
-            v, inv = constraint.evaluate(IDs, method, mapping, KG_tables, parameter_transformers)
-            valid_count += v
-            invalid_count += inv
-        return (valid_count, invalid_count)
+
+            rst = constraint.evaluate(IDs, method, mapping, KG_tables, parameter_transformers)
+            if rst == True:
+                self.evaluation_results[str(constraint)] = True
+            elif rst == False:
+                self.evaluation_results[str(constraint)] = False
+
+        return self.evaluation_results
 
 
 class RefinementConstraint:
     def __init__(self):
         pass
+
+    def __str__(self):
+        return type(self).__name__
 
     @staticmethod
     def test_parameter_constraint(mapping, KG_tables, parameter_transformers):
@@ -51,12 +58,15 @@ class RefinementConstraint:
         t3 = self.test_all_parameters_constraint_on_reference(IDs)
         t4 = self.test_concrete_method(method)
         t = (t1, t2, t3, t4)
+        if t.count(None) != 3:
+            raise AssertionError("One constraint could only implement one test.")
         for test in t:
             if(test == False):
-                utils.log_msg("{} failed!".format(type(self).__name__))
+                utils.log_msg("{} failed!".format(str(self)))
+                return False
             elif(test == True):
-                utils.log_msg("{} succeeded!".format(type(self).__name__))
-        return (t.count(True), t.count(False))
+                utils.log_msg("{} succeeded!".format(str(self)))
+                return True
 
 
 
