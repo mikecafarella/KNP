@@ -2,14 +2,21 @@
 import pandas as pd
 import utils
 
-def kgpcompile(action, KG_references):
+def kgpcompile(action, KG_references, web=False):
 
     # Sanitiy check on Action
     # if(action not in traits_utils.Actions):
     #     raise ValueError("Unknown action!")
 
     # Turn each parameter into its corresponding ID in Wikidata
-    IDs = utils.KG_references_to_ID(KG_references)
+    if not web:
+        IDs = utils.KG_references_to_ID(KG_references)
+    else:
+        IDs = []
+        for param in KG_references:
+            IDs.append(param.split("."))
+            IDs[-1] = [x[0:x.find(":")] for x in IDs[-1]]
+        
 
     # Get the corresponding data
     KG_data = utils.get_KG_data(IDs)
@@ -55,12 +62,12 @@ def execute_compiled_program(mapping, KG_tables, parameter_transformers, method)
     return method.function(*transformed_mapped_data)
 
 
-def compute_quality_metrics(IDs, KP, method, refinements, parameter_transformers, mapping, KG_tables):
+def compute_quality_metrics(action, IDs, KP, method, refinements, parameter_transformers, mapping, KG_tables):
 
     total_valid_constraint_count, total_invalid_constraint_count = 0, 0
     evaluation_results = {}
     for refinement in refinements:
-        evaluation_result = refinement.evaluate(IDs, method, mapping, KG_tables, parameter_transformers)
+        evaluation_result = refinement.evaluate(action, IDs, method, mapping, KG_tables, parameter_transformers)
         evaluation_results[str(refinement)] = evaluation_result
         total_valid_constraint_count += list(evaluation_result.values()).count(True)
         total_invalid_constraint_count += list(evaluation_result.values()).count(False)
@@ -91,7 +98,7 @@ if __name__ == '__main__':
     IDs, KP, method, refinements, parameter_transformers, mapping, KG_table = kgpcompile(action, KG_references)
 
     # Computue quality
-    metrics = compute_quality_metrics(IDs, KP, method, refinements, parameter_transformers, mapping, KG_table)
+    metrics = compute_quality_metrics(action, IDs, KP, method, refinements, parameter_transformers, mapping, KG_table)
     if metrics[-1]:
         raise ValueError("There is unsatisfied constraints. Don't execute.")
 

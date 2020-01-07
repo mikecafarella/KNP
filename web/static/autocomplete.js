@@ -1,22 +1,36 @@
-function handleInput() {
+String.prototype.replaceAt = function(index, replacement) {
+    return this.substr(0, index) + replacement+ this.substr(index + replacement.length);
+}
+
+
+function handleInput(e) {
     var user_code = document.getElementById("user_code").value;
-    if(!user_code.includes("(") || user_code.endsWith("(") || user_code.endsWith(".") || user_code.endsWith("|") || user_code.endsWith(")")){
+    
+    var cursor_pos = e.target.selectionStart;
+    var char_before_cursor = user_code.charAt(cursor_pos - 1);
+    // console.log(char_before_cursor);
+    if(!user_code.includes("(") || char_before_cursor === ")" || char_before_cursor === "." || char_before_cursor === "|" || char_before_cursor === "(" || cursor_pos <= user_code.indexOf("(")){
         $("#entity_list")
           .empty()
         return;
     }
-    var KG_params = user_code.substring(user_code.indexOf("(") + 1).split("|");
-    var last_param = KG_params[KG_params.length - 1].split(".");
-    var search_string = last_param[last_param.length - 1];
-    if(last_param.length > 1){
+    // console.log("here");
+    var replaced_user_code = user_code.replace(/[^a-zA-Z0-9 ]/g, "|");
+    // console.log(replaced_user_code);
+    var search_string_start = replaced_user_code.lastIndexOf("|", cursor_pos - 1) + 1;
+    var search_string_end = replaced_user_code.indexOf("|", cursor_pos);
+    if(search_string_end === -1){
+        search_string_end = replaced_user_code.length;
+    }
+    var search_string = replaced_user_code.substring(search_string_start, search_string_end);
+    // console.log(search_string);
+
+    if(user_code.charAt(search_string_start - 1) === "."){
         var type = "property";
     }
     else{
         var type = "item";
     }
-    // console.log(KG_params);
-    // console.log(type);
-    // return;
 
     $("#entity_list")
       .empty()
@@ -40,7 +54,8 @@ function handleInput() {
                 option.value = search_rst['id'];
                 option.text = search_rst['id'] + "(" + search_rst['label'] + ")" + ": " + search_rst['description'];
                 option.onclick = function () {
-                    document.getElementById("user_code").value = user_code.replace(search_string, option.value)
+                    document.getElementById("user_code").value = user_code.substring(0, search_string_start) + search_rst['id'] + ":" + search_rst['label'] + user_code.substring(search_string_end);
+                    // document.getElementById("IDs").value += seperator + search_rst['id']; 
                     $("#entity_list")
                       .empty();
                 };
@@ -52,4 +67,3 @@ function handleInput() {
         }
       });
 }
-

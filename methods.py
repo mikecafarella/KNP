@@ -1,13 +1,20 @@
+import matplotlib
 import matplotlib.pyplot as plt
+matplotlib.use('agg')
+
 import pandas as pd
 
 class ConcreteMethod(object):
-    def __init__(self, name, num_args, type_checks, actions_implemented):
+    def __init__(self, name, num_args, type_checks, actions_implemented, output_type):
         self.name = name
         self.type_checks = type_checks
         self.num_args = num_args
         self.actions_implemented = actions_implemented
+        self.output_type = output_type
     
+    def __str__(self):
+        return type(self).__name__
+
     def function(*args):
         pass
 
@@ -21,7 +28,8 @@ class Plot(ConcreteMethod):
                                     2: lambda x: all(isinstance(y, (int, float)) for y in x),
                                     3: lambda x: isinstance(x, str),
                                     4: lambda x: isinstance(x, str)},
-                                ["Show"]
+                                ["Show"],
+                                "image"
                                 )
 
     @staticmethod
@@ -35,7 +43,7 @@ class Plot(ConcreteMethod):
 
 class PlotTwoLines(ConcreteMethod):
     def __init__(self):
-        super().__init__("PlotTwoLines", 8, {}, ["Compare"])
+        super().__init__("PlotTwoLines", 8, {}, ["Compare"], "image")
 
     @staticmethod
     def function(*args):
@@ -47,7 +55,8 @@ class PlotTwoLines(ConcreteMethod):
         plt.xlabel(args[-2])
         plt.ylabel(args[-1])
         ax.legend()
-        plt.show()
+        # plt.show()
+        return fig
         
 
 

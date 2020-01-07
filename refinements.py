@@ -10,12 +10,12 @@ class Refinement:
     def __str__(self):
         return type(self).__name__
 
-    def evaluate(self, IDs, method, mapping, KG_tables, parameter_transformers):
+    def evaluate(self, action, IDs, method, mapping, KG_tables, parameter_transformers):
         """This method evaluates all the RefinementConstraint."""
 
         for constraint in self.constraints:
 
-            rst = constraint.evaluate(IDs, method, mapping, KG_tables, parameter_transformers)
+            rst = constraint.evaluate(action, IDs, method, mapping, KG_tables, parameter_transformers)
             if rst == True:
                 self.evaluation_results[str(constraint)] = True
             elif rst == False:
@@ -47,16 +47,16 @@ class RefinementConstraint:
         pass
 
     @staticmethod
-    def test_concrete_method(method):
+    def test_concrete_method(method, action):
         """Evaluate a logical test on the chosen concrete method"""
         pass
 
-    def evaluate(self, IDs, method, mapping, KG_tables, parameter_transformers):
+    def evaluate(self, action, IDs, method, mapping, KG_tables, parameter_transformers):
         """Evaluate the constraints."""
         t1 = self.test_parameter_constraint(mapping, KG_tables, parameter_transformers)
         t2 = self.test_all_parameters_constraint_on_value(mapping, KG_tables, parameter_transformers)
         t3 = self.test_all_parameters_constraint_on_reference(IDs)
-        t4 = self.test_concrete_method(method)
+        t4 = self.test_concrete_method(method, action)
         t = (t1, t2, t3, t4)
         if t.count(None) != 3:
             raise AssertionError("One constraint could only implement one test.")
@@ -109,8 +109,8 @@ class ShouldDoPlottingConstraint(RefinementConstraint):
     """This constraint means a particular action should be taken"""
 
     @staticmethod
-    def test_concrete_method(method):
-        return "Compare" in method.actions_implemented
+    def test_concrete_method(method, action):
+        return action in method.actions_implemented
 
 
 class ComparingTwoThings(Refinement):
