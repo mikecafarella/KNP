@@ -7,7 +7,7 @@ import os
 DATABASE = 'web/databases/database.db'
 SCHEMA = 'databases/schema.sql'
 
-INSERT_RESULT_QUERY = "INSERT INTO results (kpid, method, KG, KNP_version, {}, rank) VALUES(?, ?, ?, ?, ?, ?)"
+INSERT_RESULT_QUERY = "INSERT INTO results (kpid, method, KG, KNP_version, {}, rank, type) VALUES(?, ?, ?, ?, ?, ?, ?)"
 INSERT_KP_QUERY = "INSERT INTO knowledge_programs (program) VALUES (?)"
 
 

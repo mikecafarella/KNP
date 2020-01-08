@@ -11,9 +11,10 @@
     <script type="text/javascript" src="{{ url_for('static', filename='autocomplete.js') }}"></script>
     </head>
     <body>
+        <!-- AutoComplete -->
         <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
             <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Knowledge Program</a>
-            <form class="w-100" method="POST" autocomplete="off" action="{{url_for('compiler_result')}}" method="POST">
+            <form class="w-100" method="POST" autocomplete="off" action="{{url_for('compiler_index')}}" method="POST">
                 <input class="form-control form-control-dark w-100" type="text" id="user_code" autocomplete="off" onkeyup="handleInput(event)" name="user_code" value="{{user_code}}">
                 <!-- <input type="hidden" id="IDs" name="IDs"> -->
             </form>
@@ -24,6 +25,7 @@
                 <div id="entity_list" class="col-md-9 ml-sm-auto col-lg-10 px-4 bg-light" role="ac"></div>
             </div>
         </div>
+        <!-- --------------------- -->
 
         <div class="container-fluid pl-3 ml-3">
 
@@ -35,7 +37,7 @@
                 {{method}} outputs {{method.output_type}}.
             </div>
 
-            <!-- Mapping -->
+            Mapping
             <div class="pt-3 pb-2 mb-1 border-bottom">
                 <h1 class="h2">Mapping</h1>
             </div>
