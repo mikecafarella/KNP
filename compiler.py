@@ -63,7 +63,7 @@ def execute_compiled_program(mapping, KG_tables, parameter_transformers, method)
 
 
 def compute_quality_metrics(action, IDs, KP, method, refinements, parameter_transformers, mapping, KG_tables):
-
+    ## evaluation_results = {refinement: {constraint_1: True, constraint_2: True...}....}
     total_valid_constraint_count, total_invalid_constraint_count = 0, 0
     evaluation_results = {}
     for refinement in refinements:

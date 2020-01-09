@@ -6,7 +6,7 @@ app = Flask(__name__)
 import web.views
 import web.db_utils
 
-web.db_utils.drop_db()
+# web.db_utils.drop_db()
 web.db_utils.init_db()
 
 ### Remove all tmp files

@@ -7,6 +7,9 @@ class Refinement:
         self.constraints = constraints
         self.evaluation_results = {}
     
+    def get_constraints(self):
+        return self.constraints
+    
     def __str__(self):
         return type(self).__name__
 

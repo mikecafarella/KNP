@@ -1,22 +1,23 @@
 <!doctype html>
 <html lang="en">
     <head>
-    <title>KNP Compiler</title>
+    <title>KNP Result Page</title>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="The page for displaying KP results.">
+    <meta name="author" content="Yuze Lou">
+
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <link rel="stylesheet" href="{{ url_for('static', filename='compiler.css') }}">
-
     <script type="text/javascript" src="{{ url_for('static', filename='autocomplete.js') }}"></script>
     </head>
     <body>
         <!-- AutoComplete -->
         <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-            <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Knowledge Program</a>
-            <form class="w-100" method="POST" autocomplete="off" action="{{url_for('compiler_index')}}" method="POST">
+            <a class="navbar-brand col-sm-3 col-md-2 mr-0">Knowledge Program</a>
+            <form class="w-100" method="POST" autocomplete="off" action="{{url_for('compiler_index')}}">
                 <input class="form-control form-control-dark w-100" type="text" id="user_code" autocomplete="off" onkeyup="handleInput(event)" name="user_code" value="{{user_code}}">
-                <!-- <input type="hidden" id="IDs" name="IDs"> -->
             </form>
         </nav>
         <div class="container-fluid">
@@ -27,55 +28,83 @@
         </div>
         <!-- --------------------- -->
 
-        <div class="container-fluid pl-3 ml-3">
-
-            <!-- Method -->
-            <div class="pt-3 pb-1 mb-1 border-bottom">
-                <h1 class="h2">Method</h1>
-            </div>
-            <div>
-                {{method}} outputs {{method.output_type}}.
-            </div>
-
-            Mapping
-            <div class="pt-3 pb-2 mb-1 border-bottom">
-                <h1 class="h2">Mapping</h1>
-            </div>
-            <div class="row">
-                {% for m in mappings %}
-                <div class="col-md-4">
-                    Slot {{loop.index}}
-                </div>
-                <div class="col-md-7">
-                    {{m}}
-                </div>
+        <!-- Display the common metadata -->
+        <div class="container-fluid mb-3">
+            <h2 class="mt-2 ml-2 border-bottom pb-3"> Entitie Data </h2>
+            <a class="row">
+                {% for KG_param_link in KG_params_links %}
+                    <a class="col-md-3" href="{{KG_param_link[1]}}">{{KG_param_link[0]}}</a>
                 {% endfor %}
             </div>
+            
+        </div>
+        
+        <div class="container-fluid ">
+        <h2 class="mt-2 ml-2 border-bottom pb-3"> Results </h2>
+        <div class="row">
+            
+            <!-- Left Panel: Results Display -->
+            <div class="col-md-5">
+                
+                {% for result in results %}
+                <form method="GET" action="{{url_for('compiler_result', kpid=kpid, rank=loop.index-1)}}">
+                    {% if rank == loop.index-1 %}
+                    <input type="radio" name="diaplay_results" onclick="javascript: submit()" checked>
+                    {% else %}
+                    <input type="radio" name="diaplay_results" onclick="javascript: submit()">
+                    {% endif %}
+                    <a href="{{url_for('compiler_result', kpid=kpid, rank=loop.index-1)}}">
+                    
+                        {% if result['type'] == "image" %}
+                            <img src="{{ url_for('static', filename='tmp/kpid{}rank{}'.format(kpid, loop.index-1)) }}" class="img-fluid">
+                        {% elif result['type'] == "text" %}
+                            <p>{{result['result_text']}}</p>
+                        {% endif %}
+                    </a>
+                </form>      
+                {% endfor %}
 
-            <!-- Refinements -->
-            <div class="pt-3 pb-1 mb-1 border-bottom">
-                <h1 class="h2">Refinements</h1>
             </div>
-            {% for refinement, evaluation_result in evaluation_results.items() %}
-                <h5>{{refinement}}</h5>
-                <div class="row">
-                    {% for constraint, rst in evaluation_result.items() %}
-                    <div class="col-md-4">{{constraint}}</div>
-                    <div class="col-md-7">{{rst}}</div>
+            <!-- --------------- -->
+
+
+            <!-- Right Panel: Metadata -->
+            <div class="col-md-7">
+                <div class="mt-2 ml-2 pb-1 mb-1" id="method">
+                    <h5 class="border-bottom"> Method </h5>
+                    <a href="aaaa">{{results[rank]['method']}}</a>
+                </div>
+
+                <div class="mt-2 ml-2 pb-1 mb-1" id="mapping">
+                    <h5 class="border-bottom"> Mapping </h5>
+                    {% for m in mapping %}
+                        <div class="row border-bottom ml-1">
+                            <div class="col-md-2">Slot {{loop.index}}</div>
+                            <div class="col-md-10"><a href="google.com">{{m}}</a></div>
+                        </div>
                     {% endfor %}
                 </div>
-            {% endfor %}
-            
-            <!-- Result -->
-            <div class="pt-3 pb-1 mb-1 border-bottom">
-                <h1 class="h2">Result</h1>
-            </div>
-            {% if method.output_type == 'image'%}
-                <img src="{{ url_for('static', filename='tmp/{}'.format(rid)) }}">
-            {% else %}
-                {{result}}
-            {% endif %}
 
+                <div class="mt-2 ml-2 pb-1 mb-1" id="refinements">
+                    <h5 class="border-bottom"> Refinements </h5>
+                    {% for refinement_name, evaluation_result in refinements.items() %}
+                        <a href="aaa"><h6>{{refinement_name}}</h6></a>
+                        <div class="row mb-2">
+                            {% for constraint, rst in evaluation_result %}
+                            <div class="col-md-7"><a href="aaa">{{constraint}}</a></div>
+                            <div class="col-md-2">evaluates</div>
+                            <div class="col-md-3">{{rst}}</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                    <button class="btn btn-secondary" type="button">Add refinements.</button>
+                </div>
+                
+                
+            </div>
+            <!-- --------------- -->
+
+        </div>
         </div>
 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>

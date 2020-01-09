@@ -13,7 +13,7 @@ class ConcreteMethod(object):
         self.output_type = output_type
     
     def __str__(self):
-        return type(self).__name__
+        return "{} takes {} arguments, outputs {}.".format(self.name, self.num_args, self.output_type)
 
     def function(*args):
         pass

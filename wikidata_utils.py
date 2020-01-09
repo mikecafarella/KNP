@@ -88,3 +88,14 @@ def flatten_dict(data_frame):
             data_frame = data_frame.drop(columns=[column], axis=1)
             data_frame = pd.concat([data_frame, tmp], axis=1, sort=True)
     return data_frame
+
+def get_link(KG_param):
+    """Get the webgetclaims or webgetentities api link for the KG_param, which is in the form "ID:label.ID:label"."""
+    if "." not in KG_param:
+        # Get entity
+        ID = KG_param[0:KG_param.find(":")]
+        return "https://www.wikidata.org/w/api.php?action=wbgetentities&ids={}&languages=en".format(ID)
+    else:
+        item_ID = KG_param[0:KG_param.find(":")]
+        property_ID = KG_param[KG_param.find(".") + 1:KG_param.find(":", KG_param.find(".") + 1)]
+        return "https://www.wikidata.org/w/api.php?action=wbgetclaims&entity={}&property={}&languages=en".format(item_ID, property_ID)

@@ -4,70 +4,75 @@ from web import app
 import wikidata_utils as wu
 import compiler
 import web.db_utils as du
-import io
+import json
 
 @app.route('/compiler', methods=['GET', 'POST'])
 def compiler_index():
     """Homepage of the compiler."""
 
     if request.method == 'POST':
-        g.user_code = request.form['user_code']
+        user_code = request.form['user_code']
 
         try:
-            g.action, params = check_and_split_user_code(g.user_code)
+            action, params = check_and_split_user_code(user_code)
         except:
             return "Invalid user code!"
 
-        IDs, KP, g.method, refinements, parameter_transformers, g.mappings, KG_table = compiler.kgpcompile(g.action, params, web=True)
+        IDs, KP, method, refinements, parameter_transformers, mappings, KG_table = compiler.kgpcompile(action, params, web=True)
 
         # Computue quality
-        g.evaluation_results, total_valid_constraint_count, total_invalid_constraint_count = compiler.compute_quality_metrics(g.action, IDs, KP, g.method, refinements, parameter_transformers, g.mappings, KG_table)
+        evaluation_results, total_valid_constraint_count, total_invalid_constraint_count = compiler.compute_quality_metrics(action, IDs, KP, method, refinements, parameter_transformers, mappings, KG_table)
 
-        user_facing_result = compiler.execute_compiled_program(g.mappings, KG_table, parameter_transformers, g.method)
+        user_facing_result = compiler.execute_compiled_program(mappings, KG_table, parameter_transformers, method)
         
-        kpid = du.insert(du.INSERT_KP_QUERY, (g.user_code, )).lastrowid
-
-        # TODO multiple results
-        if g.method.output_type == "image":
-            buf = io.BytesIO()
-            user_facing_result.savefig(buf, format='png')
-            buf.seek(0)
-            blob = buf.read()
-            buf.close()
-            query = du.INSERT_RESULT_QUERY.format('result_img')
-            rid = du.insert(query, (kpid, str(g.method), "WikiData", "KNP_v0", blob, 0, 'image')).lastrowid
-        else:
-            raise ValueError("not implemented!")
+        kpid = du.insert_results(user_code, action, params, IDs, method, refinements, parameter_transformers, mappings, evaluation_results, user_facing_result)
 
         # defualt shows the first result in the list
-        return redirect(url_for("compiler_result", kpid=kpid))
+        return redirect(url_for("compiler_result", kpid=kpid, rank=0))
     else:
         ### GET request
         return render_template('compiler_index.html')
 
 
-@app.route('/compiler/<int:kpid>', methods=['GET'])
-@app.route('/compiler/<int:kpid>/rid<int:rid>', methods=['GET'])
-@app.route('/compiler/<int:kpid>/rank<int:rank>', methods=['GET'])
+@app.route('/compiler/kpid<int:kpid>', methods=['GET'])
+@app.route('/compiler/kpid<int:kpid>/rank<int:rank>', methods=['GET'])
 def compiler_result(kpid, rid=None, rank=None):
 
-    
+    # defualt shows the first result in the list
+    if rank is None:
+        return redirect(url_for("compiler_result", kpid=kpid, rank=0))
+
+    ### Get entity links
+    kp = du.query_db("SELECT * from knowledge_programs where kpid=?", (kpid, ), one=True)
+    user_code = kp['user_code']
+    KG_params = json.loads(kp['KG_params'])
+    # print(KG_params)
+    KG_params_links = []
+    for KG_param in KG_params:
+        KG_params_links.append((KG_param, wu.get_link(KG_param)))
+
+
     ### Get rid(s) for the kpid
     results = du.query_db("SELECT * from results where kpid=? ORDER BY rank", (kpid, ))
+
     for result in results:
-        # print("keys")
-        # print(result.keys())
         type = result['type']
         if type == 'image':
-            du.writeTofile(result['result_img'], "web/static/tmp/{}".format(result['rid']))
+            du.writeTofile(result['result_img'], "web/static/tmp/kpid{}rank{}".format(kpid, result['rank']))
     
-    # defualt shows the first result in the list
-    if rid is None and rank is None:
-        rid = results[0]['rid']
-    if rank:
-        rid = results[rank]['rid']
+    displayed_result = results[rank]
 
-    return render_template('compiler_result.html', results=results, rid=rid, mappings=g.mappings, evaluation_results=g.evaluation_results, user_code=g.user_code, method=g.method, action=g.action)
+    mapping = json.loads(displayed_result['mapping'])
+
+    refinements_row = du.query_db("SELECT refinement_name, GROUP_CONCAT(constraint_name, ','), GROUP_CONCAT(true_false, ',') FROM constraint_evaluation_results where rid=? GROUP BY refinement_name", (displayed_result['rid'], ))
+    refinements = {}
+
+    for refinement in refinements_row:
+        constraints = refinement[1].split(",")
+        constraints_true_false = refinement[2].split(",")
+        refinements[refinement['refinement_name']] = [ (constraints[i], constraints_true_false[i]) for i in range(len(constraints))]
+    
+    return render_template('compiler_result.html', kpid=kpid, rank=rank, refinements=refinements, user_code=user_code, mapping=mapping, KG_params_links=KG_params_links, results=results)
 
 
 
@@ -78,3 +83,7 @@ def check_and_split_user_code(user_code):
     action = user_code[0:left_p]
     params = user_code[left_p + 1: right_p].split("|")
     return (action, params)
+
+
+
+# Compare(Q30:United States of America.P2131:nominal GDP|Q16:Canada.P2131:nominal GDP)
