@@ -4,6 +4,6 @@
   
 @media (min-width: 768px) {
     [role="ac"] {
-        padding-top: 48px; /* Space for fixed navbar */
+        padding-top: 40px; 
     }
 }
