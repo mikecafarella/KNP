@@ -89,13 +89,30 @@ def flatten_dict(data_frame):
             data_frame = pd.concat([data_frame, tmp], axis=1, sort=True)
     return data_frame
 
-def get_link(KG_param):
+def get_json_link(KG_param):
     """Get the webgetclaims or webgetentities api link for the KG_param, which is in the form "ID:label.ID:label"."""
     if "." not in KG_param:
         # Get entity
         ID = KG_param[0:KG_param.find(":")]
         return "https://www.wikidata.org/w/api.php?action=wbgetentities&ids={}&languages=en".format(ID)
     else:
-        item_ID = KG_param[0:KG_param.find(":")]
+        entity_ID = KG_param[0:KG_param.find(":")]
         property_ID = KG_param[KG_param.find(".") + 1:KG_param.find(":", KG_param.find(".") + 1)]
-        return "https://www.wikidata.org/w/api.php?action=wbgetclaims&entity={}&property={}&languages=en".format(item_ID, property_ID)
+        return "https://www.wikidata.org/w/api.php?action=wbgetclaims&entity={}&property={}&languages=en".format(entity_ID, property_ID)
+
+def get_entity_link(KG_param):
+    """Get the item/property link, or the link to a specific property of an item."""
+    if "." not in KG_param:
+        # Get entity
+        ID = KG_param[0:KG_param.find(":")]
+        if ID.startswith("Q"):
+            return "https://www.wikidata.org/wiki/{}".format(ID)
+        elif ID.startswith("P"):
+            return "https://www.wikidata.org/wiki/Property:{}".format(ID)
+    else:
+        entity_ID = KG_param[0:KG_param.find(":")]
+        property_ID = KG_param[KG_param.find(".") + 1:KG_param.find(":", KG_param.find(".") + 1)]
+        if entity_ID.startswith("Q"):
+            return  "https://www.wikidata.org/wiki/{}#{}".format(entity_ID, property_ID)
+        elif entity_ID.startswith("P"):
+            return "https://www.wikidata.org/wiki/Property:{}#{}".format(entity_ID, property_ID)

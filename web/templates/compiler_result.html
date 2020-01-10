@@ -33,7 +33,9 @@
             <h2 class="mt-2 ml-2 border-bottom pb-3"> Involved Entities </h2>
             <div class="row">
                 {% for KG_param_link in KG_params_links %}
-                    <a class="col-md-4" href="{{KG_param_link[1]}}">{{KG_param_link[0]}}</a>
+                    <div class="col-md-4">
+                        <a href="{{KG_param_link[1]}}">{{KG_param_link[0]}}</a> <a href="{{KG_param_link[2]}}">(json)</a>
+                    </div>
                 {% endfor %}
             </div>
             <h2 class="mt-2 ml-2 border-bottom pb-3"> Results </h2>

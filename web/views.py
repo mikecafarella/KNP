@@ -46,10 +46,10 @@ def compiler_result(kpid, rid=None, rank=None):
     kp = du.query_db("SELECT * from knowledge_programs where kpid=?", (kpid, ), one=True)
     user_code = kp['user_code']
     KG_params = json.loads(kp['KG_params'])
-    # print(KG_params)
+    # KG_params = [[param_text, entity_page_link, json_data_link], ...]
     KG_params_links = []
     for KG_param in KG_params:
-        KG_params_links.append((KG_param, wu.get_link(KG_param)))
+        KG_params_links.append((KG_param, wu.get_entity_link(KG_param), wu.get_json_link(KG_param)))
 
 
     ### Get rid(s) for the kpid
