@@ -4,6 +4,7 @@ from web import app
 import os
 import json
 import io
+import inspect
 
 
 DATABASE = 'web/databases/database.db'
@@ -73,7 +74,7 @@ def insert_results(user_code, action, KG_params, IDs, method, refinements, param
     
     db = get_db()
 
-    INSERT_RESULT_QUERY = "INSERT INTO results (kpid, method, mapping, {}, rank, type) VALUES(?, ?, ?, ?, ?, ?)"
+    INSERT_RESULT_QUERY = "INSERT INTO results (parameter_transformers, kpid, method_name, mapping, {}, rank, type) VALUES(?, ?, ?, ?, ?, ?, ?)"
     INSERT_KP_QUERY = "INSERT INTO knowledge_programs (user_code, KG, KNP_version, KG_params, action) VALUES (?, ?, ?, ?, ?)"
     kpid = db.execute(INSERT_KP_QUERY, (user_code, "WIKIDATA", "KNP_v0", json.dumps(KG_params), action)).lastrowid
 
@@ -84,7 +85,7 @@ def insert_results(user_code, action, KG_params, IDs, method, refinements, param
         buf.seek(0)
         blob = buf.read()
         buf.close()
-        rid = db.execute(INSERT_RESULT_QUERY.format('result_img'), (kpid, str(method), json.dumps(mapping), blob, 0, "image")).lastrowid
+        rid = db.execute(INSERT_RESULT_QUERY.format('result_img'), (json.dumps(parameter_transformers), kpid, method.name, json.dumps(mapping), blob, 0, "image")).lastrowid
     else:
         raise ValueError("not implemented!")
 
@@ -95,3 +96,6 @@ def insert_results(user_code, action, KG_params, IDs, method, refinements, param
 
     db.commit()
     return kpid
+
+
+    

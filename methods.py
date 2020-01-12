@@ -5,15 +5,14 @@ matplotlib.use('agg')
 import pandas as pd
 
 class ConcreteMethod(object):
-    def __init__(self, name, num_args, type_checks, actions_implemented, output_type):
+    def __init__(self, name, num_args, actions_implemented, output_type):
         self.name = name
-        self.type_checks = type_checks
         self.num_args = num_args
         self.actions_implemented = actions_implemented
         self.output_type = output_type
     
     def __str__(self):
-        return "{} takes {} arguments, outputs {}.".format(self.name, self.num_args, self.output_type)
+        return self.name
 
     def function(*args):
         pass
@@ -24,10 +23,6 @@ class Plot(ConcreteMethod):
         ConcreteMethod.__init__(self,
                                 "Plot",
                                 4,
-                                {1: lambda x: all(isinstance(y, (int, float)) for y in x), 
-                                    2: lambda x: all(isinstance(y, (int, float)) for y in x),
-                                    3: lambda x: isinstance(x, str),
-                                    4: lambda x: isinstance(x, str)},
                                 ["Show"],
                                 "image"
                                 )
@@ -43,17 +38,17 @@ class Plot(ConcreteMethod):
 
 class PlotTwoLines(ConcreteMethod):
     def __init__(self):
-        super().__init__("PlotTwoLines", 8, {}, ["Compare"], "image")
+        super().__init__("PlotTwoLines", 8, ["Compare"], "image")
 
     @staticmethod
-    def function(*args):
+    def function(x_value_1, y_value_1, legend_1, x_value_2, y_value_2, legend_2, xlabel, ylabel):
         
         fig = plt.figure()
         ax = plt.subplot(111)
-        ax.plot(args[0], args[1], label=args[2])
-        ax.plot(args[3], args[4], label=args[5])
-        plt.xlabel(args[-2])
-        plt.ylabel(args[-1])
+        ax.plot(x_value_1, y_value_1, label=legend_1)
+        ax.plot(x_value_2, y_value_2, label=legend_2)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
         ax.legend()
         # plt.show()
         return fig

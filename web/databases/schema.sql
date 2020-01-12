@@ -1,8 +1,9 @@
 CREATE TABLE IF NOT EXISTS results(
     rid integer primary key AUTOINCREMENT,
     kpid integer not null,
-    method text,
+    method_name text,
     mapping text,
+    parameter_transformers text,
     result_img blob,
     result_text text,
     rank integer not null,

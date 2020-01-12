@@ -1,6 +1,7 @@
 
 import pandas as pd
 import utils
+import iso8601
 
 def kgpcompile(action, KG_references, web=False):
 
@@ -50,16 +51,16 @@ def kgpcompile(action, KG_references, web=False):
 def execute_compiled_program(mapping, KG_tables, parameter_transformers, method):
 
     # Apply transformers onto the data
-    transformed_mapped_data = []
-    for i in range(len(parameter_transformers)):
-        if(mapping[i][-1]):
+    transformed_mapped_data = {}
+    for key, transformer in parameter_transformers.items():
+        if(mapping[key][-1]):
             # Need to fetch the data from KG_tables
-            data = KG_tables[mapping[i][0]][mapping[i][1]]
+            data = KG_tables[mapping[key][0]][mapping[key][1]]
         else:
-            data = mapping[i][0]
-        transformed_mapped_data.append(parameter_transformers[i](data))
+            data = mapping[key][0]
+        transformed_mapped_data[key] = eval(transformer)(data)
 
-    return method.function(*transformed_mapped_data)
+    return method.function(**transformed_mapped_data)
 
 
 def compute_quality_metrics(action, IDs, KP, method, refinements, parameter_transformers, mapping, KG_tables):

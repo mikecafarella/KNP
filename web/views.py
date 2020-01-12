@@ -5,6 +5,10 @@ import wikidata_utils as wu
 import compiler
 import web.db_utils as du
 import json
+import utils
+import inspect
+import iso8601
+import pandas as pd
 
 @app.route('/compiler', methods=['GET', 'POST'])
 def compiler_index():
@@ -34,8 +38,8 @@ def compiler_index():
         return render_template('compiler_index.html')
 
 
-@app.route('/compiler/kpid<int:kpid>', methods=['GET'])
-@app.route('/compiler/kpid<int:kpid>/rank<int:rank>', methods=['GET'])
+@app.route('/results/kpid<int:kpid>', methods=['GET'])
+@app.route('/results/kpid<int:kpid>/rank<int:rank>', methods=['GET'])
 def compiler_result(kpid, rid=None, rank=None):
 
     # defualt shows the first result in the list
@@ -63,6 +67,8 @@ def compiler_result(kpid, rid=None, rank=None):
     displayed_result = results[rank]
 
     mapping = json.loads(displayed_result['mapping'])
+    parameter_transformers = json.loads(displayed_result['parameter_transformers'])
+    method = utils.get_method_by_name(displayed_result['method_name'])()  # method instance
 
     refinements_row = du.query_db("SELECT refinement_name, GROUP_CONCAT(constraint_name, ','), GROUP_CONCAT(true_false, ',') FROM constraint_evaluation_results where rid=? GROUP BY refinement_name", (displayed_result['rid'], ))
     refinements = {}
@@ -72,12 +78,61 @@ def compiler_result(kpid, rid=None, rank=None):
         constraints_true_false = refinement[2].split(",")
         refinements[refinement['refinement_name']] = [ (constraints[i], constraints_true_false[i]) for i in range(len(constraints))]
     
-    return render_template('compiler_result.html', kpid=kpid, rank=rank, refinements=refinements, user_code=user_code, mapping=mapping, KG_params_links=KG_params_links, results=results)
+    return render_template('compiler_result.html', kpid=kpid, rank=rank, method=method, refinements=refinements, user_code=user_code, mapping=mapping, KG_params_links=KG_params_links, results=results, parameter_transformers=parameter_transformers)
 
+
+@app.route('/KG_data/<string:KG_param>', methods=['GET'])
+@app.route('/KG_data/<string:KG_param>/<string:column>', methods=['GET'])
+def KG_data(KG_param, column=None):
+
+    head = KG_param
+    if column:
+        head += "['{}']".format(column)
+
+    KG_param = KG_param.split(".")
+    KG_param = [x[0:x.find(":")] for x in KG_param]
+    KG_data = utils.get_KG_data((KG_param, ))[0]
+    if KG_data['type'] == 'claims':
+        KG_data = utils.Dataset(KG_data['data'], KG_param)
+    elif KG_data['type'] == 'entity':
+        KG_data = utils.Entity(KG_data['data'], KG_param)
+
+    if column:
+        return render_template("KG_data.html", data=KG_data[column].to_frame().to_html(), head=head)
+    else:
+        return render_template("KG_data.html", data=KG_data.data_frame.to_html(), head=head)
+
+
+@app.route('/method/<string:method_name>', methods=['GET'])
+def method(method_name):
+
+    method = utils.get_method_by_name(method_name)
+    return render_template("method.html", code=inspect.getsource(method))
+
+
+@app.route('/transformer/<string:transformer>', methods=['GET'])
+def transformer(transformer):
+    return transformer
+
+
+@app.route('/method_data/<string:KG_param>/<string:column>/<string:transformer>', methods=['GET'])
+@app.route('/method_data/<string:raw_data>/<string:transformer>', methods=['GET'])
+def method_data(transformer, KG_param=None, column=None, raw_data=None):
+    if raw_data:
+        return eval(transformer)(raw_data)
+    else:
+        KG_param = KG_param.split(".")
+        KG_param = [x[0:x.find(":")] for x in KG_param]
+        KG_data = utils.get_KG_data((KG_param, ))[0]
+        if KG_data['type'] == 'claims':
+            KG_data = utils.Dataset(KG_data['data'], KG_param)
+        elif KG_data['type'] == 'entity':
+            KG_data = utils.Entity(KG_data['data'], KG_param)
+
+        return pd.DataFrame(eval(transformer)(KG_data[column])).to_html()
 
 
 def check_and_split_user_code(user_code):
-
     left_p = user_code.find("(")
     right_p = user_code.find(")")
     action = user_code[0:left_p]

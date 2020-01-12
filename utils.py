@@ -42,6 +42,7 @@ class Entity(dict):
 
 
 def KG_references_to_ID(KG_references):
+    """Default get the first one in the returned result."""
     rst = []
     for i in range(len(KG_references)):
         split_arg = KG_references[i].split('.')
@@ -89,26 +90,33 @@ def get_slot_mapping(action, method, KG_datasets_and_entities, KG_references):
         KG_tables[user_code] = data
 
     # The slot mapping
-
-    arg_0 = (KG_references[0], "qualifiers.P585.datavalue.value.time", True)
-    arg_1 = (KG_references[0], "mainsnak.datavalue.value.amount", True)
-    arg_2 = (KG_references[0], False)
-    arg_3 = (KG_references[1], "qualifiers.P585.datavalue.value.time", True)
-    arg_4 = (KG_references[1], "mainsnak.datavalue.value.amount", True)
-    arg_5 = (KG_references[1], False)
-    arg_x_label = ("time", False)
-    arg_y_label = ("GDP", False)
-    mapping = [arg_0, arg_1, arg_2, arg_3, arg_4, arg_5, arg_x_label, arg_y_label]
+    mapping = {}
+    mapping["x_value_1"] = (KG_references[0], "qualifiers.P585.datavalue.value.time", True)
+    mapping["y_value_1"] = (KG_references[0], "mainsnak.datavalue.value.amount", True)
+    mapping["legend_1"] = (KG_references[0], False)
+    mapping["x_value_2"] = (KG_references[1], "qualifiers.P585.datavalue.value.time", True)
+    mapping["y_value_2"] = (KG_references[1], "mainsnak.datavalue.value.amount", True)
+    mapping["legend_2"] = (KG_references[1], False)
+    mapping["xlabel"] = ("time", False)
+    mapping["ylabel"] = ("GDP", False)
+    
     return (KG_tables, mapping)
 
 def get_parameter_transformers(mapping, method):
 
-    # type_checks = method.type_checks TODO
-
-    transformers = []
+    transformers = {}
 
     # hard-code
-    transformers = [lambda l:[iso8601.parse_date(x[1:]).year for x in l], lambda l: [float(x) for x in l], lambda x: x, \
-                    lambda l:[iso8601.parse_date(x[1:]).year for x in l], lambda l: [float(x) for x in l], lambda x: x, \
-                    lambda x: x, lambda x: x]
+    transformers["x_value_1"] = "lambda l:[iso8601.parse_date(x[1:]).year for x in l]"
+    transformers["y_value_1"] = "lambda l: [float(x) for x in l]"
+    transformers["legend_1"] = "lambda x: x"
+    transformers["x_value_2"] = "lambda l:[iso8601.parse_date(x[1:]).year for x in l]"
+    transformers["y_value_2"] = "lambda l: [float(x) for x in l]"
+    transformers["legend_2"] = "lambda x: x"
+    transformers["xlabel"] = "lambda x: x"
+    transformers["ylabel"] = "lambda x: x"
+
     return transformers
+
+def get_method_by_name(method_name):
+    return getattr(methods, method_name)

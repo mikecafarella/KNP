@@ -3,6 +3,7 @@
     <head>
     <title>KNP Result Page</title>
     <!-- Required meta tags -->
+    <link rel="shortcut icon" href="#" />
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="The page for displaying KP results.">
@@ -42,7 +43,7 @@
             <div class="row">
                 
                 <!-- Left Panel: Results Display -->
-                <div class="col-md-5">
+                <div class="col-md-4.5">
                     
                     {% for result in results %}
                     <form method="GET" action="{{url_for('compiler_result', kpid=kpid, rank=loop.index-1)}}">
@@ -67,18 +68,43 @@
 
 
                 <!-- Right Panel: Metadata -->
-                <div class="col-md-7">
+                <div class="col-md-6">
                     <div class="mt-2 ml-2 pb-1 mb-1" id="method">
                         <h5 class="border-bottom"> Method </h5>
-                        <a href="aaaa">{{results[rank]['method']}}</a>
+                        <a href="{{url_for('method', method_name=method.name)}}">{{method.name}}</a> takes {{method.num_args}} arguments, outputs {{method.output_type}}.
                     </div>
 
                     <div class="mt-2 ml-2 pb-1 mb-1" id="mapping">
                         <h5 class="border-bottom"> Mapping </h5>
-                        {% for m in mapping %}
-                            <div class="row border-bottom ml-1">
-                                <div class="col-md-2">Slot {{loop.index}}</div>
-                                <div class="col-md-10"><a href="google.com">{{m}}</a></div>
+                        {% for slot, KG_params in mapping.items() %}
+
+                            <!-- <div class="row border-bottom ml-1">
+                                <div class="col-md-2">{{slot}}</div>
+                                <div class="col-md-10">
+                                    {% if KG_params[-1] %}
+                                    <a href="{{url_for('KG_data', KG_param=KG_params[0])}}">{{KG_params[0]}}</a> <a href="{{url_for('KG_data', KG_param=KG_params[0], column=KG_params[1])}}"> ['{{KG_params[1]}}']</a>
+                                    {% else %}
+                                    "{{KG_params[0]}}"
+                                    {% endif %}  
+                                    <a href=""><br>transformed to</a>
+                                    <a href=""><br>{{slot}}</a>
+                                </div>
+                            </div> -->
+
+                            <div class="row border-bottom">
+                                <div class="col-md-6">
+                                    {% if KG_params[-1] %}
+                                    <a href="{{url_for('KG_data', KG_param=KG_params[0])}}">{{KG_params[0]}}</a> <a href="{{url_for('KG_data', KG_param=KG_params[0], column=KG_params[1])}}"> ['{{KG_params[1]}}']</a>
+                                    {% else %}
+                                    "{{KG_params[0]}}"
+                                    {% endif %}  
+                                </div>
+                                <div class="col-md-3"><a href="{{url_for('transformer', transformer=parameter_transformers[slot])}}">transformed to</a></div>
+                                {% if KG_params[-1] %}
+                                <div class="col-md-3"><a href="{{url_for('method_data', KG_param=KG_params[0], column=KG_params[1], transformer=parameter_transformers[slot])}}">{{slot}}</a></div>
+                                {% else %}
+                                <div class="col-md-3"><a href="{{url_for('method_data', raw_data=KG_params[0], transformer=parameter_transformers[slot])}}">{{slot}}</a></div>
+                                {% endif %}
                             </div>
                         {% endfor %}
                     </div>
