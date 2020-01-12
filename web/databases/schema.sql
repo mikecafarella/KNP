@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS results(
     result_img blob,
     result_text text,
     rank integer not null,
+    status integer,
     type text,
     FOREIGN KEY(kpid) REFERENCES knowledge_programs(kpid)
 );

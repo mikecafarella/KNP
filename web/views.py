@@ -27,9 +27,13 @@ def compiler_index():
         # Computue quality
         evaluation_results, total_valid_constraint_count, total_invalid_constraint_count = compiler.compute_quality_metrics(action, IDs, KP, method, refinements, parameter_transformers, mappings, KG_table)
 
-        user_facing_result = compiler.execute_compiled_program(mappings, KG_table, parameter_transformers, method)
-        
-        kpid = du.insert_results(user_code, action, params, IDs, method, refinements, parameter_transformers, mappings, evaluation_results, user_facing_result)
+        if not total_invalid_constraint_count:
+            # all constraints are satisfied
+            user_facing_result = compiler.execute_compiled_program(mappings, KG_table, parameter_transformers, method)
+            kpid = du.insert_successful_results(user_code, action, params, IDs, method, refinements, parameter_transformers, mappings, evaluation_results, user_facing_result)
+        else:
+            # There are unsatisfied constraints, don't execute
+            kpid = du.insert_failed_results(user_code, action, params, IDs, method, evaluation_results)
 
         # defualt shows the first result in the list
         return redirect(url_for("compiler_result", kpid=kpid, rank=0))
@@ -66,10 +70,6 @@ def compiler_result(kpid, rid=None, rank=None):
     
     displayed_result = results[rank]
 
-    mapping = json.loads(displayed_result['mapping'])
-    parameter_transformers = json.loads(displayed_result['parameter_transformers'])
-    method = utils.get_method_by_name(displayed_result['method_name'])()  # method instance
-
     refinements_row = du.query_db("SELECT refinement_name, GROUP_CONCAT(constraint_name, ','), GROUP_CONCAT(true_false, ',') FROM constraint_evaluation_results where rid=? GROUP BY refinement_name", (displayed_result['rid'], ))
     refinements = {}
 
@@ -77,7 +77,15 @@ def compiler_result(kpid, rid=None, rank=None):
         constraints = refinement[1].split(",")
         constraints_true_false = refinement[2].split(",")
         refinements[refinement['refinement_name']] = [ (constraints[i], constraints_true_false[i]) for i in range(len(constraints))]
-    
+
+
+    mapping = json.loads(displayed_result['mapping'])
+    try:
+        parameter_transformers = json.loads(displayed_result['parameter_transformers'])
+    except:
+        parameter_transformers = None
+    method = utils.get_method_by_name(displayed_result['method_name'])()  # method instance
+
     return render_template('compiler_result.html', kpid=kpid, rank=rank, method=method, refinements=refinements, user_code=user_code, mapping=mapping, KG_params_links=KG_params_links, results=results, parameter_transformers=parameter_transformers)
 
 

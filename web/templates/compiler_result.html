@@ -41,7 +41,7 @@
             <div class="row">
                 
                 <!-- Left Panel: Results Display -->
-                <div class="col-md-4.5">
+                <div class="col-md-5">
                     
                     {% for result in results %}
                     <form method="GET" action="{{url_for('compiler_result', kpid=kpid, rank=loop.index-1)}}">
@@ -56,6 +56,8 @@
                                 <img src="{{ url_for('static', filename='tmp/kpid{}rank{}'.format(kpid, loop.index-1)) }}" class="img-fluid">
                             {% elif result['type'] == "text" %}
                                 <p>{{result['result_text']}}</p>
+                            {% else %}
+                                <p> No result!</p>
                             {% endif %}
                         </a>
                     </form>      
@@ -66,7 +68,8 @@
 
 
                 <!-- Right Panel: Metadata -->
-                <div class="col-md-6">
+                <div class="col-md-7">
+                    {% if results[rank]['status'] %}
                     <div class="mt-2 ml-2 pb-1 mb-1" id="method">
                         <h5 class="border-bottom"> Method </h5>
                         <a href="{{url_for('method', method_name=method.name)}}">{{method.name}}</a> takes {{method.num_args}} arguments, outputs {{method.output_type}}.
@@ -99,9 +102,9 @@
                                 </div>
                                 <div class="col-md-3"><a href="{{url_for('transformer', transformer=parameter_transformers[slot])}}">transformed to</a></div>
                                 {% if KG_params[-1] %}
-                                <div class="col-md-3"><a href="{{url_for('method_data', KG_param=KG_params[0], column=KG_params[1], transformer=parameter_transformers[slot])}}">{{slot}}</a></div>
+                                    <div class="col-md-3"><a href="{{url_for('method_data', KG_param=KG_params[0], column=KG_params[1], transformer=parameter_transformers[slot])}}">{{slot}}</a></div>
                                 {% else %}
-                                <div class="col-md-3"><a href="{{url_for('method_data', raw_data=KG_params[0], transformer=parameter_transformers[slot])}}">{{slot}}</a></div>
+                                    <div class="col-md-3"><a href="{{url_for('method_data', raw_data=KG_params[0], transformer=parameter_transformers[slot])}}">{{slot}}</a></div>
                                 {% endif %}
                             </div>
                         {% endfor %}
@@ -125,6 +128,28 @@
                     
                 </div>
                 <!-- --------------- -->
+                {% else %}
+                <!-- Some refinements unsatisfied -->
+                <div class="mt-2 ml-2 pb-1 mb-1" id="method">
+                    <h5 class="border-bottom"> Method </h5>
+                    <a href="{{url_for('method', method_name=method.name)}}">{{method.name}}</a> takes {{method.num_args}} arguments, outputs {{method.output_type}}.
+                </div>
+                
+                <div class="mt-2 ml-2 pb-1 mb-1" id="refinements">
+                    <h5 class="border-bottom"> Refinements </h5>
+                    {% for refinement_name, evaluation_result in refinements.items() %}
+                        <a href="aaa"><h6>{{refinement_name}}</h6></a>
+                        <div class="row mb-2">
+                            {% for constraint, rst in evaluation_result %}
+                            <div class="col-md-7"><a href="aaa">{{constraint}}</a></div>
+                            <div class="col-md-2">evaluates</div>
+                            <div class="col-md-3">{{rst}}</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                    <button class="btn btn-secondary" type="button">Add refinements.</button>
+                </div>
+                {% endif %}
 
             </div>
         </div>

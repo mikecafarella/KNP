@@ -70,11 +70,11 @@ def writeTofile(data, filename):
     # print("Stored blob data into: ", filename, "\n")
 
 
-def insert_results(user_code, action, KG_params, IDs, method, refinements, parameter_transformers, mapping, evaluation_results, user_facing_result):
+def insert_successful_results(user_code, action, KG_params, IDs, method, refinements, parameter_transformers, mapping, evaluation_results, user_facing_result):
     
     db = get_db()
 
-    INSERT_RESULT_QUERY = "INSERT INTO results (parameter_transformers, kpid, method_name, mapping, {}, rank, type) VALUES(?, ?, ?, ?, ?, ?, ?)"
+    INSERT_RESULT_QUERY = "INSERT INTO results (status, parameter_transformers, kpid, method_name, mapping, {}, rank, type) VALUES(1, ?, ?, ?, ?, ?, ?, ?)"
     INSERT_KP_QUERY = "INSERT INTO knowledge_programs (user_code, KG, KNP_version, KG_params, action) VALUES (?, ?, ?, ?, ?)"
     kpid = db.execute(INSERT_KP_QUERY, (user_code, "WIKIDATA", "KNP_v0", json.dumps(KG_params), action)).lastrowid
 
@@ -98,4 +98,20 @@ def insert_results(user_code, action, KG_params, IDs, method, refinements, param
     return kpid
 
 
+def insert_failed_results(user_code, action, KG_params, IDs, method, evaluation_results, mapping):
+
+    db = get_db()
     
+    INSERT_RESULT_QUERY = "INSERT INTO results (status, kpid, method_name, mapping, rank) VALUES(0, ?, ?, ?, ?)"
+    INSERT_KP_QUERY = "INSERT INTO knowledge_programs (user_code, KG, KNP_version, KG_params, action) VALUES (?, ?, ?, ?, ?)"
+    kpid = db.execute(INSERT_KP_QUERY, (user_code, "WIKIDATA", "KNP_v0", json.dumps(KG_params), action)).lastrowid
+
+    rid = db.execute(INSERT_RESULT_QUERY, (kpid, method.name, json.dumps(mapping), 0)).lastrowid
+
+    # insert evaluation_results
+    for refinement, constraints_result in evaluation_results.items():
+        for consraint, result in constraints_result.items():
+            db.execute("INSERT INTO constraint_evaluation_results (constraint_name, refinement_name, rid, true_false) VALUES (?, ?, ?, ?)", (consraint, refinement, rid, result))
+
+    db.commit()
+    return kpid
