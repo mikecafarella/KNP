@@ -7,7 +7,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-    <link rel="stylesheet" href="{{ url_for('static', filename='compiler.css') }}">
 
     <script type="text/javascript" src="{{ url_for('static', filename='autocomplete.js') }}"></script>
     </head>
@@ -20,11 +19,10 @@
                 <!-- <input type="hidden" id="IDs" name="IDs"> -->
             </form>
         </nav>
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-2 d-none d-md-block"></div>
-                <div id="entity_list" class="col-md-9 ml-sm-auto col-lg-10 px-4 bg-light" role="ac"></div>
-            </div>
+
+        <div class="row fixed-top" style="margin-top: 36px; padding-left:10px;">
+            <div class="col-md-2"></div>
+            <div id="entity_list" class="col-md-10 ml-sm-auto mt-1 col-lg-10 bg-light border"></div>
         </div>
 
 
