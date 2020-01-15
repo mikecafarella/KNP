@@ -108,9 +108,9 @@
                                 <div class="col-md-3">{{rst}}</div>
                                 {% endfor %}
                             </div>
-                        <form class="form-inline" action="{{url_for('add_constraint', kpid=kpid, rank=rank, refinement_name=refinement_name)}}" method="POST">
+                        <form class="form-inline" action="{{url_for('add_constraint', kpid=kpid, rank=rank, refinement_name=refinement_name)}}" method="POST" autocomplete="off">
                             <input type="button" class="btn btn-secondary" value="Add constraints" onclick="javascript: submit()">
-                            <input type="text" name="new_constraint_name" placeholder="new constraint name">
+                            <input type="text" name="new_constraint_name" placeholder="new constraint name" autocomplete="off">
                         </form>
                         {% endfor %}
                         <!-- <button class="btn btn-secondary" type="button">Edit the refinement.</button> -->
@@ -138,9 +138,9 @@
                             <div class="col-md-3">{{rst}}</div>
                             {% endfor %}
                         </div>
-                    <form class="form-inline" action="{{url_for('add_constraint', kpid=kpid, rank=rank, refinement_name=refinement_name)}}">
+                    <form class="form-inline" action="{{url_for('add_constraint', kpid=kpid, rank=rank, refinement_name=refinement_name)}}" autocomplete="off" method="POST">
                         <input type="button" class="btn btn-secondary" value="Add constraints" onclick="javascript: submit()">
-                        <input type="text" name="new_constraint_name" placeholder="new constraint name">
+                        <input type="text" name="new_constraint_name" placeholder="new constraint name" autocomplete="off">
                     </form>
                     {% endfor %}
                     <!-- <button class="btn btn-secondary" type="button">Edit the refinement.</button> -->
