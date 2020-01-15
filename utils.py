@@ -120,3 +120,9 @@ def get_parameter_transformers(mapping, method):
 
 def get_method_by_name(method_name):
     return getattr(methods, method_name)
+
+def get_refinement_by_name(refinement_name):
+    return getattr(refinements, refinement_name)
+
+def get_constraint_by_name(constraint_name):
+    return getattr(refinements, constraint_name)

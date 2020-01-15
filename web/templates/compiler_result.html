@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <script type="text/javascript" src="{{ url_for('static', filename='autocomplete.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='add_CR2rst.js') }}"></script>
     </head>
     <body>
         <!-- AutoComplete -->
@@ -78,20 +79,6 @@
                     <div class="mt-2 ml-2 pb-1 mb-1" id="mapping">
                         <h5 class="border-bottom"> Mapping </h5>
                         {% for slot, KG_params in mapping.items() %}
-
-                            <!-- <div class="row border-bottom ml-1">
-                                <div class="col-md-2">{{slot}}</div>
-                                <div class="col-md-10">
-                                    {% if KG_params[-1] %}
-                                    <a href="{{url_for('KG_data', KG_param=KG_params[0])}}">{{KG_params[0]}}</a> <a href="{{url_for('KG_data', KG_param=KG_params[0], column=KG_params[1])}}"> ['{{KG_params[1]}}']</a>
-                                    {% else %}
-                                    "{{KG_params[0]}}"
-                                    {% endif %}  
-                                    <a href=""><br>transformed to</a>
-                                    <a href=""><br>{{slot}}</a>
-                                </div>
-                            </div> -->
-
                             <div class="row border-bottom">
                                 <div class="col-md-6">
                                     {% if KG_params[-1] %}
@@ -113,16 +100,21 @@
                     <div class="mt-2 ml-2 pb-1 mb-1" id="refinements">
                         <h5 class="border-bottom"> Refinements </h5>
                         {% for refinement_name, evaluation_result in refinements.items() %}
-                            <a href="aaa"><h6>{{refinement_name}}</h6></a>
+                            <a href="{{url_for('refinement', refinement_name=refinement_name)}}"><h6>{{refinement_name}}</h6></a>
                             <div class="row mb-2">
                                 {% for constraint, rst in evaluation_result %}
-                                <div class="col-md-7"><a href="aaa">{{constraint}}</a></div>
+                                <div class="col-md-7"><a href="{{url_for('constraint', constraint_name=constraint)}}">{{constraint}}</a></div>
                                 <div class="col-md-2">evaluates</div>
                                 <div class="col-md-3">{{rst}}</div>
                                 {% endfor %}
                             </div>
+                        <form class="form-inline" action="{{url_for('add_constraint', kpid=kpid, rank=rank, refinement_name=refinement_name)}}" method="POST">
+                            <input type="button" class="btn btn-secondary" value="Add constraints" onclick="javascript: submit()">
+                            <input type="text" name="new_constraint_name" placeholder="new constraint name">
+                        </form>
                         {% endfor %}
-                        <button class="btn btn-secondary" type="button">Add refinements.</button>
+                        <!-- <button class="btn btn-secondary" type="button">Edit the refinement.</button> -->
+                        
                     </div>
                     
                     
@@ -138,16 +130,21 @@
                 <div class="mt-2 ml-2 pb-1 mb-1" id="refinements">
                     <h5 class="border-bottom"> Refinements </h5>
                     {% for refinement_name, evaluation_result in refinements.items() %}
-                        <a href="aaa"><h6>{{refinement_name}}</h6></a>
+                        <a href="{{url_for('refinement', refinement_name=refinement_name)}}"><h6>{{refinement_name}}</h6></a>
                         <div class="row mb-2">
                             {% for constraint, rst in evaluation_result %}
-                            <div class="col-md-7"><a href="aaa">{{constraint}}</a></div>
+                            <div class="col-md-7"><a href="{{url_for('constraint', constraint_name=constraint)}}">{{constraint}}</a></div>
                             <div class="col-md-2">evaluates</div>
                             <div class="col-md-3">{{rst}}</div>
                             {% endfor %}
                         </div>
+                    <form class="form-inline" action="{{url_for('add_constraint', kpid=kpid, rank=rank, refinement_name=refinement_name)}}">
+                        <input type="button" class="btn btn-secondary" value="Add constraints" onclick="javascript: submit()">
+                        <input type="text" name="new_constraint_name" placeholder="new constraint name">
+                    </form>
                     {% endfor %}
-                    <button class="btn btn-secondary" type="button">Add refinements.</button>
+                    <!-- <button class="btn btn-secondary" type="button">Edit the refinement.</button> -->
+                    
                 </div>
                 {% endif %}
 

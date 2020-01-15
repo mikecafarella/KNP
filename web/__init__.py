@@ -15,3 +15,9 @@ for f in filelist:
     os.remove(os.path.join("web/static/tmp", f))
 
 
+# @app.after_request
+# def after_request(response):
+#     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, public, max-age=0"
+#     response.headers["Expires"] = 0
+#     response.headers["Pragma"] = "no-cache"
+#     return response

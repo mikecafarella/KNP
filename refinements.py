@@ -1,14 +1,22 @@
 import utils
 
 class Refinement:
+
+    constraints = []
+
     def __init__(self, author, name, constraints):
         self.author = author
         self.name = name
-        self.constraints = constraints
+        self.add_constraints(constraints)
         self.evaluation_results = {}
     
-    def get_constraints(self):
-        return self.constraints
+    @classmethod
+    def add_constraints(cls, constraints):
+        cls.constraints += constraints
+    
+    @classmethod
+    def get_constraints(cls):
+        return cls.constraints
     
     def __str__(self):
         return type(self).__name__
@@ -73,13 +81,13 @@ class RefinementConstraint:
 
 
 
-class MustBeSameKGAttrConstraint(RefinementConstraint):
-    """This constraint means that all parameters must have the same KG type."""
+# class MustBeSameKGAttr(RefinementConstraint):
+#     """This constraint means that all parameters must have the same KG type."""
 
-    @staticmethod
-    def test_all_parameters_constraint_on_reference(IDs):
-        """Test that all the parameters are named via the same attribute."""
-        return len(set(map(lambda x: x[-1], IDs))) == 1
+#     @staticmethod
+#     def test_all_parameters_constraint_on_reference(IDs):
+#         """Test that all the parameters are named via the same attribute."""
+#         return len(set(map(lambda x: x[-1], IDs))) == 1
 
 
 # class SameTypeConstraint(RefinementConstraint):
@@ -116,16 +124,16 @@ class ShouldDoPlottingConstraint(RefinementConstraint):
         return action in method.actions_implemented
 
 
-class ComparingTwoThings(Refinement):
-    def __init__(self):
-        Refinement.__init__(self, "Mike", "Comparing two things", (SameUnitConstraint(),
-                                                                     MustBeSameKGAttrConstraint(),
-                                                                     ShouldDoPlottingConstraint()))
+# class ComparingTwoThings(Refinement):
+#     def __init__(self):
+#         super().__init__("Mike", "Comparing two things", (SameUnitConstraint(),
+#                                                                      MustBeSameKGAttrConstraint(),
+#                                                                      ShouldDoPlottingConstraint()))
 
 
 class ComparingGDP(Refinement):
     def __init__(self):
-        Refinement.__init__(self, "Mike", "Comparing GDP means making a time series",
-                            (ShouldDoPlottingConstraint(),
-                             SameUnitConstraint(),
-                             MustBeSameKGAttrConstraint()))
+        super().__init__("Mike", "Comparing GDP means making a time series",
+                            [ShouldDoPlottingConstraint(),
+                             SameUnitConstraint()])
+
