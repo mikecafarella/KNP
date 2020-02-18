@@ -124,8 +124,7 @@ def test_mappings(method, dataframe, criterion="runnable", output_path=None):
             count_ok_mappings += 1
             if output_path:
                 with open(output_path, 'a') as f:
-                    yaml.dump((index, mapping), f)
-                    f.write("\n")
+                    f.write(json.dumps((index, mapping)) + "\n")
             else:
                 print(index, mapping)
             # break
@@ -148,7 +147,7 @@ def test_mappings_for_seaborn(method, output_path=None):
         print("Start loading dataset {}".format(dataset_name))
         df = load_seaborn_dataset(dataset_name)
         if output_path:
-            test_mappings(method, df, output_path="{}/{}_runnable_mappings.yml".format(output_path, dataset_name))
+            test_mappings(method, df, output_path="{}/{}_runnable_mappings.json".format(output_path, dataset_name))
         else:
             test_mappings(method, df)
 
@@ -159,4 +158,4 @@ def run_mappings_from_file():
 
 test_mappings_for_seaborn(methods.OneNumericSeveralGroupBoxPlot, output_path="outputs")
 
-iris = load_seaborn_dataset('iris')
+# iris = load_seaborn_dataset('iris')
