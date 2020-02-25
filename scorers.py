@@ -5,8 +5,8 @@ import scorer_algorithms
 import pandas
 
 _score_types = [
-    'Q_R',
-    'R_C',
+    'Q_R',  # The scorer looks at the Query and Refinement of the Invocation.
+    'R_C',  # The scorer looks at the Refinement and ConcreteMethod of the Invocation.
     'R_M',
     'C_M'
 ]

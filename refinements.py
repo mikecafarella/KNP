@@ -2,10 +2,10 @@ from abc import ABC, abstractmethod
 
 """
     Each Refinement should contain attributes:
-        description (str) (Q_R): A high-level description of the Refinement.
+        description (str) (can be used in Q_R Scorers): A high-level description of the Refinement.
         method_desc (str) (R_C): A NL description of concrete method tied to the Refinement.
         mapping_desc (str) (R_M): Parameter mapping indications.
-        involves (str) (Q_R): Description of what 'types' of things are involved in the Refinement.
+        involves (str) (Q_R): Description of what 'types' of things are supposed to be involved.
 """
 
 """
