@@ -2,10 +2,10 @@
 
 import pandas as pd
 import inspect
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 
 
-class ConcreteMethod(object):
+class ConcreteMethod(ABC):
     def __init__(self, name):
         self.name = name
     
@@ -84,7 +84,7 @@ class OneNumericSeveralGroupBoxPlot(ConcreteMethod):
 
         sns.boxplot( x=x, y=y )
 
-        # plt.show()
+        plt.show()
 
 
 class BasicScatterPlot(ConcreteMethod):
@@ -167,3 +167,13 @@ class BasicViolinPlot(ConcreteMethod):
 
         sns.violinplot( y=y )
         plt.show()
+
+
+class PrintTexts(ConcreteMethod):
+    def __init__(self):
+        super().__init__("PrintTexts")
+    
+    @staticmethod
+    def function(*texts):
+        for text in texts:
+            print(text)

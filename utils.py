@@ -9,13 +9,20 @@ import glob
 import matplotlib.pyplot as plt
 import json
 import yaml
+import string
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import CountVectorizer
+from nltk.corpus import stopwords
+
 
 def parse(source):
-    """return Operator_string, """
+    """ Parse a raw user query."""
     call = ast.parse(source, "operator string", mode="eval").body
     print(ast.dump(call))
-    # TODO: data is not handled 
-    return call.func.id, [arg.value for arg in call.args[1:]], [(keyword.arg, keyword.value.value) for keyword in call.keywords]
+    # TODO: data references are not handled 
+    return call.func.id, [elt.value if isinstance(elt, ast.Constant) else elt.id for elt in call.args[0].elts], \
+         [arg.value if isinstance(arg, ast.Constant) else arg.id for arg in call.args[1:]], \
+             [(keyword.arg, keyword.value.value) for keyword in call.keywords]
 
 
 def load_seaborn_dataset(name, **kws):
@@ -120,15 +127,17 @@ def test_mappings(method, dataframe, criterion="runnable", output_path=None):
         else:
             actual_mapping = [ m[1] if m[0] else dataframe[m[1]][index[0]:index[1]] for m in mapping]
         
+        print(index, mapping)
         if test_one_mapping(method, actual_mapping, criterion):
             count_ok_mappings += 1
             if output_path:
                 with open(output_path, 'a') as f:
                     f.write(json.dumps((index, mapping)) + "\n")
+                
             else:
                 print(index, mapping)
             # break
-        count_total_mappings = 0
+        count_total_mappings += 1
     print(count_ok_mappings, count_total_mappings)
 
 
@@ -152,10 +161,11 @@ def test_mappings_for_seaborn(method, output_path=None):
             test_mappings(method, df)
 
 
-def run_mappings_from_file():
-    pass
+def clean_string(text):
+    sw = stopwords.words('english')
+    text = ''.join([word for word in text if word not in string.punctuation])
+    text = text.lower()
+    text = ' '.join([word for word in text.split() if word not in sw])
+    return text
 
-
-test_mappings_for_seaborn(methods.OneNumericSeveralGroupBoxPlot, output_path="outputs")
-
-# iris = load_seaborn_dataset('iris')
+# print(clean_string("sdfsd sdf"))
