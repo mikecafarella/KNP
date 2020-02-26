@@ -1,0 +1,43 @@
+refinements:
+  - Invocation:
+      methodlabel:
+        cardinality: one
+        type: "/types/__String__"
+      method:
+        type: /code/Method
+      params:
+        cardinality: zeroOrMore
+        type: /types/__Object__
+      output:
+        cardinality: one
+        type: ["/types/__Image__", "/types/__Table__", "/types/__SideEffect__", "/types/__Text__"]
+
+invocations:  
+  - name: Comparison
+    extends: Invocation
+    params:
+      cardinality: twoOrMore
+      type: /types/__Object__
+    method:
+      type: "/code/Text"
+    eltType:
+      cardinality: one
+      eltType: /types/*
+
+  - name: HumanComparison
+    extends: Comparison
+    method:
+      type: /code/TableGenMethod
+    params:
+      cardinality: twoOrMore
+      type: Q5
+    output:
+      type: /types/__Table__
+
+  - name: TimedataComparison
+    extends: Comparison
+    method:
+      type: /code/TimeSeriesPlot
+    params:
+      cardinality: twoOrMore
+

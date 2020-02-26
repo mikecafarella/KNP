@@ -19,11 +19,16 @@ class ConcreteMethod(ABC):
     def get_variables(self):
         return inspect.signature(self.function)
 
+    def get_types(self):
+        return set()
 
 
 class PlotTwoLines(ConcreteMethod):
     def __init__(self):
         super().__init__("PlotTwoLines")
+
+    def get_types(self):
+        return set(["/code/TimeSeriesPlot"])
 
     @staticmethod
     def function(x_value_1, y_value_1, legend_1, x_value_2, y_value_2, legend_2, xlabel, ylabel):
@@ -48,6 +53,9 @@ class BasicLineChart(ConcreteMethod):
     def __init__(self):
         super().__init__("BasicLineChart")
 
+    def get_types(self):
+        return set(["/code/TimeSeriesPlot"])
+
     @staticmethod
     def function(values):
 
@@ -63,6 +71,9 @@ class OneNumericBoxPlot(ConcreteMethod):
     def __init__(self):
         super().__init__("OneNumericBoxPlot")
 
+    def get_types(self):
+        return set(["/code/BoxPlot"])
+
     @staticmethod
     def function(y):
         import seaborn as sns
@@ -77,6 +88,9 @@ class OneNumericSeveralGroupBoxPlot(ConcreteMethod):
     def __init__(self):
         super().__init__("OneNumericSeveralGroupBoxPlot")
 
+    def get_types(self):
+        return set(["/code/BoxPlot"])
+    
     @staticmethod
     def function(x, y):
         import seaborn as sns
@@ -91,6 +105,9 @@ class BasicScatterPlot(ConcreteMethod):
     def __init__(self):
         super().__init__("BasicScatterPlot")
 
+    def get_types(self):
+        return set(["/code/ScatterPlot"])
+
     @staticmethod
     def function(x, y):
         import seaborn as sns
@@ -104,6 +121,9 @@ class BasicScatterPlot(ConcreteMethod):
 class BasicHistogram(ConcreteMethod):
     def __init__(self):
         super().__init__("BasicHistogram")
+
+    def get_types(self):
+        return set(["/code/Histogram"])
     
     @staticmethod
     def function(x):
@@ -172,6 +192,21 @@ class BasicViolinPlot(ConcreteMethod):
 class PrintTexts(ConcreteMethod):
     def __init__(self):
         super().__init__("PrintTexts")
+
+    def get_types(self):
+        return set(["/code/Text"])
+    
+    @staticmethod
+    def function(*texts):
+        for text in texts:
+            print(text)
+
+class TableGen(ConcreteMethod):
+    def __init__(self):
+        super().__init__("TableGen")
+
+    def get_types(self):
+        return set(["/code/TableGenMethod"])
     
     @staticmethod
     def function(*texts):

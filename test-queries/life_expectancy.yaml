@@ -1,0 +1,6 @@
+methodstring: Compare
+args:
+  - entity: Q30
+    property: P2250
+  - entity: Q148
+    property: P2250    
