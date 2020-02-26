@@ -4,9 +4,10 @@ import argparse
 import os
 import os.path
 import pickle
+import inspect
 
 import methods
-from wikidata_utils import get_entity
+from wikidata_utils import get_entity, get_datavalues_for_a_property
 from Levenshtein import distance
 
 class KGPDir:
@@ -16,22 +17,42 @@ class KGPDir:
         with open(refinementsfile, "r") as fin:
             self.refinements = yaml.safe_load(fin)
 
-        self.methods = set([methods.PlotTwoLines(),
-                           methods.BasicLineChart(),
-                           methods.OneNumericBoxPlot(),
-                           methods.OneNumericBoxPlot(),
-                           methods.OneNumericSeveralGroupBoxPlot(),
-                           methods.BasicScatterPlot(),
-                           methods.BasicHistogram(),
-                           methods.AreaChart(),
-                           methods.DensityPlot(),
-                           methods.BubblePlot(),
-                           methods.BasicViolinPlot(),
-                           methods.PrintTexts(),
-                           methods.TableGen()])
-
+        #
+        # Grab all the available candidate methods
+        #
+        self.methods = set()
+        for name, obj in inspect.getmembers(methods):
+            if inspect.isclass(obj):
+                if issubclass(obj, methods.ConcreteMethod) and not issubclass(methods.ConcreteMethod, obj):
+                    self.methods.add(obj())
         self.invocations = self.refinements["invocations"]
-                           
+
+class KGReference:
+    def __init__(self, entity, entityLabel, propertyLabel):
+        self.entity = entity
+        self.entityLabel = entityLabel
+        self.propertyLabel = propertyLabel
+
+    def getEntityTypes(self):
+        curArgTypes = set()
+        if isinstance(self.entity, dict):
+            for propertyRelevantClaim in self.entity["claims"]["P31"]:
+                mainsnak = propertyRelevantClaim["mainsnak"]
+                datavalue = mainsnak["datavalue"]
+                if datavalue["type"] == "wikibase-entityid":
+                    value = datavalue["value"]                    
+                    instanceOfId = value["id"]
+                    curArgTypes.add(instanceOfId)
+        else:
+            #
+            # REMIND -- this is bad.  I'm using the property identifier to identify
+            # types for sets.  This should be a more generic type, not anything drawn
+            # from the knowledge graph namespace
+            #
+            curArgTypes.add(self.propertyLabel)
+        return curArgTypes
+            
+
 class Query:
     def __init__(self, fname):
         self.cacheName = "./.localKGCache"
@@ -55,18 +76,21 @@ class Query:
         entityLabel = referenceDesc["entity"]
         propertyLabel = referenceDesc.get("property", None)
 
-        if entityLabel in self.kgcache:
-            return self.kgcache[entityLabel]
+        if (entityLabel, propertyLabel) in self.kgcache:
+            return self.kgcache[(entityLabel, propertyLabel)]
         else:
-            resolvedEntity = get_entity(entityLabel)
-            self.kgcache[entityLabel] = resolvedEntity
+            if propertyLabel is None:
+                rawEntity = get_entity(entityLabel)
+            else:
+                rawEntity = get_entity(entityLabel)                
+                rawEntity = get_datavalues_for_a_property(rawEntity, property_id=propertyLabel)
+                
+            resolvedEntity = KGReference(rawEntity, entityLabel, propertyLabel)
+            self.kgcache[(entityLabel, propertyLabel)] = resolvedEntity
             with open(self.cacheName, "wb") as fout:
                 pickle.dump(self.kgcache, fout)
             
             return resolvedEntity
-
-    def isCorrectTargetMethod(self, candidateMethod):
-        return 1 - distance(self.methodstring, type(candidateMethod).__name__)
 
     def isCorrectInvocation(self, candidateInvocation, candidateMethod):
         ################################################
@@ -77,15 +101,13 @@ class Query:
         #
         candidateInvocationCard = candidateInvocation["params"]["cardinality"]
         cardinalityMatch = 0.05
-        if candidateInvocationCard in ("zero", "lone"):
-            if len(self.args) == 0:
-                cardinalityMatch = 0.95
-        elif candidateInvocationCard in ("zeroOrMore", "one", "oneOrMore", "lone"):
-            if len(self.args) == 1:
-                cardinalityMatch = 0.95
-        elif candidateInvocationCard in ("zeroOrMore", "twoOrMore", "oneOrMore"):
-            if len(self.args) >= 2:
-                cardinalityMatch = 0.95
+
+        if len(self.args) == 0 and candidateInvocationCard in ("zero", "lone", "zeroOrMore"):
+            cardinalityMatch = 0.95
+        elif len(self.args) == 1 and candidateInvocationCard in ("one", "lone", "zeroOrMore", "oneOrMore"):
+            cardinalityMatch = 0.95
+        elif len(self.args) >= 2 and candidateInvocationCard in ("zeroOrMore", "oneOrMore", "twoOrMore"):
+            cardinalityMatch = 0.95            
             
         #
         # Does the candidate's Invocation's type signature match the query's type signature?
@@ -96,16 +118,7 @@ class Query:
         if "type" in candidateInvocation["params"]:
             argTypes = []
             for arg in self.args:
-                curArgType = set()
-                typeProperty = "P31"
-                for propertyRelevantClaim in arg["claims"][typeProperty]:
-                    mainsnak = propertyRelevantClaim["mainsnak"]
-                    datavalue = mainsnak["datavalue"]
-                    if datavalue["type"] == "wikibase-entityid":
-                        value = datavalue["value"]                    
-                        instanceOfId = value["id"]
-                        curArgType.add(instanceOfId)
-                argTypes.append(curArgType)
+                argTypes.append(arg.getEntityTypes())
 
                 #
                 # This will work for instance-of, but nothing else.
@@ -139,7 +152,6 @@ def answerQuery(kgpdir, q):
     allMethodsAndInvocations = []
     for curMethod in kgpdir.methods:
         for curInvocation in kgpdir.invocations:
-            #curMethodScore = q.isCorrectTargetMethod(curMethod)
             cardMatch, argTypeMatch, methodTypeMatch = q.isCorrectInvocation(curInvocation, curMethod)
             curInvocationScore = cardMatch + argTypeMatch + methodTypeMatch
             
@@ -157,7 +169,7 @@ def answerQuery(kgpdir, q):
     print()
     print()
     print("Results for query", q.methodstring, q.arglabels)
-    for score, invokeTuple, scoreDetails in allMethodsAndInvocations[0:]:
+    for score, invokeTuple, scoreDetails in allMethodsAndInvocations[0:10]:
         curInvocation, curMethod = invokeTuple
         print(score, curMethod, curInvocation["name"], scoreDetails)
         print()

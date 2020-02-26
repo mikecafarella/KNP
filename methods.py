@@ -28,7 +28,7 @@ class PlotTwoLines(ConcreteMethod):
         super().__init__("PlotTwoLines")
 
     def get_types(self):
-        return set(["/code/TimeSeriesPlot"])
+        return set(["/code/TimeSeriesMultiPlot"])
 
     @staticmethod
     def function(x_value_1, y_value_1, legend_1, x_value_2, y_value_2, legend_2, xlabel, ylabel):

@@ -37,7 +37,8 @@ invocations:
   - name: TimedataComparison
     extends: Comparison
     method:
-      type: /code/TimeSeriesPlot
+      type: /code/TimeSeriesMultiPlot
     params:
       cardinality: twoOrMore
+      type: P2250      
 
