@@ -1,10 +1,13 @@
 import requests
-
+from pandas.io.json import json_normalize
+from typing import List, Set, Mapping, Tuple
+import pandas as pd
+import json
 
 _API_ROOT = "https://www.wikidata.org/w/api.php"
 
 def search_entity(search_string, type, limit=10):
-    """Search for a property."""
+    """Search for a entity."""
     params = {
         'action': 'wbsearchentities',
         'format': 'json',
@@ -16,7 +19,7 @@ def search_entity(search_string, type, limit=10):
     info = requests.get(_API_ROOT, params=params).json()['search']
     rst = []
     for _, i in enumerate(info):
-        rst.append(i['id'])
+        rst.append(i)
     return rst
 
 def get_entity(entity_id):
@@ -98,3 +101,31 @@ def get_value_from_datavalue(datavalues):
         elif(datavalue['type'] == 'quantity'):
             rst.append(datavalue['value']['amount'])
     return rst
+
+
+def explode(data_frame):
+    """Iterate all columns, and explode them if needed."""
+    for column in data_frame:
+        if(isinstance(data_frame[column].values[0], list) or (column.startswith("qualifiers.") and len(column.split("."))==2)):
+            data_frame = data_frame.explode(column).reset_index(drop=True)
+    return data_frame
+
+def flatten_dict(data_frame):
+    for column in data_frame:
+        if(isinstance(data_frame[column].values[0], dict)):
+            tmp = json_normalize(data_frame[column].values[0], errors='ignore').add_prefix(column + ".")
+            for x in data_frame[column].values[1:]:
+                if(isinstance(x, dict)):
+                    t = json_normalize(x, errors='ignore').add_prefix(column + ".")
+                    tmp = pd.concat([tmp, t], sort=True)
+            tmp = tmp.reset_index(drop=True)
+            data_frame = data_frame.drop(columns=[column], axis=1)
+            data_frame = pd.concat([data_frame, tmp], axis=1, sort=True)
+    return data_frame
+
+
+def parse_datavalue(datavalue: Mapping, datatype:str):
+    pass
+
+def parse_qualifiers(qualifiers):
+    pass

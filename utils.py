@@ -168,4 +168,8 @@ def clean_string(text):
     text = ' '.join([word for word in text.split() if word not in sw])
     return text
 
-# print(clean_string("sdfsd sdf"))
+def merge_dicts(dic1, dic2):
+    #
+    # If there is overlapping keys, 
+    #
+    pass

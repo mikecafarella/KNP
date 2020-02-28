@@ -1,4 +1,74 @@
 import utils
+from wikidata_utils import *
+from typing import List, Set, Mapping, Tuple
+import pandas as pd
+
+class IR:
+    """ The IR for an entity (item/property). Supported KGs: Wikidata
+
+        Args:
+            entity_id: the entity ID.
+            focus: the part of the IR that is focuesd. 
+                E.g., For Q30.GDP, we build an IR for Q30, but also keep in mind that the user
+                      indicated he/she wants GDP of Q30.
+        
+        Attributes:
+            type (str): item / property. Others are not supported yet.
+            id (str)
+            focus (str)
+            desc (str)
+            aliases (List[str])
+    """ 
+    def __init__(self, entity_id: str, KG: str, focus: str=None):
+        if KG.lower() != "wikidata":
+            raise ValueError("Unsupported KG: {}".format(KG))
+        self.KG = KG
+        self.id = entity_id
+        self.focus = focus
+        self.properties = {}
+
+        if entity_id.startswith("Q"):
+            self.type = "item"
+        elif entity_id.startswith("P"):
+            self.type = "property"
+        else:
+            raise ValueError("Unsupported entity type with id = {}".format(entity_id))
+        self._generate_IR_()
+        
+    def _generate_IR_(self):
+        entity_obj = get_entity(self.id)
+        self.label = entity_obj["labels"].get("en", {}).get("value")
+        self.desc = entity_obj["descriptions"].get("en", {}).get("value")
+        self.aliases = [m["value"] for m in entity_obj["aliases"]["en"]]
+        for property_id, snaks in entity_obj['claims'].items():
+            property = search_entity(property_id, "property", limit=1)[0]
+            data_df = None
+            for snak in snaks:
+                mainsnak = snak.get("mainsnak")
+                qualifiers = snak.get("qualifiers")
+                if mainsnak['snaktype'] != "value":
+                    continue
+                datatype = mainsnak["datatype"]
+                datavalue = mainsnak["datavalue"]
+                value_mapping = parse_datavalue(datavalue, datatype)
+                qualifiers_mapping = parse_qualifiers(qualifiers)
+                value_mapping.update(qualifiers_mapping)
+                #
+                # Assume no overlapping keys in qualifiers_maping and value_mapping
+                #
+                if data_df is None:
+                    data_df = pd.DataFrame(data=value_mapping)
+                else:
+                    data_df = data_df.append(value_mapping, ignore_index=True, sort=True)
+            self.properties[property_id] = data_df
+
+
+    def __getitem__(self, key):
+        return self.properties.get(key)
+
+    def __str__(self):
+        return self.KG + ": " + self.id + " ({})".format(self.label) 
+
 
 class Query:
     """ The class for user queries.
@@ -14,11 +84,12 @@ class Query:
             datasets (list[DataFrame]):
             KG_params (List)
     """
-    def __init__(self, raw_query):
+    def __init__(self, raw_query, KG=None):
         self.raw_query = raw_query
-        self._parse_user_query()
+        self._parse_user_query_()
+        self.KG_params = self._data_preprocess_(self.first_params, KG)
     
-    def _parse_user_query(self, KG=None):
+    def _parse_user_query_(self):
         """
         Fow now: assume the user uses a dataset from seaborn by passing the dataset name
             as the first argument in the query string.
@@ -28,7 +99,47 @@ class Query:
         self.pos_args = pos_args
         self.keyword_args = keyword_args
         self.first_params = first_params
-        if KG is None:
-            self.datasets = [utils.load_seaborn_dataset(dataset_name) for dataset_name in first_params]
+        # if KG is None:
+        #     self.datasets = [utils.load_seaborn_dataset(dataset_name) for dataset_name in first_params]
+        # else:
+        #     self.KG_params = first_params
+
+    @staticmethod
+    def _data_preprocess_(KG_params: List[str], KG):
+        """
+            Converts KG_params to IRs.
+
+            Args:
+                KG_params: A list of expressions referring to KG data.
+                        -- An entity (whether the user refers to it directly, as in Q76, or via an expression, as in Q1048.P19) 
+                        -- Others (E.g., Q76.P569)
+        """
+        KG_params = {}
+        if KG and KG.lower() == "wikidata":
+            for KG_param in KG_params:
+                entity_id = KG_param.split(".")[0]
+                if "." in KG_param:
+                    # expression = A.B
+                    property_id = KG_param.split(".")[1]
+                    claims = get_claims(entity_id, property_id)
+                    if claims is None:
+                        raise ValueError("No result for {}".format(KG_param))
+                    #
+                    # Check if the expression refers to another entity.
+                    #
+                    type = claims[0]["mainsnak"].get('datatype')  # TODO: expr refers to a list of entities?
+                    if type is None:
+                        # No datavalue
+                        KG_params[KG_param] = None
+                        continue
+                    elif type == "wikibase-item" or type == "wikibase-property":
+                        e_id = claims[0]["mainsnak"]["datavalue"]["value"]["id"]
+                        KG_params[KG_param] = IR(e_id)
+                    else:
+                        KG_params[KG_param] = IR(entity_id, focus=property_id)
+                else:
+                    # expr = A
+                    KG_params[KG_param] = IR(entity_id)
         else:
-            self.KG_params = first_params
+            raise ValueError("Unsupported KG: {}".format(KG))
+        return KG_params

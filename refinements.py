@@ -12,9 +12,12 @@ from abc import ABC, abstractmethod
     For now, let's assume only Refinments that implement all the above 4 attributes can be used.
 """
 
-class Refinement(ABC):
-    pass 
+available_refinements = ['GDPComparison', 'PoliticianComparison']
 
+class Refinement(ABC):
+    @classmethod
+    def __str__(cls):
+        return cls.description
 
 class Comparison(Refinement):
     description = "Comparison of two similar entities."
@@ -38,5 +41,5 @@ class GDPComparison(AmountComparison):
 class PoliticianComparison(HumanComparison):
     description = "Comparison of two politicians."
     involves = ["Politician", "Politician"]
-    method_desc = "PrintTexts"
+    method_desc = "PrintText"
     mapping_desc = ["political party"]

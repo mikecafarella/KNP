@@ -40,7 +40,7 @@ class LevenshteinStringSimilarity(Scorer):
                 and between Refinement.description and ConcreteMethod.name.
         """
         Q_R = scorer_algorithms._levenshtein_score(invocation.q.operator_desc, invocation.r.description)
-        R_C = scorer_algorithms._levenshtein_score(invocation.r.description, invocation.c.name)
+        R_C = scorer_algorithms._levenshtein_score(invocation.r.method_desc, invocation.c.name)
         return (Q_R + R_C) / 2
 
 
@@ -52,7 +52,7 @@ class CosineStringSimilarity(Scorer):
                 and between Refinement.description and ConcreteMethod.name.
         """
         Q_R = scorer_algorithms._cosine_similarity(invocation.q.operator_desc, invocation.r.description)
-        R_C = scorer_algorithms._cosine_similarity(invocation.r.description, invocation.c.name)
+        R_C = scorer_algorithms._cosine_similarity(invocation.r.method_desc, invocation.c.name)
         return (Q_R + R_C) / 2
 
 
