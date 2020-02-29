@@ -4,7 +4,7 @@ from typing import List, Set, Mapping, Tuple
 import pandas as pd
 
 class IR:
-    """ The IR for an entity (item/property). Supported KGs: Wikidata
+    """ The Intermidiate Representation for an entity (item/property). Supported KGs: Wikidata
 
         Args:
             entity_id: the entity ID.
@@ -18,6 +18,7 @@ class IR:
             focus (str)
             desc (str)
             aliases (List[str])
+            properties (Dict): Keys are property_id, values are DataFrame
     """ 
     def __init__(self, entity_id: str, KG: str, focus: str=None):
         if KG.lower() != "wikidata":
@@ -41,7 +42,8 @@ class IR:
         self.desc = entity_obj["descriptions"].get("en", {}).get("value")
         self.aliases = [m["value"] for m in entity_obj["aliases"]["en"]]
         for property_id, snaks in entity_obj['claims'].items():
-            property = search_entity(property_id, "property", limit=1)[0]
+            if self.focus and property_id != self.focus:
+                continue
             data_df = None
             for snak in snaks:
                 mainsnak = snak.get("mainsnak")
@@ -50,16 +52,24 @@ class IR:
                     continue
                 datatype = mainsnak["datatype"]
                 datavalue = mainsnak["datavalue"]
-                value_mapping = parse_datavalue(datavalue, datatype)
-                qualifiers_mapping = parse_qualifiers(qualifiers)
-                value_mapping.update(qualifiers_mapping)
+                value_mapping = utils.parse_wikidata_datavalue(datavalue, datatype)
+                if len(value_mapping) == 0:
+                    continue
+                qualifiers_mapping = utils.parse_wikidata_qualifiers(qualifiers)
                 #
                 # Assume no overlapping keys in qualifiers_maping and value_mapping
                 #
+                assert(set(value_mapping.keys()) != set(qualifiers_mapping.keys()))
+                value_mapping.update(qualifiers_mapping)
+                
                 if data_df is None:
-                    data_df = pd.DataFrame(data=value_mapping)
+                    data_df = pd.DataFrame.from_records([value_mapping])
                 else:
                     data_df = data_df.append(value_mapping, ignore_index=True, sort=True)
+                # print(data_df)
+            #
+            # Open question: do we want to include property labels in keys?
+            #
             self.properties[property_id] = data_df
 
 
@@ -78,10 +88,9 @@ class Query:
 
         Attributes:
             raw_query: the raw string the user typed.
-            operator_desc (str): A string describes the tast, could be used to match Refinements.
+            operator_desc (str): A string describes the task, could be used to match Refinements.
             pos_args (list): positinal arguments in the query.
             keyword_args (list): keyword arguments in the query.
-            datasets (list[DataFrame]):
             KG_params (List)
     """
     def __init__(self, raw_query, KG=None):

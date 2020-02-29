@@ -103,29 +103,22 @@ def get_value_from_datavalue(datavalues):
     return rst
 
 
-def explode(data_frame):
-    """Iterate all columns, and explode them if needed."""
-    for column in data_frame:
-        if(isinstance(data_frame[column].values[0], list) or (column.startswith("qualifiers.") and len(column.split("."))==2)):
-            data_frame = data_frame.explode(column).reset_index(drop=True)
-    return data_frame
+# def explode(data_frame):
+#     """Iterate all columns, and explode them if needed."""
+#     for column in data_frame:
+#         if(isinstance(data_frame[column].values[0], list) or (column.startswith("qualifiers.") and len(column.split("."))==2)):
+#             data_frame = data_frame.explode(column).reset_index(drop=True)
+#     return data_frame
 
-def flatten_dict(data_frame):
-    for column in data_frame:
-        if(isinstance(data_frame[column].values[0], dict)):
-            tmp = json_normalize(data_frame[column].values[0], errors='ignore').add_prefix(column + ".")
-            for x in data_frame[column].values[1:]:
-                if(isinstance(x, dict)):
-                    t = json_normalize(x, errors='ignore').add_prefix(column + ".")
-                    tmp = pd.concat([tmp, t], sort=True)
-            tmp = tmp.reset_index(drop=True)
-            data_frame = data_frame.drop(columns=[column], axis=1)
-            data_frame = pd.concat([data_frame, tmp], axis=1, sort=True)
-    return data_frame
-
-
-def parse_datavalue(datavalue: Mapping, datatype:str):
-    pass
-
-def parse_qualifiers(qualifiers):
-    pass
+# def flatten_dict(data_frame):
+#     for column in data_frame:
+#         if(isinstance(data_frame[column].values[0], dict)):
+#             tmp = json_normalize(data_frame[column].values[0], errors='ignore').add_prefix(column + ".")
+#             for x in data_frame[column].values[1:]:
+#                 if(isinstance(x, dict)):
+#                     t = json_normalize(x, errors='ignore').add_prefix(column + ".")
+#                     tmp = pd.concat([tmp, t], sort=True)
+#             tmp = tmp.reset_index(drop=True)
+#             data_frame = data_frame.drop(columns=[column], axis=1)
+#             data_frame = pd.concat([data_frame, tmp], axis=1, sort=True)
+#     return data_frame

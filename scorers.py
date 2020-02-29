@@ -17,43 +17,50 @@ _score_types = [
 
 class Scorer(ABC):
     @abstractmethod
-    def get_score(self, invocation: Invocation):
+    @classmethod
+    def get_score(cls, invocation: Invocation):
         pass
 
 
 class ScoreAggregator(ABC):
     @abstractmethod
-    def aggregate(self, scores: Mapping[str, float]) -> float:
+    def aggregate(self, scores: List[Tuple(float, float)]) -> float:
         pass
 
 
 class AverageAgg(ScoreAggregator):
-    def aggregate(self, scores: Mapping[str, float]):
-        return sum(scores.values()) / len(scores.values())
+    def aggregate(self, scores: List[Tuple(float, float)]):
+        sum_of_scores = sum([t[0] for t in scores])
+        sum_of_weights = sum([t[1] for t in scores])
+        return sum_of_scores / sum_of_weights
 
 
 class LevenshteinStringSimilarity(Scorer):
     applicable_types = ['Q_R', 'R_C']
+    weight = 1
 
-    def get_score(self, invocation: Invocation):
+    @classmethod
+    def get_score(cls, invocation: Invocation):
         """ Calulate the Levenshtein score between Query.operator_desc and Refinement.description,
                 and between Refinement.description and ConcreteMethod.name.
         """
         Q_R = scorer_algorithms._levenshtein_score(invocation.q.operator_desc, invocation.r.description)
         R_C = scorer_algorithms._levenshtein_score(invocation.r.method_desc, invocation.c.name)
-        return (Q_R + R_C) / 2
+        return cls.weight * (Q_R + R_C) / 2
 
 
 class CosineStringSimilarity(Scorer):
     applicable_types = ['Q_R', 'R_C']
+    weight = 1
 
-    def get_score(self, invocation: Invocation):
+    @classmethod
+    def get_score(cls, invocation: Invocation):
         """ Calulate the Cosine score between Query.operator_desc and Refinement.description,
                 and between Refinement.description and ConcreteMethod.name.
         """
         Q_R = scorer_algorithms._cosine_similarity(invocation.q.operator_desc, invocation.r.description)
         R_C = scorer_algorithms._cosine_similarity(invocation.r.method_desc, invocation.c.name)
-        return (Q_R + R_C) / 2
+        return cls.weight * (Q_R + R_C) / 2
 
 
 class InvolvedEntityAllignment(Scorer):
@@ -61,16 +68,20 @@ class InvolvedEntityAllignment(Scorer):
         Check whether the number of elements in Query.KG_params equal to that of Refinement.involves
     """
     applicable_types = ['Q_R']
+    weight = 1
 
-    def get_score(self, invocation: Invocation):
-        return len(invocation.q.first_params) == len(invocation.r.involves)
+    @classmethod
+    def get_score(cls, invocation: Invocation):
+        return cls.weight * len(invocation.q.first_params) == len(invocation.r.involves)
 
 
 class BasicMappingProbability(Scorer):
     """Check whether every selected column in the mapping appeared in Refinement.mapping_desc."""
     applicable_types = ['R_M']
+    weight = 1
 
-    def get_score(self, invocation: Invocation):
+    @classmethod
+    def get_score(cls, invocation: Invocation):
         scores = []
         for variable, value in invocation.m.mapping.items():
             if isinstance(value, str):
@@ -83,7 +94,7 @@ class BasicMappingProbability(Scorer):
             name_similarity = max([ max(scorer_algorithms._cosine_similarity(name, p), scorer_algorithms._levenshtein_score(name, p)) \
                 for p in invocation.r.mapping_desc])
             scores.append(name_similarity)
-        return sum(scores) / len(scores)
+        return cls.weight * sum(scores) / len(scores)
 
 
 class MappingRunnable(Scorer):
@@ -92,10 +103,12 @@ class MappingRunnable(Scorer):
         fails the test, -50 is returned. 
     """
     applicable_types = ['C_M']
+    weight = 50
 
-    def get_score(self, invocation: Invocation):
+    @classmethod
+    def get_score(cls, invocation: Invocation):
         try:
             invocation.c.function(invocation.m.mapping)
-            return 1
+            return 1 * cls.weight
         except:
-            return -50
+            return 0
