@@ -16,20 +16,26 @@ _score_types = [
 """
 
 class Scorer(ABC):
-    @abstractmethod
     @classmethod
+    @abstractmethod
     def get_score(cls, invocation: Invocation):
         pass
 
 
 class ScoreAggregator(ABC):
+    @classmethod
     @abstractmethod
-    def aggregate(self, scores: List[Tuple(float, float)]) -> float:
+    def aggregate(cls, scores: List):
+        """
+            Args:
+                scores: a list of (score, weight of the scorer) tuples.
+        """
         pass
 
 
 class AverageAgg(ScoreAggregator):
-    def aggregate(self, scores: List[Tuple(float, float)]):
+    @classmethod
+    def aggregate(cls, scores: List):
         sum_of_scores = sum([t[0] for t in scores])
         sum_of_weights = sum([t[1] for t in scores])
         return sum_of_scores / sum_of_weights
@@ -72,7 +78,7 @@ class InvolvedEntityAllignment(Scorer):
 
     @classmethod
     def get_score(cls, invocation: Invocation):
-        return cls.weight * len(invocation.q.first_params) == len(invocation.r.involves)
+        return cls.weight * len(invocation.q.KG_params) == len(invocation.r.involves)
 
 
 class BasicMappingProbability(Scorer):
@@ -83,7 +89,7 @@ class BasicMappingProbability(Scorer):
     @classmethod
     def get_score(cls, invocation: Invocation):
         scores = []
-        for variable, value in invocation.m.mapping.items():
+        for _, value in invocation.m.mapping.items():
             if isinstance(value, str):
                 name = value
             elif isinstance(value, pandas.Series):
@@ -108,7 +114,7 @@ class MappingRunnable(Scorer):
     @classmethod
     def get_score(cls, invocation: Invocation):
         try:
-            invocation.c.function(invocation.m.mapping)
+            invocation.c.function(**invocation.m.mapping)
             return 1 * cls.weight
         except:
             return 0

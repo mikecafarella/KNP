@@ -19,8 +19,11 @@ from wikidata_utils import search_entity
 def parse(source):
     """ Parse a raw user query."""
     call = ast.parse(source, "operator string", mode="eval").body
-    print(ast.dump(call))
-    # TODO: data references are not handled 
+    # print(ast.dump(call))
+    # l = compile(call.args[0], "", "eval")
+    # l = ast.literal_eval(call.args[0])
+    # print(l)
+    # TODO: might be buggy
     return call.func.id, [elt.value if isinstance(elt, ast.Constant) else elt.id for elt in call.args[0].elts], \
          [arg.value if isinstance(arg, ast.Constant) else arg.id for arg in call.args[1:]], \
              [(keyword.arg, keyword.value.value) for keyword in call.keywords]

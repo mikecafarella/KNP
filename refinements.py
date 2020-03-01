@@ -12,7 +12,8 @@ from abc import ABC, abstractmethod
     For now, let's assume only Refinments that implement all the above 4 attributes can be used.
 """
 
-available_refinements = ['GDPComparison', 'PoliticianComparison']
+available_refinements = ['GDPComparison', 'PoliticianComparison', "ShowGDP"]
+# available_refinements = ['ShowGDP']
 
 class Refinement(ABC):
     @classmethod
@@ -30,10 +31,9 @@ class HumanComparison(Comparison):
 class AmountComparison(Comparison):
     description = "Comparison of two set of quantity values."
 
-
 class GDPComparison(AmountComparison):
     description = "Comparison of GDP values of two different places."
-    invloves = ["GDP", "GDP"]
+    involves = ["GDP", "GDP"]
     method_desc = "PlotTwoLines"
     mapping_desc = ["GDP", "time"]
     # TODO: How about constraints such as same unit?
@@ -43,3 +43,13 @@ class PoliticianComparison(HumanComparison):
     involves = ["Politician", "Politician"]
     method_desc = "PrintText"
     mapping_desc = ["political party"]
+
+
+class Show(Refinement):
+    description = "Show something."
+
+class ShowGDP(Show):
+    description = "Show of GDP values."
+    involves = ['GDP']
+    method_desc = "BasicScatterPlot"
+    mapping_desc = ['amount', 'time']

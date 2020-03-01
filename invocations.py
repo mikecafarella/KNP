@@ -20,11 +20,17 @@ class Invocation:
         scores = [(s.get_score(self), s.weight) for s in scorers]
         score = overall_aggragator.aggregate(scores)
         self.score = score
+
+        print(str(self)+":              score = {}".format(score))
+
         return score
 
     def __str__(self):
-        return "ConcreteMethod: {}\n Refinement: {}\n Mapping: {}\n Query: {}." \
-            .format(self.c, self.r, self.m, self.q)
+        # return "ConcreteMethod: {}\n Refinement: {}\n Mapping: {}\n Query: {}." \
+        #     .format(self.c, self.r, self.m, self.q)
+        
+        return "ConcreteMethod: {}\n Refinement: {}\n Mapping: {}." \
+            .format(self.c, self.r, self.m)
 
     def execute(self):
         pass

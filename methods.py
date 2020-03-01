@@ -5,6 +5,11 @@ import inspect
 from abc import ABC, abstractmethod
 
 
+available_methods = ["PlotTwoLines", "BasicLineChart", "OneNumericBoxPlot", "OneNumericSeveralGroupBoxPlot", \
+    "BasicScatterPlot", "BasicHistogram", "AreaChart", "DensityPlot", "BubblePlot", "BasicViolinPlot", \
+    "PrintTexts", "TableGen"]
+available_methods = ['BasicScatterPlot']
+
 class ConcreteMethod(ABC):
     def __init__(self, name):
         self.name = name
@@ -45,7 +50,7 @@ class PlotTwoLines(ConcreteMethod):
         plt.ylabel(ylabel)
         ax.legend()
 
-        plt.show()
+        # plt.show()
         # return fig
 
 
@@ -64,7 +69,7 @@ class BasicLineChart(ConcreteMethod):
 
         plt.plot(values)
 
-        plt.show()
+        # plt.show()
 
 
 class OneNumericBoxPlot(ConcreteMethod):
@@ -81,7 +86,7 @@ class OneNumericBoxPlot(ConcreteMethod):
 
         sns.boxplot( y=y )
 
-        plt.show()
+        # plt.show()
 
 
 class OneNumericSeveralGroupBoxPlot(ConcreteMethod):
@@ -98,7 +103,7 @@ class OneNumericSeveralGroupBoxPlot(ConcreteMethod):
 
         sns.boxplot( x=x, y=y )
 
-        plt.show()
+        # plt.show()
 
 
 class BasicScatterPlot(ConcreteMethod):
@@ -115,7 +120,7 @@ class BasicScatterPlot(ConcreteMethod):
 
         sns.regplot(x=x, y=y, fit_reg=False)
 
-        plt.show()
+        # plt.show()
 
 
 class BasicHistogram(ConcreteMethod):
@@ -132,7 +137,7 @@ class BasicHistogram(ConcreteMethod):
 
         sns.distplot( x )
 
-        plt.show()
+        # plt.show()
 
 
 class AreaChart(ConcreteMethod):
@@ -146,7 +151,7 @@ class AreaChart(ConcreteMethod):
         plt.fill_between(x, y)
 
 
-        plt.show()
+        # plt.show()
 
 
 class DensityPlot(ConcreteMethod):
@@ -160,7 +165,7 @@ class DensityPlot(ConcreteMethod):
 
         sns.kdeplot(values)
 
-        plt.show()
+        # plt.show()
 
 
 class BubblePlot(ConcreteMethod):
@@ -173,7 +178,7 @@ class BubblePlot(ConcreteMethod):
         import matplotlib.pyplot as plt
 
         plt.scatter(x, y, s=z*1000, alpha=0.5)
-        plt.show()
+        # plt.show()
 
 
 class BasicViolinPlot(ConcreteMethod):
@@ -186,7 +191,7 @@ class BasicViolinPlot(ConcreteMethod):
         import matplotlib.pyplot as plt
 
         sns.violinplot( y=y )
-        plt.show()
+        # plt.show()
 
 
 class PrintTexts(ConcreteMethod):

@@ -8,14 +8,13 @@ class IR:
 
         Args:
             entity_id: the entity ID.
-            focus: the part of the IR that is focuesd. 
-                E.g., For Q30.GDP, we build an IR for Q30, but also keep in mind that the user
-                      indicated he/she wants GDP of Q30.
+            focus: the part of the IR that is built. 
+                E.g., For Q30.GDP, we build an IR for Q30 with only GDP property data fetched.
         
         Attributes:
             type (str): item / property. Others are not supported yet.
             id (str)
-            focus (str)
+            focus (str): The property_id of the IT 
             desc (str)
             aliases (List[str])
             properties (Dict): Keys are property_id, values are DataFrame
@@ -42,6 +41,7 @@ class IR:
         self.desc = entity_obj["descriptions"].get("en", {}).get("value")
         self.aliases = [m["value"] for m in entity_obj["aliases"]["en"]]
         for property_id, snaks in entity_obj['claims'].items():
+            # property = search_entity(property_id, 'property', limit=1)[0]
             if self.focus and property_id != self.focus:
                 continue
             data_df = None
@@ -61,6 +61,11 @@ class IR:
                 #
                 assert(set(value_mapping.keys()) != set(qualifiers_mapping.keys()))
                 value_mapping.update(qualifiers_mapping)
+                #
+                # Add prefix to all keys
+                #
+                # key_prefix = self.label + "." + 
+                # value_mapping = {key_prefix+k: v for k, v in value_mapping.items()}
                 
                 if data_df is None:
                     data_df = pd.DataFrame.from_records([value_mapping])
@@ -91,12 +96,16 @@ class Query:
             operator_desc (str): A string describes the task, could be used to match Refinements.
             pos_args (list): positinal arguments in the query.
             keyword_args (list): keyword arguments in the query.
-            KG_params (List)
+            KG_params (List): a list of IR.
     """
-    def __init__(self, raw_query, KG=None):
+    def __init__(self, raw_query, KG):
         self.raw_query = raw_query
         self._parse_user_query_()
-        self.KG_params = self._data_preprocess_(self.first_params, KG)
+        self.KG = KG
+        #
+        # Generates IRs
+        #
+        self._data_preprocess_()
     
     def _parse_user_query_(self):
         """
@@ -107,14 +116,13 @@ class Query:
         self.operator_desc = operator_desc
         self.pos_args = pos_args
         self.keyword_args = keyword_args
-        self.first_params = first_params
+        self._first_params = first_params
         # if KG is None:
         #     self.datasets = [utils.load_seaborn_dataset(dataset_name) for dataset_name in first_params]
         # else:
         #     self.KG_params = first_params
 
-    @staticmethod
-    def _data_preprocess_(KG_params: List[str], KG):
+    def _data_preprocess_(self):
         """
             Converts KG_params to IRs.
 
@@ -124,8 +132,8 @@ class Query:
                         -- Others (E.g., Q76.P569)
         """
         KG_params = {}
-        if KG and KG.lower() == "wikidata":
-            for KG_param in KG_params:
+        if self.KG and self.KG.lower() == "wikidata":
+            for KG_param in self._first_params:
                 entity_id = KG_param.split(".")[0]
                 if "." in KG_param:
                     # expression = A.B
@@ -142,13 +150,16 @@ class Query:
                         KG_params[KG_param] = None
                         continue
                     elif type == "wikibase-item" or type == "wikibase-property":
-                        e_id = claims[0]["mainsnak"]["datavalue"]["value"]["id"]
-                        KG_params[KG_param] = IR(e_id)
+                        new_entity_id = claims[0]["mainsnak"]["datavalue"]["value"]["id"]
+                        KG_params[KG_param] = IR(new_entity_id, self.KG)
                     else:
-                        KG_params[KG_param] = IR(entity_id, focus=property_id)
+                        KG_params[KG_param] = IR(entity_id, self.KG, focus=property_id)
                 else:
                     # expr = A
-                    KG_params[KG_param] = IR(entity_id)
+                    KG_params[KG_param] = IR(entity_id, self.KG)
         else:
             raise ValueError("Unsupported KG: {}".format(KG))
-        return KG_params
+        self.KG_params = KG_params
+    
+    def __getitem__(self, key):
+        return self.KG_params.get(key)
