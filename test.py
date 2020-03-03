@@ -8,6 +8,7 @@ import yaml
 import methods
 import utils
 import core
+import query
 
 import pprint
 q = query.Query("ShowMeAPlot(['Q30.P2131'])", KG="wikidata")
