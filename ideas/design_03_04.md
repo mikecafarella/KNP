@@ -232,7 +232,7 @@ the `TimeSeries` type.  It calls another ideal function, which is
 defined as follows:
 
     PythonPlotOneLine(vals: __Array__, timeVals: __Array__, label:
-__String__, title: __String__):__Image__ {
+    __String__, title: __String__):__Image__ {
         return __CallPython__(plot.PlotOneLine(vals, timeVals, label, title)), __Image__)
     }
 
