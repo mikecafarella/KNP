@@ -26,6 +26,7 @@ class KGPDir:
                 if issubclass(obj, methods.ConcreteMethod) and not issubclass(methods.ConcreteMethod, obj):
                     self.methods.add(obj())
         self.invocations = self.refinements["invocations"]
+        
 
 class KGReference:
     def __init__(self, entity, entityLabel, propertyLabel):
@@ -33,7 +34,27 @@ class KGReference:
         self.entityLabel = entityLabel
         self.propertyLabel = propertyLabel
 
+    #
+    # What are the "types" that can be used to label a KG reference?
+    # a) Anything of the form /types/instance/<wikidatanode>.  These can
+    #    be derived using either the instance-of property, or trained
+    #    classifiers.
+    #
+    # b) /types/data/dataset indicates a collection of similarly-structured
+    #    claims.
+    #
+    # c) /types/data/qualified/<propertyname> indicates a collection of claims, most of which
+    #    have been qualified by the given property name (such as P585, point-in-time).
+    #
+    # d) /types/data/Timeseries indicates a collection of claims, most of which
+    #    have been qualified by something that indicates time 
+    # 
+    #
     def getEntityTypes(self):
+        """This returns all the 'types' that the given KG reference
+        falls into.  Right now we use solely the 'instance-of' property,
+        but in the future we should use labels derived using trained
+        classifiers.  These can work even when 'instance-of' is not available"""
         curArgTypes = set()
         if isinstance(self.entity, dict):
             for propertyRelevantClaim in self.entity["claims"]["P31"]:
@@ -167,12 +188,15 @@ def answerQuery(kgpdir, q):
     allMethodsAndInvocations.sort(key=lambda x: x[0], reverse=True)
     print()
     print()
-    print()
-    print("Results for query", q.methodstring, q.arglabels)
+    print("*********************************************")
+    print("QUERY: ", q.methodstring, q.arglabels)
+    print("*********************************************")
+    idx = 1
     for score, invokeTuple, scoreDetails in allMethodsAndInvocations[0:10]:
         curInvocation, curMethod = invokeTuple
-        print(score, curMethod, curInvocation["name"], scoreDetails)
+        print(str(idx) + ".  ", str(curMethod) + "()", "\n" + "\t", curInvocation["name"], score, scoreDetails)
         print()
+        idx += 1
                 
 
 
