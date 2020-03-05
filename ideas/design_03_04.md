@@ -1,7 +1,7 @@
 # KGP Design
 
-This document describes the latest attempt (as of March 4, 2020) for a
-KGP design.  It is more concrete and practical than previous efforts.
+This document describes the latest attempt (updated March 5, 2020) for a
+KGP design.  It is more concrete and practical than previous efforts. 
 
 The KGP system comprises five primary components:
 
@@ -164,10 +164,26 @@ used.  For example, consider this possible **Ideal Function**:
 
 
 In this example, `Person` is used in a type context, both in the input
-to the function and in the output. The system checks a value's
-membership in a type by examining whether `(<value>, is-instance,
-\<typelabel\>)` is true in the **Ideal KG**. The set of possible
-`<typelabel>`s is the set of all nodes in the Ideal KG.
+to the function and in the output.  The set of possible types that a
+programmer can use is the set of _all KG nodes_.
+
+During construction of the Ideal KG, the system also constructs all of
+the system types.  That is, the system emits a series of tuples of
+this form:
+
+    (TypeLabel, testIfDataValueIsMemberOfType(v))
+
+
+In principle, this could require the Ideal KG to construct tens of
+millions of types!  In practice, we can do this lazily: the system
+should not actually build a type membership classifier until a
+particular TypeLabel is used by a programmer.
+
+The space of types cannot be added to by the programmer.  There is no
+such thing as a private type.  All types are either derived from the
+KG or are builtins such as __Table__ and __String__.  If the
+programmer needs a type that is not in the system, she can add a new
+node to the KG.
 
 The methods of the input parameter `p` ---  `spouseOf()` and
 `dateOfBirth()` --- are derived from the properties associated with
@@ -210,6 +226,26 @@ in the Ideal Codebase:
 `Compare(x: Person, y: Person): __Table__ {}`
 and
 `Compare(x: TimeSeries, y: TimeSeries): __Image__ {}`
+
+### Type Coercion
+
+In some cases the same method might be parameterized differently.  For
+example, a user might write `CompareGDP(USA.gdp, Canada.gdp)` or
+`CompareGDP(USA, Canada)`.  In the latter case, the system will
+automatically figure out how to translate the parameterized objects
+into the intended GDP types.  This translation will be probabilistic
+and uncertain; see below for more on probabilities.
+
+As a rule, functions should be written with the "most specific
+relevant type".  If you're comparing GDP, then use the GDP type.
+Don't use the country type, even if you want to enable calls like
+`CompareGDP(USA, Canada)`.  Rely on type coercion for these imperfect
+tpye matches.
+
+It is still legal to define `CompareGDP(c1: Country, c2:Country)`. But
+in most cases, it's not a good idea if the contents of that method
+will simply be implemented as `CompareGDP(c1.gdp(), c2.gdp())`.
+
 
 ### Useful Code
 
@@ -261,13 +297,14 @@ use case:
       return CompareTimeSeries(gdp1, gdp2, "GDP")
     }
 
+
 In this case, the code is embodying a small but useful set of
 observations about the world:
 -- When comparing GDP, it must be true that both values are
    expressed in the same units (e.g., US Dollars)
 -- Comparing GDP always means comparing two time series
 
-What if the user wants to run `CompareGDP()`, but these facts aren't
+Now what if the user wants to run `CompareGDP()`, but these facts aren't
 true? That brings us to...
 
 ### Probabilities
