@@ -32,12 +32,11 @@ def check_type_preconditions(func):
                 except:
                     print("### Undefined type {}".format(type_str))
         score = sum(scores) / len(scores)
-        # print(scores)
+        print(scores)
         if score < 1:
             raise ValueError("Not a perfect match!")
         print("### Passed type check. Now call {}.".format(func.__name__))
         return func(*args, **kwargs)
-
     return function_wrapper
 
 
@@ -60,12 +59,3 @@ def CompareTimeSeries(ts1: TimeSeries, ts2: TimeSeries, title: __String__) -> __
     #                  ts2.getValues(), ts1.getTime(), ts2.getLabel(), title)
     pass
 
-
-#
-# These 2 IRs are equivalent to user string "Q30.P2131", "Q16.P2131"
-#
-CompareGDP(IR("Q30", KG='wikidata', focus="P2131"), IR("Q16", KG='wikidata', focus="P2131"))
-# Pass
-
-CompareGDP(1, 2)
-# Fail
