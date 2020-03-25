@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Functions - Knowledge Graph Programming Language</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Functions";
+    var mkdocs_page_input_path = "docs.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Knowledge Graph Programming Language</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="..">Welcome</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../tour/">A Tour of KGPL</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="" href="../values.md">Values</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../variables/">Variables</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../about/">About</a>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Knowledge Graph Programming Language</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Functions</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="functions">Functions</h1>
+<p>A function is a piece of executable code.  A function is another kind
+of value.  It can be created, but not edited, destroyed, or versioned.</p>
+<p>When a function is executed, it yields the standard results (that is
+values), as well as an <strong>Execution</strong> value.  This value encapsulates
+the execution event via three fields. The <code>source-function</code> field is
+the identifier of the value that represents the function that was
+executed.  The <code>timestamp</code> value simply indicates when the function
+was run. The <code>log</code> value indicates any information emitted by the
+function during execution.</p>
+<p>Some of the nodes in a value's directed lineage tree are <strong>Execution</strong>
+values. </p>
+<p>Like other values, a function can be assigned to a variable.  That
+variable can change its value over time, like any other variable.  It
+might be shared, become well-known, etc.</p>
+<p>A function value is fixed, but most of the time when programming or
+sharing with others, users refer to functions via a variable name.</p>
+<p>Since type membership is probabilistic, it is possible that a single
+function invocation may satisfy multiple functions simultaneously.  In
+these cases, the system will invoke the maximally-probable function.</p>
+<h1 id="program-code">Program Code</h1>
+<p>The body of a KGPL Function is simply Python code, with a few minor
+differences:</p>
+<ul>
+<li>The function signature must declare types for all of its input
+  parameters. These can include KGPL Types.</li>
+<li>Function inputs are KGPL variables.  </li>
+<li>The function will be executed in a VM-style environment that will be
+  destroyed immediately after execution, so the programmer cannot rely
+  on retaining side effects.  All important results must be returned
+  by the function call.</li>
+<li>The function must create KGPL-style results to be returned. In
+  particular, it must create an <strong>Execution</strong> value and appropriate
+  KGPL-style values (with unique identifiers and lineage) for all
+  returned items.</li>
+</ul>
+<p>Building an accurate lineage graph for each output value can be
+burdensome. If the function's outputs are created using special KGPL
+helper functions, this output lineage graph will be generated
+automatically.</p>
+<h1 id="interfaces">Interfaces</h1>
+<p>How is a KGPL function started?  The system can present several possible
+interfaces to the user.</p>
+<h3 id="unambiguous-invocation">Unambiguous Invocation</h3>
+<p>The most straightforward is the <strong>unambiguous interface</strong>, intended
+for data scientists and developers.  This is essentially the same as
+how an KGPL function invokes another function.  The function name and
+its parameters are unambiguously indicated by the user's code.  The only
+ambiguity around which method is invoked is driven by
+identically-named functions with different type signatures.</p>
+<h3 id="method-ambiguous-invocation">Method-Ambiguous Invocation</h3>
+<p>Slightly more user-friendly is the <strong>method-ambiguous interface</strong>,
+in which parameters and their order are indicated entirely
+unambigously, but the method name is indicated via text keywords.</p>
+<p>In this scenario, we can imagine that the chosen function is given an
+additional "virtual precondition" that tests whether the candidate
+function was indicated by the user's set of keywords.  This can be
+quantified with a probability.</p>
+<h3 id="implicit-invocation">Implicit Invocation</h3>
+<p>Finally, the most user-friendly input mode is one in which the
+function, its parameters, and their order are given by the user
+entirely via a text-style or voice-driven interface.  Again, the
+interface adds a virtual precondition that measures whether the
+method, the identified parameter values, AND the mapping from values
+to slots were all indeed intended by the user.</p>
+<h3 id="execution-environments">Execution Environments</h3>
+<p>Every invocation of a KGPL function entails a small
+custom set of KG entities that describe the <strong>execution
+environment</strong>.  These values can be used by a function to
+control output depending on the execution environment.</p>
+<p>For example, the same code might be runnable either on a laptop with a
+large screen, or in voice mode.  If the system returns a table, it
+might make sense to present the entire result on a scrollable laptop
+screen, but in a voice setting it would only make sense to read the
+first tuple aloud.  How can this be implemented?</p>
+<pre><code>RenderTable(t: __Table__): __Table__ {
+  if (__Environment__.isVoiceOnly) {
+    return t[0]
+  } else {
+    return t
+  }
+}
+</code></pre>
+<p>The conditional statement overall always has a precondition
+probability of 1.  One particular branch has a precondition
+probability that depends on whether its tested condition is true (or,
+for the else branch, (1-p)).</p>
+<h3 id="managing-uncertainty-thresholds">Managing Uncertainty Thresholds</h3>
+<p>In some cases, the precondition probability is useful for comparing
+different alternatives.  The user might have invoked <code>Compare(x, y)</code>;
+depending on the values for <code>x</code> and <code>y</code>, either <code>Compare(x: Person,
+y:Person)</code> or <code>Compare(x: TimeSeries, y: TimeSeries)</code> might be more
+probable.</p>
+<p>But what should be done when the precondition probability of the
+maximally-probable option is still quite low?  The right course of
+action depends on the environment and context. For example, the
+unambiguous interface probably should always run whatever the user
+asks for, while the implicit invocation interface should probably only
+run code when the confidence is above a certain threshold.</p>
+<p>Each invocation interface can register two special values: the minimum
+probability for function execution, and the minimum probability for
+warning the user prior to function execution.</p>
+<p>Finally, there is the probability associated with conditionals.  The
+<strong>True</strong> branch is always evaluated when its probability is 95% or
+higher.</p>
+<ul>
+<li><strong>Run Once, Debug Everywhere</strong>: It is easy to share, examine,
+  discuss, copy, and modify single executions.</li>
+<li><strong>The Universal Class Library</strong>: KGPL offers a class library of more
+  than <strong>70 million</strong> individual and easily-understood types. These
+  types reflect real-world categories, such as Presidents, Buildings,
+  Emotions, Satellites, and many more</li>
+<li><strong>Easy Fine-Grained Code Sharing</strong>: KGPL makes it easy to share
+  even individual variables with other programs.</li>
+<li><strong>Practical Python</strong>: Despite all of the above features, KGPL looks and
+  feels like Python 99% of the time</li>
+</ul>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

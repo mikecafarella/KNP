@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Variables - Knowledge Graph Programming Language</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Variables";
+    var mkdocs_page_input_path = "variables.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Knowledge Graph Programming Language</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="..">Welcome</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../tour/">A Tour of KGPL</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="" href="../values.md">Values</a>
+                    </li>
+                </ul>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">Variables</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#relationship-to-knowledge-graph-entities">Relationship to Knowledge Graph Entities</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#updates">Updates</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#permissions">Permissions</a>
+    </li>
+    </ul>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../about/">About</a>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Knowledge Graph Programming Language</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Variables</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="variables">Variables</h1>
+<p>KGPL variables are named objects that refer to a particular KGPL value
+at any given point in time.</p>
+<p>The variable's <code>id</code> field is a universally-unique identifier for all
+time and space.  This never changes.</p>
+<p>The <code>current-value</code> field is the <code>id</code> of a KGPL value.  This can be
+changed over time</p>
+<p>The <code>owner</code> field indicates the username of the owner of the
+variable. This is important for determining who is allowed to modify a
+variable.</p>
+<p>The <code>url</code> field is optional. It is populated when the variable is
+registered with a <strong>KGPL sharing service</strong>. The URL syntactically
+contains the variable's <code>id</code>. When a <strong>KGPL sharing service</strong> is
+queried using this URL, it will return all of the variable's other
+fields.</p>
+<p>Note that in principle, a variable could be shared and widely known,
+but its value could be more limited.  This might be appropriate in
+certain information-sharing scenarios; for example, the government
+knows that there is a precomputed monthly unemployment number, but
+this number is not widely revealed until a particular time and date.</p>
+<p>The <code>annotations</code> field is arbitrary human-readable information that
+can be added to the variable. It is carried along with the variable,
+but has no practical impact on its programmatic KGPL usage.  It could
+have an impact on the findability or usefulness of the variable for
+other human beings. For example, there might be a search service that
+allows users to find useful variables on an existing <strong>KGPL sharing
+service</strong>. This search service might use the annotations field to get
+better search results.</p>
+<p>When a registered variable is changed, the update should be
+immediately transmitted to its registered sharing service.</p>
+<p>You can observe all of the KGPL variable fields --- and those of its
+current value --- at the Python REPL:</p>
+<pre><code>&gt;&gt;&gt; import kgpl
+&gt;&gt;&gt; from kgpl import kgplSquare
+&gt;&gt;&gt; from kgpl import KGPLVariable
+&gt;&gt;&gt;
+&gt;&gt;&gt; x = KGPLVariable(kgplSquare(3))
+&gt;&gt;&gt; x
+id: 8cf28bb1-ea67-4c37-a949-7d8bab2be6f8
+owner: michjc
+url: &lt;unregistered&gt;
+annotations: []
+current-value: 9
+&gt;&gt;&gt;
+&gt;&gt;&gt; x.currentvalue
+concrete-value: 9
+id: 01f9da67-9206-499f-a985-30d734ffbbef
+lineage: &lt;kgpl.Lineage object at 0x101338588&gt;
+url: &lt;unregistered&gt;
+annotations: []
+&gt;&gt;&gt;
+&gt;&gt;&gt; x.reassign(kgplSquare(4))
+&gt;&gt;&gt; x
+id: 8cf28bb1-ea67-4c37-a949-7d8bab2be6f8
+owner: michjc
+url: &lt;unregistered&gt;
+annotations: []
+current-value: 16
+&gt;&gt;&gt;
+&gt;&gt;&gt; x.currentvalue
+concrete-value: 16
+id: 2ac5abea-e790-4100-828c-39f3637e9bc5
+lineage: &lt;kgpl.Lineage object at 0x101417080&gt;
+url: &lt;unregistered&gt;
+annotations: []
+</code></pre>
+
+<h2 id="relationship-to-knowledge-graph-entities">Relationship to Knowledge Graph Entities</h2>
+<p>An object in an extant knowledge graph, such as Wikidata, can be
+viewed as a registered KGPL variable.  For example, the Barack Obama
+URL at Wikidata (Q76) is a uniquely-identified variable that refers at
+any point in time to a particular value. That value has the <strong>Entity</strong>
+type.</p>
+<p>Most KGPL variables will never be registered. Most registered ones
+will never become well-known. But a small fraction will become
+well-known and potentially used by many. The current KGs can be
+thought of as sets of registered and well-known KGPL variables.</p>
+<h2 id="updates">Updates</h2>
+<p>A KGPL variable can be updated whenever its owner decides it is
+appropriate.  Some KGPL variables will be updated by social mechanisms
+-- basically, whenever a human wants to, the variable gets updated.
+   Some will be updated according to a regular schedule, such as a
+   variable that reflects a stock price, which gets updated every
+   minute.  Some will be updated according to external events, such as
+   a temperature sensor reading.  This update policy should be
+   described in the human-readable part of a well-known variable.</p>
+<p>A KGPL variable can be updated by a process that is external to the
+KGPL universe.  That is, external actors (social software, data feeds,
+etc) can publish variables "into" the KGPL variable space.</p>
+<p>But much of the time, a KGPL variable is updated because a KGPL
+program runs and changes the value.  That's great!</p>
+<p>KGPL programs can register interest in their upstream variables. When
+the upstream variable is modified, the KGPL program may decide to
+re-execute.</p>
+<h2 id="permissions">Permissions</h2>
+<p>KGPL variables are owned by a single user and registered at a single
+service.  Unlike values, variables have a "home service".  That
+service might be an internet-wide one, or limited to a particular
+group.</p>
+<p>Unlike value sharing, sharing a previously-private variable with an
+external party can only be done via changing access control to the
+home sharing service.  Variables cannot be transmitted between sharing
+services.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../about/" class="btn btn-neutral float-right" title="About">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../tour/" class="btn btn-neutral" title="A Tour of KGPL"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../tour/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../about/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
