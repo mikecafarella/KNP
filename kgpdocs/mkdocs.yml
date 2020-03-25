@@ -1,0 +1,8 @@
+site_name: Knowledge Graph Programming Language
+nav:
+  - Welcome: index.md
+  - A Tour of KGPL: tour.md
+  - Values: values.md
+  - Variables: variables.md
+  - About: about.md
+theme: readthedocs  
