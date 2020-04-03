@@ -25,6 +25,7 @@ class IR:
         self.KG = KG
         self.id = entity_id
         self.focus = focus
+        self.focus_label = None
         self.properties = {}
 
         if entity_id.startswith("Q"):
@@ -40,6 +41,9 @@ class IR:
         self.label = entity_obj["labels"].get("en", {}).get("value")
         self.desc = entity_obj["descriptions"].get("en", {}).get("value")
         self.aliases = [m["value"] for m in entity_obj["aliases"]["en"]]
+        if self.focus is not None:
+            p = search_entity(self.focus, 'property', limit=1)[0]
+            self.focus_label = p.get("label")
         for property_id, snaks in entity_obj['claims'].items():
             # property = search_entity(property_id, 'property', limit=1)[0]
             if self.focus and property_id != self.focus:
