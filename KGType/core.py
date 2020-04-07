@@ -16,8 +16,6 @@ from .embeddings import wembedder
 vector = wembedder.model.wv.word_vec
 
 
-import sys
-sys.path.append("..")
 from query import IR
 from scorer_algorithms import _cosine_similarity
 
@@ -61,6 +59,8 @@ class Type(ABC):
             return:
                  a float in [0, 1] representing the possbiility of X is a memboer of the type.
         """
+        if hasattr(X, "val"):
+            X = X.val
         if cls.type == 'entity':
             if hasattr(cls, "pos_examples") and not hasattr(cls, "clf"):
                 if not os.path.exists(MODEL_CACHE_DIR + cls.__name__):
@@ -93,7 +93,7 @@ class Type(ABC):
             else:
                 raise ValueError("Unsuported X!")
         elif cls.type == 'built_in':
-            return ValueError("Unimplemented! Not supposed to use this.")
+            pass
         else:
             raise ValueError("Unsuported type!")
         

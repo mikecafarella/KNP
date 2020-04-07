@@ -1,19 +1,40 @@
 from .core import Type
 
 
-class __Image__(Type):
+class Image(Type):
     type = 'built_in'
-    pass
+
+    @classmethod
+    def typefuc(cls, X):
+        raise NotImplementedError("")
 
 
-class __List__(Type):
+class List(Type):
     type = 'built_in'
-    pass
+
+    @classmethod
+    def typefuc(cls, X):
+        raise NotImplementedError("")
 
 
-class __String__(Type):
+class String(Type):
     type = 'built_in'
-    pass
+    
+    @classmethod
+    def typefuc(cls, X):
+        if hasattr(X, "val"):
+            X = X.val
+        return isinstance(X, str)
+
+
+class Integer(Type):
+    type = 'built_in'
+
+    @classmethod
+    def typefuc(cls, X):
+        if hasattr(X, "val"):
+            X = X.val
+        return isinstance(X, int)
 
 
 # class TimeSeries(Type):
