@@ -30,34 +30,7 @@ class Integer(Type):
 
     @classmethod
     def typefunc(cls, X):
-        return isinstance(X, kgpl.KGPLInt)
-
-
-# class TimeSeries(Type):
-    
-    # def __init__(self, source):
-    #     # if isinstance(source, query.IR):
-    #     #     source = source.properties
-    #     #     # IR = source
-    #     #     # if IR.focus is not None:
-    #     #     #     source = IR[IR.focus]
-    #     #     # else:
-    #     #     #     #
-    #     #     #     # For now, let's assume the user won't pass an entire entity to convert to TimeSeries
-    #     #     #     #
-    #     #     #     raise RuntimeError("Should never do this!")
-    #     # elif isinstance(source, Type):
-    #     #     # TODO: the source might already be TimeSeries
-    #     #     source = source.attributes
-    #     # else:
-    #     #     self.overall_score = 0
-    #     #     return
-
-    #     self.attributes, self.overall_score = _match(self.schema, source)
-    #     assert(len(self.attributes.keys()) == len(self.schema.keys()))
-        
-        
-        
+        return isinstance(X, kgpl.KGPLInt)        
 
 class MovieStar(Type):
     type = "entity"
@@ -111,3 +84,28 @@ class Place(Type):
 
 class LifeExpectancy(Type):
     type = "relation"
+
+
+
+# class TimeSeries(Type):
+    
+    # def __init__(self, source):
+    #     # if isinstance(source, query.IR):
+    #     #     source = source.properties
+    #     #     # IR = source
+    #     #     # if IR.focus is not None:
+    #     #     #     source = IR[IR.focus]
+    #     #     # else:
+    #     #     #     #
+    #     #     #     # For now, let's assume the user won't pass an entire entity to convert to TimeSeries
+    #     #     #     #
+    #     #     #     raise RuntimeError("Should never do this!")
+    #     # elif isinstance(source, Type):
+    #     #     # TODO: the source might already be TimeSeries
+    #     #     source = source.attributes
+    #     # else:
+    #     #     self.overall_score = 0
+    #     #     return
+
+    #     self.attributes, self.overall_score = _match(self.schema, source)
+    #     assert(len(self.attributes.keys()) == len(self.schema.keys()))

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import uuid
+import os
+import pickle
 from enum import Enum
 
 import KGType
@@ -38,6 +40,15 @@ class Lineage:
         return "Lineage kind: " + str(self.lineageKind) + ", prev-lineage-id " + str(self.prevLineageId)
 
 class KGPLValue:
+    @staticmethod
+    def LoadFromURL(url):
+        if url.startswith("localhost"):
+            with open("."+url, 'rb') as f:
+                return pickle.load(f)
+        #
+        # TODO: KGPL Sharing Service
+        #
+
     def __init__(self, val, lineage=None):
         self.val = val        
         if lineage is None:
@@ -55,6 +66,17 @@ class KGPLValue:
 
     def __repr__(self):
         return "concretevalue: " + str(self.val) + "\nid: " + str(self.id) + "\nlineage: " + str(self.lineage) + "\nurl: " + str(self.url) + "\nannotations: " + str(self.annotations)
+
+    def register(self, server):
+        self.url = server + "/{}".format(self.id)
+        if server == "localhost":
+            if not os.path.exists(".localhost"):
+                os.mkdir(".localhost")
+            file_name = '.localhost/{}'.format(self.id)
+            with open(file_name, 'wb') as f:
+                pickle.dump(self, f)
+            return self.url
+
 
     def showLineageTree(self, depth=0):
         print(" " * depth + str(self))
@@ -97,10 +119,22 @@ class KGPLFuncValue(KGPLValue):
         return str("KGPLFunc " + str(self.id) + ", " + str(self.val))
 
     def __call__(self, *args, **kwargs):
+        """
+            All args, and kwargs should be of type KGPLValue.
+        """
         f = self.val
         resultval = f(*list(map(lambda x: x.val, args)))
-        execval = Execution(self, args)
-        return kgval(resultval, lineage=Lineage.InitFromExecution(execval.id))
+        #
+        # Todo: what about kwargs?
+        #
+        execval = Execution(self, args, kwargs)
+
+        if not isinstance(resultval, KGPLValue):
+            return kgval(resultval, lineage=Lineage.InitFromExecution(execval.id))
+        else:
+            resultval.lineage = Lineage.InitFromExecution(execval.id)
+            return resultval
+
 
 class KGPLEntityValue(KGPLValue):
     def __init__(self, text_reference, kg="wikidata", lineage=None):
@@ -146,51 +180,74 @@ def kgfunc(f, name=None, lineage=None):
     return KGPLFuncValue(f, name, lineage)
 
 class Execution(KGPLValue):
-    def __init__(self, funcValue, inputs):
-        super().__init__((funcValue, inputs), lineage=Lineage.InitFromInternalOp())
+    def __init__(self, funcValue, args, kwargs):
+        super().__init__((funcValue, args, kwargs), lineage=Lineage.InitFromInternalOp())
 
     def __repr__(self):
         funcVal = self.val[0]
-        inputs = self.val[1]
+        inputs = self.val[1:]
         return "Execution funcValue: " + str(funcVal) + " inputs: " + str(inputs)
 
     def __str__(self):
         return str("__Execution__ " + str(self.id))
 
     def showLineageTree(self, depth=0):
-        funcVal, inputs = self.val
+        funcVal = self.val[0]
+        inputs = self.val[1:]
         print(" " * depth + str(self))
         print(" " * depth + str(self.lineage.lineageKind))
         print()
         ALLVALS[funcVal.id].showLineageTree(depth=depth+2)
         for x in inputs:
             ALLVALS[x.id].showLineageTree(depth=depth+2)
-        
 
-def __kgadd_raw__(x: Integer, y: Integer):
-    return x + y
+# def __kgadd_raw__(x: Integer, y: Integer):
+#     return x + y
 
-kgAdd = kgfunc(__kgadd_raw__)
+# kgAdd = kgfunc(__kgadd_raw__)
 
-KGPLValue.__add__ = lambda x, y: kgAdd(x, y)
+# KGPLValue.__add__ = lambda x, y: kgAdd(x, y)
+
 
 
 class KGPLVariable:
+    @staticmethod
+    def LoadFromURL(url):
+        if url.startswith("localhost"):
+            with open("."+url, 'rb') as f:
+                return pickle.load(f)
+        #
+        # TODO: KGPL Sharing Service
+        #
+
     def __init__(self, val: KGPLValue):
         self.id = uuid.uuid4()
         self.currentvalue = val
         self.owner = "michjc"
         self.url = "<unregistered>"
         self.annotations = []
+        self.historical_vals = [val]
 
     def reassign(self, val: KGPLValue):
         self.currentvalue = val
+        self.historical_vals.append(val)
 
     def __str__(self):
         return str(self.currentvalue)
 
     def __repr__(self):
         return "id: " + str(self.id) + "\nowner: " + str(self.owner) + "\nurl: " + str(self.url) + "\nannotations: " + str(self.annotations) + "\ncurrentvalue: " + str(self.currentvalue)
+
+    def register(self, server):
+        self.url = server + "/{}".format(self.id)
+        if server == "localhost":
+            if not os.path.exists(".localhost"):
+                os.mkdir(".localhost")
+            file_name = '.localhost/{}'.format(self.id)
+            with open(file_name, 'wb') as f:
+                pickle.dump(self, f)
+            return self.url
+        
 
 
 ###################################################
