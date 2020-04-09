@@ -86,7 +86,10 @@ class IR:
         return self.properties.get(key)
 
     def __str__(self):
-        return self.KG + ": " + self.id + " ({})".format(self.label) 
+        if self.focus is None:
+            return self.KG + ": " + self.id + "({})".format(self.label)
+        else:
+            return self.KG + ": " + self.id + "({})".format(self.label) + ".{}({})".format(self.focus, self.focus_label)
 
 
 class Query:

@@ -4,6 +4,7 @@ import uuid
 from enum import Enum
 
 import KGType
+from query import IR
 
 ALLVALS = {}
 ALLFUNCS = {}
@@ -14,12 +15,15 @@ class LineageKinds(Enum):
     InitFromExecution = 3
 
 class Lineage:
+    @staticmethod
     def InitFromInternalOp():
         return Lineage(LineageKinds.InitFromInternalOp, None)
 
+    @staticmethod
     def InitFromPythonVal():
         return Lineage(LineageKinds.InitFromPythonValue, None)
 
+    @staticmethod
     def InitFromExecution(srcExecutionId):
         return Lineage(LineageKinds.InitFromExecution, srcExecutionId)
 
@@ -98,15 +102,32 @@ class KGPLFuncValue(KGPLValue):
         execval = Execution(self, args)
         return kgval(resultval, lineage=Lineage.InitFromExecution(execval.id))
 
+class KGPLEntityValue(KGPLValue):
+    def __init__(self, text_reference, kg="wikidata", lineage=None):
+        """text_reference (str): KG references like Q30."""
+        if kg.lower() != "wikidata":
+            raise RuntimeError("Unimplemented kg {}".format(kg))
+
+        if kg.lower() == "wikidata":
+            entiy_id = text_reference.split(".")[0]
+            property_id = text_reference.split(".")[1] if "." in text_reference else None
+            super().__init__(IR(entiy_id, "wikidata", focus=property_id), lineage)
+
+    def __str__(self):
+        return str("KGPLEntityValue " + str(self.id) + ", " + str(self.val))
+
 
 def kgint(x, lineage=None):
     return KGPLInt(x, lineage)
 
 def kgstr(x, lineage=None):
-    return KGPLValue(x, lineage)
+    return KGPLStr(x, lineage)
 
 def kgfloat(x, lineage=None):
     return KGPLFloat(x, lineage)
+
+def kgplSquare(x):
+    return KGPLValue(x * x)
 
 def kgval(x, lineage=None):
     if isinstance(x, int):
@@ -115,6 +136,9 @@ def kgval(x, lineage=None):
         return kgstr(x, lineage)
     elif isinstance(x, float):
         return kgfloat(x, lineage)
+    #
+    # other values? KGPLEntity
+    #
     else:
         raise Exception("Cannot create KG value for", x)
 
@@ -148,14 +172,7 @@ def __kgadd_raw__(x: Integer, y: Integer):
 
 kgAdd = kgfunc(__kgadd_raw__)
 
-
 KGPLValue.__add__ = lambda x, y: kgAdd(x, y)
-
-
-
-def __kgadd_raw__(x: String, y: String):
-    return "str 1: {} + str 2: {}".format(x, y)
-kgfunc(__kgadd_raw__)
 
 
 class KGPLVariable:
@@ -176,10 +193,6 @@ class KGPLVariable:
         return "id: " + str(self.id) + "\nowner: " + str(self.owner) + "\nurl: " + str(self.url) + "\nannotations: " + str(self.annotations) + "\ncurrentvalue: " + str(self.currentvalue)
 
 
-def kgplSquare(x):
-    return KGPLValue(x * x)
-
-
 ###################################################
 def call_func_by_name(func_name, *args, **kwargs):
     if func_name not in ALLFUNCS:
@@ -198,11 +211,30 @@ def call_func_by_name(func_name, *args, **kwargs):
     return cur_func(*args, **kwargs)
 
 
+def call_func_by_id(id, *args, **kwargs):
+    if id not in ALLVALS:
+        raise ValueError("Function {} not found".format(id))
+    return ALLVALS[id](*args, **kwargs)
+
+
 def get_type_precondition_score(kgpl_func: KGPLFuncValue, *args, **kwargs):
-    #
-    # TODO: what if # of args != # or params required by the function?
-    #
     func = kgpl_func.val
+    #
+    # what if # of args != # or params required by the function? return 0
+    #
+    all_args_count = func.__code__.co_argcount
+    if func.__defaults__ is not None:  #  in case there are no kwargs
+        kwargs_count = len(func.__defaults__)
+    else:
+        kwargs_count = 0
+    positinal_args_count = all_args_count - kwargs_count
+
+    if len(args) != positinal_args_count:
+        return 0
+    
+    if len(kwargs) > kwargs_count:
+        return 0
+
     type_annotations = func.__annotations__
     arg_values = {}
     for k, v in zip(type_annotations.keys(), args):
@@ -214,7 +246,7 @@ def get_type_precondition_score(kgpl_func: KGPLFuncValue, *args, **kwargs):
         type_str = type_annotations[name]
         if hasattr(KGType, type_str):
             KGtype = getattr(KGType, type_str)
-            score = KGtype.typefuc(arg_value)
+            score = KGtype.typefunc(arg_value)
             scores.append(score)
         else:
             raise ValueError("### Undefined type {}".format(type_str))

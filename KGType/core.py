@@ -55,12 +55,14 @@ class Type(ABC):
     def typefunc(cls, X):
         """
             Args:
-                X: could be entity ID (string), or IR.
+                X: a KGPLValue.
             return:
                  a float in [0, 1] representing the possbiility of X is a memboer of the type.
         """
         if hasattr(X, "val"):
             X = X.val
+        else:
+            raise RuntimeError("X must be a KGPLValue!")
         if cls.type == 'entity':
             if hasattr(cls, "pos_examples") and not hasattr(cls, "clf"):
                 if not os.path.exists(MODEL_CACHE_DIR + cls.__name__):
@@ -70,10 +72,12 @@ class Type(ABC):
                     joblib.dump(cls.clf, MODEL_CACHE_DIR + cls.__name__)
                 else:
                     cls.clf = joblib.load(MODEL_CACHE_DIR + cls.__name__)
-            if isinstance(X, str):
-                v = vector(X)
-                return cls.clf.predict_proba([v])[0][1]
-            elif isinstance(X, IR):
+
+            # if isinstance(X, str):
+            #     v = vector(X)
+            #     return cls.clf.predict_proba([v])[0][1]
+            
+            if isinstance(X, IR):
                 if X.focus is not None:
                     # TODO: how about Obama.wife?
                     return 0
@@ -98,80 +102,90 @@ class Type(ABC):
             raise ValueError("Unsuported type!")
         
 
+# def _match(schema: Mapping[str, Type], source) -> Mapping:
+#     """ 
+#         Deprecated.
+#     """
+#     rst = {}
+#     scores = []
+#     # columns = list(df.columns)
+#     # if len(columns) < len(schema):
+#     #     return None, 0
+#     # for s in schema:
+#     #     columns.sort(key=lambda col_name: scorer_algorithms._levenshtein_score(col_name, s))
+#     #     column = columns.pop()
+#     #     rst[s] = df[column]
+#     #     scores.append(scorer_algorithms._levenshtein_score(column, s))
+#     if isinstance(source, query.IR):
+#         possible_matches = {}
+#         for pid, df in source.properties.items():
+#             for column in df.columns:
+#                 possible_matches[pid + "." + str(column)] = df[column]
+
+#         print(possible_matches.keys())
+
+#         source_labels = list(possible_matches.keys())
+
+#         for target_label, _type in schema.items():
+#             if _type is __List__:
+#                 # source_labels = list(possible_matches.keys())
+#                 source_labels.sort(key=lambda source_label: scorer_algorithms._levenshtein_score(source_label, target_label))
+#                 # tmp = source_labels.pop()
+#                 tmp = source_labels[-1]
+#                 rst[target_label] = possible_matches[tmp]
+#                 scores.append(scorer_algorithms._levenshtein_score(tmp, target_label))
+#             elif _type is __String__:
+#                 # source_labels = [l.split(".")[1:] for l in list(possible_matches.keys())]
+#                 source_labels.sort(key=lambda source_label: scorer_algorithms._levenshtein_score(source_label, target_label))
+#                 # tmp = source_labels.pop()
+#                 tmp = source_labels[-1]
+#                 rst[target_label] = tmp
+#                 scores.append(scorer_algorithms._levenshtein_score(tmp, target_label))
+#             else:
+#                 raise ValueError("Not implemented yet")
+#     elif isinstance(source, Type):
+#         if source.schema == schema:
+#             return copy.deepcopy(source.attributes), 1  # TODO: source.overall_score?
+#         # for label, _type in schema.items():
+#         #     pass
+#         raise ValueError("Not implemented yet")
+#     else:
+#         raise ValueError("Not implemented yet")
+#     return rst, sum(scores) / len(scores)
 
 
-def _match(schema: Mapping[str, Type], source) -> Mapping:
-    rst = {}
-    scores = []
-    # columns = list(df.columns)
-    # if len(columns) < len(schema):
-    #     return None, 0
-    # for s in schema:
-    #     columns.sort(key=lambda col_name: scorer_algorithms._levenshtein_score(col_name, s))
-    #     column = columns.pop()
-    #     rst[s] = df[column]
-    #     scores.append(scorer_algorithms._levenshtein_score(column, s))
-    if isinstance(source, query.IR):
-        possible_matches = {}
-        for pid, df in source.properties.items():
-            for column in df.columns:
-                possible_matches[pid + "." + str(column)] = df[column]
-
-        print(possible_matches.keys())
-
-        source_labels = list(possible_matches.keys())
-
-        for target_label, _type in schema.items():
-            if _type is __List__:
-                # source_labels = list(possible_matches.keys())
-                source_labels.sort(key=lambda source_label: scorer_algorithms._levenshtein_score(source_label, target_label))
-                # tmp = source_labels.pop()
-                tmp = source_labels[-1]
-                rst[target_label] = possible_matches[tmp]
-                scores.append(scorer_algorithms._levenshtein_score(tmp, target_label))
-            elif _type is __String__:
-                # source_labels = [l.split(".")[1:] for l in list(possible_matches.keys())]
-                source_labels.sort(key=lambda source_label: scorer_algorithms._levenshtein_score(source_label, target_label))
-                # tmp = source_labels.pop()
-                tmp = source_labels[-1]
-                rst[target_label] = tmp
-                scores.append(scorer_algorithms._levenshtein_score(tmp, target_label))
-            else:
-                raise ValueError("Not implemented yet")
-    elif isinstance(source, Type):
-        if source.schema == schema:
-            return copy.deepcopy(source.attributes), 1  # TODO: source.overall_score?
-        # for label, _type in schema.items():
-        #     pass
-        raise ValueError("Not implemented yet")
-    else:
-        raise ValueError("Not implemented yet")
-    return rst, sum(scores) / len(scores)
+# def check_instanceOf_prop(IR, entity_id: str):
+#     """ 
+#         Deprecated.
+#     """
+#     """ Chechk if the entity represented by IR is an instance of the entity with entity_id."""
+#     PID = 'P31'
+#     if PID not in IR.properties:
+#         return 0
+#     series = IR[PID]["wikidata ID"]
+#     if entity_id in series:
+#         return 1
+#     return 0
 
 
-def check_instanceOf_prop(IR, entity_id: str):
-    """ Chechk if the entity represented by IR is an instance of the entity with entity_id."""
-    PID = 'P31'
-    if PID not in IR.properties:
-        return 0
-    series = IR[PID]["wikidata ID"]
-    if entity_id in series:
-        return 1
-    return 0
+# def check_occupation_prop(IR, entity_id: str):
+#     """ 
+#         Deprecated.
+#     """
+#     PID = "P106"
+#     if PID not in IR.properties:
+#         return 0
+#     series = IR[PID]["wikidata ID"]
+#     if entity_id in series:
+#         return 1
+#     return 0
 
 
-def check_occupation_prop(IR, entity_id: str):
-    PID = "P106"
-    if PID not in IR.properties:
-        return 0
-    series = IR[PID]["wikidata ID"]
-    if entity_id in series:
-        return 1
-    return 0
-
-
-def check_prop(IR, prop_id: str):
-    if IR.focus == prop_id:
-        return 1
-    else:
-        return 0
+# def check_prop(IR, prop_id: str):
+#     """ 
+#         Deprecated.
+#     """
+#     if IR.focus == prop_id:
+#         return 1
+#     else:
+#         return 0

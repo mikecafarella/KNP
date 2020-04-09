@@ -1,11 +1,11 @@
 from .core import Type
-
+import kgpl
 
 class Image(Type):
     type = 'built_in'
 
     @classmethod
-    def typefuc(cls, X):
+    def typefunc(cls, X):
         raise NotImplementedError("")
 
 
@@ -13,7 +13,7 @@ class List(Type):
     type = 'built_in'
 
     @classmethod
-    def typefuc(cls, X):
+    def typefunc(cls, X):
         raise NotImplementedError("")
 
 
@@ -21,20 +21,16 @@ class String(Type):
     type = 'built_in'
     
     @classmethod
-    def typefuc(cls, X):
-        if hasattr(X, "val"):
-            X = X.val
-        return isinstance(X, str)
+    def typefunc(cls, X):
+        return isinstance(X, kgpl.KGPLStr)
 
 
 class Integer(Type):
     type = 'built_in'
 
     @classmethod
-    def typefuc(cls, X):
-        if hasattr(X, "val"):
-            X = X.val
-        return isinstance(X, int)
+    def typefunc(cls, X):
+        return isinstance(X, kgpl.KGPLInt)
 
 
 # class TimeSeries(Type):
