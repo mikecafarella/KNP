@@ -4,6 +4,10 @@ from typing import List, Set, Mapping, Tuple
 import pandas as pd
 import json
 
+import socket
+
+socket.setdefaulttimeout(1)
+
 _API_ROOT = "https://www.wikidata.org/w/api.php"
 
 def search_entity(search_string, type, limit=10):
