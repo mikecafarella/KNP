@@ -8,13 +8,20 @@ class Image(Type):
     def typefunc(cls, X):
         raise NotImplementedError("")
 
-
-class List(Type):
+class Dict(Type):
     type = 'built_in'
 
     @classmethod
     def typefunc(cls, X):
-        raise NotImplementedError("")
+        return isinstance(X, kgpl.KGPLDict)
+
+
+class List(Type, list):
+    type = 'built_in'
+
+    @classmethod
+    def typefunc(cls, X):
+        return isinstance(X, kgpl.KGPLList)
 
 
 class String(Type):
@@ -31,6 +38,7 @@ class Integer(Type):
     @classmethod
     def typefunc(cls, X):
         return isinstance(X, kgpl.KGPLInt)        
+
 
 class MovieStar(Type):
     type = "entity"

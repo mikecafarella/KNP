@@ -15,6 +15,7 @@ class LineageKinds(Enum):
     InitFromInternalOp = 1
     InitFromPythonValue = 2
     InitFromExecution = 3
+    InitFromKG = 4
 
 class Lineage:
     @staticmethod
@@ -109,6 +110,34 @@ class KGPLFloat(KGPLValue):
         return str("KGPLFloat " + str(self.id) + ", " + str(self.val))
 
 
+class KGPLList(KGPLValue, list):
+    def __init__(self, x, lineage=None):
+        x = [item if isinstance(item, KGPLValue) else kgval(item) for item in x]
+        KGPLValue.__init__(self, x, lineage)
+
+    def __str__(self):
+        return str("KGPLList " + str(self.id) + ",\n" + str(self.val))
+
+    def __len__(self):
+        return len(self.val)
+
+    def __getitem__(self, key):
+        # TODO: lineage
+        return self.val[key]
+    
+    def __setitem__(self, key, value):
+        # TODO: lineage
+        self.val[key] = kgval(value)
+
+    def __iter__(self):
+        for e in self.val:
+            yield e   
+
+
+class KGPLDict(KGPLValue, dict):
+    pass
+
+
 class KGPLFuncValue(KGPLValue):
     def __init__(self, f, name, lineage=None):
         super().__init__(f, lineage)
@@ -164,12 +193,17 @@ def kgplSquare(x):
     return KGPLValue(x * x)
 
 def kgval(x, lineage=None):
+    if isinstance(x, KGPLValue):
+        return x
+    
     if isinstance(x, int):
         return kgint(x, lineage)
     elif isinstance(x, str):
         return kgstr(x, lineage)
     elif isinstance(x, float):
         return kgfloat(x, lineage)
+    elif hasattr(x, "__iter__"):
+        return KGPLList(x, lineage)
     #
     # other values? KGPLEntity
     #
