@@ -95,6 +95,11 @@ class KGPLValue:
             file_name = '.localhost/{}'.format(self.id)
             with open(file_name, 'wb') as f:
                 pickle.dump(self, f)
+            # assume: any lineages are shared automatically
+            for lineage in self.lineages:
+                if lineage.KGPLValueID is None:
+                    continue
+                ALLVALS[lineage.KGPLValueID].register(server)
             return self.url
 
 
@@ -323,6 +328,11 @@ class KGPLVariable:
             file_name = '.localhost/{}'.format(self.id)
             with open(file_name, 'wb') as f:
                 pickle.dump(self, f)
+            # assume: any lineages are shared automatically
+            for lineage in self.lineages:
+                if lineage.KGPLValueID is None:
+                    continue
+                ALLVALS[lineage.KGPLValueID].register(server)
             return self.url
         
 
