@@ -1,9 +1,11 @@
 from __future__ import annotations
+from dataclasses import dataclass
 
 import uuid
 import os
 import pickle
 from enum import Enum
+import datetime
 
 import KGType
 from query import IR
@@ -16,8 +18,16 @@ class LineageKinds(Enum):
     InitFromPythonValue = 2
     InitFromExecution = 3
     InitFromKG = 4
+    ExecutionInputs = 5
+    Arguments = 6
+    Code = 7
 
 class Lineage:
+    """
+        Attrs:
+            lineageKind,
+            KGPLValueID
+    """
     @staticmethod
     def InitFromInternalOp():
         return Lineage(LineageKinds.InitFromInternalOp, None)
@@ -29,18 +39,31 @@ class Lineage:
     @staticmethod
     def InitFromExecution(srcExecutionId):
         return Lineage(LineageKinds.InitFromExecution, srcExecutionId)
+    
+    @staticmethod
+    def InitFromKG():
+        #
+        # TODO: do we wanna track which KG and ID here?
+        #
+        return Lineage(LineageKinds.InitFromKG, None)
 
-    def __init__(self, lineageKind, prevLineageId):
+    def __init__(self, lineageKind, KGPLValueID):
         self.lineageKind = lineageKind
-        self.prevLineageId = prevLineageId
+        self.KGPLValueID = KGPLValueID
 
     def __repr__(self):
-        return "Lineage kind: " + str(self.lineageKind) + ", prev-lineage-id: " + str(self.prevLineageId)
+        return "Lineage kind: " + str(self.lineageKind) + ", KGPL ID:" + str(self.KGPLValueID) + "."
 
     def __str__(self):
-        return "Lineage kind: " + str(self.lineageKind) + ", prev-lineage-id " + str(self.prevLineageId)
+        return "Lineage kind: " + str(self.lineageKind) + ", KGPL ID:" + str(self.KGPLValueID) + "."
+
 
 class KGPLValue:
+    """
+        Attrs:
+            val.
+            lineages: a list of Lineage instances.
+    """
     @staticmethod
     def LoadFromURL(url):
         if url.startswith("localhost"):
@@ -50,13 +73,9 @@ class KGPLValue:
         # TODO: KGPL Sharing Service
         #
 
-    def __init__(self, val, lineage=None):
-        self.val = val        
-        if lineage is None:
-            self.lineage = Lineage.InitFromPythonVal()
-        else:
-            self.lineage = lineage
-
+    def __init__(self, val, lineages=None):
+        self.val = val
+        self.lineages = lineages if lineages is not None else [Lineage.InitFromPythonVal()]
         self.id = uuid.uuid4()
         self.url = "<unregistered>"
         self.annotations = []
@@ -66,7 +85,7 @@ class KGPLValue:
         return str(self.val)
 
     def __repr__(self):
-        return "concretevalue: " + str(self.val) + "\nid: " + str(self.id) + "\nlineage: " + str(self.lineage) + "\nurl: " + str(self.url) + "\nannotations: " + str(self.annotations)
+        return "concretevalue: " + str(self.val) + "\nid: " + str(self.id) + "\nlineages: " + ", ".join(self.lineages) + "\nurl: " + str(self.url) + "\nannotations: " + str(self.annotations)
 
     def register(self, server):
         self.url = server + "/{}".format(self.id)
@@ -81,39 +100,42 @@ class KGPLValue:
 
     def showLineageTree(self, depth=0):
         print(" " * depth + str(self))
-        print(" " * depth + str(self.lineage.lineageKind))
+        # print(" " * depth + str(self.lineage.lineageKind))
         print()
-        if self.lineage.prevLineageId is not None:
-            ALLVALS[self.lineage.prevLineageId].showLineageTree(depth=depth+2)
+        for lineage in self.lineages:
+            if lineage.KGPLValueID is not None:
+                print(" " * (depth + 2) + str(lineage.lineageKind))
+                ALLVALS[lineage.KGPLValueID].showLineageTree(depth=depth+2)
 
 
 class KGPLInt(KGPLValue):
-    def __init__(self, x, lineage=None):
-        super().__init__(int(x), lineage)
+    def __init__(self, x, lineages=None):
+        super().__init__(int(x), lineages)
 
     def __str__(self):
         return str("KGPLInt " + str(self.id) + ", " + str(self.val))
 
+
 class KGPLStr(KGPLValue):
-    def __init__(self, x, lineage=None):
-        KGPLValue.__init__(self, str(x), lineage)
+    def __init__(self, x, lineages=None):
+        KGPLValue.__init__(self, str(x), lineages)
 
     def __str__(self):
         return str("KGPLStr " + str(self.id) + ", " + str(self.val))
 
 
 class KGPLFloat(KGPLValue):
-    def __init__(self, x, lineage=None):
-        KGPLValue.__init__(self, float(x), lineage)
+    def __init__(self, x, lineages=None):
+        KGPLValue.__init__(self, float(x), lineages)
 
     def __str__(self):
         return str("KGPLFloat " + str(self.id) + ", " + str(self.val))
 
 
 class KGPLList(KGPLValue, list):
-    def __init__(self, x, lineage=None):
-        x = [item if isinstance(item, KGPLValue) else kgval(item) for item in x]
-        KGPLValue.__init__(self, x, lineage)
+    def __init__(self, x, lineages=None):
+        x = [item if isinstance(item, KGPLValue) else kgval(item, lineages) for item in x]
+        KGPLValue.__init__(self, x, lineages)
 
     def __str__(self):
         return str("KGPLList " + str(self.id) + ",\n" + str(self.val))
@@ -139,8 +161,8 @@ class KGPLDict(KGPLValue, dict):
 
 
 class KGPLFuncValue(KGPLValue):
-    def __init__(self, f, name, lineage=None):
-        super().__init__(f, lineage)
+    def __init__(self, f, name, lineages=None):
+        super().__init__(f, lineages)
         self.name = f.__name__ if name is None else name
         ALLFUNCS.setdefault(self.name, []).append(self)  # could be: self.id
 
@@ -156,84 +178,104 @@ class KGPLFuncValue(KGPLValue):
         #
         # Todo: what about kwargs?
         #
-        execval = Execution(self, args, kwargs)
+        execval = Execution(self, args, kwargs, resultval)
 
         if not isinstance(resultval, KGPLValue):
-            return kgval(resultval, lineage=Lineage.InitFromExecution(execval.id))
+            return kgval(resultval, lineages=[Lineage.InitFromExecution(execval.id)])
         else:
-            resultval.lineage = Lineage.InitFromExecution(execval.id)
+            resultval.lineages = [Lineage.InitFromExecution(execval.id)]
             return resultval
 
 
 class KGPLEntityValue(KGPLValue):
-    def __init__(self, text_reference, kg="wikidata", lineage=None):
+    def __init__(self, text_reference, kg="wikidata", lineages=None):
         """text_reference (str): KG references like Q30."""
+        lineages = lineages if lineages is not None else [Lineage.InitFromKG()]
         if kg.lower() != "wikidata":
             raise RuntimeError("Unimplemented kg {}".format(kg))
 
         if kg.lower() == "wikidata":
             entiy_id = text_reference.split(".")[0]
             property_id = text_reference.split(".")[1] if "." in text_reference else None
-            super().__init__(IR(entiy_id, "wikidata", focus=property_id), lineage)
+            super().__init__(IR(entiy_id, "wikidata", focus=property_id), lineages)
 
     def __str__(self):
         return str("KGPLEntityValue " + str(self.id) + ", " + str(self.val))
 
 
-def kgint(x, lineage=None):
-    return KGPLInt(x, lineage)
+def kgint(x, lineages=None):
+    return KGPLInt(x, lineages)
 
-def kgstr(x, lineage=None):
-    return KGPLStr(x, lineage)
+def kgstr(x, lineages=None):
+    return KGPLStr(x, lineages)
 
-def kgfloat(x, lineage=None):
-    return KGPLFloat(x, lineage)
+def kgfloat(x, lineages=None):
+    return KGPLFloat(x, lineages)
 
 def kgplSquare(x):
     return KGPLValue(x * x)
 
-def kgval(x, lineage=None):
+def kgval(x, lineages=None):
     if isinstance(x, KGPLValue):
         return x
     
     if isinstance(x, int):
-        return kgint(x, lineage)
+        return kgint(x, lineages)
     elif isinstance(x, str):
-        return kgstr(x, lineage)
+        return kgstr(x, lineages)
     elif isinstance(x, float):
-        return kgfloat(x, lineage)
+        return kgfloat(x, lineages)
     elif hasattr(x, "__iter__"):
-        return KGPLList(x, lineage)
+        return KGPLList(x, lineages)
     #
     # other values? KGPLEntity
     #
     else:
         raise Exception("Cannot create KG value for", x)
 
-def kgfunc(f, name=None, lineage=None):
-    return KGPLFuncValue(f, name, lineage)
+
+def kgfunc(f, name=None, lineages=None):
+    return KGPLFuncValue(f, name, lineages)
+
+@dataclass
+class ExecutionDetails:
+    time: datetime.datetime
+    user: str
+    Python_version: str
 
 class Execution(KGPLValue):
-    def __init__(self, funcValue, args, kwargs):
-        super().__init__((funcValue, args, kwargs), lineage=Lineage.InitFromInternalOp())
+    def __init__(self, funcValue, args, kwargs, resultval):
+        # super().__init__((funcValue, args, kwargs), lineage=Lineage.InitFromInternalOp())
+        lineages = [Lineage(LineageKinds.Code, funcValue.id)]
+        lineages += [Lineage(LineageKinds.Arguments, arg.id) for arg in args]
+        for kward, value in kwargs.items():
+            lineages.append(Lineage(LineageKinds.Arguments, value.id))
+        #
+        # TODO: lineage (executionInputs) unimplemented!
+        #
+
+        #
+        # TODO: user??? 
+        #
+        val = ExecutionDetails(datetime.datetime.now(), "yuze", "3.8.1")
+        super().__init__(val, lineages=lineages)
+
 
     def __repr__(self):
-        funcVal = self.val[0]
-        inputs = self.val[1:]
-        return "Execution funcValue: " + str(funcVal) + " inputs: " + str(inputs)
+        return "Execution details: \n" + str(self.val)
 
     def __str__(self):
-        return str("__Execution__ " + str(self.id))
+        return str("Execution " + str(self.id))
 
-    def showLineageTree(self, depth=0):
-        funcVal = self.val[0]
-        inputs = self.val[1:]
-        print(" " * depth + str(self))
-        print(" " * depth + str(self.lineage.lineageKind))
-        print()
-        ALLVALS[funcVal.id].showLineageTree(depth=depth+2)
-        for x in inputs:
-            ALLVALS[x.id].showLineageTree(depth=depth+2)
+    # def showLineageTree(self, depth=0):
+    #     funcVal = self.val[0]
+    #     inputs = self.val[1:]
+    #     print(" " * depth + str(self))
+    #     print(" " * depth + str(self.lineage.lineageKind))
+    #     print()
+    #     ALLVALS[funcVal.id].showLineageTree(depth=depth+2)
+    #     for x in inputs:
+    #         ALLVALS[x.id].showLineageTree(depth=depth+2)
 
 # def __kgadd_raw__(x: Integer, y: Integer):
 #     return x + y
@@ -263,8 +305,9 @@ class KGPLVariable:
         self.historical_vals = [val]
 
     def reassign(self, val: KGPLValue):
+        self.historical_vals.append(self.currentvalue)
         self.currentvalue = val
-        self.historical_vals.append(val)
+        
 
     def __str__(self):
         return str(self.currentvalue)
