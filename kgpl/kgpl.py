@@ -6,6 +6,7 @@ import os
 import pickle
 from enum import Enum
 import datetime
+import pandas as pd
 
 import KGType
 from query import IR
@@ -26,7 +27,8 @@ class Lineage:
     """
         Attrs:
             lineageKind,
-            KGPLValueID
+            KGPLValueID,
+            kg (optional)
     """
     @staticmethod
     def InitFromInternalOp():
@@ -41,15 +43,16 @@ class Lineage:
         return Lineage(LineageKinds.InitFromExecution, srcExecutionId)
     
     @staticmethod
-    def InitFromKG():
+    def InitFromKG(kg=None):
         #
         # TODO: do we wanna track which KG and ID here?
         #
-        return Lineage(LineageKinds.InitFromKG, None)
+        return Lineage(LineageKinds.InitFromKG, None, kg)
 
-    def __init__(self, lineageKind, KGPLValueID):
+    def __init__(self, lineageKind, KGPLValueID, kg=None):
         self.lineageKind = lineageKind
         self.KGPLValueID = KGPLValueID
+        self.kg = kg
 
     def __repr__(self):
         return "Lineage kind: " + str(self.lineageKind) + ", KGPL ID:" + str(self.KGPLValueID) + "."
@@ -68,10 +71,13 @@ class KGPLValue:
     def LoadFromURL(url):
         if url.startswith("localhost"):
             with open("."+url, 'rb') as f:
-                return pickle.load(f)
+                r = pickle.load(f)
+        ALLVALS[r.id] = r
+
         #
         # TODO: KGPL Sharing Service
         #
+        return r
 
     def __init__(self, val, lineages=None):
         self.val = val
@@ -110,7 +116,10 @@ class KGPLValue:
         for lineage in self.lineages:
             if lineage.KGPLValueID is not None:
                 print(" " * (depth + 2) + str(lineage.lineageKind))
-                ALLVALS[lineage.KGPLValueID].showLineageTree(depth=depth+2)
+                if lineage.KGPLValueID not in ALLVALS:
+                    print(" " * (depth + 2) + "KGPLValue({}) is not loaded".format(lineage.KGPLValueID))
+                else:
+                    ALLVALS[lineage.KGPLValueID].showLineageTree(depth=depth+2)
 
 
 class KGPLInt(KGPLValue):
@@ -138,11 +147,12 @@ class KGPLFloat(KGPLValue):
 
 
 class KGPLList(KGPLValue, list):
-    def __init__(self, x, lineages=None):
+    def __init__(self, x=[], lineages=None):
         x = [item if isinstance(item, KGPLValue) else kgval(item, lineages) for item in x]
         KGPLValue.__init__(self, x, lineages)
 
     def __str__(self):
+        # TODO: need fixing
         return str("KGPLList " + str(self.id) + ",\n" + str(self.val))
 
     def __len__(self):
@@ -154,11 +164,20 @@ class KGPLList(KGPLValue, list):
     
     def __setitem__(self, key, value):
         # TODO: lineage
-        self.val[key] = kgval(value)
+        if isinstance(value, KGPLValue):
+            self.val[key] = value
+        else:
+            self.val[key] = kgval(value)
 
     def __iter__(self):
         for e in self.val:
-            yield e   
+            yield e
+    
+    def append(self, value):
+        if isinstance(value, KGPLValue):
+            self.val.append(value)
+        else:
+            self.val.append(kgval(value))
 
 
 class KGPLDict(KGPLValue, dict):
@@ -193,16 +212,20 @@ class KGPLFuncValue(KGPLValue):
 
 
 class KGPLEntityValue(KGPLValue):
-    def __init__(self, text_reference, kg="wikidata", lineages=None):
+    def __init__(self, text_reference, kg:str, lineages=None):
         """text_reference (str): KG references like Q30."""
         lineages = lineages if lineages is not None else [Lineage.InitFromKG()]
-        if kg.lower() != "wikidata":
-            raise RuntimeError("Unimplemented kg {}".format(kg))
 
         if kg.lower() == "wikidata":
             entiy_id = text_reference.split(".")[0]
             property_id = text_reference.split(".")[1] if "." in text_reference else None
             super().__init__(IR(entiy_id, "wikidata", focus=property_id), lineages)
+        elif kg.lower() == "localKG":
+            pass
+        elif kg.lower() == "datacommons":
+            pass
+        else:
+            raise RuntimeError("Unimplemented kg {}".format(kg))
 
     def __str__(self):
         return str("KGPLEntityValue " + str(self.id) + ", " + str(self.val))
@@ -230,6 +253,8 @@ def kgval(x, lineages=None):
         return kgstr(x, lineages)
     elif isinstance(x, float):
         return kgfloat(x, lineages)
+    elif isinstance(x, pd.DataFrame):
+        return KGPLValue(x, lineages)
     elif hasattr(x, "__iter__"):
         return KGPLList(x, lineages)
     #
@@ -296,10 +321,12 @@ class KGPLVariable:
     def LoadFromURL(url):
         if url.startswith("localhost"):
             with open("."+url, 'rb') as f:
-                return pickle.load(f)
+                r = pickle.load(f)
         #
         # TODO: KGPL Sharing Service
         #
+        ALLVALS[r.id] = r
+        return r
 
     def __init__(self, val: KGPLValue):
         self.id = uuid.uuid4()
