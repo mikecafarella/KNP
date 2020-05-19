@@ -8,19 +8,14 @@ from kgpl import KGPLValue, KGPLVariable
 class KNPSStore:
   def __init__(self):
     self.serverURL = "http://107.191.51.32:5000"
+    if not os.path.exists("val/"):
+        os.mkdir("val/")
     if os.path.exists("valueList"):
       infile = open("valueList", "rb")
       self.valueList = pickle.load(infile)
       infile.close()
     else:
       self.valueList = {}
-
-  def __del__(self):
-    print("destructor called")
-    outfile = open("valueList", "wb")
-    pickle.dump(self.valueList, outfile)
-    outfile.close()
-  
 
   def GetValue(self, id: str):
     file_path = os.path.join("val", id)
@@ -31,24 +26,25 @@ class KNPSStore:
       infile.close()
       return val
     else:
+      r = requests.get(os.path.join(self.serverURL, "val", id))
+      if r.status_code == 404:
+        print("value not found")
+        return None
       self.valueList[id] = True
       self.SaveValueList()
-      r = requests.get(os.path.join(self.serverURL, "val", id))
-      response = r.json()
-      value = r[0]['value']
-      outfile = open(id, "wb")
-      pickle.dump(value, outfile)
+      outfile = open(file_path, "wb")
+      outfile.write(r.content)
       outfile.close()
+      infile = open(file_path, "rb")
+      val = pickle.load(infile)
       return val
 
   def StoreValues(self, valueList):
     for value in valueList:
       filename = str(value.id)
-      print("store" + filename)
+      print("store:" + filename)
       self.valueList[filename] = False
       self.SaveValueList()
-      if not os.path.exists("val/"):
-        os.mkdir("val/")
       if not os.path.exists(filename):
         outfile = open(os.path.join("val", filename), "wb")
         pickle.dump(value, outfile)

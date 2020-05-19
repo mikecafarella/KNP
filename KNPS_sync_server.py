@@ -5,27 +5,28 @@ from kgpl import KGPLValue, KGPLVariable
 
 
 app = flask.Flask(__name__)
-if not os.path.exists("/val/"):
-  os.mkdir("/val/")
+if not os.path.exists("val/"):
+  os.mkdir("val/")
 
 
 @app.route("/val/<fileid>", methods=['GET', 'POST'])
 def ReturnValue(fileid):
-  file_path = os.path.join("/val", fileid)
+  file_path = os.path.join("val", fileid)
   if flask.request.method == 'GET':
-    if os.path.exists(file_path):
-      infile = open(file_path, "rb")
-      val = pickle.load(infile)
-      infile.close()
-      return val
-    else: 
-      return "no value found"
-      
-      #TODO: value not found
+    try:
+      print(file_path)
+      print(os.path.exists(file_path))
+      print(os.path.abspath(file_path))
+      return flask.send_file(os.path.abspath(file_path),as_attachment = True)
+    except FileNotFoundError:
+      return flask.abort(404)
   else:
-    flask.request.files["file"].save("a")
-    outfile = open("a", "rb")
-    val = pickle.load(outfile)
-    print(val.__repr__())
-    outfile.close()
-    return "post received"
+    flask.request.files["file"].save(file_path)
+    infile = open(file_path, "rb")
+    val = pickle.load(infile)
+    infile.close()
+    context = {
+        "id" : fileid,
+        "value" : val.__repr__()
+      }
+    return flask.jsonify(**context), 201
