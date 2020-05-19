@@ -39,8 +39,9 @@ class KNPSStore:
       val = pickle.load(infile)
       return val
 
-  def StoreValues(self, valueList):
-    for value in valueList:
+  def StoreValues(self, inputList):
+    # inputList is a list of KGPLValue ojects
+    for value in inputList:
       filename = str(value.id)
       print("store:" + filename)
       self.valueList[filename] = False
