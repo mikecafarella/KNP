@@ -46,7 +46,7 @@ class KNPSStore:
       print("store:" + filename)
       self.valueList[filename] = False
       self.SaveValueList()
-      if not os.path.exists(filename):
+      if not os.path.exists(os.path.join("val",filename)):
         outfile = open(os.path.join("val", filename), "wb")
         pickle.dump(value, outfile)
         outfile.close()
