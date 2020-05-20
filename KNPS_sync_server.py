@@ -14,9 +14,6 @@ def ReturnValue(fileid):
   file_path = os.path.join("val", fileid)
   if flask.request.method == 'GET':
     try:
-      print(file_path)
-      print(os.path.exists(file_path))
-      print(os.path.abspath(file_path))
       return flask.send_file(os.path.abspath(file_path),as_attachment = True)
     except FileNotFoundError:
       return flask.abort(404)
@@ -28,5 +25,24 @@ def ReturnValue(fileid):
     context = {
         "id" : fileid,
         "value" : val.__repr__()
+      }
+    return flask.jsonify(**context), 201
+
+@app.route("/var/<fileid>", methods=['GET', 'POST'])
+def ReturnVariable(fileid):
+  file_path = os.path.join("var", fileid)
+  if flask.request.method == 'GET':
+    try:
+      return flask.send_file(os.path.abspath(file_path),as_attachment = True)
+    except FileNotFoundError:
+      return flask.abort(404)
+  else:
+    flask.request.files["file"].save(file_path)
+    infile = open(file_path, "rb")
+    var = pickle.load(infile)
+    infile.close()
+    context = {
+        "id" : fileid,
+        "value" : var.__repr__()
       }
     return flask.jsonify(**context), 201

@@ -1,9 +1,8 @@
 import pickle
 import os
 import requests
-import json
 from datetime import datetime
-from kgpl import KGPLValue, KGPLVariable
+import kgpl
 
 class KNPSStore:
   def __init__(self):
@@ -28,7 +27,7 @@ class KNPSStore:
     else:
       r = requests.get(os.path.join(self.serverURL, "val", id))
       if r.status_code == 404:
-        print("value not found")
+        print("value {} not found".format(id))
         return None
       self.valueList[id] = True
       self.SaveValueList()
@@ -40,13 +39,12 @@ class KNPSStore:
       return val
 
   def StoreValues(self, inputList):
-    # inputList is a list of KGPLValue ojects
     for value in inputList:
       filename = str(value.id)
-      print("store:" + filename)
+      print("storing:" + filename)
       self.valueList[filename] = False
       self.SaveValueList()
-      if not os.path.exists(os.path.join("val",filename)):
+      if not os.path.exists(os.path.join("val", filename)):
         outfile = open(os.path.join("val", filename), "wb")
         pickle.dump(value, outfile)
         outfile.close()
@@ -63,26 +61,52 @@ class KNPSStore:
     
 
   def GetVariale(self, varName: str):
+    """Return variable given the varName of it. If it can't be found locally and remotely, return None"""
     # suppose ttl for every variable is 30 sec
+    filepath = os.path.join("var", varName)
     if varName in self.varTimestamp:
       if (datetime.now()-self.varTimestamp[varName]).seconds<30:
         # local
-        pass
+        infile = open(filepath, "rb")
+        variable = pickle.load(infile)
+        infile.close()
+        return variable
       else:
         # remote
-        pass
-      varTimestamp[varName] = datetime.now()
+        var = self.DownloadVariableFile(self,varName)
+        return var
     else:
-      varTimestamp[varName] = datetime.now()
       # remote
+      var = self.DownloadVariableFile(self,varName)
+      return var
 
 
-  def SetVariable(self, varName, Value):
-    self.varTimestamp[varName] = datetime.now()
-    pass
+  def SetVariable(self, varName, Value, Config = None):
+    """ Here the value is a KGPLclass """
+    variable = self.GetVariale(varName)
+    variable.reassign(Value)
+    filepath = os.path.join("var", varName)
+    outfile = open(filepath, "wb");
+    pickle.dump(variable, outfile)
+    outfile.clode()
+    files = {'file': open(filepath, "rb")}
+    r = requests.post(self.serverURL + "/" + filepath, files=files)
 
   def SaveValueList(self):
     outfile = open("valueList", "wb")
     pickle.dump(self.valueList, outfile)
     outfile.close()
-    
+  
+  def DownloadVariableFile(self, varName):
+    filepath = os.path.join("var", varName)
+    r = requests.get(self.serverURL + "/var/" + varName)
+    if r.status_code == 404:
+      print("variable {} not found".format(varName))
+      return None
+    self.varTimestamp[varName] = datetime.now()
+    outfile = open(filepath, "wb")
+    outfile.write(r.content)
+    outfile.close()
+    infile = open(filepath, "rb")
+    var = pickle.load(infile)
+    return var
