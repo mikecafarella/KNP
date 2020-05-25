@@ -12,7 +12,7 @@ from query import IR
 
 ALLVALS = {}
 ALLFUNCS = {}
-store = KNPSStore.KNPSStore()
+store = KNPSStore.KNPSStore('http://107.191.51.32:5000')
 
 class LineageKinds(Enum):
     InitFromInternalOp = 1
@@ -280,6 +280,9 @@ class KGPLVariable:
         self.url = "<unregistered>"
         self.annotations = []
         self.historical_vals = [(time.time(), val)]
+
+    def registerVariable(self):
+        self.varName = store.RegisterVariable(self.currentvalue, self.historical_vals[0][0])
 
     def reassign(self, val: KGPLValue):
         self.currentvalue = val
