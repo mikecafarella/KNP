@@ -114,7 +114,7 @@ class KNPSStore:
   def SetVariable(self, varName, value, timestamp, Config = None):
     """ Here the value is a KGPLclass and in current verion, the value need to be stored ahead to access it later"""
     
-    variable = self.GetVariale(varName)
+    variable = self.GetVariable(varName)
     variable.value = value
     filepath = os.path.join("var", varName)
     outfile = open(filepath, "w");
