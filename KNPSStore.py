@@ -89,7 +89,7 @@ class KNPSStore:
     outfile.close()
     return filename
 
-  def GetVariale(self, varName: str):
+  def GetVariable(self, varName: str):
     """Return variable given the varName of it. If it can't be found locally and remotely, return None"""
     # suppose ttl for every variable is 30 sec
     filepath = os.path.join("var", varName)
