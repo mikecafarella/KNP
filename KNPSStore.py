@@ -117,8 +117,8 @@ class KNPSStore:
     variable = self.GetVariale(varName)
     variable.value = value
     filepath = os.path.join("var", varName)
-    outfile = open(filepath, "wb");
-    pickle.dump(variable, outfile)
+    outfile = open(filepath, "w");
+    outfile.write(jsonpickle.encode(variable))
     outfile.close()
     files = {'file': open(filepath, "rb")}
     r = requests.put(self.serverURL + "/" + filepath, files=files)
