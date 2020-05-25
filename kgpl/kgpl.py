@@ -14,6 +14,17 @@ ALLVALS = {}
 ALLFUNCS = {}
 store = KNPSStore.KNPSStore('http://107.191.51.32:5000')
 
+def getValue(id):
+    return store.GetValue(id)
+
+def getVariable(varName):
+    if 'var/' in varName:
+        if varName[0:3] == 'var':
+            return store.GetVariable(varName[4:])
+    else:
+        return store.GetVariable(varName)
+
+
 class LineageKinds(Enum):
     InitFromInternalOp = 1
     InitFromPythonValue = 2
@@ -98,11 +109,6 @@ class KGPLValue:
         if self.lineage.prevLineageId is not None:
             ALLVALS[self.lineage.prevLineageId].showLineageTree(depth=depth+2)
 
-def getValue(id):
-    return store.GetValue(id)
-
-def getVariable(varName):
-    return store.GetVariable(varName)
 
 class KGPLInt(KGPLValue):
     def __init__(self, x, lineage=None):
@@ -110,6 +116,7 @@ class KGPLInt(KGPLValue):
 
     def __str__(self):
         return str("KGPLInt " + str(self.id) + ", " + str(self.val))
+
 
 class KGPLStr(KGPLValue):
     def __init__(self, x, lineage=None):
@@ -281,43 +288,30 @@ class KGPLVariable:
         self.annotations = []
         self.historical_vals = [(time.time(), val)]
 
-    def registerVariable(self):
-        self.varName = store.RegisterVariable(self.currentvalue, self.historical_vals[0][0])
-
-    def reassign(self, val: KGPLValue):
-        self.currentvalue = val
-        timestamp = time.time()
-        self.historical_vals.append((timestamp, val))
-        store.setVariable(self.varName, val, timestamp)
-
     def __str__(self):
         return str(self.currentvalue)
 
     def __repr__(self):
         return "id: " + str(self.id) + "\nowner: " + str(self.owner) + "\nurl: " + str(self.url) + "\nannotations: " + str(self.annotations) + "\ncurrentvalue: " + str(self.currentvalue)
 
-    def register(self, server):
-        self.url = server + "/{}".format(self.id)
-        if server == "localhost":
-            store.StoreVariables([self])
+    def registerVariable(self):
+        self.varName = store.RegisterVariable(self.currentvalue, self.historical_vals[0][0])
+
+    def initOrUpdate(self, varName):
+        if 'var/' in varName:
+            if varName[0:3] == 'var':
+                self = getVariable(varName[4:])
         else:
-            store.PushVariables()
-        return self.url
-        '''self.url = server + "/{}".format(self.id)
-        if server == "localhost":
-            if not os.path.exists(".localhost"):
-                os.mkdir(".localhost")
-            file_name = '.localhost/{}'.format(self.id)
-            with open(file_name, 'wb') as f:
-                pickle.dump(self, f)
-            return self.url
-        else:
-             if not os.path.exists(server):
-                os.mkdir(server)
-            file_name = server + "/{}".format(self.id)
-            with open(file_name, 'wb') as f:
-                pickle.dump(self, f)
-            return self.url'''
+            self = getVariable(varName)
+        if not self:
+            self.registerVariable()
+        return self
+
+    def reassign(self, val: KGPLValue):
+        self.currentvalue = val
+        timestamp = time.time()
+        self.historical_vals.append((timestamp, val))
+        store.SetVariable(self.varName, val, timestamp)
         
 
 
