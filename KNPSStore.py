@@ -89,7 +89,7 @@ class KNPSStore:
     outfile.close()
     return filename
 
-  def GetVariale(self, varName: str):
+  def GetVariable(self, varName: str):
     """Return variable given the varName of it. If it can't be found locally and remotely, return None"""
     # suppose ttl for every variable is 30 sec
     filepath = os.path.join("var", varName)
@@ -114,11 +114,11 @@ class KNPSStore:
   def SetVariable(self, varName, value, timestamp, Config = None):
     """ Here the value is a KGPLclass and in current verion, the value need to be stored ahead to access it later"""
     
-    variable = self.GetVariale(varName)
+    variable = self.GetVariable(varName)
     variable.value = value
     filepath = os.path.join("var", varName)
-    outfile = open(filepath, "wb");
-    pickle.dump(variable, outfile)
+    outfile = open(filepath, "w");
+    outfile.write(jsonpickle.encode(variable))
     outfile.close()
     files = {'file': open(filepath, "rb")}
     r = requests.put(self.serverURL + "/" + filepath, files=files)
