@@ -97,9 +97,11 @@ class KNPSStore:
             return filename
         else:
             variable = kgpl.KGPLVariable(value)
-            variable.historical_vals[0][0] = timestamp
+            variable.historical_vals[0] = (timestamp, variable.historical_vals[0][1])
+            print(variable.historical_vals)
             list = os.listdir("var/")
-            filename = "K" + len(list)
+            filename = "K" + str(len(list))
+            variable.varName = filename
             path = os.path.join("var", filename)
             outfile = open(path, "w")
             outfile.write(jsonpickle.encode(variable))
@@ -156,10 +158,15 @@ class KNPSStore:
             else:
                 var.value = value
                 var.historical_vals.append((timestamp, value))
+                filepath = os.path.join("var", varName)
+                outfile = open(filepath, "w")
+                outfile.write(jsonpickle.encode(var))
+                outfile.close()
                 return var
         filepath = os.path.join("var", varName)
+        print(filepath)
         r = requests.put(self.serverURL + "/" + filepath, json = {"value": jsonpickle.encode(value), "timestamp": timestamp})
-        outfile = open(file_path, "w")
+        outfile = open(filepath, "w")
         outfile.write(r.json()["var"])
         outfile.close()
         self.varTimestamp[varName] = timestamp
