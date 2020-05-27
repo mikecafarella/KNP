@@ -156,7 +156,7 @@ class KNPSStore:
             if not var:
                 return None
             else:
-                var.value = value
+                var.currentvalue = value
                 var.historical_vals.append((timestamp, value))
                 filepath = os.path.join("var", varName)
                 outfile = open(filepath, "w")
