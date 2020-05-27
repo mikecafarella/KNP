@@ -1,16 +1,30 @@
 from __future__ import annotations
 
 import uuid
+import time
 import os
 import pickle
 from enum import Enum
 
+import KNPSStore
 import KGType
 from query import IR
 
 ALLVALS = {}
 ALLFUNCS = {}
-        
+store = KNPSStore.KNPSStore('http://107.191.51.32:5000')
+
+def getValue(id):
+    return store.GetValue(id)
+
+def getVariable(varName):
+    if 'var/' in varName:
+        if varName[0:3] == 'var':
+            return store.GetVariable(varName[4:])
+    else:
+        return store.GetVariable(varName)
+
+
 class LineageKinds(Enum):
     InitFromInternalOp = 1
     InitFromPythonValue = 2
@@ -71,13 +85,22 @@ class KGPLValue:
     def register(self, server):
         self.url = server + "/{}".format(self.id)
         if server == "localhost":
+            store.StoreValues([self])
+        else:
+            store.PushValues()
+        return self.url
+
+        '''self.url = server + "/{}".format(self.id)
+        if server == "localhost":
             if not os.path.exists(".localhost"):
                 os.mkdir(".localhost")
             file_name = '.localhost/{}'.format(self.id)
             with open(file_name, 'wb') as f:
                 pickle.dump(self, f)
-            return self.url
+            return self.url'''
 
+    def showUrl(self):
+        print(self.url)
 
     def showLineageTree(self, depth=0):
         print(" " * depth + str(self))
@@ -93,6 +116,7 @@ class KGPLInt(KGPLValue):
 
     def __str__(self):
         return str("KGPLInt " + str(self.id) + ", " + str(self.val))
+
 
 class KGPLStr(KGPLValue):
     def __init__(self, x, lineage=None):
@@ -173,7 +197,9 @@ class KGPLEntityValue(KGPLValue):
 
         if kg.lower() == "wikidata":
             entiy_id = text_reference.split(".")[0]
+            #print(entiy_id)
             property_id = text_reference.split(".")[1] if "." in text_reference else None
+            #print(property_id)
             super().__init__(IR(entiy_id, "wikidata", focus=property_id), lineage)
 
     def __str__(self):
@@ -243,7 +269,6 @@ class Execution(KGPLValue):
 # KGPLValue.__add__ = lambda x, y: kgAdd(x, y)
 
 
-
 class KGPLVariable:
     @staticmethod
     def LoadFromURL(url):
@@ -256,15 +281,12 @@ class KGPLVariable:
 
     def __init__(self, val: KGPLValue):
         self.id = uuid.uuid4()
+        self.varName = ""
         self.currentvalue = val
         self.owner = "michjc"
         self.url = "<unregistered>"
         self.annotations = []
-        self.historical_vals = [val]
-
-    def reassign(self, val: KGPLValue):
-        self.currentvalue = val
-        self.historical_vals.append(val)
+        self.historical_vals = [(time.time(), val)]
 
     def __str__(self):
         return str(self.currentvalue)
@@ -272,15 +294,24 @@ class KGPLVariable:
     def __repr__(self):
         return "id: " + str(self.id) + "\nowner: " + str(self.owner) + "\nurl: " + str(self.url) + "\nannotations: " + str(self.annotations) + "\ncurrentvalue: " + str(self.currentvalue)
 
-    def register(self, server):
-        self.url = server + "/{}".format(self.id)
-        if server == "localhost":
-            if not os.path.exists(".localhost"):
-                os.mkdir(".localhost")
-            file_name = '.localhost/{}'.format(self.id)
-            with open(file_name, 'wb') as f:
-                pickle.dump(self, f)
-            return self.url
+    def registerVariable(self):
+        self.varName = store.RegisterVariable(self.currentvalue, self.historical_vals[0][0])
+
+    def initOrUpdate(self, varName):
+        if 'var/' in varName:
+            if varName[0:3] == 'var':
+                self = getVariable(varName[4:])
+        else:
+            self = getVariable(varName)
+        if not self:
+            self.registerVariable()
+        return self
+
+    def reassign(self, val: KGPLValue):
+        self.currentvalue = val
+        timestamp = time.time()
+        self.historical_vals.append((timestamp, val))
+        store.SetVariable(self.varName, val, timestamp)
         
 
 
