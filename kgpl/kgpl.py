@@ -155,11 +155,76 @@ class KGPLList(KGPLValue, list):
 
     def __iter__(self):
         for e in self.val:
-            yield e   
+            yield e
+
+
+class KGPLTuple(KGPLValue, tuple):
+    def __init__(self, x, lineage=None):
+        temp = ()
+        for item in x:
+            if isinstance(item, KGPLValue):
+                temp += (item,)
+            else:
+                temp += (kgval(item),)
+        x = temp
+        KGPLValue.__init__(self, x, lineage)
+
+    def __str__(self):
+        return str("KGPLTuple " + str(self.id) + ",\n" + str(self.val))
+
+    def __len__(self):
+        return len(self.val)
+
+    def __getitem__(self, key):
+        # TODO: lineage
+        return self.val[key]
+
+    def __setitem__(self, key, value):
+        # TODO: lineage
+        self.val[key] = kgval(value)
+
+    def __iter__(self):
+        for e in self.val:
+            yield e
+
+    def isTuple(self):
+        pass
 
 
 class KGPLDict(KGPLValue, dict):
-    pass
+    # Require modification
+    def __init__(self, x, lineage=None):
+        temp = {}
+        for key, value in x.items():
+            if isinstance(key, KGPLValue) and isinstance(value, KGPLValue):
+                temp[key] = value
+            elif isinstance(key, KGPLValue):
+                temp[key] = kgval(value)
+            else:
+                temp[kgval(key)] = kgval(value)
+        x = temp
+        KGPLValue.__init__(self, x, lineage)
+
+    def __str__(self):
+        return str("KGPLDictionary " + str(self.id) + ",\n" + str(self.val))
+
+    def __len__(self):
+        return len(self.val)
+
+    def __getitem__(self, key):
+        # TODO: lineage
+        return self.val[key]
+
+    def __setitem__(self, key, value):
+        # TODO: lineage
+        self.val[key] = kgval(value)
+
+    def __iter__(self):
+        for e in self.val:
+            yield e
+
+    def isDictionary(self):
+        pass
 
 
 class KGPLFuncValue(KGPLValue):
@@ -228,6 +293,10 @@ def kgval(x, lineage=None):
         return kgstr(x, lineage)
     elif isinstance(x, float):
         return kgfloat(x, lineage)
+    elif hasattr(x, "isDictionary"):
+        return KGPLDict(x, lineage)
+    elif hasattr(x, "isTuple"):
+        return KGPLTuple(x, lineage)
     elif hasattr(x, "__iter__"):
         return KGPLList(x, lineage)
     #
@@ -312,6 +381,9 @@ class KGPLVariable:
         timestamp = time.time()
         self.historical_vals.append((timestamp, val))
         store.SetVariable(self.varName, val, timestamp)
+
+    def viewHistory(self):
+        print(self.historical_vals)
         
 
 
