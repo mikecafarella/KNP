@@ -90,15 +90,6 @@ class KGPLValue:
             store.PushValues()
         return self.url
 
-        '''self.url = server + "/{}".format(self.id)
-        if server == "localhost":
-            if not os.path.exists(".localhost"):
-                os.mkdir(".localhost")
-            file_name = '.localhost/{}'.format(self.id)
-            with open(file_name, 'wb') as f:
-                pickle.dump(self, f)
-            return self.url'''
-
     def showUrl(self):
         print(self.url)
 
@@ -192,7 +183,6 @@ class KGPLTuple(KGPLValue, tuple):
 
 
 class KGPLDict(KGPLValue, dict):
-    # Require modification
     def __init__(self, x, lineage=None):
         temp = {}
         for key, value in x.items():
