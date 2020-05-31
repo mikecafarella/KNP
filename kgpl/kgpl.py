@@ -12,7 +12,7 @@ from query import IR
 
 ALLVALS = {}
 ALLFUNCS = {}
-store = KNPSStore.KNPSStore('http://107.191.51.32:5000')
+store = KNPSStore.KNPSStore('http://lasagna.eecs.umich.edu:8000')
 
 def getValue(id):
     return store.GetValue(id)
@@ -217,6 +217,20 @@ class KGPLDict(KGPLValue, dict):
         pass
 
 
+class KGPLWiki(KGPLValue):
+    def __init__(self, x, lineage=None):
+        KGPLValue.__init__(self, x, lineage)
+        self.IR = IR(x, 'wikidata')
+        self.entity_id = x
+        self.description = self.IR.desc
+        self.name = self.IR.label
+        self.properties = self.IR.properties
+
+    def __str__(self):
+        return str("KGPLWikiData " + str(self.id) + ",\n Name: " + str(self.name) +
+                   ",\n Entity_id: " + str(self.entity_id) + ",\n Description: " + self.description)
+
+
 class KGPLFuncValue(KGPLValue):
     def __init__(self, f, name, lineage=None):
         super().__init__(f, lineage)
@@ -339,7 +353,7 @@ class KGPLVariable:
         #
 
     def __init__(self, val: KGPLValue):
-        self.id = uuid.uuid4()
+        self.id = None
         self.varName = ""
         self.currentvalue = val
         self.owner = "michjc"
