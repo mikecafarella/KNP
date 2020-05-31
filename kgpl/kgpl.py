@@ -381,6 +381,7 @@ class KGPLVariable:
         return self
 
     def reassign(self, val: KGPLValue):
+        print("Before: Type of val:" + str(type(val)))
         self.currentvalue = val
         timestamp = time.time()
         self.historical_vals.append((timestamp, val))
