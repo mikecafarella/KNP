@@ -12,7 +12,8 @@ from query import IR
 
 ALLVALS = {}
 ALLFUNCS = {}
-store = KNPSStore.KNPSStore('http://lasagna.eecs.umich.edu:8000')
+store = KNPSStore.KNPSStore('http://lasagna.eecs.umich.edu:4000')
+wikiMap = {}
 
 def getValue(id):
     return store.GetValue(id)
@@ -22,7 +23,10 @@ def getVariable(varName):
         if varName[0:3] == 'var':
             return store.GetVariable(varName[4:])
     else:
-        return store.GetVariable(varName)
+        if varName[0] == "Q":
+            return store.GetVariable(wikiMap[varName])
+        else:
+            return store.GetVariable(varName)
 
 
 class LineageKinds(Enum):
@@ -169,10 +173,6 @@ class KGPLTuple(KGPLValue, tuple):
     def __getitem__(self, key):
         # TODO: lineage
         return self.val[key]
-
-    def __setitem__(self, key, value):
-        # TODO: lineage
-        self.val[key] = kgval(value)
 
     def __iter__(self):
         for e in self.val:
@@ -368,7 +368,10 @@ class KGPLVariable:
         return "id: " + str(self.id) + "\nowner: " + str(self.owner) + "\nurl: " + str(self.url) + "\nannotations: " + str(self.annotations) + "\ncurrentvalue: " + str(self.currentvalue)
 
     def registerVariable(self):
-        self.varName = store.RegisterVariable(self.currentvalue, self.historical_vals[0][0])
+        self.varName = store.RegisterVariable(
+            self.currentvalue, self.historical_vals[0][0])
+        if isinstance(self.currentvalue, KGPLWiki):
+            wikiMap[self.currentvalue.entity_id] = self.varName
 
     def initOrUpdate(self, varName):
         if 'var/' in varName:
@@ -381,7 +384,6 @@ class KGPLVariable:
         return self
 
     def reassign(self, val: KGPLValue):
-        print("Before: Type of val:" + str(type(val)))
         self.currentvalue = val
         timestamp = time.time()
         self.historical_vals.append((timestamp, val))
