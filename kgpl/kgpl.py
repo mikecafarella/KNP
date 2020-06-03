@@ -153,7 +153,7 @@ class KGPLList(KGPLValue, list):
             yield e
 
 
-class KGPLTuple(KGPLValue, tuple):
+class KGPLTuple(KGPLValue):
     def __init__(self, x, lineage=None):
         temp = ()
         for item in x:
