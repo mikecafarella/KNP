@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-engine = create_engine('sqlite:///KGPLData.db', echo=True)
+engine = create_engine('sqlite:///KGPLData.db', echo=False)
 Base = declarative_base(bind=engine)
 # ----------
 
@@ -78,7 +78,20 @@ class Lineage:
             self.lineageKind) + ", prev-lineage-id " + str(self.prevLineageId)
 
 
-class KGPLValue:
+class KGPLValue(Base):
+    __tablename__ = 'KGPLValue'
+    id = Column(UnicodeText, primary_key=True)
+    val = Column(PickleType)
+    lineage = Column(PickleType, nullable=True)
+    url = Column(UnicodeText)
+    annotations = Column(UnicodeText)
+    discriminator = Column(String(20))
+
+    __mapper_args__ = {
+        'polymorphic_on': discriminator,
+        'polymorphic_identity': 'KGPLValue'
+    }
+
     @staticmethod
     def LoadFromURL(url):
         if url.startswith("localhost"):
@@ -131,28 +144,26 @@ class KGPLValue:
                 depth=depth + 2)
 
 
-class KGPLInt(KGPLValue, Base):
-    __tablename__ = 'KGPLInt'
-    id = Column(UnicodeText, primary_key=True)
-    val = Column(Integer)
-    lineage = Column(PickleType, nullable=True)
-    url = Column(UnicodeText)
-    annotations = Column(UnicodeText)
+class KGPLInt(KGPLValue):
+    __mapper_args__ = {
+        'polymorphic_identity': 'KGPLInt'
+    }
+
+    # love = Column(Integer, nullable=True)
 
     def __init__(self, x, lineage=None):
+        # self.love = 42
+
         super().__init__(int(x), lineage)
 
     def __str__(self):
         return str("KGPLInt " + str(self.id) + ", " + str(self.val))
 
 
-class KGPLStr(KGPLValue, Base):
-    __tablename__ = 'KGPLStr'
-    id = Column(UnicodeText, primary_key=True)
-    val = Column(UnicodeText)
-    lineage = Column(PickleType, nullable=True)
-    url = Column(UnicodeText)
-    annotations = Column(UnicodeText)
+class KGPLStr(KGPLValue):
+    __mapper_args__ = {
+        'polymorphic_identity': 'KGPLStr'
+    }
 
     def __init__(self, x, lineage=None):
         KGPLValue.__init__(self, str(x), lineage)
@@ -161,13 +172,10 @@ class KGPLStr(KGPLValue, Base):
         return str("KGPLStr " + str(self.id) + ", " + str(self.val))
 
 
-class KGPLFloat(KGPLValue, Base):
-    __tablename__ = 'KGPLFloat'
-    id = Column(UnicodeText, primary_key=True)
-    val = Column(Float)
-    lineage = Column(PickleType, nullable=True)
-    url = Column(UnicodeText)
-    annotations = Column(UnicodeText)
+class KGPLFloat(KGPLValue):
+    __mapper_args__ = {
+        'polymorphic_identity': 'KGPLFloat'
+    }
 
     def __init__(self, x, lineage=None):
         KGPLValue.__init__(self, float(x), lineage)
@@ -176,13 +184,10 @@ class KGPLFloat(KGPLValue, Base):
         return str("KGPLFloat " + str(self.id) + ", " + str(self.val))
 
 
-class KGPLList(KGPLValue, list, Base):
-    __tablename__ = 'KGPLList'
-    id = Column(UnicodeText, primary_key=True)
-    val = Column(PickleType)
-    lineage = Column(PickleType, nullable=True)
-    url = Column(UnicodeText)
-    annotations = Column(UnicodeText)
+class KGPLList(KGPLValue, list):
+    __mapper_args__ = {
+        'polymorphic_identity': 'KGPLList'
+    }
 
     def __init__(self, x, lineage=None):
         x = [item if isinstance(item, KGPLValue) else kgval(item) for item in
@@ -209,12 +214,9 @@ class KGPLList(KGPLValue, list, Base):
 
 
 class KGPLTuple(KGPLValue, Base):
-    __tablename__ = 'KGPLTuple'
-    id = Column(UnicodeText, primary_key=True)
-    val = Column(PickleType)
-    lineage = Column(PickleType, nullable=True)
-    url = Column(UnicodeText)
-    annotations = Column(UnicodeText)
+    __mapper_args__ = {
+        'polymorphic_identity': 'KGPLTuple'
+    }
 
     def __init__(self, x, lineage=None):
         temp = ()
@@ -245,12 +247,9 @@ class KGPLTuple(KGPLValue, Base):
 
 
 class KGPLDict(KGPLValue, dict, Base):
-    __tablename__ = 'KGPLDict'
-    id = Column(UnicodeText, primary_key=True)
-    val = Column(PickleType)
-    lineage = Column(PickleType, nullable=True)
-    url = Column(UnicodeText)
-    annotations = Column(UnicodeText)
+    __mapper_args__ = {
+        'polymorphic_identity': 'KGPLDict'
+    }
 
     def __init__(self, x, lineage=None):
         temp = {}
@@ -286,18 +285,19 @@ class KGPLDict(KGPLValue, dict, Base):
         pass
 
 
+'''
 class KGPLWiki(KGPLValue, Base):
     __tablename__ = 'KGPLWiki'
     id = Column(UnicodeText, primary_key=True)
-    val = Column(Unicode) # format is Q100000
+    val = Column(Unicode)  # format is Q100000
     lineage = Column(PickleType, nullable=True)
     url = Column(UnicodeText)
     annotations = Column(UnicodeText, nullable=True)
     IR = Column(PickleType, nullable=True)
     entity_id = Column(Unicode)
     description = Column(Unicode, nullable=True)
-    name = Column(Unicode,nullable=True)
-    properties = Column(PickleType,nullable=True)
+    name = Column(Unicode, nullable=True)
+    properties = Column(PickleType, nullable=True)
 
     def __init__(self, x, lineage=None):
         KGPLValue.__init__(self, x, lineage)
@@ -312,9 +312,15 @@ class KGPLWiki(KGPLValue, Base):
             "KGPLWikiData " + str(self.id) + ",\n Name: " + str(self.name) +
             ",\n Entity_id: " + str(
                 self.entity_id) + ",\n Description: " + self.description)
+'''
 
 
 class KGPLFuncValue(KGPLValue):
+    __mapper_args__ = {
+        'polymorphic_identity': 'KGPLFuncValue'
+    }
+    KGPLFuncValue_name = Column(PickleType, nullable=True)
+
     def __init__(self, f, name, lineage=None):
         super().__init__(f, lineage)
         self.name = f.__name__ if name is None else name
@@ -343,6 +349,10 @@ class KGPLFuncValue(KGPLValue):
 
 
 class KGPLEntityValue(KGPLValue):
+    __mapper_args__ = {
+        'polymorphic_identity': 'KGPLEntityValue'
+    }
+
     def __init__(self, text_reference, kg="wikidata", lineage=None):
         """text_reference (str): KG references like Q30."""
         if kg.lower() != "wikidata":
