@@ -4,6 +4,7 @@ import pickle
 import json
 import jsonpickle
 from kgpl import KGPLValue, KGPLVariable
+from KNPSStore import Session
 import KNPSStore
 
 app = flask.Flask(__name__)
@@ -22,8 +23,9 @@ def ReturnValue(fileid):
     else:
         flask.request.get_data()
         val = pickle.loads(flask.request.data)
-        s.StoreValues([val])
-        s.PushValues()
+        s = Session()
+        s.add(val)
+        s.commit()
         context = {
             "id": fileid,
             "value": "received"
@@ -69,3 +71,6 @@ def RegisterVariable():
     infile.close()
     return flask.jsonify(**context), 201
 
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    Session.remove()

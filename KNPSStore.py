@@ -57,6 +57,7 @@ class KNPSStore:
             s = Session()
             s.add(val)
             s.commit()
+            Session.remove()
             return val
         except sqlalchemy.orm.exc.MultipleResultsFound:
             print("multiple KGPLValues with the same ID found")
@@ -72,6 +73,7 @@ class KNPSStore:
             self.SaveValueList()
             print(value)
         s.commit()
+        Session.remove()
 
     def PushValues(self):
         if self.serverURL is not None:
@@ -79,6 +81,7 @@ class KNPSStore:
                 if not self.valueList[id]:
                     s = Session()
                     fetch = s.query(kgpl.KGPLValue).filter(kgpl.KGPLValue.id == id)[0]
+                    Session.remove()
                     binary = pickle.dumps(fetch)
                     self.valueList[id] = True
                     print(self.serverURL + "/val/" + id)
