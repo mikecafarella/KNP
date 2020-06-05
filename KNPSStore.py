@@ -10,12 +10,12 @@ import sqlalchemy
 from sqlalchemy import Column, Integer, Unicode, UnicodeText, String
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 
 engine = create_engine('sqlite:///KGPLData.db', echo=False)
 
-Session = sessionmaker(bind=engine)
-s = Session()
+Session = scoped_session(sessionmaker(bind=engine))
 
 class KNPSStore:
     """self.serverURL stores the IP address of parent"""
@@ -54,6 +54,7 @@ class KNPSStore:
             self.valueList[id] = True
             self.SaveValueList()
             val = pickle.loads(r.content)
+            s = Session()
             s.add(val)
             s.commit()
             return val
@@ -63,16 +64,20 @@ class KNPSStore:
 
     def StoreValues(self, inputList):
         """inputList is a list of kgplValue"""
+        s = Session()
         for value in inputList:
+            print(value)
             s.add(value)
             self.valueList[value.id] = False
             self.SaveValueList()
+            print(value)
         s.commit()
 
     def PushValues(self):
         if self.serverURL is not None:
             for id in self.valueList:
                 if not self.valueList[id]:
+                    s = Session()
                     fetch = s.query(kgpl.KGPLValue).filter(kgpl.KGPLValue.id == id)[0]
                     binary = pickle.dumps(fetch)
                     self.valueList[id] = True
