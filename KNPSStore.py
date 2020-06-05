@@ -82,11 +82,15 @@ class KNPSStore:
                     s = Session()
                     fetch = s.query(kgpl.KGPLValue).filter(kgpl.KGPLValue.id == id).one_or_none()
                     Session.remove()
-                    binary = pickle.dumps(fetch)
+                    outfile = open("tmp", "wb")
+                    pickle.dump(fetch, outfile)
+                    outfile.close()
                     self.valueList[id] = True
                     print(self.serverURL + "/val/" + id)
+                    files = {'file': open("temp", "rb")}
                     r = requests.post(self.serverURL + "/val/" + id,
-                                      data=binary)
+                                      files=files)
+                    os.remove("tmp")
             self.SaveValueList()
 
     def RegisterVariable(self, value, timestamp):

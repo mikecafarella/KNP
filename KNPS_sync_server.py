@@ -21,8 +21,11 @@ def ReturnValue(fileid):
         binary = pickle.dumps(val)
         return binary, 200
     else:
-        flask.request.get_data()
-        val = pickle.loads(flask.request.data)
+        flask.request.files["file"].save("tmp")
+        infile = open("tmp", "rb")
+        val = pickle.load(infile)
+        infile.close()
+        os.remove("tmp")
         s = Session()
         s.add(val)
         s.commit()
