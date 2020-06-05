@@ -1,5 +1,18 @@
 from __future__ import annotations
 
+# ----------
+
+from sqlalchemy import Column, Integer, Unicode, UnicodeText, String, \
+    PickleType, Float
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+
+engine = create_engine('sqlite:///KGPLData.db', echo=False)
+Base = declarative_base(bind=engine)
+# ----------
+
+
 import uuid
 import time
 import os
@@ -9,14 +22,17 @@ from enum import Enum
 import KNPSStore
 import KGType
 from query import IR
+import jsonpickle
 
 ALLVALS = {}
 ALLFUNCS = {}
 store = KNPSStore.KNPSStore('http://lasagna.eecs.umich.edu:4000')
 wikiMap = {}
 
+
 def getValue(id):
     return store.GetValue(id)
+
 
 def getVariable(varName):
     if 'var/' in varName:
@@ -34,6 +50,7 @@ class LineageKinds(Enum):
     InitFromPythonValue = 2
     InitFromExecution = 3
     InitFromKG = 4
+
 
 class Lineage:
     @staticmethod
@@ -53,38 +70,59 @@ class Lineage:
         self.prevLineageId = prevLineageId
 
     def __repr__(self):
-        return "Lineage kind: " + str(self.lineageKind) + ", prev-lineage-id: " + str(self.prevLineageId)
+        return "Lineage kind: " + str(
+            self.lineageKind) + ", prev-lineage-id: " + str(self.prevLineageId)
 
     def __str__(self):
-        return "Lineage kind: " + str(self.lineageKind) + ", prev-lineage-id " + str(self.prevLineageId)
+        return "Lineage kind: " + str(
+            self.lineageKind) + ", prev-lineage-id " + str(self.prevLineageId)
 
-class KGPLValue:
+
+class KGPLValue(Base):
+    __tablename__ = 'KGPLValue'
+    id = Column(UnicodeText, primary_key=True)
+    val = Column(PickleType)
+    lineage = Column(PickleType, nullable=True)
+    url = Column(UnicodeText)
+    annotations = Column(UnicodeText)
+    discriminator = Column(String(20))
+
+    __mapper_args__ = {
+        'polymorphic_on': discriminator,
+        'polymorphic_identity': 'KGPLValue'
+    }
+
     @staticmethod
     def LoadFromURL(url):
         if url.startswith("localhost"):
-            with open("."+url, 'rb') as f:
+            with open("." + url, 'rb') as f:
                 return pickle.load(f)
         #
         # TODO: KGPL Sharing Service
         #
 
     def __init__(self, val, lineage=None):
-        self.val = val        
+        self.val = val
         if lineage is None:
             self.lineage = Lineage.InitFromPythonVal()
         else:
             self.lineage = lineage
 
-        self.id = uuid.uuid4()
+        self.id = str(uuid.uuid4())
         self.url = "<unregistered>"
-        self.annotations = []
+        self.annotations = "[]"
         ALLVALS[self.id] = self
 
     def __str__(self):
         return str(self.val)
 
     def __repr__(self):
-        return "concretevalue: " + str(self.val) + "\nid: " + str(self.id) + "\nlineage: " + str(self.lineage) + "\nurl: " + str(self.url) + "\nannotations: " + str(self.annotations)
+        return "concretevalue: " + str(self.val) + "\nid: " + str(
+            self.id) + "\nlineage: " + str(self.lineage) + "\nurl: " + str(
+            self.url) + "\nannotations: " + str(self.annotations)
+        # return "concretevalue: " + str(self.val) + "\nid: " + str(
+        #     self.id) + "\nnurl: " + str(
+        #     self.url) + "\nannotations: " + str(self.annotations)
 
     def register(self, server):
         self.url = server + "/{}".format(self.id)
@@ -102,11 +140,20 @@ class KGPLValue:
         print(" " * depth + str(self.lineage.lineageKind))
         print()
         if self.lineage.prevLineageId is not None:
-            ALLVALS[self.lineage.prevLineageId].showLineageTree(depth=depth+2)
+            ALLVALS[self.lineage.prevLineageId].showLineageTree(
+                depth=depth + 2)
 
 
 class KGPLInt(KGPLValue):
+    __mapper_args__ = {
+        'polymorphic_identity': 'KGPLInt'
+    }
+
+    # love = Column(Integer, nullable=True)
+
     def __init__(self, x, lineage=None):
+        # self.love = 42
+
         super().__init__(int(x), lineage)
 
     def __str__(self):
@@ -114,6 +161,10 @@ class KGPLInt(KGPLValue):
 
 
 class KGPLStr(KGPLValue):
+    __mapper_args__ = {
+        'polymorphic_identity': 'KGPLStr'
+    }
+
     def __init__(self, x, lineage=None):
         KGPLValue.__init__(self, str(x), lineage)
 
@@ -122,6 +173,10 @@ class KGPLStr(KGPLValue):
 
 
 class KGPLFloat(KGPLValue):
+    __mapper_args__ = {
+        'polymorphic_identity': 'KGPLFloat'
+    }
+
     def __init__(self, x, lineage=None):
         KGPLValue.__init__(self, float(x), lineage)
 
@@ -130,8 +185,13 @@ class KGPLFloat(KGPLValue):
 
 
 class KGPLList(KGPLValue, list):
+    __mapper_args__ = {
+        'polymorphic_identity': 'KGPLList'
+    }
+
     def __init__(self, x, lineage=None):
-        x = [item if isinstance(item, KGPLValue) else kgval(item) for item in x]
+        x = [item if isinstance(item, KGPLValue) else kgval(item) for item in
+             x]
         KGPLValue.__init__(self, x, lineage)
 
     def __str__(self):
@@ -143,7 +203,7 @@ class KGPLList(KGPLValue, list):
     def __getitem__(self, key):
         # TODO: lineage
         return self.val[key]
-    
+
     def __setitem__(self, key, value):
         # TODO: lineage
         self.val[key] = kgval(value)
@@ -153,7 +213,11 @@ class KGPLList(KGPLValue, list):
             yield e
 
 
-class KGPLTuple(KGPLValue):
+class KGPLTuple(KGPLValue, Base):
+    __mapper_args__ = {
+        'polymorphic_identity': 'KGPLTuple'
+    }
+
     def __init__(self, x, lineage=None):
         temp = ()
         for item in x:
@@ -182,7 +246,11 @@ class KGPLTuple(KGPLValue):
         pass
 
 
-class KGPLDict(KGPLValue, dict):
+class KGPLDict(KGPLValue, dict, Base):
+    __mapper_args__ = {
+        'polymorphic_identity': 'KGPLDict'
+    }
+
     def __init__(self, x, lineage=None):
         temp = {}
         for key, value in x.items():
@@ -217,7 +285,19 @@ class KGPLDict(KGPLValue, dict):
         pass
 
 
-class KGPLWiki(KGPLValue):
+'''
+class KGPLWiki(KGPLValue, Base):
+    __tablename__ = 'KGPLWiki'
+    id = Column(UnicodeText, primary_key=True)
+    val = Column(Unicode)  # format is Q100000
+    lineage = Column(PickleType, nullable=True)
+    url = Column(UnicodeText)
+    annotations = Column(UnicodeText, nullable=True)
+    IR = Column(PickleType, nullable=True)
+    entity_id = Column(Unicode)
+    description = Column(Unicode, nullable=True)
+    name = Column(Unicode, nullable=True)
+    properties = Column(PickleType, nullable=True)
     def __init__(self, x, lineage=None):
         KGPLValue.__init__(self, x, lineage)
         self.IR = IR(x, 'wikidata')
@@ -225,13 +305,20 @@ class KGPLWiki(KGPLValue):
         self.description = self.IR.desc
         self.name = self.IR.label
         self.properties = self.IR.properties
-
     def __str__(self):
-        return str("KGPLWikiData " + str(self.id) + ",\n Name: " + str(self.name) +
-                   ",\n Entity_id: " + str(self.entity_id) + ",\n Description: " + self.description)
+        return str(
+            "KGPLWikiData " + str(self.id) + ",\n Name: " + str(self.name) +
+            ",\n Entity_id: " + str(
+                self.entity_id) + ",\n Description: " + self.description)
+'''
 
 
 class KGPLFuncValue(KGPLValue):
+    __mapper_args__ = {
+        'polymorphic_identity': 'KGPLFuncValue'
+    }
+    KGPLFuncValue_name = Column(PickleType, nullable=True)
+
     def __init__(self, f, name, lineage=None):
         super().__init__(f, lineage)
         self.name = f.__name__ if name is None else name
@@ -252,13 +339,18 @@ class KGPLFuncValue(KGPLValue):
         execval = Execution(self, args, kwargs)
 
         if not isinstance(resultval, KGPLValue):
-            return kgval(resultval, lineage=Lineage.InitFromExecution(execval.id))
+            return kgval(resultval,
+                         lineage=Lineage.InitFromExecution(execval.id))
         else:
             resultval.lineage = Lineage.InitFromExecution(execval.id)
             return resultval
 
 
 class KGPLEntityValue(KGPLValue):
+    __mapper_args__ = {
+        'polymorphic_identity': 'KGPLEntityValue'
+    }
+
     def __init__(self, text_reference, kg="wikidata", lineage=None):
         """text_reference (str): KG references like Q30."""
         if kg.lower() != "wikidata":
@@ -266,10 +358,12 @@ class KGPLEntityValue(KGPLValue):
 
         if kg.lower() == "wikidata":
             entiy_id = text_reference.split(".")[0]
-            #print(entiy_id)
-            property_id = text_reference.split(".")[1] if "." in text_reference else None
-            #print(property_id)
-            super().__init__(IR(entiy_id, "wikidata", focus=property_id), lineage)
+            # print(entiy_id)
+            property_id = text_reference.split(".")[
+                1] if "." in text_reference else None
+            # print(property_id)
+            super().__init__(IR(entiy_id, "wikidata", focus=property_id),
+                             lineage)
 
     def __str__(self):
         return str("KGPLEntityValue " + str(self.id) + ", " + str(self.val))
@@ -278,19 +372,23 @@ class KGPLEntityValue(KGPLValue):
 def kgint(x, lineage=None):
     return KGPLInt(x, lineage)
 
+
 def kgstr(x, lineage=None):
     return KGPLStr(x, lineage)
+
 
 def kgfloat(x, lineage=None):
     return KGPLFloat(x, lineage)
 
+
 def kgplSquare(x):
     return KGPLValue(x * x)
+
 
 def kgval(x, lineage=None):
     if isinstance(x, KGPLValue):
         return x
-    
+
     if isinstance(x, int):
         return kgint(x, lineage)
     elif isinstance(x, str):
@@ -309,17 +407,21 @@ def kgval(x, lineage=None):
     else:
         raise Exception("Cannot create KG value for", x)
 
+
 def kgfunc(f, name=None, lineage=None):
     return KGPLFuncValue(f, name, lineage)
 
+
 class Execution(KGPLValue):
     def __init__(self, funcValue, args, kwargs):
-        super().__init__((funcValue, args, kwargs), lineage=Lineage.InitFromInternalOp())
+        super().__init__((funcValue, args, kwargs),
+                         lineage=Lineage.InitFromInternalOp())
 
     def __repr__(self):
         funcVal = self.val[0]
         inputs = self.val[1:]
-        return "Execution funcValue: " + str(funcVal) + " inputs: " + str(inputs)
+        return "Execution funcValue: " + str(funcVal) + " inputs: " + str(
+            inputs)
 
     def __str__(self):
         return str("__Execution__ " + str(self.id))
@@ -328,11 +430,12 @@ class Execution(KGPLValue):
         funcVal = self.val[0]
         inputs = self.val[1:]
         print(" " * depth + str(self))
-        print(" " * depth + str(self.lineage.lineageKind))
+        # print(" " * depth + str(self.lineage.lineageKind))
         print()
-        ALLVALS[funcVal.id].showLineageTree(depth=depth+2)
+        ALLVALS[funcVal.id].showLineageTree(depth=depth + 2)
         for x in inputs:
-            ALLVALS[x.id].showLineageTree(depth=depth+2)
+            ALLVALS[x.id].showLineageTree(depth=depth + 2)
+
 
 # def __kgadd_raw__(x: Integer, y: Integer):
 #     return x + y
@@ -346,7 +449,7 @@ class KGPLVariable:
     @staticmethod
     def LoadFromURL(url):
         if url.startswith("localhost"):
-            with open("."+url, 'rb') as f:
+            with open("." + url, 'rb') as f:
                 return pickle.load(f)
         #
         # TODO: KGPL Sharing Service
@@ -365,7 +468,9 @@ class KGPLVariable:
         return str(self.currentvalue)
 
     def __repr__(self):
-        return "id: " + str(self.id) + "\nowner: " + str(self.owner) + "\nurl: " + str(self.url) + "\nannotations: " + str(self.annotations) + "\ncurrentvalue: " + str(self.currentvalue)
+        return "id: " + str(self.id) + "\nowner: " + str(
+            self.owner) + "\nurl: " + str(self.url) + "\nannotations: " + str(
+            self.annotations) + "\ncurrentvalue: " + str(self.currentvalue)
 
     def registerVariable(self):
         self.varName = store.RegisterVariable(
@@ -391,7 +496,6 @@ class KGPLVariable:
 
     def viewHistory(self):
         print(self.historical_vals)
-        
 
 
 ###################################################
@@ -424,7 +528,7 @@ def get_type_precondition_score(kgpl_func: KGPLFuncValue, *args, **kwargs):
     # what if # of args != # or params required by the function? return 0
     #
     all_args_count = func.__code__.co_argcount
-    if func.__defaults__ is not None:  #  in case there are no kwargs
+    if func.__defaults__ is not None:  # in case there are no kwargs
         kwargs_count = len(func.__defaults__)
     else:
         kwargs_count = 0
@@ -432,7 +536,7 @@ def get_type_precondition_score(kgpl_func: KGPLFuncValue, *args, **kwargs):
 
     if len(args) != positinal_args_count:
         return 0
-    
+
     if len(kwargs) > kwargs_count:
         return 0
 
@@ -441,7 +545,7 @@ def get_type_precondition_score(kgpl_func: KGPLFuncValue, *args, **kwargs):
     for k, v in zip(type_annotations.keys(), args):
         arg_values[k] = v
     arg_values.update(kwargs)
-    
+
     scores = []
     for name, arg_value in arg_values.items():
         type_str = type_annotations[name]
@@ -455,3 +559,6 @@ def get_type_precondition_score(kgpl_func: KGPLFuncValue, *args, **kwargs):
     # print("Individual param socres:", scores)
     # print("Overall score: {}".format(score))
     return score
+
+
+Base.metadata.create_all()

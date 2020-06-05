@@ -17,15 +17,16 @@ def ReturnValue(fileid):
         val = s.GetValue(fileid)
         if not val:
             return flask.abort(404)
-        context = {"value": jsonpickle.encode(val)}
-        return flask.jsonify(**context), 200
+        binary = pickle.dumps(val)
+        return binary, 200
     else:
-        val = jsonpickle.decode(flask.request.json["value"])
+        flask.request.get_data()
+        val = pickle.loads(flask.request.data)
         s.StoreValues([val])
         s.PushValues()
         context = {
             "id": fileid,
-            "value": jsonpickle.encode(val)
+            "value": "received"
         }
         return flask.jsonify(**context), 201
 
