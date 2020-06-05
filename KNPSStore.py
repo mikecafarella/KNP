@@ -80,7 +80,7 @@ class KNPSStore:
             for id in self.valueList:
                 if not self.valueList[id]:
                     s = Session()
-                    fetch = s.query(kgpl.KGPLValue).filter(kgpl.KGPLValue.id == id)[0]
+                    fetch = s.query(kgpl.KGPLValue).filter(kgpl.KGPLValue.id == id).one_or_none()
                     Session.remove()
                     binary = pickle.dumps(fetch)
                     self.valueList[id] = True
