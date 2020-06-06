@@ -11,12 +11,13 @@ from sqlalchemy import Column, Integer, Unicode, UnicodeText, String
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
+from sqlalchemy.orm import session
 from sqlalchemy.ext.declarative import declarative_base
 
 engine = create_engine('sqlite:///KGPLData.db', echo=False)
 
 Session = scoped_session(sessionmaker(bind=engine))
-
+s = Session()
 class KNPSStore:
     """self.serverURL stores the IP address of parent"""
 
@@ -54,10 +55,9 @@ class KNPSStore:
             self.valueList[id] = True
             self.SaveValueList()
             val = pickle.loads(r.content)
-            s = Session()
+            session.make_transient(val)
             s.add(val)
             s.commit()
-            Session.remove()
             return val
         except sqlalchemy.orm.exc.MultipleResultsFound:
             print("multiple KGPLValues with the same ID found")
@@ -65,7 +65,6 @@ class KNPSStore:
 
     def StoreValues(self, inputList):
         """inputList is a list of kgplValue"""
-        s = Session()
         for value in inputList:
             print(value)
             s.add(value)
@@ -73,25 +72,25 @@ class KNPSStore:
             self.SaveValueList()
             print(value)
         s.commit()
-        Session.remove()
 
     def PushValues(self):
-        if self.serverURL is not None:
-            for id in self.valueList:
-                if not self.valueList[id]:
-                    s = Session()
-                    fetch = s.query(kgpl.KGPLValue).filter(kgpl.KGPLValue.id == id).one_or_none()
-                    Session.remove()
-                    outfile = open("tmp", "wb")
-                    pickle.dump(fetch, outfile)
-                    outfile.close()
-                    self.valueList[id] = True
-                    print(self.serverURL + "/val/" + id)
-                    files = {'file': open("temp", "rb")}
-                    r = requests.post(self.serverURL + "/val/" + id,
-                                      files=files)
-                    os.remove("tmp")
-            self.SaveValueList()
+        try:
+            if self.serverURL is not None:
+                for id in self.valueList:
+                    if not self.valueList[id]:
+                        fetch = s.query(kgpl.KGPLValue).filter(kgpl.KGPLValue.id == id).one_or_none()
+                        if not fetch:
+                            print("value not found in db but should be found")
+                            return
+                        new = pickle.dumps(fetch)
+                        self.valueList[id] = True
+                        print(self.serverURL + "/val/" + id)
+                        r = requests.post(self.serverURL + "/val/" + id,
+                                        data=new)
+                self.SaveValueList()
+        except sqlalchemy.orm.exc.MultipleResultsFound:
+            print("multiple KGPLValues with the same ID found")
+            exit(1)
 
     def RegisterVariable(self, value, timestamp):
         """Return variable name and register the new variable on the server"""

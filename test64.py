@@ -2,7 +2,9 @@ import kgpl
 import KNPSStore
 
 store = KNPSStore.KNPSStore('http://lasagna.eecs.umich.edu:4000')
-a = kgpl.KGPLFloat(4578)
-print(a.id)
-store.StoreValues([a])
+a = kgpl.getValue("22a9d095-a520-4b69-9ac0-b76a26b5ed87")
+print(a.__repr__())
+
+b = kgpl.KGPLInt(44)
+store.StoreValues([b])
 store.PushValues()

@@ -4,6 +4,7 @@ import pickle
 import json
 import jsonpickle
 from kgpl import KGPLValue, KGPLVariable
+from sqlalchemy.orm import session
 from KNPSStore import Session
 import KNPSStore
 
@@ -21,14 +22,11 @@ def ReturnValue(fileid):
         binary = pickle.dumps(val)
         return binary, 200
     else:
-        flask.request.files["file"].save("tmp")
-        infile = open("tmp", "rb")
-        val = pickle.load(infile)
-        infile.close()
-        os.remove("tmp")
-        s = Session()
-        s.add(val)
-        s.commit()
+        flask.request.get_data()
+        val = pickle.loads(flask.request.data)
+        session.make_transient(val)
+        s.StoreValues([val])
+        s.PushValues()
         context = {
             "id": fileid,
             "value": "received"
