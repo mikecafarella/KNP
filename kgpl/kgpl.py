@@ -7,9 +7,11 @@ from sqlalchemy import Column, Integer, Unicode, UnicodeText, String, \
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import scoped_session
 
 engine = create_engine('sqlite:///KGPLData.db', echo=False)
 Base = declarative_base(bind=engine)
+
 # ----------
 
 
@@ -26,7 +28,8 @@ import jsonpickle
 
 ALLVALS = {}
 ALLFUNCS = {}
-store = KNPSStore.KNPSStore('http://lasagna.eecs.umich.edu:4000')
+# store = KNPSStore.KNPSStore('http://lasagna.eecs.umich.edu:4000')
+store = KNPSStore.KNPSStore(None)
 wikiMap = {}
 
 
@@ -35,14 +38,7 @@ def getValue(id):
 
 
 def getVariable(varName):
-    if 'var/' in varName:
-        if varName[0:3] == 'var':
-            return store.GetVariable(varName[4:])
-    else:
-        if varName[0] == "Q":
-            return store.GetVariable(wikiMap[varName])
-        else:
-            return store.GetVariable(varName)
+    return store.GetVariable(varName)
 
 
 class LineageKinds(Enum):
@@ -124,11 +120,12 @@ class KGPLValue(Base):
         #     self.id) + "\nnurl: " + str(
         #     self.url) + "\nannotations: " + str(self.annotations)
 
-    def register(self, server):
+    def register(self, server="central_server"):
         self.url = server + "/{}".format(self.id)
         if server == "localhost":
             store.StoreValues([self])
         else:
+            store.StoreValues([self])
             store.PushValues()
         return self.url
 
@@ -298,7 +295,6 @@ class KGPLWiki(KGPLValue, Base):
     description = Column(Unicode, nullable=True)
     name = Column(Unicode, nullable=True)
     properties = Column(PickleType, nullable=True)
-
     def __init__(self, x, lineage=None):
         KGPLValue.__init__(self, x, lineage)
         self.IR = IR(x, 'wikidata')
@@ -306,7 +302,6 @@ class KGPLWiki(KGPLValue, Base):
         self.description = self.IR.desc
         self.name = self.IR.label
         self.properties = self.IR.properties
-
     def __str__(self):
         return str(
             "KGPLWikiData " + str(self.id) + ",\n Name: " + str(self.name) +
@@ -447,7 +442,23 @@ class Execution(KGPLValue):
 # KGPLValue.__add__ = lambda x, y: kgAdd(x, y)
 
 
-class KGPLVariable:
+class KGPLVariable(Base):
+    __tablename__ = 'KGPLVariable'
+    id = Column(UnicodeText, primary_key=True)
+    timestamp = Column(Float, primary_key=True)
+    currentvalue = Column(UnicodeText, nullable=True)  # TODO: Foreign key
+    owner = Column(UnicodeText, nullable=True)
+    url = Column(UnicodeText, nullable=True)
+    annotations = Column(UnicodeText, nullable=True)
+    # TODO: Currently we have redundant field "history val" in the database
+    historical_vals = Column(PickleType, nullable=True)
+    discriminator = Column(String(20))
+
+    __mapper_args__ = {
+        'polymorphic_on': discriminator,
+        'polymorphic_identity': 'KGPLVariable'
+    }
+
     @staticmethod
     def LoadFromURL(url):
         if url.startswith("localhost"):
@@ -457,44 +468,79 @@ class KGPLVariable:
         # TODO: KGPL Sharing Service
         #
 
-    def __init__(self, val: KGPLValue):
-        self.id = None
-        self.varName = ""
-        self.currentvalue = val
-        self.owner = "michjc"
+    def __init__(self, val: str):
+        self.id = None  # after registration, it will have an id.
+        self.currentvalue = val  # uuid of KGPLValue
+        self.owner = "minions"  # TODO: automatically assign owner
         self.url = "<unregistered>"
-        self.annotations = []
+        self.annotations = "[]"
+        self.timestamp = time.time()
         self.historical_vals = [(time.time(), val)]
 
+    #
+    # def get_id(self):
+    #     return self.id
+    #
+    # def set_id_url(self, newid, newurl):
+    #     self.id = newid
+    #     self.url = newurl
+    #
+    # def get_cur_val(self):
+    #     return self.currentvalue
+    #
+    # def get_owner(self):
+    #     return self.owner
+    #
+    # def get_url(self):
+    #     return self.url
+    #
+    # def get_ann(self):
+    #     return self.annotations
+    #
+    # def get_his_val(self):
+    #     return self.historical_vals
+
     def __str__(self):
-        return str(self.currentvalue)
+        return "uuid for the current related KGPLValue: " + self.currentvalue
 
     def __repr__(self):
+        print(self.historical_vals)
         return "id: " + str(self.id) + "\nowner: " + str(
             self.owner) + "\nurl: " + str(self.url) + "\nannotations: " + str(
             self.annotations) + "\ncurrentvalue: " + str(self.currentvalue)
 
     def registerVariable(self):
-        self.varName = store.RegisterVariable(
-            self.currentvalue, self.historical_vals[0][0])
-        if isinstance(self.currentvalue, KGPLWiki):
-            wikiMap[self.currentvalue.entity_id] = self.varName
+        """
+        Session = scoped_session(sessionmaker(bind=engine))
+        s = Session()
+        fetch = s.query(KGPLValue).filter(
+            KGPLValue.id == self.currentvalue).one_or_none()
+        if not fetch:
+            print("value not found in db but should be found")
+        fetch.register()
+        """
+        # TODO: make sure the related value is registered as well
+        """
+        Register variable: push to a centralized remote database on the
+        parent server. (According to decision on May 20th)
+        """
+        store.RegisterVariable(self)
 
-    def initOrUpdate(self, varName):
-        if 'var/' in varName:
-            if varName[0:3] == 'var':
-                self = getVariable(varName[4:])
-        else:
-            self = getVariable(varName)
-        if not self:
-            self.registerVariable()
-        return self
+    # def initOrUpdate(self, varName):
+    #     if 'var/' in varName:
+    #         if varName[0:3] == 'var':
+    #             self = getVariable(varName[4:])
+    #     else:
+    #         self = getVariable(varName)
+    #     if not self:
+    #         self.registerVariable()
+    #     return self
 
-    def reassign(self, val: KGPLValue):
+    def reassign(self, val: str):
         self.currentvalue = val
-        timestamp = time.time()
-        self.historical_vals.append((timestamp, val))
-        store.SetVariable(self.varName, val, timestamp)
+        self.timestamp = time.time()
+        self.historical_vals.append((self.timestamp, val))
+        store.SetVariable(self)
 
     def viewHistory(self):
         print(self.historical_vals)
