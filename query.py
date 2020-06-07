@@ -79,7 +79,7 @@ class IR:
             #
             # Open question: do we want to include property labels in keys?
             #
-            self.properties[property_id] = data_df
+            self.properties[property_id] = data_df.to_dict()
 
 
     def __getitem__(self, key):
