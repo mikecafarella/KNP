@@ -40,7 +40,7 @@ class IR:
         entity_obj = get_entity(self.id)
         self.label = entity_obj["labels"].get("en", {}).get("value")
         self.desc = entity_obj["descriptions"].get("en", {}).get("value")
-        self.aliases = [m["value"] for m in entity_obj["aliases"]["en"]]
+        # self.aliases = [m["value"] for m in entity_obj["aliases"]["en"]]
         if self.focus is not None:
             p = search_entity(self.focus, 'property', limit=1)[0]
             self.focus_label = p.get("label")
@@ -79,7 +79,10 @@ class IR:
             #
             # Open question: do we want to include property labels in keys?
             #
-            self.properties[property_id] = data_df.to_dict()
+            if data_df is None:
+                self.properties[property_id] = data_df
+            else:
+                self.properties[property_id] = data_df.to_dict()
 
 
     def __getitem__(self, key):
