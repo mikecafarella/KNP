@@ -26,7 +26,7 @@ import jsonpickle
 
 ALLVALS = {}
 ALLFUNCS = {}
-store = KNPSStore.KNPSStore('http://lasagna.eecs.umich.edu:4000')
+store = KNPSStore.KNPSStore('http://lasagna.eecs.umich.edu:8000')
 wikiMap = {}
 
 
@@ -43,6 +43,16 @@ def getVariable(varName):
             return store.GetVariable(wikiMap[varName])
         else:
             return store.GetVariable(varName)
+
+
+def Wiki_Dict_Transformer(entity_id):
+    IR_temp = IR(entity_id, 'wikidata')
+    result = {}
+    result["entity_id"] = entity_id
+    result["description"] = IR_temp.desc
+    result["name"] = IR_temp.label
+    result["property"] = IR_temp.properties
+    return result
 
 
 class LineageKinds(Enum):
@@ -253,17 +263,22 @@ class KGPLDict(KGPLValue, dict, Base):
     def __init__(self, x, lineage=None):
         temp = {}
         for key, value in x.items():
-            if isinstance(key, KGPLValue) and isinstance(value, KGPLValue):
+            if isinstance(value, KGPLValue):
                 temp[key] = value
-            elif isinstance(key, KGPLValue):
-                temp[key] = kgval(value)
             else:
-                temp[kgval(key)] = kgval(value)
+                temp[key] = kgval(value)
         x = temp
         KGPLValue.__init__(self, x, lineage)
 
     def __str__(self):
-        return str("KGPLDictionary " + str(self.id) + ",\n" + str(self.val))
+        strings = []
+        strings.append("KGPLDictionary " + str(self.id))
+        for key, value in self.val.items():
+            strings.append("--------------------")
+            strings.append("Key: " + str(key))
+            strings.append("Value: " + str(value))
+            strings.append("--------------------")
+        return '\n'.join(strings)
 
     def __len__(self):
         return len(self.val)
@@ -394,7 +409,7 @@ def kgval(x, lineage=None):
         return kgstr(x, lineage)
     elif isinstance(x, float):
         return kgfloat(x, lineage)
-    elif hasattr(x, "isDictionary"):
+    elif isinstance(x, dict):
         return KGPLDict(x, lineage)
     elif hasattr(x, "isTuple"):
         return KGPLTuple(x, lineage)
