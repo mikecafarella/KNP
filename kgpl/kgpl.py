@@ -122,8 +122,8 @@ class KGPLValue(Base):
         self.id = str(uuid.uuid4())
         self.url = "<unregistered>"
         self.annotations = "[]"
-        # TODO: Mofify code for new field
-        # self.isRegistered = False
+        ### Newly modified
+        self.isRegistered = False 
         ###
         ALLVALS[self.id] = self
 
@@ -140,8 +140,8 @@ class KGPLValue(Base):
 
     def register(self, server="central_server"):
         self.url = server + "/{}".format(self.id)
-        ###
-        # self.isRegistered = True
+        ### Newly modified
+        self.isRegistered = True
         ###
         if server == "localhost":
             store.StoreValues([self])
@@ -495,15 +495,17 @@ class KGPLVariable:
     def __init__(self, val: KGPLValue):
         self.id = None
         self.varName = ""
-        # if not val.isRegistered:
-        #     raise Exception("KGPLValue not registered!!!")
-        # else:
-        #     self.currentvalue = str(val.id)
-        #     self.owner = "michjc"
-        #     self.url = "<unregistered>"
-        #     self.annotations = "[]"
-        #     self.timestamp = time.time()
-        #     self.historical_vals = [(time.time(), str(val.id))]
+        ### Newly modified
+        if not val.isRegistered:
+            raise Exception("KGPLValue not registered!!!")
+        else:
+            self.currentvalue = str(val.id)
+            self.owner = "michjc"
+            self.url = "<unregistered>"
+            self.annotations = "[]"
+            self.timestamp = time.time()
+            self.historical_vals = [(time.time(), str(val.id))]
+        ###
 
     def __str__(self):
         return str("Variable Name: " + self.varName + "\nCurrent value id: " + str(self.currentvalue))
@@ -549,14 +551,15 @@ class KGPLVariable:
         return self
 
     def reassign(self, val: KGPLValue):
-        # if not val.isRegistered:
-        #     raise Exception("KGPLValue is not registered!!!")
-        # else:
-        #     self.currentvalue = str(val.id)
-        #     self.timestamp = time.time()
-        #     self.historical_vals.append((self.timestamp, str(val.id)))
-        #     store.SetVariable(self)
-        pass
+        ### Newly modified
+        if not val.isRegistered:
+            raise Exception("KGPLValue is not registered!!!")
+        else:
+            self.currentvalue = str(val.id)
+            self.timestamp = time.time()
+            self.historical_vals.append((self.timestamp, str(val.id)))
+            store.SetVariable(self)
+        ###
 
     def viewHistory(self):
         i = 0
