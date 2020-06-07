@@ -7,6 +7,7 @@ from sqlalchemy import Column, Integer, Unicode, UnicodeText, String, \
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import scoped_session
 
 engine = create_engine('sqlite:///KGPLData.db', echo=False)
 Base = declarative_base(bind=engine)
@@ -121,6 +122,9 @@ class KGPLValue(Base):
         self.id = str(uuid.uuid4())
         self.url = "<unregistered>"
         self.annotations = "[]"
+        # TODO: Mofify code for new field
+        # self.isRegistered = False
+        ###
         ALLVALS[self.id] = self
 
     def __str__(self):
@@ -134,11 +138,15 @@ class KGPLValue(Base):
         #     self.id) + "\nnurl: " + str(
         #     self.url) + "\nannotations: " + str(self.annotations)
 
-    def register(self, server):
+    def register(self, server="central_server"):
         self.url = server + "/{}".format(self.id)
+        ###
+        # self.isRegistered = True
+        ###
         if server == "localhost":
             store.StoreValues([self])
         else:
+            store.StoreValues([self])
             store.PushValues()
         return self.url
 
@@ -460,6 +468,21 @@ class Execution(KGPLValue):
 
 
 class KGPLVariable:
+    __tablename__ = 'KGPLVariable'
+    id = Column(UnicodeText, primary_key=True)
+    timestamp = Column(Float, primary_key=True)
+    currentvalue = Column(UnicodeText, nullable=True)  # TODO: Foreign key
+    owner = Column(UnicodeText, nullable=True)
+    url = Column(UnicodeText, nullable=True)
+    annotations = Column(UnicodeText, nullable=True)
+    # TODO: Currently we have redundant field "history val" in the database
+    historical_vals = Column(PickleType, nullable=True)
+    discriminator = Column(String(20))
+    __mapper_args__ = {
+        'polymorphic_on': discriminator,
+        'polymorphic_identity': 'KGPLVariable'
+    }
+
     @staticmethod
     def LoadFromURL(url):
         if url.startswith("localhost"):
@@ -472,11 +495,15 @@ class KGPLVariable:
     def __init__(self, val: KGPLValue):
         self.id = None
         self.varName = ""
-        self.currentvalue = val.id
-        self.owner = "michjc"
-        self.url = "<unregistered>"
-        self.annotations = []
-        self.historical_vals = [(time.time(), val.id)]
+        # if not val.isRegistered:
+        #     raise Exception("KGPLValue not registered!!!")
+        # else:
+        #     self.currentvalue = str(val.id)
+        #     self.owner = "michjc"
+        #     self.url = "<unregistered>"
+        #     self.annotations = "[]"
+        #     self.timestamp = time.time()
+        #     self.historical_vals = [(time.time(), str(val.id))]
 
     def __str__(self):
         return str("Variable Name: " + self.varName + "\nCurrent value id: " + str(self.currentvalue))
@@ -487,10 +514,29 @@ class KGPLVariable:
             self.annotations) + "\ncurrentvalue: " + str(self.currentvalue)
 
     def registerVariable(self):
+        """
         self.varName = store.RegisterVariable(
             self.currentvalue, self.historical_vals[0][0])
         if isinstance(self.currentvalue, KGPLWiki):
             wikiMap[self.currentvalue.entity_id] = self.varName
+        """
+
+        """
+        Session = scoped_session(sessionmaker(bind=engine))
+        s = Session()
+        fetch = s.query(KGPLValue).filter(
+            KGPLValue.id == self.currentvalue).one_or_none()
+        if not fetch:
+            print("value not found in db but should be found")
+        fetch.register()
+        """
+            # TODO: make sure the related value is registered as well
+        """
+        Register variable: push to a centralized remote database on the
+        parent server. (According to decision on May 20th)
+        """
+        # self.url = "registered"
+        store.RegisterVariable(self)
 
     def initOrUpdate(self, varName):
         if 'var/' in varName:
@@ -503,16 +549,23 @@ class KGPLVariable:
         return self
 
     def reassign(self, val: KGPLValue):
-        self.currentvalue = val.id
-        timestamp = time.time()
-        self.historical_vals.append((timestamp, val.id))
-        store.SetVariable(self.varName, val, timestamp)
+        # if not val.isRegistered:
+        #     raise Exception("KGPLValue is not registered!!!")
+        # else:
+        #     self.currentvalue = str(val.id)
+        #     self.timestamp = time.time()
+        #     self.historical_vals.append((self.timestamp, str(val.id)))
+        #     store.SetVariable(self)
+        pass
 
     def viewHistory(self):
+        i = 0
         print("History of " + str(self.varName))
-        for pair in self.historical_vals:		
+        for pair in self.historical_vals:
+            print("Modification " + str(i))
             print("Timestamp: " + str(pair[0]))		
-            print("Value_id: " + str(pair[1]))		
+            print("Value_id: " + str(pair[1]))
+            i = i + 1
             print()
 
 
