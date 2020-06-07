@@ -28,8 +28,8 @@ import jsonpickle
 
 ALLVALS = {}
 ALLFUNCS = {}
-# store = KNPSStore.KNPSStore('http://lasagna.eecs.umich.edu:4000')
-store = KNPSStore.KNPSStore(None)
+store = KNPSStore.KNPSStore('http://lasagna.eecs.umich.edu:8080')
+# store = KNPSStore.KNPSStore(None)
 wikiMap = {}
 
 
@@ -108,6 +108,12 @@ class KGPLValue(Base):
         self.url = "<unregistered>"
         self.annotations = "[]"
         ALLVALS[self.id] = self
+        Session = scoped_session(sessionmaker(bind=engine))
+        s = Session()
+        s.expire_on_commit = False
+        s.add(self)
+        s.commit()
+        # s.expunge_all()
 
     def __str__(self):
         return str(self.val)
@@ -504,7 +510,7 @@ class KGPLVariable(Base):
         return "uuid for the current related KGPLValue: " + self.currentvalue
 
     def __repr__(self):
-        print(self.historical_vals)
+        print("historical vals: ", self.historical_vals)
         return "id: " + str(self.id) + "\nowner: " + str(
             self.owner) + "\nurl: " + str(self.url) + "\nannotations: " + str(
             self.annotations) + "\ncurrentvalue: " + str(self.currentvalue)
@@ -524,6 +530,7 @@ class KGPLVariable(Base):
         Register variable: push to a centralized remote database on the
         parent server. (According to decision on May 20th)
         """
+        # self.url = "registered"
         store.RegisterVariable(self)
 
     # def initOrUpdate(self, varName):
