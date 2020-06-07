@@ -34,9 +34,10 @@ def ReturnValue(fileid):
         return flask.jsonify(**context), 201
 
 
-@app.route("/var/<varname>", methods=['GET', 'PUT'])
+@app.route("/var/<varname>", methods=['GET', 'POST'])
 def ReturnVariable(varname):
     if flask.request.method == 'GET':
+        print("-----------------get var/varname------------------")
         # if s.serverURL:
         #     var = s.GetVariable(varname)
         #     binary = pickle.dumps(var)
@@ -47,7 +48,38 @@ def ReturnVariable(varname):
         binary = pickle.dumps(var)
         return binary, 200
     else:
-        pass
+        print("-----------------post var/varname------------------")
+
+        flask.request.get_data()
+        var = pickle.loads(flask.request.data)
+        s.SetVariable(var)
+        context = {
+            "variable": "set"
+        }
+        return flask.jsonify(**context), 201
+
+
+@app.route("/var", methods=['POST'])
+def RegisterVariable():
+    print("----------------post /var-------------------")
+    flask.request.get_data()
+    var = pickle.loads(flask.request.data)
+    # if s.serverURL:  # currently dont have parent
+    #     return s.RegisterVariable(var)
+    session.make_transient(var)
+    s.RegisterVariable(var)
+    # s.PushValues()
+    context = {
+        "var_id": var.id,
+        "value": "registered"
+    }
+    return flask.jsonify(**context), 201
+
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    Session.remove()
+
 # @app.route("/var/<fileid>", methods=['GET', 'PUT'])
 # def ReturnVariable(fileid):
 #     # file_path = os.path.join("var", fileid)
@@ -72,22 +104,6 @@ def ReturnVariable(varname):
 #         }
 #         return flask.jsonify(**context), 201
 
-@app.route("/var", methods=['POST'])
-def RegisterVariable():
-    flask.request.get_data()
-    var = pickle.loads(flask.request.data)
-    # if s.serverURL:  # currently dont have parent
-    #     return s.RegisterVariable(var)
-    session.make_transient(var)
-    s.RegisterVariable(var)
-    # s.PushValues()
-    context = {
-        "var id": var.id,
-        "value": "registered"
-    }
-    return flask.jsonify(**context), 201
-
-
 # @app.route("/var", methods=['POST'])
 # def RegisterVariable():
 #     data = flask.request.json
@@ -103,7 +119,3 @@ def RegisterVariable():
 #     }
 #     infile.close()
 #     return flask.jsonify(**context), 201
-
-@app.teardown_appcontext
-def shutdown_session(exception=None):
-    Session.remove()
