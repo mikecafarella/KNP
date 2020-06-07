@@ -190,8 +190,7 @@ class KGPLList(KGPLValue, list):
     }
 
     def __init__(self, x, lineage=None):
-        x = [item if isinstance(item, KGPLValue) else kgval(item) for item in
-             x]
+        x = [item if isinstance(item, KGPLValue) else kgval(item) for item in x]
         KGPLValue.__init__(self, x, lineage)
 
     def __str__(self):
@@ -458,14 +457,14 @@ class KGPLVariable:
     def __init__(self, val: KGPLValue):
         self.id = None
         self.varName = ""
-        self.currentvalue = val
+        self.currentvalue = val.id
         self.owner = "michjc"
         self.url = "<unregistered>"
         self.annotations = []
-        self.historical_vals = [(time.time(), val)]
+        self.historical_vals = [(time.time(), val.id)]
 
     def __str__(self):
-        return str(self.currentvalue)
+        return str("Variable Name: " + self.varName + "\nCurrent value id: " + str(self.currentvalue))
 
     def __repr__(self):
         return "id: " + str(self.id) + "\nowner: " + str(
@@ -489,13 +488,17 @@ class KGPLVariable:
         return self
 
     def reassign(self, val: KGPLValue):
-        self.currentvalue = val
+        self.currentvalue = val.id
         timestamp = time.time()
-        self.historical_vals.append((timestamp, val))
+        self.historical_vals.append((timestamp, val.id))
         store.SetVariable(self.varName, val, timestamp)
 
     def viewHistory(self):
-        print(self.historical_vals)
+        print("History of " + str(self.varName))
+        for pair in self.historical_vals:		
+            print("Timestamp: " + str(pair[0]))		
+            print("Value_id: " + str(pair[1]))		
+            print()
 
 
 ###################################################
