@@ -25,7 +25,9 @@ def ReturnValue(fileid):
         flask.request.get_data()
         val = pickle.loads(flask.request.data)
         session.make_transient(val)
-        s.StoreValues([val])
+        print("--------------store value to DB---------------")
+        s.StoreValues([val, ])
+        print("-----------------successfully stored duplicate value to DB ---------------")
         s.PushValues()
         context = {
             "id": fileid,
@@ -66,7 +68,7 @@ def RegisterVariable():
     var = pickle.loads(flask.request.data)
     # if s.serverURL:  # currently dont have parent
     #     return s.RegisterVariable(var)
-    session.make_transient(var)
+    # session.make_transient(var)
     s.RegisterVariable(var)
     # s.PushValues()
     context = {

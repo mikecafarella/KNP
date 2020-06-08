@@ -20,6 +20,7 @@ engine = create_engine('sqlite:///KGPLData.db', echo=False)
 
 Session = scoped_session(sessionmaker(bind=engine))
 s = Session()
+s.expire_on_commit = False
 
 
 class KNPSStore:
@@ -70,15 +71,22 @@ class KNPSStore:
 
     def StoreValues(self, inputList):
         """inputList is a list of kgplValue"""
+
         for value in inputList:
-            print(value)
-            s.add(value)
-            self.valueList[value.id] = False
-            self.SaveValueList()
-            print(value)
-        s.commit()
+            # print(value)
+            try:
+                s.add(value)
+                s.commit()
+                self.valueList[value.id] = False
+                self.SaveValueList()
+            except:  # if not unique
+                s.rollback()
+                print("duplicate exception suppressed")
+            # print(value)
+
 
     def PushValues(self):
+        print("-------------pushing value------------")
         try:
             if self.serverURL is not None:
                 for id in self.valueList:
@@ -115,9 +123,9 @@ class KNPSStore:
             print("-------------------posting to server----------------------")
             r = requests.post(self.serverURL + "/var", data=pickle.dumps(var))
             print(r.json())
-
             var.id = r.json()["var_id"]
             var.url = "not_implement_sharing_service_yet"
+
             val = s.query(kgpl.KGPLValue).filter(
                 kgpl.KGPLValue.id == var.currentvalue).one_or_none()
             print("-------------val in db: ", val, "--------------------")
@@ -135,6 +143,7 @@ class KNPSStore:
                 fetch = s.query(kgpl.KGPLVariable).filter(
                     kgpl.KGPLVariable.id == varName).order_by(
                     kgpl.KGPLVariable.timestamp.desc()).first()
+                session.make_transient(fetch)
                 return fetch
             except sqlalchemy.orm.exc.NoResultFound:
                 # return sth showing no related result
@@ -147,7 +156,7 @@ class KNPSStore:
             return var
             # fetch from remote
 
-    def SetVariable(self, new_var):
+    def SetVariable(self, new_var):  # new_var is the new variable
         print("------------------setting variable--------------------")
         """
         Reset the value of a variable,
@@ -155,12 +164,17 @@ class KNPSStore:
         """
         if not self.serverURL:
             # new_var.timestamp = time.time()
-            s.add(new_var)
-            s.commit()
+            self.StoreValues([new_var, ])
         else:
             set_var = pickle.dumps(new_var)
             r = requests.post(self.serverURL + "/var/" + new_var.id,
                               data=set_var)
+
+            val = s.query(kgpl.KGPLValue).filter(
+                kgpl.KGPLValue.id == new_var.currentvalue).one_or_none()
+            print("-------------val in db: ", val, "--------------------")
+            requests.post(self.serverURL + "/val/" + new_var.currentvalue,
+                          data=pickle.dumps(val))
 
     def SaveValueList(self):
         outfile = open("valueList", "wb")
