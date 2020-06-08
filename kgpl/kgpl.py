@@ -108,12 +108,6 @@ class KGPLValue(Base):
         self.url = "<unregistered>"
         self.annotations = "[]"
         ALLVALS[self.id] = self
-        Session = scoped_session(sessionmaker(bind=engine))
-        s = Session()
-        s.expire_on_commit = False
-        s.add(self)
-        s.commit()
-        # s.expunge_all()
 
     def __str__(self):
         return str(self.val)
@@ -474,37 +468,15 @@ class KGPLVariable(Base):
         # TODO: KGPL Sharing Service
         #
 
-    def __init__(self, val: str):
+    def __init__(self, val: KGPLValue):
         self.id = None  # after registration, it will have an id.
-        self.currentvalue = val  # uuid of KGPLValue
+        self.currentvalue = val.id  # uuid of KGPLValue
         self.owner = "minions"  # TODO: automatically assign owner
         self.url = "<unregistered>"
         self.annotations = "[]"
         self.timestamp = time.time()
         self.historical_vals = [(time.time(), val)]
-
-    #
-    # def get_id(self):
-    #     return self.id
-    #
-    # def set_id_url(self, newid, newurl):
-    #     self.id = newid
-    #     self.url = newurl
-    #
-    # def get_cur_val(self):
-    #     return self.currentvalue
-    #
-    # def get_owner(self):
-    #     return self.owner
-    #
-    # def get_url(self):
-    #     return self.url
-    #
-    # def get_ann(self):
-    #     return self.annotations
-    #
-    # def get_his_val(self):
-    #     return self.historical_vals
+        store.StoreValues([val, ])  # store the KGPLValue to local database
 
     def __str__(self):
         return "uuid for the current related KGPLValue: " + self.currentvalue
@@ -543,10 +515,11 @@ class KGPLVariable(Base):
     #         self.registerVariable()
     #     return self
 
-    def reassign(self, val: str):
-        self.currentvalue = val
+    def reassign(self, val: KGPLValue):
+        self.currentvalue = val.id
         self.timestamp = time.time()
         self.historical_vals.append((self.timestamp, val))
+        store.StoreValues([val, ])
         store.SetVariable(self)
 
     def viewHistory(self):
