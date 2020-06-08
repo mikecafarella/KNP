@@ -76,10 +76,10 @@ class KNPSStore:
             # print(value)
             if value.id not in self.valueList:
                 s.add(value)
-                s.commit()
+                # TODO: move out
                 self.valueList[value.id] = False
                 self.SaveValueList()
-
+        s.commit()
             # print(value)
 
     def PushValues(self):
@@ -87,6 +87,8 @@ class KNPSStore:
         try:
             if self.serverURL is not None:
                 for id in self.valueList:
+                    print(id)
+                    print(self.valueList)
                     if not self.valueList[id]:  # fetch from local database
                         fetch = s.query(kgpl.KGPLValue).filter(
                             kgpl.KGPLValue.id == id).one_or_none()
