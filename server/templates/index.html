@@ -6,16 +6,21 @@
 </head>
 <body>
 <a href="/">
-<h1>KGPLVariable History</h1>
+    <h1>KGPLVariable History</h1>
 </a>
 
+<h2>{{invalid}}</h2>
+
+{% if existing_variables == 0 %}
+<h2>Currently database is empty. No variable available.</h2>
+{%else%}
+<h2>Enter a number range from 1 to {{existing_variables}}</h2>
 <form action="/" method="post" enctype="multipart/form-data">
-    <input type="text" name="Variable_Name" placeholder='V1'/>
+    V<input type="number" name="Variable_Name" placeholder='1'/>
     <br>
     <input type="submit" value="Find"/>
 </form>
-
-
+{%endif%}
 <!--  {% for user in users %}-->
 <!--  <h2>{{users}}</h2>-->
 <!--  <p>&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;</p>-->

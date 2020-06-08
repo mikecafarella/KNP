@@ -16,7 +16,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import func
 from sqlalchemy import distinct
 
-engine = create_engine('sqlite:///KGPLData.db', echo=False)
+engine = create_engine('sqlite:///KGPLData.db', echo=False,
+                       connect_args={'check_same_thread': False})
 
 Session = scoped_session(sessionmaker(bind=engine))
 s = Session()
@@ -29,11 +30,8 @@ class KNPSStore:
     def __init__(self, url):
         self.serverURL = url
 
-        if not os.path.exists("../var/"):
-            os.mkdir("../var/")
-
-        if os.path.exists("../valueList"):
-            infile = open("../valueList", "rb")
+        if os.path.exists("valueList"):
+            infile = open("valueList", "rb")
             self.valueList = pickle.load(infile)
             infile.close()
         else:
@@ -80,7 +78,7 @@ class KNPSStore:
                 self.valueList[value.id] = False
                 self.SaveValueList()
         s.commit()
-            # print(value)
+        # print(value)
 
     def PushValues(self):
         print("-------------pushing value------------")
@@ -154,6 +152,17 @@ class KNPSStore:
             # session.make_transient(var)
             return var
             # fetch from remote
+
+    def availVar(self):
+        if not self.serverURL:
+            try:
+                num = s.query(kgpl.KGPLVariable.id).distinct().count()
+                return int(num)
+            except sqlalchemy.orm.exc.NoResultFound:
+                print("-------------variable not found------------")
+                return -1
+        else:
+            return -1
 
     def SetVariable(self, new_var):  # new_var is the new variable
         print("------------------setting variable--------------------")

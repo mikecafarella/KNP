@@ -16,33 +16,42 @@ APPLICATION_ROOT = '/'
 
 @app.route("/", methods=['GET', 'POST'])
 def main():
+    curnum = s.availVar()
     if flask.request.method == 'POST':
-        vname = flask.request.form['Variable_Name']
-        print(vname)
-        var = s.GetVariable(vname)
-        his = var.historical_vals
-        print(his)
-        print("@@@@@@@@@@@@@@@@@@@@@@", type(his))
-        # pretty = json.dumps(his, sort_keys=True, indent=4,
-        #                     separators=(',', ': '))
+        vnum = flask.request.form['Variable_Name']
+        # check whether vnum is from 1 to len(s.valueList)
 
-        pretty_time = []
-        for onehis in his:
-            value_value = s.GetValue(onehis[1])
+        if 1 <= int(vnum) <= curnum:
+            vname = "V" + str(vnum)
+            var = s.GetVariable(vname)
+            his = var.historical_vals
+            print(his)
+            print("@@@@@@@@@@@@@@@@@@@@@@", type(his))
+            pretty_time = []
+            for onehis in his:
+                value_value = s.GetValue(onehis[1])
+                pretty_time.append(
+                    (datetime.fromtimestamp(onehis[0]).strftime(
+                        '%Y-%m-%d %H:%M:%S'), onehis[1],
+                     type(value_value).__name__,
+                     value_value.val),
+                )
+            context = {
+                "vname": vname,
+                "var": pretty_time
+            }
+            return flask.render_template("result.html", **context)
+        else:
+            context = {
+                "existing_variables": curnum,
+                "invalid": "Invalid Input! Please retry."
+            }
+            return flask.render_template("index.html", **context)
 
-            pretty_time.append((datetime.fromtimestamp(onehis[0]).strftime(
-                '%Y-%m-%d %H:%M:%S'), onehis[1], type(value_value).__name__,
-                                value_value.val),
-            )
-
-        context = {
-            "vname": vname,
-            "var": pretty_time
-        }
-        return flask.render_template("result.html", **context)
 
     else:
-        context = {"users": "hardcode"}
+        context = {
+            "existing_variables": curnum}
         # return flask.jsonify(**context), 200
         # return flask.render_template("index.html", **context)
 
