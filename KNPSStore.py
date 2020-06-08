@@ -74,16 +74,13 @@ class KNPSStore:
 
         for value in inputList:
             # print(value)
-            try:
+            if value.id not in self.valueList:
                 s.add(value)
                 s.commit()
                 self.valueList[value.id] = False
                 self.SaveValueList()
-            except:  # if not unique
-                s.rollback()
-                print("duplicate exception suppressed")
-            # print(value)
 
+            # print(value)
 
     def PushValues(self):
         print("-------------pushing value------------")
