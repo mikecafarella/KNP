@@ -1,12 +1,6 @@
-import pickle
-
-import sqlalchemy
-from sqlalchemy import Column, Integer, Unicode, UnicodeText, String
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, session
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 import kgpl
-import KNPSStore
 
 engine = create_engine('sqlite:///KGPLData.db', echo=False)
 

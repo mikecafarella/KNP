@@ -1,3 +1,5 @@
+import pickle
+
 from sqlalchemy import Column, Integer, Unicode, UnicodeText, String
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -9,9 +11,13 @@ from random import choice
 
 # engine = create_engine('sqlite:///KGPLData.db', echo=True)
 engine = create_engine('sqlite:///KGPLData.db', echo=False)
+# engineB = create_engine('sqlite:///KGPLData_reinsert.db', echo=False)
 
 Session = sessionmaker(bind=engine)
 s = Session()
+#
+# Session = sessionmaker(bind=engineB)
+# sB = Session()
 
 if __name__ == '__main__':  # If run twice, it will insert twice.
 
@@ -25,20 +31,20 @@ if __name__ == '__main__':  # If run twice, it will insert twice.
     val2 = kgpl.KGPLFloat(42.0)
     s.add(val2)
     # s.commit()
-
+    #
     val3 = kgpl.KGPLStr("42.0 is THE ANSWER!")
     s.add(val3)
-    # s.commit()
-
+    # # s.commit()
+    #
     val4 = kgpl.KGPLList([42, "answer"])
 
     s.add(val4)
-    # s.commit()
-
+    # # s.commit()
+    #
     val5 = kgpl.KGPLDict({"test key": "test val"})
     s.add(val5)
-    # s.commit()
-
+    # # s.commit()
+    #
     val6 = kgpl.KGPLTuple(("t1", "t2"))
     s.add(val6)
     s.commit()
@@ -99,11 +105,17 @@ if __name__ == '__main__':  # If run twice, it will insert twice.
     print("--------val1: int---------")
     for element in s.query(kgpl.KGPLInt):
         print("Database: ", type(element), element.val, element.id,
-              element.url,
-              element.annotations, element.lineage)
+              element.url, element.annotations, element.lineage)
+        # with open("database.out", 'wb') as db:
+        #     pickle.dump(element, db)
+        # sB.add(element)
+        # sB.commit()
+
     print("Directly: ", type(val1), val1.val, val1.id, val1.url,
-          val1.annotations,
-          val1.lineage)
+          val1.annotations, val1.lineage)
+    #
+    # with open("direct.out", 'wb') as direct:
+    #     pickle.dump(val1, direct)
 
     # IR = Column(PickleType, nullable=True)
     # entity_id = Column(Unicode)

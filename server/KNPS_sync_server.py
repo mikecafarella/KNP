@@ -1,15 +1,52 @@
+from datetime import datetime
+
 import flask
-import os
 import pickle
 import json
-import jsonpickle
-from kgpl import KGPLValue, KGPLVariable
+from kgpl import KNPSStore
 from sqlalchemy.orm import session
-from KNPSStore import Session
-import KNPSStore
+from kgpl.KNPSStore import Session
+import server
 
 app = flask.Flask(__name__)
-s = KNPSStore.KNPSStore(None)
+s = KNPSStore(None)
+
+APPLICATION_ROOT = '/'
+
+
+@app.route("/", methods=['GET', 'POST'])
+def main():
+    if flask.request.method == 'POST':
+        vname = flask.request.form['Variable_Name']
+        print(vname)
+        var = s.GetVariable(vname)
+        his = var.historical_vals
+        print(his)
+        print("@@@@@@@@@@@@@@@@@@@@@@", type(his))
+        # pretty = json.dumps(his, sort_keys=True, indent=4,
+        #                     separators=(',', ': '))
+
+        pretty_time = []
+        for onehis in his:
+            value_value = s.GetValue(onehis[1])
+
+            pretty_time.append((datetime.fromtimestamp(onehis[0]).strftime(
+                '%Y-%m-%d %H:%M:%S'), onehis[1], type(value_value).__name__,
+                                value_value.val),
+            )
+
+        context = {
+            "vname": vname,
+            "var": pretty_time
+        }
+        return flask.render_template("result.html", **context)
+
+    else:
+        context = {"users": "hardcode"}
+        # return flask.jsonify(**context), 200
+        # return flask.render_template("index.html", **context)
+
+        return flask.render_template("index.html", **context)
 
 
 @app.route("/val/<fileid>", methods=['GET', 'POST'])
@@ -27,7 +64,8 @@ def ReturnValue(fileid):
         session.make_transient(val)
         print("--------------store value to DB---------------")
         s.StoreValues([val, ])
-        print("-----------------successfully stored duplicate value to DB ---------------")
+        print(
+            "-----------------successfully stored duplicate value to DB ---------------")
         s.PushValues()
         context = {
             "id": fileid,

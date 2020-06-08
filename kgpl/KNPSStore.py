@@ -29,11 +29,11 @@ class KNPSStore:
     def __init__(self, url):
         self.serverURL = url
 
-        if not os.path.exists("var/"):
-            os.mkdir("var/")
+        if not os.path.exists("../var/"):
+            os.mkdir("../var/")
 
-        if os.path.exists("valueList"):
-            infile = open("valueList", "rb")
+        if os.path.exists("../valueList"):
+            infile = open("../valueList", "rb")
             self.valueList = pickle.load(infile)
             infile.close()
         else:
@@ -176,12 +176,12 @@ class KNPSStore:
                           data=pickle.dumps(val))
 
     def SaveValueList(self):
-        outfile = open("valueList", "wb")
+        outfile = open("../valueList", "wb")
         pickle.dump(self.valueList, outfile)
         outfile.close()
 
     def DownloadVariableFile(self, varName, timestamp):
-        filepath = os.path.join("var", varName)
+        filepath = os.path.join("../var", varName)
         r = requests.get(self.serverURL + "/var/" + varName)
         if r.status_code == 404:
             print("variable {} not found".format(varName))

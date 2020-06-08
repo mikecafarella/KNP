@@ -2,12 +2,10 @@ from __future__ import annotations
 
 # ----------
 
-from sqlalchemy import Column, Integer, Unicode, UnicodeText, String, \
+from sqlalchemy import Column, UnicodeText, String, \
     PickleType, Float
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import scoped_session
 
 engine = create_engine('sqlite:///KGPLData.db', echo=False)
 Base = declarative_base(bind=engine)
@@ -17,18 +15,16 @@ Base = declarative_base(bind=engine)
 
 import uuid
 import time
-import os
 import pickle
 from enum import Enum
 
-import KNPSStore
+from .KNPSStore import KNPSStore
 import KGType
 from query import IR
-import jsonpickle
 
 ALLVALS = {}
 ALLFUNCS = {}
-store = KNPSStore.KNPSStore('http://lasagna.eecs.umich.edu:8080')
+store = KNPSStore('http://lasagna.eecs.umich.edu:8080')
 # store = KNPSStore.KNPSStore(None)
 wikiMap = {}
 
@@ -475,7 +471,7 @@ class KGPLVariable(Base):
         self.url = "<unregistered>"
         self.annotations = "[]"
         self.timestamp = time.time()
-        self.historical_vals = [(time.time(), val)]
+        self.historical_vals = [(time.time(), val.id)]
         store.StoreValues([val, ])  # store the KGPLValue to local database
 
     def __str__(self):
@@ -518,7 +514,7 @@ class KGPLVariable(Base):
     def reassign(self, val: KGPLValue):
         self.currentvalue = val.id
         self.timestamp = time.time()
-        self.historical_vals.append((self.timestamp, val))
+        self.historical_vals.append((self.timestamp, val.id))
         store.StoreValues([val, ])
         store.SetVariable(self)
 

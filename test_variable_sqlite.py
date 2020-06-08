@@ -1,12 +1,8 @@
-import pickle
-
-import sqlalchemy
-from sqlalchemy import Column, Integer, Unicode, UnicodeText, String
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, session
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 import kgpl
-import KNPSStore
+# from kgpl import KNPSStore
+
 engine = create_engine('sqlite:///KGPLData.db', echo=False)
 
 Session = sessionmaker(bind=engine)
@@ -40,7 +36,7 @@ if __name__ == '__main__':
     # print("+++")
     # print(var2.__repr__())
 
-    store = KNPSStore.KNPSStore('http://lasagna.eecs.umich.edu:8080')
+    store = kgpl.KNPSStore('http://lasagna.eecs.umich.edu:8080')
     var3 = store.GetVariable("V2")
     print("+++")
     print(var3.__repr__())
