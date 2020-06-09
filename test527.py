@@ -1,4 +1,11 @@
+
+import KGType
 import kgpl
+import KNPSStore
+import time
+import query
+import wikidata_utils
+
 
 if __name__ == '__main__':
     # temp = query.IR('Q76', 'wikidata', 'P69')
