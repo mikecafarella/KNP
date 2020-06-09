@@ -5,9 +5,8 @@ from __future__ import annotations
 from sqlalchemy import Column, Integer, Unicode, UnicodeText, String, \
     PickleType, Float
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import scoped_session
+
 
 engine = create_engine('sqlite:///KGPLData.db', echo=False)
 Base = declarative_base(bind=engine)
@@ -16,7 +15,6 @@ Base = declarative_base(bind=engine)
 
 import uuid
 import time
-import os
 import pickle
 from enum import Enum
 
@@ -122,9 +120,6 @@ class KGPLValue(Base):
         self.id = str(uuid.uuid4())
         self.url = "<unregistered>"
         self.annotations = "[]"
-        ### Newly modified
-        self.isRegistered = False 
-        ###
         ALLVALS[self.id] = self
 
     def __str__(self):
@@ -140,9 +135,6 @@ class KGPLValue(Base):
 
     def register(self, server="central_server"):
         self.url = server + "/{}".format(self.id)
-        ### Newly modified
-        self.isRegistered = True
-        ###
         if server == "localhost":
             store.StoreValues([self])
         else:
@@ -411,7 +403,9 @@ def kgval(x, lineage=None):
     if isinstance(x, KGPLValue):
         return x
 
-    if isinstance(x, int):
+    if x is None:
+        return kgstr("None")
+    elif isinstance(x, int):
         return kgint(x, lineage)
     elif isinstance(x, str):
         return kgstr(x, lineage)
@@ -467,7 +461,7 @@ class Execution(KGPLValue):
 # KGPLValue.__add__ = lambda x, y: kgAdd(x, y)
 
 
-class KGPLVariable:
+class KGPLVariable(Base):
     __tablename__ = 'KGPLVariable'
     id = Column(UnicodeText, primary_key=True)
     timestamp = Column(Float, primary_key=True)
@@ -493,22 +487,17 @@ class KGPLVariable:
         #
 
     def __init__(self, val: KGPLValue):
-        self.id = None
-        self.varName = ""
-        ### Newly modified
-        if not val.isRegistered:
-            raise Exception("KGPLValue not registered!!!")
-        else:
-            self.currentvalue = str(val.id)
-            self.owner = "michjc"
-            self.url = "<unregistered>"
-            self.annotations = "[]"
-            self.timestamp = time.time()
-            self.historical_vals = [(time.time(), str(val.id))]
-        ###
+        self.id = None  # after registration, it will have an id.
+        self.currentvalue = val.id  # uuid of KGPLValue
+        self.owner = "minions"  # TODO: automatically assign owner
+        self.url = "<unregistered>"
+        self.annotations = "[]"
+        self.timestamp = time.time()
+        self.historical_vals = [(time.time(), val.id)]
+        store.StoreValues([val, ])  # store the KGPLValue to local database
 
     def __str__(self):
-        return str("Variable Name: " + self.varName + "\nCurrent value id: " + str(self.currentvalue))
+        return "uuid for the current related KGPLValue: " + self.currentvalue
 
     def __repr__(self):
         return "id: " + str(self.id) + "\nowner: " + str(
@@ -551,15 +540,12 @@ class KGPLVariable:
         return self
 
     def reassign(self, val: KGPLValue):
-        ### Newly modified
-        if not val.isRegistered:
-            raise Exception("KGPLValue is not registered!!!")
-        else:
-            self.currentvalue = str(val.id)
-            self.timestamp = time.time()
-            self.historical_vals.append((self.timestamp, str(val.id)))
-            store.SetVariable(self)
-        ###
+        self.currentvalue = val.id
+        self.timestamp = time.time()
+        self.historical_vals.append((self.timestamp, val.id))
+        store.StoreValues([val, ])
+        store.SetVariable(self)
+
 
     def viewHistory(self):
         i = 0

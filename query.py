@@ -2,6 +2,7 @@ import utils
 from wikidata_utils import *
 from typing import List, Set, Mapping, Tuple
 import pandas as pd
+import time
 
 class IR:
     """ The Intermidiate Representation for an entity (item/property). Supported KGs: Wikidata
@@ -82,6 +83,8 @@ class IR:
             if data_df is None:
                 self.properties[property_id] = data_df
             else:
+                print("---------------")
+                print(data_df)
                 self.properties[property_id] = data_df.to_dict()
 
 
