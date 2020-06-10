@@ -53,6 +53,7 @@ def Wiki_Dict_Transformer(entity_id):
     result["description"] = IR_temp.desc
     result["name"] = IR_temp.label
     result["property"] = IR_temp.properties
+    result["modified"] = IR_temp.modified
     return result
 
 
@@ -476,6 +477,7 @@ class KGPLVariable(Base):
     # TODO: Currently we have redundant field "history val" in the database
     historical_vals = Column(PickleType, nullable=True)
     discriminator = Column(String(20))
+    wikimap = relationship("Wikimap", uselist=False, back_populates="KGPLVariable")
 
     __mapper_args__ = {
         'polymorphic_on': discriminator,
