@@ -39,10 +39,11 @@ class IR:
         
     def _generate_IR_(self):
         entity_obj = get_entity(self.id)
-        if entity_obj['missing'] == '':
-            print("No such wikidata")
-            self.properties = None
-            return
+        if 'missing' in entity_obj.keys():
+            if entity_obj['missing'] == '':
+                print("No such wikidata")
+                self.properties = None
+                return
         self.label = entity_obj["labels"].get("en", {}).get("value")
         self.desc = entity_obj["descriptions"].get("en", {}).get("value")
         # self.aliases = [m["value"] for m in entity_obj["aliases"]["en"]]
