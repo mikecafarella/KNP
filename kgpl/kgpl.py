@@ -4,23 +4,27 @@ from __future__ import annotations
 
 
 from sqlalchemy import Column, Integer, Unicode, UnicodeText, String, \
-    PickleType, Float
+    PickleType, Float, Table, ForeignKey
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
 engine = create_engine('sqlite:///KGPLData.db', echo=False)
 Base = declarative_base(bind=engine)
 # ----------
-
+association_table = Table('association', Base.metadata,
+                          Column('left_id', Integer,
+                                 ForeignKey('KGPLValue.id')),
+                          Column('right_id', Integer,
+                                 ForeignKey('KGPLVariable.currentvalue'))
+                          )
 
 import uuid
 import time
 import pickle
 from enum import Enum
 
-
 from .KNPSStore import KNPSStore
-
 
 import KGType
 from query import IR
@@ -29,7 +33,7 @@ import jsonpickle
 ALLVALS = {}
 ALLFUNCS = {}
 store = KNPSStore('http://lasagna.eecs.umich.edu:8080')
-# store = KNPSStore.KNPSStore(None)
+# store = KNPSStore(None)
 
 wikiMap = {}
 
@@ -42,7 +46,6 @@ def getVariable(varName):
     return store.GetVariable(varName)
 
 
-
 def Wiki_Dict_Transformer(entity_id):
     IR_temp = IR(entity_id, 'wikidata')
     result = {}
@@ -51,7 +54,6 @@ def Wiki_Dict_Transformer(entity_id):
     result["name"] = IR_temp.label
     result["property"] = IR_temp.properties
     return result
-
 
 
 class LineageKinds(Enum):
@@ -95,6 +97,7 @@ class KGPLValue(Base):
     url = Column(UnicodeText)
     annotations = Column(UnicodeText)
     discriminator = Column(String(20))
+    children = relationship("KGPLVariable", secondary=association_table)
 
     __mapper_args__ = {
         'polymorphic_on': discriminator,
@@ -256,7 +259,6 @@ class KGPLTuple(KGPLValue, Base):
         pass
 
 
-
 class KGPLDict(KGPLValue, dict, Base):
     __mapper_args__ = {
         'polymorphic_identity': 'KGPLDict'
@@ -404,7 +406,7 @@ def kgplSquare(x):
 def kgval(x, lineage=None):
     if isinstance(x, KGPLValue):
         return x
-      
+
     if x is None:
         return kgstr("None")
     elif isinstance(x, int):
@@ -525,7 +527,7 @@ class KGPLVariable(Base):
         fetch.register()
         """
 
-            # TODO: make sure the related value is registered as well
+        # TODO: make sure the related value is registered as well
         """
         Register variable: push to a centralized remote database on the
         parent server. (According to decision on May 20th)
@@ -533,15 +535,15 @@ class KGPLVariable(Base):
         # self.url = "registered"
         store.RegisterVariable(self)
 
-    def initOrUpdate(self, varName):
-        if 'var/' in varName:
-            if varName[0:3] == 'var':
-                self = getVariable(varName[4:])
-        else:
-            self = getVariable(varName)
-        if not self:
-            self.registerVariable()
-        return self
+    # def initOrUpdate(self, varName):
+    #     if 'var/' in varName:
+    #         if varName[0:3] == 'var':
+    #             self = getVariable(varName[4:])
+    #     else:
+    #         self = getVariable(varName)
+    #     if not self:
+    #         self.registerVariable()
+    #     return self
 
     def reassign(self, val: KGPLValue):
         self.currentvalue = val.id
@@ -552,10 +554,10 @@ class KGPLVariable(Base):
 
     def viewHistory(self):
         i = 0
-        print("History of " + str(self.varName))
+        print("History of " + str(self.id))
         for pair in self.historical_vals:
             print("Modification " + str(i))
-            print("Timestamp: " + str(pair[0]))		
+            print("Timestamp: " + str(pair[0]))
             print("Value_id: " + str(pair[1]))
             i = i + 1
             print()
@@ -625,4 +627,3 @@ def get_type_precondition_score(kgpl_func: KGPLFuncValue, *args, **kwargs):
 
 
 Base.metadata.create_all()
-

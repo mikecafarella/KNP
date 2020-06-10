@@ -185,7 +185,7 @@ class KNPSStore:
                           data=pickle.dumps(val))
 
     def SaveValueList(self):
-        outfile = open("../valueList", "wb")
+        outfile = open("valueList", "wb")
         pickle.dump(self.valueList, outfile)
         outfile.close()
 
