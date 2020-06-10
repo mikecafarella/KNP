@@ -46,6 +46,9 @@ class IR:
             if entity_obj['missing'] == '':
                 print("No such wikidata")
                 self.properties = None
+                self.desc = None
+                self.label = None
+                self.modified = None
                 return
         self.label = entity_obj["labels"].get("en", {}).get("value")
         self.desc = entity_obj["descriptions"].get("en", {}).get("value")
