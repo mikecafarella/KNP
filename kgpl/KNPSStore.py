@@ -147,7 +147,7 @@ class KNPSStore:
                 fetch.historical_vals = []
                 for one_his in his:
                     fetch.historical_vals.append(
-                        (one_his.timestamp, one_his.id))
+                        (one_his.timestamp, one_his.currentvalue))
 
                 print("historical values: ", fetch.historical_vals)
                 session.make_transient(fetch)
