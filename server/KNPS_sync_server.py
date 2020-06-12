@@ -58,6 +58,13 @@ def main():
         return flask.render_template("index.html", **context)
 
 
+@app.route("/allvalues", methods=['GET'])
+def allvals():
+    context = {
+        "rst": s.availVal()
+    }
+    return flask.render_template("all_val.html",**context)
+
 @app.route("/val/<fileid>", methods=['GET', 'POST'])
 def ReturnValue(fileid):
     # file_path = os.path.join("val", fileid)

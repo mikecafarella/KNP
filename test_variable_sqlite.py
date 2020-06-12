@@ -15,6 +15,12 @@ if __name__ == '__main__':
 
     var1 = kgpl.KGPLVariable(val1)
     var2 = kgpl.KGPLVariable(val2)
+
+    var1.registerVariable()
+    var2.registerVariable()
+
+    var1.reassign(val2)
+
     print("+++")
     print(val1.__repr__())
     print("+++")
@@ -24,11 +30,9 @@ if __name__ == '__main__':
     print("+++")
     print(var2.__repr__())
     #
-    var1.registerVariable()
-    var2.registerVariable()
+
     # # # print(var1.__repr__())
     # # # print(var2.__repr__())
-    var1.reassign(val2)
     # # print(val1.__repr__())
     # # print(val2.__repr__())
     # print("+++")

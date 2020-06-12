@@ -9,14 +9,14 @@ import kgpl
 import sqlalchemy
 from sqlalchemy import Column, Integer, Unicode, UnicodeText, String
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, make_transient
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import func
 from sqlalchemy import distinct
 
-engine = create_engine('sqlite:///KGPLData.db', echo=False,
+engine = create_engine('sqlite:///KGPLData.db', echo=True,
                        connect_args={'check_same_thread': False})
 
 Session = scoped_session(sessionmaker(bind=engine))
@@ -140,6 +140,16 @@ class KNPSStore:
                 fetch = s.query(kgpl.KGPLVariable).filter(
                     kgpl.KGPLVariable.id == varName).order_by(
                     kgpl.KGPLVariable.timestamp.desc()).first()
+
+                his = s.query(kgpl.KGPLVariable).filter(
+                    kgpl.KGPLVariable.id == varName).order_by(
+                    kgpl.KGPLVariable.timestamp.desc())
+                fetch.historical_vals = []
+                for one_his in his:
+                    fetch.historical_vals.append(
+                        (one_his.timestamp, one_his.id))
+
+                print("historical values: ", fetch.historical_vals)
                 session.make_transient(fetch)
                 return fetch
             except sqlalchemy.orm.exc.NoResultFound:
@@ -164,15 +174,34 @@ class KNPSStore:
         else:
             return -1
 
+    def availVal(self):
+        if not self.serverURL:
+            try:
+                fetch = s.query(kgpl.KGPLValue)
+                rst = []
+                for one_fetch in fetch:
+                    # session.make_transient(one_fetch)
+                    rst.append((one_fetch.id, one_fetch.val))
+                return rst
+            except sqlalchemy.orm.exc.NoResultFound:
+                print("-------------variable not found------------")
+                return -1
+        else:
+            return -1
+
     def SetVariable(self, new_var):  # new_var is the new variable
         print("------------------setting variable--------------------")
         """
         Reset the value of a variable,
         Update in the database(add a line)
         """
+
         if not self.serverURL:
-            # new_var.timestamp = time.time()
-            self.StoreValues([new_var, ])
+            # self.StoreValues([new_var, ])
+            print("---inside------", new_var.timestamp)
+
+            s.add(new_var)
+            s.commit()
         else:
             set_var = pickle.dumps(new_var)
             r = requests.post(self.serverURL + "/var/" + new_var.id,

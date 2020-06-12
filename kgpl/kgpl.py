@@ -7,7 +7,7 @@ from sqlalchemy import Column, Integer, Unicode, UnicodeText, String, \
     PickleType, Float, Table, ForeignKey
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, make_transient
 
 engine = create_engine('sqlite:///KGPLData.db', echo=False)
 Base = declarative_base(bind=engine)
@@ -32,8 +32,8 @@ import jsonpickle
 
 ALLVALS = {}
 ALLFUNCS = {}
-store = KNPSStore('http://lasagna.eecs.umich.edu:8080')
-# store = KNPSStore(None)
+# store = KNPSStore('http://lasagna.eecs.umich.edu:8080')
+store = KNPSStore(None)
 
 wikiMap = {}
 
@@ -475,9 +475,9 @@ class KGPLVariable(Base):
     url = Column(UnicodeText, nullable=True)
     annotations = Column(UnicodeText, nullable=True)
     # TODO: Currently we have redundant field "history val" in the database
-    historical_vals = Column(PickleType, nullable=True)
+    # historical_vals = Column(PickleType, nullable=True)
     discriminator = Column(String(20))
-    wikimap = relationship("Wikimap", uselist=False, back_populates="KGPLVariable")
+    # wikimap = relationship("Wikimap", uselist=False, back_populates="KGPLVariable")
 
     __mapper_args__ = {
         'polymorphic_on': discriminator,
@@ -548,8 +548,14 @@ class KGPLVariable(Base):
     #     return self
 
     def reassign(self, val: KGPLValue):
+        make_transient(self)
+
         self.currentvalue = val.id
+        print("---------",self.timestamp)
+
         self.timestamp = time.time()
+        print("---------",self.timestamp)
+
         self.historical_vals.append((self.timestamp, val.id))
         store.StoreValues([val, ])
         store.SetVariable(self)
