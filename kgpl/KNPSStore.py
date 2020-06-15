@@ -16,7 +16,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import func
 from sqlalchemy import distinct
 
-engine = create_engine('sqlite:///KGPLData.db', echo=True,
+engine = create_engine('sqlite:///KGPLData.db', echo=False,
                        connect_args={'check_same_thread': False})
 
 Session = scoped_session(sessionmaker(bind=engine))

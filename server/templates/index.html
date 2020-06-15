@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>KNPS Tools</title>
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800,900"
+          rel="stylesheet">
+    <link rel="shortcut icon"
+          href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+
+<div class="wrapper d-flex align-items-stretch">
+    <nav id="sidebar">
+        <div class="p-4 pt-5">
+            <a href="/" class="img logo rounded-circle mb-5"
+               style="background-image: url({{ url_for('static', filename='logoo.png') }});"></a>
+
+
+            <ul class="list-unstyled components mb-5">
+                <li class="active">
+                    <a href="/">Home</a>
+                    <!--                    <ul class="collapse list-unstyled" id="homeSubmenu">-->
+                    <!--                        <li>-->
+                    <!--                            <a href="#">Home 1</a>-->
+                    <!--                        </li>-->
+                    <!--                        <li>-->
+                    <!--                            <a href="#">Home 2</a>-->
+                    <!--                        </li>-->
+                    <!--                        <li>-->
+                    <!--                            <a href="#">Home 3</a>-->
+                    <!--                        </li>-->
+                    <!--                    </ul>-->
+                </li>
+                <li>
+                    <a href="/allvalues">All KGPLValues</a>
+                </li>
+                <li>
+                    <a href="/">All KGPLVariables</a>
+                </li>
+            </ul>
+
+            <div class="footer">
+                <p>
+                    <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+<!--                    Copyright &copy;<script>document.write(new Date().getFullYear());</script>-->
+<!--                    All rights reserved | This template is made with <i-->
+<!--                        class="icon-heart" aria-hidden="true"></i> by <a-->
+<!--                        href="https://colorlib.com" target="_blank">Colorlib.com</a>-->
+                    <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+                </p>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- Page Content  -->
+    <div id="content" class="p-4 p-md-5 h3">
+
+<!--        <nav class="navbar navbar-expand-lg navbar-light bg-light">-->
+<!--            <div class="container-fluid">-->
+<!--                <div class="collapse navbar-collapse"-->
+<!--                     id="navbarSupportedContent">-->
+<!--                    <ul class="nav navbar-nav ml-auto">-->
+<!--                        <li class="nav-item active">-->
+<!--                            <a class="nav-link" href="#">Home</a>-->
+<!--                        </li>-->
+<!--                        <li class="nav-item">-->
+<!--                            <a class="nav-link" href="#">All KGPLValues</a>-->
+<!--                        </li>-->
+<!--                        <li class="nav-item">-->
+<!--                            <a class="nav-link" href="#">All KGPLVariables</a>-->
+<!--                        </li>-->
+<!--                    </ul>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </nav>-->
+        <a href="/">
+            <h1>KGPLVariable History Search</h1>
+        </a>
+
+        <h2>{{invalid}}</h2>
+        <br>
+        {% if existing_variables == 0 %}
+        <h2>Currently database is empty. No variable available.</h2>
+        {%else%}
+        <p>Currently {{existing_variables}} variables are in database.</p>
+        <form action="/" method="post" enctype="multipart/form-data">
+            Search the history for V<input type="number" name="Variable_Name" placeholder='1'/>
+            <br>
+            <br>
+            <input type="submit" value="Find" class="ui-button"/>
+        </form>
+
+
+        {%endif%}
+
+    </div>
+</div>
+
+</body>
+</html>
