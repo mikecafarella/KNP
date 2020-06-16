@@ -417,8 +417,6 @@ def kgval(x, lineage=None):
         return KGPLTuple(x, lineage)
     elif isinstance(x, list):
         return KGPLList(x, lineage)
-    else:
-        return kgstr("None")
     #
     # other values? KGPLEntity
     #
