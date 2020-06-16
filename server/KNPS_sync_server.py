@@ -3,6 +3,7 @@ from datetime import datetime
 import flask
 import pickle
 import json
+import BulkLoader
 from kgpl import KNPSStore
 from sqlalchemy.orm import session
 from kgpl.KNPSStore import Session
@@ -58,12 +59,17 @@ def main():
         return flask.render_template("index.html", **context)
 
 
-@app.route("/allvalues", methods=['GET'])
+@app.route("/allvalues", methods=['GET', 'POST'])
 def allvals():
-    context = {
-        "rst": s.availVal()
-    }
-    return flask.render_template("all_val.html",**context)
+    if flask.request.method == 'POST':
+        uuid = flask.request.form['uuid']
+        return flask.redirect("/allvalues/" + uuid)
+
+    else:
+        context = {
+            "rst": s.availVal()
+        }
+        return flask.render_template("all_val.html",**context)
 
 @app.route("/allvalues/<uuid>", methods=['GET'])
 def specval(uuid):
@@ -103,12 +109,28 @@ def specval(uuid):
             "type": value.discriminator,
             "val": value.val
         }"""
+    if value:
+        context = {
+                "UUID": uuid,
+                "type": value.discriminator,
+                "val": value.val
+        }
+        return flask.render_template("specval.html",**context)
+    else:
+        return flask.abort(404)
+
+@app.route("/wikimap", methods=['GET'])
+def ReturnWikiMap():
+    ss = Session()
+    rst = []
+    fetch = ss.query(BulkLoader.Wikimap)
+    for v in fetch:
+        rst.append((v.var_id, v.wiki_id))
     context = {
-            "UUID": uuid,
-            "type": value.discriminator,
-            "val": value.val
+        "rst": rst
     }
-    return flask.render_template("specval.html",**context)
+    return flask.render_template("wiki_map.html", **context)
+
 
 @app.route("/val/<fileid>", methods=['GET', 'POST'])
 def ReturnValue(fileid):

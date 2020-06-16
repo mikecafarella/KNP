@@ -477,7 +477,7 @@ class KGPLVariable(Base):
     # TODO: Currently we have redundant field "history val" in the database
     # historical_vals = Column(PickleType, nullable=True)
     discriminator = Column(String(20))
-    # wikimap = relationship("Wikimap", uselist=False, back_populates="KGPLVariable")
+    # Wikimap = relationship("Wikimap", uselist=False, back_populates="KGPLVariable")
 
     __mapper_args__ = {
         'polymorphic_on': discriminator,

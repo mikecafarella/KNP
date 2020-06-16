@@ -25,7 +25,7 @@
 
 
             <ul class="list-unstyled components mb-5">
-                <li class="active">
+                <li>
                     <a href="/">Home</a>
                     <!--                    <ul class="collapse list-unstyled" id="homeSubmenu">-->
                     <!--                        <li>-->
@@ -45,7 +45,7 @@
                 <li>
                     <a href="/">All KGPLVariables</a>
                 </li>
-                <li>
+                <li class="active">
                     <a href="/wikimap">Wikidata Mapping</a>
                 </li>
             </ul>
@@ -65,7 +65,7 @@
     </nav>
 
     <!-- Page Content  -->
-    <div id="content" class="p-4 p-md-5">
+    <div id="content" class="p-5 p-md-5">
 
         <!--        <nav class="navbar navbar-expand-lg navbar-light bg-light">-->
         <!--            <div class="container-fluid">-->
@@ -85,30 +85,33 @@
         <!--                </div>-->
         <!--            </div>-->
         <!--        </nav>-->
-        <a href="/">
-            <h2 class="mb-4">KGPLVariable History for {{vname}}</h2>
+        <a href="/wikimap">
+            <h2 class="mb-4">One-to-One mappting between Wikidata and KGPLVariables</h2>
         </a>
 
 
-        <table class="table h4">
+        <table class="h4 table">
             <thead>
             <tr class="table100-head">
-                <th class="column1">Modified Time&nbsp;</th>
-                <th class="column2">Value Type&nbsp;</th>
-                <th class="column3">Concrete Value&nbsp;</th>
-                <th class="column4">UUID of History Value&nbsp;</th>
+                <th class="column1">Variable ID&nbsp;</th>
+                <th class="column2">Wikidata ID</th>
             </tr>
             </thead>
             <tbody>
-            {% for one_his in var %}
-            <tr>
-                <td class="column1">{{one_his[0]}} &nbsp;</td>
-                <td class="column2">{{one_his[2]}} &nbsp;</td>
-                <td class="column3">{{one_his[3]}} &nbsp;</td>
-                <td class="column4 btn-link"><a href="/allvalues/{{one_his[1]}}"
-                    style="color:black!important;">{{one_his[1]}}&nbsp;</a></td>
-            </tr>
-            {% endfor %}
+                {% for x in rst %}
+                <tr>
+                    <td class="column1">
+                        <a href="/" style="color:black!important;">
+                            {{x[0]}}&nbsp;
+                        </a>
+                    </td>
+                    <td class="column2">
+                        <a href="https://www.wikidata.org/wiki/{{x[1]}}" style="color:black!important;">
+                            {{x[1]}}&nbsp;
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
             </tbody>
         </table>
 

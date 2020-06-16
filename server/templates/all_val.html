@@ -45,6 +45,9 @@
                 <li>
                     <a href="/">All KGPLVariables</a>
                 </li>
+                <li>
+                    <a href="/wikimap">Wikidata Mapping</a>
+                </li>
             </ul>
 
             <div class="footer">
@@ -82,10 +85,14 @@
         <!--                </div>-->
         <!--            </div>-->
         <!--        </nav>-->
-        <a href="/">
+        <a href="/allvalues">
             <h2 class="mb-4">All KGPLValues</h2>
         </a>
 
+        <form action="/allvalues" method="post" enctype="multipart/form-data">
+            <input type="text" name="uuid" placeholder="enter KGPLValue's uuid">
+            <input type="submit" value="Find">
+        </form>
 
         <table class="h4 table">
             <thead>

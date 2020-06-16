@@ -24,7 +24,7 @@ class Wikimap(Base):
     wiki_id = Column(UnicodeText, primary_key=True, nullable=False)
     var_id = Column(UnicodeText, ForeignKey('KGPLVariable.id'))
     modified = Column(UnicodeText, nullable=False)
-    KGPLVariable = relationship("KGPLVariable", back_populates="wikimap")
+    # KGPLVariable = relationship("KGPLVariable", back_populates="wikimap")
 
     def __init__(self, id, var, modified):
         self.wiki_id = id
