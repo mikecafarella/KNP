@@ -413,10 +413,12 @@ def kgval(x, lineage=None):
         return kgfloat(x, lineage)
     elif isinstance(x, dict):
         return KGPLDict(x, lineage)
-    elif hasattr(x, "isTuple"):
+    elif isinstance(x, tuple):
         return KGPLTuple(x, lineage)
-    elif hasattr(x, "__iter__"):
+    elif isinstance(x, list):
         return KGPLList(x, lineage)
+    else:
+        return kgstr("None")
     #
     # other values? KGPLEntity
     #
