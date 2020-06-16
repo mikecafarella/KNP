@@ -65,6 +65,51 @@ def allvals():
     }
     return flask.render_template("all_val.html",**context)
 
+@app.route("/allvalues/<uuid>", methods=['GET'])
+def specval(uuid):
+    value = s.GetValue(uuid)
+    """
+    if value.discriminator == "KGPLList":
+        l = value.val
+        val = []
+        if len(l) == 0:
+            empty = "1"
+        else:
+            empty = "0"
+            for item in l:
+                if isinstance(item.val, int) or isinstance(item.val, float) or isinstance(item.val, str):
+                    mydict = {
+                        "display": "1", 
+                        "concrete": item.val,
+                         "itemID": item.id}
+                    val.append(mydict)
+                else:
+                    mydict = {
+                        "display": "0", 
+                        "concrete": "KGPLList",
+                         "itemID": item.id}
+                    val.append(mydict)
+
+                
+        context = {
+            "empty": empty,
+            "UUID": uuid,
+            "type": value.discriminator,
+            "val": val
+        }
+    else:
+        context = {
+            "UUID": uuid,
+            "type": value.discriminator,
+            "val": value.val
+        }"""
+    context = {
+            "UUID": uuid,
+            "type": value.discriminator,
+            "val": value.val
+    }
+    return flask.render_template("specval.html",**context)
+
 @app.route("/val/<fileid>", methods=['GET', 'POST'])
 def ReturnValue(fileid):
     # file_path = os.path.join("val", fileid)

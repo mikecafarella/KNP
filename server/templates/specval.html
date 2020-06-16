@@ -83,27 +83,27 @@
         <!--            </div>-->
         <!--        </nav>-->
         <a href="/">
-            <h2 class="mb-4">All KGPLValues</h2>
+            <h2 class="mb-4">KGPLValue</h2>
         </a>
 
 
         <table class="h4 table">
-            <thead>
-            <tr class="table100-head">
-                <th class="column1">UUID&nbsp;</th>
-                <th class="column2">Concrete Value&nbsp;</th>
-            </tr>
-            </thead>
             <tbody>
-            {% for one_his in rst %}
-
-            <tr>
-                <td class="column1 btn-link"><a href="/allvalues/{{one_his[0]}}"
-                                                style="color:black!important;">{{one_his[0]}}
-                    &nbsp;</a></td>
-                <td class="column2">{{one_his[1]}} &nbsp;</td>
-            </tr>
-            {% endfor %}
+                <tr>
+                    <th class="column1">UUID
+                        &nbsp;</a></td>
+                    <td class="column2">{{UUID}} &nbsp;</td>
+                </tr>
+                <tr>
+                    <th class="column1">Type
+                        &nbsp;</a></td>
+                    <td class="column2">{{type}} &nbsp;</td>
+                </tr>
+                <tr>
+                    <th class="column1">Concrete Value
+                        &nbsp;</a></td>
+                    <td class="column2">{{val}} &nbsp;</td>
+                </tr>
             </tbody>
         </table>
 
