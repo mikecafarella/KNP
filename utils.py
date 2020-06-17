@@ -184,9 +184,8 @@ def parse_wikidata_datavalue(datavalue, datatype: str):
     rst = {}
     if datatype == 'wikibase-item':
         assert(datavalue['type'] == 'wikibase-entityid')
-        rst = {"wikidatadata ID": datavalue['value']["id"]}
-        # item = search_entity(datavalue['value']["id"], "item", limit=1)[0]
-        # rst = {"wikidata ID": item["id"], "wikidata entity type": "item", "label": item.get("label"), "description": item.get("description"), "aliases": item.get("aliases"), "url": item["url"][2:]}
+        item = search_entity(datavalue['value']["id"], "item", limit=1)[0]
+        rst = {"wikidata ID": item["id"], "wikidata entity type": "item", "label": item.get("label"), "description": item.get("description"), "aliases": item.get("aliases"), "url": item["url"][2:]}
     elif datatype == 'wikibase-property':
         assert(datavalue['type'] == 'wikibase-entityid')
         property = search_entity(datavalue['value']["id"], "property", limit=1)[0]
