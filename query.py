@@ -2,6 +2,8 @@ import utils
 from wikidata_utils import *
 from typing import List, Set, Mapping, Tuple
 import pandas as pd
+import time
+
 
 class IR:
     """ The Intermidiate Representation for an entity (item/property). Supported KGs: Wikidata
@@ -10,16 +12,17 @@ class IR:
             entity_id: the entity ID.
             focus: the part of the IR that is built. 
                 E.g., For Q30.GDP, we build an IR for Q30 with only GDP property data fetched.
-        
+
         Attributes:
             type (str): item / property. Others are not supported yet.
             id (str)
-            focus (str): The property_id of the IT 
+            focus (str): The property_id of the IT
             desc (str)
             aliases (List[str])
             properties (Dict): Keys are property_id, values are DataFrame
-    """ 
-    def __init__(self, entity_id: str, KG: str, focus: str=None):
+    """
+
+    def __init__(self, entity_id: str, KG: str, focus: str = None):
         if KG.lower() != "wikidata":
             raise ValueError("Unsupported KG: {}".format(KG))
         self.KG = KG
@@ -33,14 +36,24 @@ class IR:
         elif entity_id.startswith("P"):
             self.type = "property"
         else:
-            raise ValueError("Unsupported entity type with id = {}".format(entity_id))
+            raise ValueError(
+                "Unsupported entity type with id = {}".format(entity_id))
         self._generate_IR_()
-        
+
     def _generate_IR_(self):
         entity_obj = get_entity(self.id)
+        if 'missing' in entity_obj.keys():
+            if entity_obj['missing'] == '':
+                print("No such wikidata")
+                self.properties = None
+                self.desc = None
+                self.label = None
+                self.modified = None
+                return
         self.label = entity_obj["labels"].get("en", {}).get("value")
         self.desc = entity_obj["descriptions"].get("en", {}).get("value")
-        self.aliases = [m["value"] for m in entity_obj["aliases"]["en"]]
+        self.modified = entity_obj["modified"]
+        # self.aliases = [m["value"] for m in entity_obj["aliases"]["en"]]
         if self.focus is not None:
             p = search_entity(self.focus, 'property', limit=1)[0]
             self.focus_label = p.get("label")
@@ -56,31 +69,39 @@ class IR:
                     continue
                 datatype = mainsnak["datatype"]
                 datavalue = mainsnak["datavalue"]
-                value_mapping = utils.parse_wikidata_datavalue(datavalue, datatype)
+                value_mapping = utils.parse_wikidata_datavalue(datavalue,
+                                                               datatype)
                 if len(value_mapping) == 0:
                     continue
-                qualifiers_mapping = utils.parse_wikidata_qualifiers(qualifiers)
+                qualifiers_mapping = utils.parse_wikidata_qualifiers(
+                    qualifiers)
                 #
                 # Assume no overlapping keys in qualifiers_maping and value_mapping
                 #
-                assert(set(value_mapping.keys()) != set(qualifiers_mapping.keys()))
+                assert (set(value_mapping.keys()) != set(
+                    qualifiers_mapping.keys()))
                 value_mapping.update(qualifiers_mapping)
                 #
                 # Add prefix to all keys
                 #
-                # key_prefix = self.label + "." + 
+                # key_prefix = self.label + "." +
                 # value_mapping = {key_prefix+k: v for k, v in value_mapping.items()}
-                
+
                 if data_df is None:
                     data_df = pd.DataFrame.from_records([value_mapping])
                 else:
-                    data_df = data_df.append(value_mapping, ignore_index=True, sort=True)
+                    data_df = data_df.append(value_mapping, ignore_index=True,
+                                             sort=True)
                 # print(data_df)
             #
             # Open question: do we want to include property labels in keys?
             #
-            self.properties[property_id] = data_df
-
+            if data_df is None:
+                self.properties[property_id] = data_df
+            else:
+                print("---------------")
+                print(data_df)
+                self.properties[property_id] = data_df.to_dict()
 
     def __getitem__(self, key):
         return self.properties.get(key)
@@ -89,7 +110,8 @@ class IR:
         if self.focus is None:
             return self.KG + ": " + self.id + "({})".format(self.label)
         else:
-            return self.KG + ": " + self.id + "({})".format(self.label) + ".{}({})".format(self.focus, self.focus_label)
+            return self.KG + ": " + self.id + "({})".format(
+                self.label) + ".{}({})".format(self.focus, self.focus_label)
 
 
 class Query:
@@ -105,6 +127,7 @@ class Query:
             keyword_args (list): keyword arguments in the query.
             KG_params (List): a list of IR.
     """
+
     def __init__(self, raw_query, KG):
         self.raw_query = raw_query
         self._parse_user_query_()
@@ -113,13 +136,14 @@ class Query:
         # Generates IRs
         #
         self._data_preprocess_()
-    
+
     def _parse_user_query_(self):
         """
         Fow now: assume the user uses a dataset from seaborn by passing the dataset name
             as the first argument in the query string.
         """
-        operator_desc, first_params, pos_args, keyword_args = utils.parse(self.raw_query)
+        operator_desc, first_params, pos_args, keyword_args = utils.parse(
+            self.raw_query)
         self.operator_desc = operator_desc
         self.pos_args = pos_args
         self.keyword_args = keyword_args
@@ -135,7 +159,7 @@ class Query:
 
             Args:
                 KG_params: A list of expressions referring to KG data.
-                        -- An entity (whether the user refers to it directly, as in Q76, or via an expression, as in Q1048.P19) 
+                        -- An entity (whether the user refers to it directly, as in Q76, or via an expression, as in Q1048.P19)
                         -- Others (E.g., Q76.P569)
         """
         KG_params = {}
@@ -151,22 +175,25 @@ class Query:
                     #
                     # Check if the expression refers to another entity.
                     #
-                    type = claims[0]["mainsnak"].get('datatype')  # TODO: expr refers to a list of entities?
+                    type = claims[0]["mainsnak"].get(
+                        'datatype')  # TODO: expr refers to a list of entities?
                     if type is None:
                         # No datavalue
                         KG_params[KG_param] = None
                         continue
                     elif type == "wikibase-item" or type == "wikibase-property":
-                        new_entity_id = claims[0]["mainsnak"]["datavalue"]["value"]["id"]
+                        new_entity_id = \
+                        claims[0]["mainsnak"]["datavalue"]["value"]["id"]
                         KG_params[KG_param] = IR(new_entity_id, self.KG)
                     else:
-                        KG_params[KG_param] = IR(entity_id, self.KG, focus=property_id)
+                        KG_params[KG_param] = IR(entity_id, self.KG,
+                                                 focus=property_id)
                 else:
                     # expr = A
                     KG_params[KG_param] = IR(entity_id, self.KG)
         else:
             raise ValueError("Unsupported KG: {}".format(KG))
         self.KG_params = KG_params
-    
+
     def __getitem__(self, key):
         return self.KG_params.get(key)

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>KNPS Tools</title>
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800,900"
+          rel="stylesheet">
+    <link rel="shortcut icon"
+          href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+
+<div class="wrapper d-flex align-items-stretch">
+    <nav id="sidebar">
+        <div class="p-4 pt-5">
+            <a href="/" class="img logo rounded-circle mb-5"
+               style="background-image: url({{ url_for('static', filename='logoo.png') }});"></a>
+
+
+            <ul class="list-unstyled components mb-5">
+                <li>
+                    <a href="/">Home</a>
+                    <!--                    <ul class="collapse list-unstyled" id="homeSubmenu">-->
+                    <!--                        <li>-->
+                    <!--                            <a href="#">Home 1</a>-->
+                    <!--                        </li>-->
+                    <!--                        <li>-->
+                    <!--                            <a href="#">Home 2</a>-->
+                    <!--                        </li>-->
+                    <!--                        <li>-->
+                    <!--                            <a href="#">Home 3</a>-->
+                    <!--                        </li>-->
+                    <!--                    </ul>-->
+                </li>
+                <li class="active">
+                    <a href="/allvalues">All KGPLValues</a>
+                </li>
+                <li>
+                    <a href="/allvars">All KGPLVariables</a>
+                </li>
+                <li>
+                    <a href="/wikimap">Wikidata Mapping</a>
+                </li>
+            </ul>
+
+            <div class="footer">
+                <p>
+                    <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+                    <!--                    Copyright &copy;<script>document.write(new Date().getFullYear());</script>-->
+                    <!--                    All rights reserved | This template is made with <i-->
+                    <!--                        class="icon-heart" aria-hidden="true"></i> by <a-->
+                    <!--                        href="https://colorlib.com" target="_blank">Colorlib.com</a>-->
+                    <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+                </p>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- Page Content  -->
+    <div id="content" class="p-5 p-md-5">
+
+        <!--        <nav class="navbar navbar-expand-lg navbar-light bg-light">-->
+        <!--            <div class="container-fluid">-->
+        <!--                <div class="collapse navbar-collapse"-->
+        <!--                     id="navbarSupportedContent">-->
+        <!--                    <ul class="nav navbar-nav ml-auto">-->
+        <!--                        <li class="nav-item active">-->
+        <!--                            <a class="nav-link" href="#">Home</a>-->
+        <!--                        </li>-->
+        <!--                        <li class="nav-item">-->
+        <!--                            <a class="nav-link" href="#">All KGPLValues</a>-->
+        <!--                        </li>-->
+        <!--                        <li class="nav-item">-->
+        <!--                            <a class="nav-link" href="#">All KGPLVariables</a>-->
+        <!--                        </li>-->
+        <!--                    </ul>-->
+        <!--                </div>-->
+        <!--            </div>-->
+        <!--        </nav>-->
+        <a href="/allvalues">
+            <h2 class="mb-4">All KGPLValues</h2>
+        </a>
+
+        <form action="/allvalues" method="post" enctype="multipart/form-data">
+            <input type="text" name="uuid"
+                   placeholder="enter KGPLValue's uuid">
+            <input type="submit" value="Find">
+        </form>
+
+        <table class="h5 table table-striped table-bordered table-hover table-hover-cursor"
+               style="table-layout: fixed; width: 100%;">
+            <thead>
+            <tr class="table100-head">
+                <th style="width: 20%">UUID&nbsp;</th>
+                <th style="width: 10%">Type&nbsp;</th>
+                <th style="width: 85%">Concrete Value&nbsp;</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for one_his in rst %}
+
+                <tr>
+                    <td class="column1 btn-link "><a
+                            href="/allvalues/{{ one_his[0] }}"
+                            style="color:black!important;">{{ one_his[0] }}
+                        &nbsp;</a></td>
+                    <td>{{ one_his[2] }}</td>
+                    <td class="text-scroll">
+                        <span>{{ one_his[1] }} &nbsp;</span>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+
+    </div>
+</div>
+
+</body>
+</html>
