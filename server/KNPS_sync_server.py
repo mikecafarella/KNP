@@ -18,44 +18,104 @@ APPLICATION_ROOT = '/'
 @app.route("/", methods=['GET', 'POST'])
 def main():
     curnum = s.availVar()
+    # if flask.request.method == 'POST':
+    #     vnum = flask.request.form['Variable_Name']
+    #     # check whether vnum is from 1 to len(s.valueList)
+    #
+    #     if 1 <= int(vnum) <= curnum:
+    #         vname = "V" + str(vnum)
+    #         var = s.GetVariable(vname)
+    #         his = var.historical_vals
+    #         print(his)
+    #         print("@@@@@@@@@@@@@@@@@@@@@@", type(his))
+    #         pretty_time = []
+    #         for onehis in his:
+    #             value_value = s.GetValue(onehis[1])
+    #             pretty_time.append(
+    #                 (datetime.fromtimestamp(onehis[0]).strftime(
+    #                     '%Y-%m-%d %H:%M:%S'), onehis[1],
+    #                  type(value_value).__name__,
+    #                  value_value.val),
+    #             )
+    #         context = {
+    #             "vname": vname,
+    #             "var": pretty_time
+    #         }
+    #         return flask.render_template("result.html", **context)
+    #     else:
+    #         context = {
+    #             "existing_variables": curnum,
+    #             "invalid": "Invalid Input! Please retry."
+    #         }
+    #         return flask.render_template("index.html", **context)
+
+    # else:
+    context = {
+        "existing_variables": curnum}
+    # return flask.jsonify(**context), 200
+    # return flask.render_template("index.html", **context)
+
+    return flask.render_template("index.html", **context)
+
+
+@app.route("/allvars", methods=['GET', 'POST'])
+def allvars():
     if flask.request.method == 'POST':
-        vnum = flask.request.form['Variable_Name']
-        # check whether vnum is from 1 to len(s.valueList)
+        var_name = flask.request.form['Variable_Name']
+        return flask.redirect("/allvars/" + var_name)
+    else:
+        curnum = s.availVar()
+        pretty_time = []
 
-        if 1 <= int(vnum) <= curnum:
-            vname = "V" + str(vnum)
+        for i in range(1, curnum + 1, 1):
+            vname = "V" + str(i)
             var = s.GetVariable(vname)
-            his = var.historical_vals
-            print(his)
-            print("@@@@@@@@@@@@@@@@@@@@@@", type(his))
-            pretty_time = []
-            for onehis in his:
-                value_value = s.GetValue(onehis[1])
-                pretty_time.append(
-                    (datetime.fromtimestamp(onehis[0]).strftime(
-                        '%Y-%m-%d %H:%M:%S'), onehis[1],
-                     type(value_value).__name__,
-                     value_value.val),
-                )
-            context = {
-                "vname": vname,
-                "var": pretty_time
-            }
-            return flask.render_template("result.html", **context)
-        else:
-            context = {
-                "existing_variables": curnum,
-                "invalid": "Invalid Input! Please retry."
-            }
-            return flask.render_template("index.html", **context)
+            value_value = s.GetValue(var.currentvalue)
+            pretty_time.append(
+                (datetime.fromtimestamp(var.timestamp).strftime(
+                    '%Y-%m-%d %H:%M:%S'),
+                 type(value_value).__name__,
+                 value_value.val,
+                 var.currentvalue,
+                 i)
+            )
+        context = {
+            "list_var": pretty_time
+        }
+    return flask.render_template("all_var.html", **context)
 
 
+@app.route("/allvars/<varname>", methods=['GET', ])
+def onevar(varname):
+    curnum = s.availVar()
+    vnum = varname
+    # check whether vnum is from 1 to len(s.valueList)
+
+    if 1 <= int(vnum) <= curnum:
+        vname = "V" + str(vnum)
+        var = s.GetVariable(vname)
+        his = var.historical_vals
+        print(his)
+        print("@@@@@@@@@@@@@@@@@@@@@@", type(his))
+        pretty_time = []
+        for onehis in his:
+            value_value = s.GetValue(onehis[1])
+            pretty_time.append(
+                (datetime.fromtimestamp(onehis[0]).strftime(
+                    '%Y-%m-%d %H:%M:%S'), onehis[1],
+                 type(value_value).__name__,
+                 value_value.val),
+            )
+        context = {
+            "vname": vname,
+            "var": pretty_time
+        }
+        return flask.render_template("result.html", **context)
     else:
         context = {
-            "existing_variables": curnum}
-        # return flask.jsonify(**context), 200
-        # return flask.render_template("index.html", **context)
-
+            "existing_variables": curnum,
+            "invalid": "Invalid Input! Please retry."
+        }
         return flask.render_template("index.html", **context)
 
 
@@ -69,7 +129,8 @@ def allvals():
         context = {
             "rst": s.availVal()
         }
-        return flask.render_template("all_val.html",**context)
+        return flask.render_template("all_val.html", **context)
+
 
 @app.route("/allvalues/<uuid>", methods=['GET'])
 def specval(uuid):
@@ -110,14 +171,24 @@ def specval(uuid):
             "val": value.val
         }"""
     if value:
-        context = {
+
+        if type(value).__name__ == "KGPLInt" or "KGPLFloat" or "KGPLStr":
+            context = {
                 "UUID": uuid,
                 "type": value.discriminator,
                 "val": value.val
-        }
-        return flask.render_template("specval.html",**context)
+            }
+        else:
+            context = {
+                "UUID": uuid,
+                "type": value.discriminator,
+                "val": json.dumps(value.val, sort_keys=True,
+                                  indent=4, separators=(',', ': '))
+            }
+        return flask.render_template("specval.html", **context)
     else:
         return flask.abort(404)
+
 
 @app.route("/wikimap", methods=['GET'])
 def ReturnWikiMap():
@@ -125,7 +196,8 @@ def ReturnWikiMap():
     rst = []
     fetch = ss.query(BulkLoader.Wikimap)
     for v in fetch:
-        rst.append((v.var_id, v.wiki_id))
+        removed = v.var_id.replace("V", "")
+        rst.append((v.var_id, v.wiki_id,removed))
     context = {
         "rst": rst
     }
@@ -152,7 +224,8 @@ def ReturnValue(fileid):
         s.PushValues()
         context = {
             "id": fileid,
-            "value": "received"
+            "value": "received",
+            "url": s.url
         }
         return flask.jsonify(**context), 201
 
@@ -202,43 +275,3 @@ def RegisterVariable():
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     Session.remove()
-
-# @app.route("/var/<fileid>", methods=['GET', 'PUT'])
-# def ReturnVariable(fileid):
-#     # file_path = os.path.join("var", fileid)
-#     if flask.request.method == 'GET':
-#         var = s.GetVariable(fileid)
-#         if not var:
-#             return flask.abort(404)
-#         else:
-#             context = {"var": jsonpickle.encode(var)}
-#             return flask.jsonify(**context), 200
-#     else:
-#         timestamp = flask.request.json["timestamp"]
-#         val = jsonpickle.decode(flask.request.json["value"])
-#         # var = s.SetVariable(fileid, val, timestamp) TODO: fix it
-#         # if not var:
-#         #     return flask.abort(404)
-#         # context = {
-#         #     "var": jsonpickle.encode(var)
-#         # }
-#         context = {
-#             "place": "holder"
-#         }
-#         return flask.jsonify(**context), 201
-
-# @app.route("/var", methods=['POST'])
-# def RegisterVariable():
-#     data = flask.request.json
-#     print(data)
-#     value = jsonpickle.decode(data["value"])
-#     timestamp = data["timestamp"]
-#     filename = s.RegisterVariable(value, timestamp)
-#     path = os.path.join("var", filename)
-#     infile = open(path, "r")
-#     context = {
-#         "varName": filename,
-#         "var": infile.read()
-#     }
-#     infile.close()
-#     return flask.jsonify(**context), 201

@@ -181,7 +181,8 @@ class KNPSStore:
                 rst = []
                 for one_fetch in fetch:
                     # session.make_transient(one_fetch)
-                    rst.append((one_fetch.id, one_fetch.val))
+                    rst.append((one_fetch.id, one_fetch.val,
+                                type(one_fetch).__name__))
                 return rst
             except sqlalchemy.orm.exc.NoResultFound:
                 print("-------------variable not found------------")

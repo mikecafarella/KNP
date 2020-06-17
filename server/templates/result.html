@@ -25,7 +25,7 @@
 
 
             <ul class="list-unstyled components mb-5">
-                <li class="active">
+                <li>
                     <a href="/">Home</a>
                     <!--                    <ul class="collapse list-unstyled" id="homeSubmenu">-->
                     <!--                        <li>-->
@@ -42,8 +42,8 @@
                 <li>
                     <a href="/allvalues">All KGPLValues</a>
                 </li>
-                <li>
-                    <a href="/">All KGPLVariables</a>
+                <li class="active">
+                    <a href="/allvars">All KGPLVariables</a>
                 </li>
                 <li>
                     <a href="/wikimap">Wikidata Mapping</a>
@@ -86,11 +86,12 @@
         <!--            </div>-->
         <!--        </nav>-->
         <a href="/">
-            <h2 class="mb-4">KGPLVariable History for {{vname}}</h2>
+            <h2 class="mb-4">KGPLVariable History for {{ vname }}</h2>
         </a>
 
 
-        <table class="table h4">
+        <table class="h5 table table-striped table-bordered table-hover table-hover-cursor"
+               style="table-layout: fixed; width: 100%;">
             <thead>
             <tr class="table100-head">
                 <th class="column1">Modified Time&nbsp;</th>
@@ -101,13 +102,15 @@
             </thead>
             <tbody>
             {% for one_his in var %}
-            <tr>
-                <td class="column1">{{one_his[0]}} &nbsp;</td>
-                <td class="column2">{{one_his[2]}} &nbsp;</td>
-                <td class="column3">{{one_his[3]}} &nbsp;</td>
-                <td class="column4 btn-link"><a href="/allvalues/{{one_his[1]}}"
-                    style="color:black!important;">{{one_his[1]}}&nbsp;</a></td>
-            </tr>
+                <tr>
+                    <td class="column1">{{ one_his[0] }} &nbsp;</td>
+                    <td class="column2">{{ one_his[2] }} &nbsp;</td>
+                    <td class="text-scroll" >{{ one_his[3] }} &nbsp;</td>
+                    <td class="column4 btn-link"><a
+                            href="/allvalues/{{ one_his[1] }}"
+                            style="color:black!important;">{{ one_his[1] }}&nbsp;</a>
+                    </td>
+                </tr>
             {% endfor %}
             </tbody>
         </table>

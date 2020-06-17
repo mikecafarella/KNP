@@ -39,10 +39,10 @@
                     <!--                        </li>-->
                     <!--                    </ul>-->
                 </li>
-                <li class="active">
+                <li>
                     <a href="/allvalues">All KGPLValues</a>
                 </li>
-                <li>
+                <li class="active">
                     <a href="/allvars">All KGPLVariables</a>
                 </li>
                 <li>
@@ -86,35 +86,42 @@
         <!--            </div>-->
         <!--        </nav>-->
         <a href="/allvalues">
-            <h2 class="mb-4">All KGPLValues</h2>
+            <h2 class="mb-4">All KGPLVariables</h2>
         </a>
 
-        <form action="/allvalues" method="post" enctype="multipart/form-data">
-            <input type="text" name="uuid"
-                   placeholder="enter KGPLValue's uuid">
+        <form action="/allvars" method="post" enctype="multipart/form-data">
+            <input type="number" name="Variable_Name"
+                   placeholder="enter KGPLVariable Index">
             <input type="submit" value="Find">
         </form>
 
         <table class="h5 table table-striped table-bordered table-hover table-hover-cursor"
                style="table-layout: fixed; width: 100%;">
             <thead>
-            <tr class="table100-head">
-                <th style="width: 20%">UUID&nbsp;</th>
-                <th style="width: 10%">Type&nbsp;</th>
-                <th style="width: 85%">Concrete Value&nbsp;</th>
+            <tr>
+                <th style="width: 10%">Variable</th>
+                <th style="width: 20%">Modified Time &nbsp;</th>
+                <th style="width: 10%">Value Type &nbsp;</th>
+                <th style="width: 40%">Concrete Value &nbsp;</th>
+                <th style="width: 20%">UUID of History Value &nbsp;</th>
+
             </tr>
             </thead>
             <tbody>
-            {% for one_his in rst %}
-
+            {% for one_var in list_var %}
                 <tr>
-                    <td class="column1 btn-link "><a
-                            href="/allvalues/{{ one_his[0] }}"
-                            style="color:black!important;">{{ one_his[0] }}
-                        &nbsp;</a></td>
-                    <td>{{ one_his[2] }}</td>
+                    <td>
+                        <a href="/allvars/{{ one_var[4] }}"
+                           style="color:black">V{{ one_var[4] }}</a>
+                    </td>
+                    <td>{{ one_var[0] }}</td>
+                    <td>{{ one_var[1] }}</td>
                     <td class="text-scroll">
-                        <span>{{ one_his[1] }} &nbsp;</span>
+                        <span>{{ one_var[2] }} &nbsp;</span>
+                    </td>
+                    <td>
+                        <a href="/allvalues/{{ one_var[3] }}"
+                           style="color:black">{{ one_var[3] }}</a>
                     </td>
                 </tr>
             {% endfor %}

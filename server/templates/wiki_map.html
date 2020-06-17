@@ -43,7 +43,7 @@
                     <a href="/allvalues">All KGPLValues</a>
                 </li>
                 <li>
-                    <a href="/">All KGPLVariables</a>
+                    <a href="/allvars">All KGPLVariables</a>
                 </li>
                 <li class="active">
                     <a href="/wikimap">Wikidata Mapping</a>
@@ -101,7 +101,7 @@
                 {% for x in rst %}
                 <tr>
                     <td class="column1">
-                        <a href="/" style="color:black!important;">
+                        <a href="/allvars/{{ x[2] }}" style="color:black!important;">
                             {{x[0]}}&nbsp;
                         </a>
                     </td>
