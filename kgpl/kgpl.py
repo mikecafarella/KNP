@@ -25,7 +25,7 @@ import jsonpickle
 
 ALLVALS = {}
 ALLFUNCS = {}
-store = KNPSStore.KNPSStore('http://lasagna.eecs.umich.edu:8000')
+store = KNPSStore.KNPSStore('http://lasagna.eecs.umich.edu:6000')
 wikiMap = {}
 
 
@@ -200,7 +200,7 @@ class KGPLList(KGPLValue, list):
     }
 
     def __init__(self, x, lineage=None):
-        x = [item if isinstance(item, KGPLValue) else kgval(item) for item in x]
+        x = [item.id if isinstance(item, KGPLValue) else kgval(item).id for item in x]
         KGPLValue.__init__(self, x, lineage)
 
     def __str__(self):
@@ -213,9 +213,9 @@ class KGPLList(KGPLValue, list):
         # TODO: lineage
         return self.val[key]
 
-    def __setitem__(self, key, value):
-        # TODO: lineage
-        self.val[key] = kgval(value)
+    # def __setitem__(self, key, value):
+    #     # TODO: lineage
+    #     self.val[key] = kgval(value)
 
     def __iter__(self):
         for e in self.val:
@@ -231,9 +231,9 @@ class KGPLTuple(KGPLValue, Base):
         temp = ()
         for item in x:
             if isinstance(item, KGPLValue):
-                temp += (item,)
+                temp += (item.id,)
             else:
-                temp += (kgval(item),)
+                temp += (kgval(item).id,)
         x = temp
         KGPLValue.__init__(self, x, lineage)
 
@@ -264,9 +264,9 @@ class KGPLDict(KGPLValue, dict, Base):
         temp = {}
         for key, value in x.items():
             if isinstance(value, KGPLValue):
-                temp[key] = value
+                temp[key] = value.id
             else:
-                temp[key] = kgval(value)
+                temp[key] = kgval(value).id
         x = temp
         KGPLValue.__init__(self, x, lineage)
 
@@ -287,9 +287,9 @@ class KGPLDict(KGPLValue, dict, Base):
         # TODO: lineage
         return self.val[key]
 
-    def __setitem__(self, key, value):
-        # TODO: lineage
-        self.val[key] = kgval(value)
+    # def __setitem__(self, key, value):
+    #     # TODO: lineage
+    #     self.val[key] = kgval(value)
 
     def __iter__(self):
         for e in self.val:
@@ -549,7 +549,7 @@ class KGPLVariable(Base):
 
     def viewHistory(self):
         i = 0
-        print("History of " + str(self.varName))
+        print("History of " + str(self.id))
         for pair in self.historical_vals:
             print("Modification " + str(i))
             print("Timestamp: " + str(pair[0]))		
