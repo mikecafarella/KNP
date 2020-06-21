@@ -14,7 +14,7 @@ if __name__ == '__main__':
         count = 0
         for line in f:
             dic = {}
-            dic["properties"] = {}
+            dic["property"] = {}
             try:
                 load_start = time.time()
                 entity_obj = json.loads(line[:-2])
@@ -25,8 +25,8 @@ if __name__ == '__main__':
                 continue
             dic["entity_id"] = entity_obj["id"]
             print(id)
-            dic["label"] = entity_obj["labels"].get("en", {}).get("value")
-            dic["desc"] = entity_obj["descriptions"].get("en", {}).get("value")
+            dic["name"] = entity_obj["labels"].get("en", {}).get("value")
+            dic["description"] = entity_obj["descriptions"].get("en", {}).get("value")
             for property_id, snaks in entity_obj['claims'].items():
                 dictionary = None
                 for snak in snaks:
@@ -47,9 +47,9 @@ if __name__ == '__main__':
                     else:
                         dictionary = dictionary.update(value_mapping)
                 if dictionary is None:
-                    dic["properties"][property_id] = dictionary
+                    dic["property"][property_id] = dictionary
                 else:
-                    dic["properties"][property_id] = dictionary
+                    dic["property"][property_id] = dictionary
             if count == 50000:
                 break
         print(np.mean(list_time))
