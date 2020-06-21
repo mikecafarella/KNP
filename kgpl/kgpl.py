@@ -266,7 +266,9 @@ class KGPLDict(KGPLValue, dict, Base):
             if isinstance(value, KGPLValue):
                 temp[key] = value.id
             else:
-                temp[key] = kgval(value).id
+                tempValue = kgval(value)
+                tempValue.register()
+                temp[key] = tempValue.id
         x = temp
         KGPLValue.__init__(self, x, lineage)
 
