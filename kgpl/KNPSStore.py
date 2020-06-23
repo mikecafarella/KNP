@@ -7,7 +7,6 @@ import time
 import kgpl
 import sqlite3
 
-
 import sqlalchemy
 from sqlalchemy import Column, Integer, Unicode, UnicodeText, String
 from sqlalchemy import create_engine
@@ -27,10 +26,12 @@ s.expire_on_commit = False
 conn = sqlite3.connect("KGPLData.db")
 c = conn.cursor()
 
+
 class KNPSStore:
     """self.serverURL stores the IP address of parent"""
 
-    def __init__(self, url):
+    def __init__(self, url, surl="localhost"):
+        self.selfurl = surl
         self.serverURL = url
         self.bulkval = []
         if os.path.exists("valueList"):
@@ -48,6 +49,7 @@ class KNPSStore:
             self.varTimestamp = {}
 
     def GetValue(self, id: str):
+        self.empty_bulk_list()
         try:
             fetch = s.query(kgpl.KGPLValue).filter(
                 kgpl.KGPLValue.id == id).one_or_none()
@@ -61,31 +63,38 @@ class KNPSStore:
                 return None
             self.valueList[id] = True
             self.SaveValueList()
-            val = pickle.loads(r.content)
-            session.make_transient(val)
-            s.add(val)
-            s.commit()
-            return val
+            got_value = pickle.loads(r.content)
+            session.make_transient(got_value)
+            got_value.bulkStore()
+            # Return value here is abandoned
+            if isinstance(got_value, kgpl.KGPLDict):
+                for key, value in got_value.val.items():
+                    self.GetValue(value)
+            elif isinstance(got_value, kgpl.KGPLList):
+                for oneitem in got_value.val:
+                    self.GetValue(oneitem)
+            elif isinstance(got_value, kgpl.KGPLTuple):
+                for onetuple in got_value.val:
+                    self.GetValue(onetuple)
+            return got_value
         except sqlalchemy.orm.exc.MultipleResultsFound:
             print("multiple KGPLValues with the same ID found")
             exit(1)
 
     def StoreValues(self, inputList):
         """inputList is a list of kgplValue"""
-
         for value in inputList:
             # print(value)
             if value.id not in self.valueList:
                 s.add(value)
-                # TODO: move out
                 self.valueList[value.id] = False
                 self.SaveValueList()
         s.commit()
         # print(value)
 
-    def bulk(self, val): # need to "emtpy the list for the last time"
+    def bulk(self, val):  # need to "emtpy the list for the last time"
         print(len(self.bulkval))
-        if len(self.bulkval) > 1: # can change, I just hard code it.
+        if len(self.bulkval) > 1:  # can change, I just hard code it.
             print("lenth>1")
             self.bulkval.append(val)
             for one_bulk in self.bulkval:
@@ -105,36 +114,56 @@ class KNPSStore:
             self.bulkval.append(val)
 
     def empty_bulk_list(self):
-        for one_bulk in self.bulkval:
-            c.execute(
-                "INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)",
-                (one_bulk.id, pickle.dumps(one_bulk.val),
-                 pickle.dumps(one_bulk.lineage),
-                 one_bulk.url, one_bulk.annotations,
-                 type(one_bulk).__name__, None)
-            )
-        conn.commit()
-        self.bulkval = []
+        if self.bulkval:
+            for one_bulk in self.bulkval:
+                c.execute(
+                    "INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)",
+                    (one_bulk.id, pickle.dumps(one_bulk.val),
+                     pickle.dumps(one_bulk.lineage),
+                     one_bulk.url, one_bulk.annotations,
+                     type(one_bulk).__name__, None)
+                )
+            conn.commit()
+            self.bulkval = []
 
-    def PushValues(self):
+    def PushValue(self, val_id):
         print("-------------pushing value------------")
+        self.empty_bulk_list()
         try:
             if self.serverURL is not None:
-                for id in self.valueList:
-                    print(id)
-                    print(self.valueList)
-                    if not self.valueList[id]:  # fetch from local database
-                        fetch = s.query(kgpl.KGPLValue).filter(
-                            kgpl.KGPLValue.id == id).one_or_none()
-                        if not fetch:
-                            print("value not found in db but should be found")
-                            return
-                        new = pickle.dumps(fetch)
-                        self.valueList[id] = True
-                        print(self.serverURL + "/val/" + id)
-                        r = requests.post(self.serverURL + "/val/" + id,
-                                          data=new)
-                self.SaveValueList()
+                # for id in self.valueList:
+                #     print(id)
+                #     print(self.valueList)
+                if val_id not in self.valueList or not self.valueList[val_id]:  # has not been pushed yet
+                    fetch = s.query(kgpl.KGPLValue).filter(
+                        kgpl.KGPLValue.id == val_id).one_or_none()
+                    if not fetch:  # fetch from local database
+                        print("value not found in db but should be found")
+                        return
+                    fetch.url = self.serverURL+"/allvalues/"+fetch.id
+                    new = pickle.dumps(fetch)
+                    s.commit()
+
+                    self.valueList[val_id] = True
+                    self.SaveValueList()
+                    # print(self.serverURL + "/val/" + id)
+                    r = requests.post(self.serverURL + "/val/" + val_id,
+                                      data=new)
+                    # session.make_transient(fetch)
+                    if isinstance(fetch, kgpl.KGPLDict):
+                        print("------------------is dict!-------------------------")
+                        print(fetch)
+                        for key, value in fetch.val.items():
+                            print(value)
+                            self.PushValue(value)
+                    elif isinstance(fetch, kgpl.KGPLList):
+                        for oneitem in fetch.val:
+                            self.PushValue(oneitem)
+                    elif isinstance(fetch, kgpl.KGPLTuple):
+                        for onetuple in fetch.val:
+                            self.PushValue(onetuple)
+
+
         except sqlalchemy.orm.exc.MultipleResultsFound:
             print("multiple KGPLValues with the same ID found")
             exit(1)
@@ -148,7 +177,7 @@ class KNPSStore:
             cur_id = 1 + int(
                 s.query(func.count(distinct(kgpl.KGPLVariable.id))).scalar())
             var.id = "V" + str(cur_id)
-            var.url = "we_have_not_implement_sharing_service_yet"
+            var.url = self.selfurl + "/allvars/" + var.id
             s.add(var)
             s.commit()
         else:
@@ -157,20 +186,20 @@ class KNPSStore:
             r = requests.post(self.serverURL + "/var", data=pickle.dumps(var))
             print(r.json())
             var.id = r.json()["var_id"]
-            var.url = "not_implement_sharing_service_yet"
-
-            val = s.query(kgpl.KGPLValue).filter(
-                kgpl.KGPLValue.id == var.currentvalue).one_or_none()
-            print("-------------val in db: ", val, "--------------------")
-            requests.post(self.serverURL + "/val/" + var.currentvalue,
-                          data=pickle.dumps(val))
+            # assume there is only one layer of server
+            var.url = self.serverURL + "/allvars/" + var.id
+            self.PushValue(var.currentvalue)
+            # val = s.query(kgpl.KGPLValue).filter(
+            #     kgpl.KGPLValue.id == var.currentvalue).one_or_none()
+            # print("-------------val in db: ", val, "--------------------")
+            # requests.post(self.serverURL + "/val/" + var.currentvalue,
+            #               data=pickle.dumps(val))
 
     def GetVariable(self, varName: str):  # varName is V1, V2 ...
         """
         Return variable given the varName of it.
         Always fetch from remote!
         """
-        # TODO: Currently we have redundant field "history val" in the database
         if not self.serverURL:
             try:
                 fetch = s.query(kgpl.KGPLVariable).filter(
@@ -195,6 +224,8 @@ class KNPSStore:
         else:
             r = requests.get(os.path.join(self.serverURL, "var", varName))
             var = pickle.loads(r.content)
+            # store the value related to the variable to the local database
+            self.GetValue(var.currentvalue)
             # session.make_transient(var)
             return var
             # fetch from remote
@@ -232,23 +263,15 @@ class KNPSStore:
         Reset the value of a variable,
         Update in the database(add a line)
         """
-
         if not self.serverURL:
-            # self.StoreValues([new_var, ])
             print("---inside------", new_var.timestamp)
-
             s.add(new_var)
             s.commit()
         else:
             set_var = pickle.dumps(new_var)
             r = requests.post(self.serverURL + "/var/" + new_var.id,
                               data=set_var)
-
-            val = s.query(kgpl.KGPLValue).filter(
-                kgpl.KGPLValue.id == new_var.currentvalue).one_or_none()
-            print("-------------val in db: ", val, "--------------------")
-            requests.post(self.serverURL + "/val/" + new_var.currentvalue,
-                          data=pickle.dumps(val))
+            self.PushValue(new_var.currentvalue)
 
     def SaveValueList(self):
         outfile = open("valueList", "wb")
@@ -273,98 +296,3 @@ class KNPSStore:
         outfile = open("timestamp", "wb")
         pickle.dump(self.varTimestamp, outfile)
         outfile.close()
-
-    # def GetVariable(self, varName: str):
-    #     """Return variable given the varName of it. If it can't be found locally and remotely, return None"""
-    #     # suppose ttl for every variable is 30 sec
-    #     filepath = os.path.join("var", varName)
-    #     if not self.serverURL:
-    #         try:
-    #             infile = open(filepath, "r")
-    #             var = infile.read()
-    #             print(var)
-    #             infile.close()
-    #             return jsonpickle.decode(var)
-    #         except FileNotFoundError:
-    #             return None
-    #     if varName in self.varTimestamp:
-    #         if (time.time() - self.varTimestamp[varName]) < 3:
-    #             # local
-    #             infile = open(filepath, "r")
-    #             var = infile.read()
-    #             print(var)
-    #             infile.close()
-    #             return jsonpickle.decode(var)
-    #         else:
-    #             # remote
-    #             var = self.DownloadVariableFile(varName, time.time())
-    #             return var
-    #     else:
-    #         # remote
-    #         var = self.DownloadVariableFile(varName, time.time())
-    #         return var
-
-    # def RegisterVariable(self, value, timestamp):
-    #     """Return variable name and register the new variable on the server"""
-    #     if self.serverURL is not None:
-    #         r = requests.post(self.serverURL + "/var",
-    #                           json={"value": jsonpickle.encode(value),
-    #                                 "timestamp": timestamp})
-    #         print(r.json())
-    #         filename = r.json()["varName"]
-    #         var = r.json()["var"]
-    #         self.varTimestamp[filename] = timestamp
-    #         self.SaveTimestamp()
-    #         path = os.path.join("var", filename)
-    #         outfile = open(path, "w")
-    #         outfile.write(var)
-    #         outfile.close()
-    #         return filename
-    #     else:
-    #         variable = kgpl.KGPLVariable(value)
-    #         variable.historical_vals[0] = (
-    #             timestamp, variable.historical_vals[0][1])
-    #         print(variable.historical_vals)
-    #         list = os.listdir("var/")
-    #         filename = "K" + str(len(list))
-    #         variable.varName = filename
-    #         path = os.path.join("var", filename)
-    #         outfile = open(path, "w")
-    #         outfile.write(jsonpickle.encode(variable))
-    #         outfile.close()
-    #         return filename
-
-    # def SetVariable(self, varName, value, timestamp, Config=None):
-    #     """ Here the value is a KGPLclass and in current version,
-    #     the value need to be stored ahead to access it later"""
-    #
-    #     """variable = self.GetVariable(varName)
-    #     variable.value = value
-    #     filepath = os.path.join("var", varName)
-    #     outfile = open(filepath, "w");
-    #     outfile.write(jsonpickle.encode(variable))
-    #     outfile.close()
-    #     files = {'file': open(filepath, "rb")}
-    #     r = requests.put(self.serverURL + "/" + filepath, files=files)"""
-    #     if not self.serverURL:
-    #         var = self.GetVariable(varName)
-    #         if not var:
-    #             return None
-    #         else:
-    #             var.currentvalue = value
-    #             var.historical_vals.append((timestamp, value))
-    #             filepath = os.path.join("var", varName)
-    #             outfile = open(filepath, "w")
-    #             outfile.write(jsonpickle.encode(var))
-    #             outfile.close()
-    #             return var
-    #     filepath = os.path.join("var", varName)
-    #     print(filepath)
-    #     r = requests.put(self.serverURL + "/" + filepath,
-    #                      json={"value": jsonpickle.encode(value),
-    #                            "timestamp": timestamp})
-    #     outfile = open(filepath, "w")
-    #     outfile.write(r.json()["var"])
-    #     outfile.close()
-    #     self.varTimestamp[varName] = timestamp
-    #     return jsonpickle.decode(r.json()["var"])

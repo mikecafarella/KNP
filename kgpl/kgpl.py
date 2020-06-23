@@ -32,8 +32,9 @@ import jsonpickle
 
 ALLVALS = {}
 ALLFUNCS = {}
+server_url = 'http://lasagna.eecs.umich.edu:8000'
 # store = KNPSStore('http://lasagna.eecs.umich.edu:8080')
-store = KNPSStore(None)
+store = KNPSStore(server_url)
 
 wikiMap = {}
 
@@ -127,6 +128,7 @@ class KGPLValue(Base):
         self.url = "<unregistered>"
         self.annotations = "[]"
         ALLVALS[self.id] = self
+        store.bulk(self)
 
     def __str__(self):
         return str(self.val)
@@ -139,28 +141,26 @@ class KGPLValue(Base):
         #     self.id) + "\nnurl: " + str(
         #     self.url) + "\nannotations: " + str(self.annotations)
 
-    def register(self, server="localhost"):
-        self.url = server + "/{}".format(self.id)
-        if server == "localhost":
-            store.StoreValues([self])
-        else:
-            store.StoreValues([self])
-            store.PushValues()
+    def register(self, server=server_url):
+        self.url = server + "/allvalues/{}".format(self.id)
+        store.PushValue(self.id)
         return self.url
 
-    def bulkstore(self):
+    def bulkStore(self):
         store.bulk(self)
 
-    def showUrl(self):
-        print(self.url)
 
-    def showLineageTree(self, depth=0):
-        print(" " * depth + str(self))
-        print(" " * depth + str(self.lineage.lineageKind))
-        print()
-        if self.lineage.prevLineageId is not None:
-            ALLVALS[self.lineage.prevLineageId].showLineageTree(
-                depth=depth + 2)
+def showUrl(self):
+    print(self.url)
+
+
+def showLineageTree(self, depth=0):
+    print(" " * depth + str(self))
+    print(" " * depth + str(self.lineage.lineageKind))
+    print()
+    if self.lineage.prevLineageId is not None:
+        ALLVALS[self.lineage.prevLineageId].showLineageTree(
+            depth=depth + 2)
 
 
 class KGPLInt(KGPLValue):
@@ -209,10 +209,10 @@ class KGPLList(KGPLValue, list):
     }
 
     def __init__(self, x, lineage=None):
-        # todo: kgpl list
-        #  x = [item.id if isinstance(item, KGPLValue) else kgval(item).id for item in x]
-        x = [item if isinstance(item, KGPLValue) else kgval(item) for item in
-             x]
+        x = [item.id if isinstance(item, KGPLValue) else kgval(item).id for
+             item in x]
+        # x = [item if isinstance(item, KGPLValue) else kgval(item) for item in
+        #      x]
         KGPLValue.__init__(self, x, lineage)
 
     def __str__(self):
@@ -243,13 +243,9 @@ class KGPLTuple(KGPLValue, Base):
         temp = ()
         for item in x:
             if isinstance(item, KGPLValue):
-                temp += (item,)
-                # todo kgpltuple
-                # temp += (item.id,)
+                temp += (item.id,)
             else:
-                temp += (kgval(item),)
-                #  temp += (kgval(item).id,)
-                # todo kgpltuple
+                temp += (kgval(item).id,)
         x = temp
         KGPLValue.__init__(self, x, lineage)
 
@@ -283,7 +279,7 @@ class KGPLDict(KGPLValue, dict, Base):
                 temp[key] = value.id
             else:
                 tempValue = kgval(value)
-                tempValue.register()
+                # tempValue.register()
                 temp[key] = tempValue.id
         x = temp
         KGPLValue.__init__(self, x, lineage)
@@ -315,34 +311,6 @@ class KGPLDict(KGPLValue, dict, Base):
 
     def isDictionary(self):
         pass
-
-
-'''
-class KGPLWiki(KGPLValue, Base):
-    __tablename__ = 'KGPLWiki'
-    id = Column(UnicodeText, primary_key=True)
-    val = Column(Unicode)  # format is Q100000
-    lineage = Column(PickleType, nullable=True)
-    url = Column(UnicodeText)
-    annotations = Column(UnicodeText, nullable=True)
-    IR = Column(PickleType, nullable=True)
-    entity_id = Column(Unicode)
-    description = Column(Unicode, nullable=True)
-    name = Column(Unicode, nullable=True)
-    properties = Column(PickleType, nullable=True)
-    def __init__(self, x, lineage=None):
-        KGPLValue.__init__(self, x, lineage)
-        self.IR = IR(x, 'wikidata')
-        self.entity_id = x
-        self.description = self.IR.desc
-        self.name = self.IR.label
-        self.properties = self.IR.properties
-    def __str__(self):
-        return str(
-            "KGPLWikiData " + str(self.id) + ",\n Name: " + str(self.name) +
-            ",\n Entity_id: " + str(
-                self.entity_id) + ",\n Description: " + self.description)
-'''
 
 
 class KGPLFuncValue(KGPLValue):
@@ -484,12 +452,10 @@ class KGPLVariable(Base):
     __tablename__ = 'KGPLVariable'
     id = Column(UnicodeText, primary_key=True)
     timestamp = Column(Float, primary_key=True)
-    currentvalue = Column(UnicodeText, nullable=True)  # TODO: Foreign key
+    currentvalue = Column(UnicodeText, nullable=True)
     owner = Column(UnicodeText, nullable=True)
     url = Column(UnicodeText, nullable=True)
     annotations = Column(UnicodeText, nullable=True)
-    # TODO: Currently we have redundant field "history val" in the database
-    # historical_vals = Column(PickleType, nullable=True)
     discriminator = Column(String(20))
     # Wikimap = relationship("Wikimap", uselist=False, back_populates="KGPLVariable")
 
@@ -510,12 +476,11 @@ class KGPLVariable(Base):
     def __init__(self, val: KGPLValue):
         self.id = None  # after registration, it will have an id.
         self.currentvalue = val.id  # uuid of KGPLValue
-        self.owner = "minions"  # TODO: automatically assign owner
+        self.owner = "SpongeBob"  # TODO: automatically assign owner
         self.url = "<unregistered>"
         self.annotations = "[]"
         self.timestamp = time.time()
         self.historical_vals = [(time.time(), val.id)]
-        store.StoreValues([val, ])  # store the KGPLValue to local database
 
     def __str__(self):
         return "uuid for the current related KGPLValue: " + self.currentvalue
@@ -526,6 +491,8 @@ class KGPLVariable(Base):
             self.annotations) + "\ncurrentvalue: " + str(self.currentvalue)
 
     def registerVariable(self):
+        store.RegisterVariable(self)
+
         """
         self.varName = store.RegisterVariable(
             self.currentvalue, self.historical_vals[0][0])
@@ -549,7 +516,6 @@ class KGPLVariable(Base):
         parent server. (According to decision on May 20th)
         """
         # self.url = "registered"
-        store.RegisterVariable(self)
 
     # def initOrUpdate(self, varName):
     #     if 'var/' in varName:
@@ -565,13 +531,8 @@ class KGPLVariable(Base):
         make_transient(self)
 
         self.currentvalue = val.id
-        print("---------", self.timestamp)
-
         self.timestamp = time.time()
-        print("---------", self.timestamp)
-
         self.historical_vals.append((self.timestamp, val.id))
-        store.StoreValues([val, ])
         store.SetVariable(self)
 
     def viewHistory(self):
