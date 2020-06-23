@@ -87,14 +87,18 @@ class KNPSStore:
         print(len(self.bulkval))
         if len(self.bulkval) > 1: # can change, I just hard code it.
             print("lenth>1")
+            self.bulkval.append(val)
             for one_bulk in self.bulkval:
-                c.execute(
-                    "INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)",
-                    (one_bulk.id, pickle.dumps(one_bulk.val),
-                     pickle.dumps(one_bulk.lineage),
-                     one_bulk.url, one_bulk.annotations,
-                     type(one_bulk).__name__, None)
-                )
+                try:
+                    c.execute(
+                        "INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)",
+                        (one_bulk.id, pickle.dumps(one_bulk.val),
+                         pickle.dumps(one_bulk.lineage),
+                         one_bulk.url, one_bulk.annotations,
+                         type(one_bulk).__name__, None)
+                    )
+                except sqlite3.IntegrityError:
+                    print("duplicate insertion: Skipping...")
             conn.commit()
             self.bulkval = []
         else:
