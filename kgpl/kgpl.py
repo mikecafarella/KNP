@@ -46,6 +46,8 @@ def getVariable(varName):
 
 def Wiki_Dict_Transformer(entity_id):
     IR_temp = IR(entity_id, 'wikidata')
+    if IR_temp.KG == "missing":
+        return None
     result = {}
     result["entity_id"] = entity_id
     result["description"] = IR_temp.desc
