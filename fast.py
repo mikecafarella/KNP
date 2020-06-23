@@ -13,7 +13,7 @@ def read_into_list(list_k):
         list_k[-1] = (list_k[-1] + infile.readline())[:-1]
 
 def parse_into_dict_first_half(dict_k, list_k):
-    dict_k = {}
+    dict_k.clear()
     sz = len(list_k)
     for x in range(0, sz // 2):
         obj = json.loads(list_k[x][:-1])
@@ -28,7 +28,7 @@ def parse_into_dict_first_half(dict_k, list_k):
 
 
 def parse_into_dict_second_half(dict_k, list_k):
-    dict_k = {}
+    dict_k.clear()
     sz = len(list_k)
     for x in range(sz // 2, sz):
         obj = json.loads(list_k[x][:-1])
