@@ -3,14 +3,31 @@ import bz2
 import threading
 import json
 
-def read_into_list(list_k):
+
+chunk_size = 1000000
+List0 = []
+List1 = []
+dict0 = {}
+dict1 = {}
+
+
+def read_into_list0():
     long_string = infile.read(chunk_size)
     if long_string[-1] == '\n':
-        list_k = long_string.splitlines()
+        List0 = long_string.splitlines()
     else:
-        list_k = long_string.splitlines()
+        List0 = long_string.splitlines()
         # make the last line complete and drop the new line character
-        list_k[-1] = (list_k[-1] + infile.readline())[:-1]
+        List0[-1] = (List0[-1] + infile.readline())[:-1]
+
+def read_into_list1():
+    long_string = infile.read(chunk_size)
+    if long_string[-1] == '\n':
+        List1 = long_string.splitlines()
+    else:
+        List1 = long_string.splitlines()
+        # make the last line complete and drop the new line character
+        List1[-1] = (List1[-1] + infile.readline())[:-1]
 
 def parse_into_dict_first_half(dict_k, list_k):
     dict_k.clear()
@@ -38,11 +55,6 @@ def parse_into_dict_second_half(dict_k, list_k):
         dict_k[id].append(obj["labels"].get("en", {}).get("value"))
         dict_k[id].append(obj["descriptions"].get("en", {}).get("value"))
 
-chunk_size = 1000000
-List0 = []
-List1 = []
-dict0 = {}
-dict1 = {}
 
 infile = bz2.open('/data/wikidata/latest-all.json.bz2', "rt")
 infile.read(2)
@@ -64,7 +76,7 @@ label_desc_dict = {}
 for r in range(0, 3):
     if r % 2 == 0:
         time1 = time.time()
-        t0 = threading.Thread(target=read_into_list, args=(List1,))
+        t0 = threading.Thread(target=read_into_list1)
         t1 = threading.Thread(target=parse_into_dict_first_half, args=(dict0, List0))
         t2 = threading.Thread(target=parse_into_dict_second_half, args=(dict1, List0))
         t0.start()
@@ -80,7 +92,7 @@ for r in range(0, 3):
         print(r, time.time() - time1)
     else:
         time1 = time.time()
-        t0 = threading.Thread(target=read_into_list, args=(List0,))
+        t0 = threading.Thread(target=read_into_list0)
         t1 = threading.Thread(target=parse_into_dict_first_half, args=(dict0, List1))
         t2 = threading.Thread(target=parse_into_dict_second_half, args=(dict1, List1))
         t0.start()
