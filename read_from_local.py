@@ -1,4 +1,3 @@
-import time
 import json
 import numpy as np
 import bz2
@@ -6,10 +5,7 @@ import utils
 
 
 if __name__ == '__main__':
-    start = time.time()
-    list_time = []
     with bz2.open('/Users/jack/Downloads/Misc/latest-all.json.bz2', 'rt') as f:
-        start = time.time()
         f.read(2)
         count = 0
         for line in f:
@@ -24,7 +20,7 @@ if __name__ == '__main__':
                 print("Error!")
                 continue
             dic["entity_id"] = entity_obj["id"]
-            print(id)
+            dic["modified"] = entity_obj.get("modified")
             dic["name"] = entity_obj["labels"].get("en", {}).get("value")
             dic["description"] = entity_obj["descriptions"].get("en", {}).get("value")
             for property_id, snaks in entity_obj['claims'].items():
@@ -50,7 +46,6 @@ if __name__ == '__main__':
                     dic["property"][property_id] = dictionary
                 else:
                     dic["property"][property_id] = dictionary
-            if count == 50000:
+                print(dic)
+            if count == 1:
                 break
-        print(np.mean(list_time))
-        print(time.time()-start)
