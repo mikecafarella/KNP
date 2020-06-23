@@ -39,9 +39,13 @@ class IR:
         
     def _generate_IR_(self):
         entity_obj = get_entity(self.id)
-        if "missing" in entity_obj:
-            self.KG = "missing"
-            return
+        if 'missing' in entity_obj.keys():
+            if entity_obj['missing'] == '':
+                print("No such wikidata")
+                self.desc = None
+                self.label = None
+                self.properties = None
+                return
         self.label = entity_obj["labels"].get("en", {}).get("value")
         self.desc = entity_obj["descriptions"].get("en", {}).get("value")
         # self.aliases = [m["value"] for m in entity_obj["aliases"]["en"]]
@@ -53,6 +57,7 @@ class IR:
             if self.focus and property_id != self.focus:
                 continue
             data_df = None
+            dictionary = None
             for snak in snaks:
                 mainsnak = snak.get("mainsnak")
                 qualifiers = snak.get("qualifiers")
@@ -74,21 +79,35 @@ class IR:
                 #
                 # key_prefix = self.label + "." + 
                 # value_mapping = {key_prefix+k: v for k, v in value_mapping.items()}
-                
-                if data_df is None:
-                    data_df = pd.DataFrame.from_records([value_mapping])
+
+                ###
+                # if data_df is None:
+                #     data_df = pd.DataFrame.from_records([value_mapping])
+                # else:
+                #     data_df = data_df.append(value_mapping, ignore_index=True, sort=True)
+                ###
+
+                if dictionary is None:
+                    dictionary = value_mapping
                 else:
-                    data_df = data_df.append(value_mapping, ignore_index=True, sort=True)
+                    dictionary = dictionary.update(value_mapping)
+
                 # print(data_df)
             #
             # Open question: do we want to include property labels in keys?
             #
-            if data_df is None:
-                self.properties[property_id] = data_df
+            ###
+            # if data_df is None:
+            #     self.properties[property_id] = data_df
+            # else:
+            #     print("---------------")
+            #     print(data_df)
+            #     self.properties[property_id] = data_df.to_dict()
+            ###
+            if dictionary is None:
+                self.properties[property_id] = dictionary
             else:
-                print("---------------")
-                print(data_df)
-                self.properties[property_id] = data_df.to_dict()
+                self.properties[property_id] = dictionary
 
 
     def __getitem__(self, key):
