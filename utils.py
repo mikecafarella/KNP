@@ -16,10 +16,11 @@ from nltk.corpus import stopwords
 from wikidata_utils import search_entity
 import time
 
-
+time1 = time.time()
 label_desc_dict = {}
-with open('temp.txt') as json_file:
+with open('/data/wikidata/label_desc.txt') as json_file:
     label_desc_dict = json.load(json_file)
+print(time.time()-time1)
 
 def parse(source):
     """ Parse a raw user query."""
