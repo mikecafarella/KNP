@@ -5,6 +5,8 @@ import os
 import requests
 import time
 import kgpl
+import sqlite3
+
 
 import sqlalchemy
 from sqlalchemy import Column, Integer, Unicode, UnicodeText, String
@@ -22,14 +24,15 @@ engine = create_engine('sqlite:///KGPLData.db', echo=False,
 Session = scoped_session(sessionmaker(bind=engine))
 s = Session()
 s.expire_on_commit = False
-
+conn = sqlite3.connect("KGPLData.db")
+c = conn.cursor()
 
 class KNPSStore:
     """self.serverURL stores the IP address of parent"""
 
     def __init__(self, url):
         self.serverURL = url
-
+        self.bulkval = []
         if os.path.exists("valueList"):
             infile = open("valueList", "rb")
             self.valueList = pickle.load(infile)
@@ -79,6 +82,35 @@ class KNPSStore:
                 self.SaveValueList()
         s.commit()
         # print(value)
+
+    def bulk(self, val): # need to "emtpy the list for the last time"
+        print(len(self.bulkval))
+        if len(self.bulkval) > 1: # can change, I just hard code it.
+            print("lenth>1")
+            for one_bulk in self.bulkval:
+                c.execute(
+                    "INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)",
+                    (one_bulk.id, pickle.dumps(one_bulk.val),
+                     pickle.dumps(one_bulk.lineage),
+                     one_bulk.url, one_bulk.annotations,
+                     type(one_bulk).__name__, None)
+                )
+            conn.commit()
+            self.bulkval = []
+        else:
+            self.bulkval.append(val)
+
+    def empty_bulk_list(self):
+        for one_bulk in self.bulkval:
+            c.execute(
+                "INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)",
+                (one_bulk.id, pickle.dumps(one_bulk.val),
+                 pickle.dumps(one_bulk.lineage),
+                 one_bulk.url, one_bulk.annotations,
+                 type(one_bulk).__name__, None)
+            )
+        conn.commit()
+        self.bulkval = []
 
     def PushValues(self):
         print("-------------pushing value------------")

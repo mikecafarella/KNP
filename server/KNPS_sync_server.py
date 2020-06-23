@@ -182,8 +182,9 @@ def specval(uuid):
             context = {
                 "UUID": uuid,
                 "type": value.discriminator,
-                "val": json.dumps(value.val, sort_keys=True,
-                                  indent=4, separators=(',', ': '))
+                # "val": json.dumps(value.val, sort_keys=True,
+                #                   indent=4, separators=(',', ': '))
+                "val": json.dumps(value.val, indent=1)
             }
         return flask.render_template("specval.html", **context)
     else:
@@ -197,7 +198,7 @@ def ReturnWikiMap():
     fetch = ss.query(BulkLoader.Wikimap)
     for v in fetch:
         removed = v.var_id.replace("V", "")
-        rst.append((v.var_id, v.wiki_id,removed))
+        rst.append((v.var_id, v.wiki_id, removed))
     context = {
         "rst": rst
     }

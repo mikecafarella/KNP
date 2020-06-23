@@ -48,6 +48,8 @@ def getVariable(varName):
 
 def Wiki_Dict_Transformer(entity_id):
     IR_temp = IR(entity_id, 'wikidata')
+    if IR_temp.KG == "missing":
+        return None
     result = {}
     result["entity_id"] = entity_id
     result["description"] = IR_temp.desc
@@ -137,7 +139,7 @@ class KGPLValue(Base):
         #     self.id) + "\nnurl: " + str(
         #     self.url) + "\nannotations: " + str(self.annotations)
 
-    def register(self, server="central_server"):
+    def register(self, server="localhost"):
         self.url = server + "/{}".format(self.id)
         if server == "localhost":
             store.StoreValues([self])
@@ -145,6 +147,9 @@ class KGPLValue(Base):
             store.StoreValues([self])
             store.PushValues()
         return self.url
+
+    def bulkstore(self):
+        store.bulk(self)
 
     def showUrl(self):
         print(self.url)
@@ -204,6 +209,8 @@ class KGPLList(KGPLValue, list):
     }
 
     def __init__(self, x, lineage=None):
+        # todo: kgpl list
+        #  x = [item.id if isinstance(item, KGPLValue) else kgval(item).id for item in x]
         x = [item if isinstance(item, KGPLValue) else kgval(item) for item in
              x]
         KGPLValue.__init__(self, x, lineage)
@@ -237,8 +244,12 @@ class KGPLTuple(KGPLValue, Base):
         for item in x:
             if isinstance(item, KGPLValue):
                 temp += (item,)
+                # todo kgpltuple
+                # temp += (item.id,)
             else:
                 temp += (kgval(item),)
+                #  temp += (kgval(item).id,)
+                # todo kgpltuple
         x = temp
         KGPLValue.__init__(self, x, lineage)
 
@@ -269,9 +280,11 @@ class KGPLDict(KGPLValue, dict, Base):
         temp = {}
         for key, value in x.items():
             if isinstance(value, KGPLValue):
-                temp[key] = value
+                temp[key] = value.id
             else:
-                temp[key] = kgval(value)
+                tempValue = kgval(value)
+                tempValue.register()
+                temp[key] = tempValue.id
         x = temp
         KGPLValue.__init__(self, x, lineage)
 
@@ -418,10 +431,11 @@ def kgval(x, lineage=None):
         return kgfloat(x, lineage)
     elif isinstance(x, dict):
         return KGPLDict(x, lineage)
-    elif hasattr(x, "isTuple"):
+    elif isinstance(x, tuple):
         return KGPLTuple(x, lineage)
-    elif hasattr(x, "__iter__"):
+    elif isinstance(x, list):
         return KGPLList(x, lineage)
+    #
     #
     # other values? KGPLEntity
     #
@@ -551,10 +565,10 @@ class KGPLVariable(Base):
         make_transient(self)
 
         self.currentvalue = val.id
-        print("---------",self.timestamp)
+        print("---------", self.timestamp)
 
         self.timestamp = time.time()
-        print("---------",self.timestamp)
+        print("---------", self.timestamp)
 
         self.historical_vals.append((self.timestamp, val.id))
         store.StoreValues([val, ])
