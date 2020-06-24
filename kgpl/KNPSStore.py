@@ -54,6 +54,15 @@ class KNPSStore:
             fetch = s.query(kgpl.KGPLValue).filter(
                 kgpl.KGPLValue.id == id).one_or_none()
             if fetch:
+                if isinstance(fetch, kgpl.KGPLDict):
+                    for key, value in fetch.val.items():
+                        self.GetValue(value)
+                elif isinstance(fetch, kgpl.KGPLList):
+                    for oneitem in fetch.val:
+                        self.GetValue(oneitem)
+                elif isinstance(fetch, kgpl.KGPLTuple):
+                    for onetuple in fetch.val:
+                        self.GetValue(onetuple)
                 return fetch
             if not self.serverURL:
                 return None
@@ -116,13 +125,16 @@ class KNPSStore:
     def empty_bulk_list(self):
         if self.bulkval:
             for one_bulk in self.bulkval:
-                c.execute(
-                    "INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)",
-                    (one_bulk.id, pickle.dumps(one_bulk.val),
-                     pickle.dumps(one_bulk.lineage),
-                     one_bulk.url, one_bulk.annotations,
-                     type(one_bulk).__name__, None)
-                )
+                try:
+                    c.execute(
+                        "INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)",
+                        (one_bulk.id, pickle.dumps(one_bulk.val),
+                         pickle.dumps(one_bulk.lineage),
+                         one_bulk.url, one_bulk.annotations,
+                         type(one_bulk).__name__, None)
+                    )
+                except sqlite3.IntegrityError:
+                    print("duplicate insertion: Skipping...")
             conn.commit()
             self.bulkval = []
 
@@ -134,13 +146,14 @@ class KNPSStore:
                 # for id in self.valueList:
                 #     print(id)
                 #     print(self.valueList)
-                if val_id not in self.valueList or not self.valueList[val_id]:  # has not been pushed yet
+                if val_id not in self.valueList or not self.valueList[
+                    val_id]:  # has not been pushed yet
                     fetch = s.query(kgpl.KGPLValue).filter(
                         kgpl.KGPLValue.id == val_id).one_or_none()
                     if not fetch:  # fetch from local database
                         print("value not found in db but should be found")
                         return
-                    fetch.url = self.serverURL+"/allvalues/"+fetch.id
+                    fetch.url = self.serverURL + "/allvalues/" + fetch.id
                     new = pickle.dumps(fetch)
                     s.commit()
 
@@ -151,7 +164,8 @@ class KNPSStore:
                                       data=new)
                     # session.make_transient(fetch)
                     if isinstance(fetch, kgpl.KGPLDict):
-                        print("------------------is dict!-------------------------")
+                        print(
+                            "------------------is dict!-------------------------")
                         print(fetch)
                         for key, value in fetch.val.items():
                             print(value)
@@ -169,8 +183,8 @@ class KNPSStore:
             exit(1)
 
     def RegisterVariable(self, var):
-        print(
-            "----------------store - registering - variable-------------------")
+        self.empty_bulk_list()
+        print("-------------store - registering - variable----------------")
         if not self.serverURL:
             # This is the ultimate centralized server.
             # Store into the database here.
