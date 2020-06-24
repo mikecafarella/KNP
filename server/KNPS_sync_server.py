@@ -175,17 +175,17 @@ def specval(uuid):
             context = {
                 "UUID": uuid,
                 "type": value.discriminator,
-                "val": value.val,
-                "url": value.url
+                "url": value.url,
+                "val": value.val
             }
         else:
             context = {
                 "UUID": uuid,
                 "type": value.discriminator,
+                "url": value.url,
                 # "val": json.dumps(value.val, sort_keys=True,
                 #                   indent=4, separators=(',', ': '))
-                "val": json.dumps(value.val, indent=1),
-                "url": value.url
+                "val": value.val
             }
         return flask.render_template("specval.html", **context)
     else:

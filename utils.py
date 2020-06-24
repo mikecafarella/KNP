@@ -18,7 +18,7 @@ import time
 
 
 label_desc_dict = {}
-# with open('../label_desc.txt') as json_file:
+# with open('/data/wikidata/label_desc.txt') as json_file:
 #     label_desc_dict = json.load(json_file)
 
 with open('temp.txt') as json_file:

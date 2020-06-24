@@ -103,7 +103,7 @@ class KNPSStore:
 
     def bulk(self, val):  # need to "emtpy the list for the last time"
         print(len(self.bulkval))
-        if len(self.bulkval) > 1:  # can change, I just hard code it.
+        if len(self.bulkval) > 10000:  # can change, I just hard code it.
             print("lenth>1")
             self.bulkval.append(val)
             for one_bulk in self.bulkval:
