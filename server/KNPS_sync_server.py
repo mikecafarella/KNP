@@ -171,22 +171,13 @@ def specval(uuid):
             "val": value.val
         }"""
     if value:
-        if type(value).__name__ == "KGPLInt" or "KGPLFloat" or "KGPLStr":
-            context = {
-                "UUID": uuid,
-                "type": value.discriminator,
-                "url": value.url,
-                "val": value.val
-            }
-        else:
-            context = {
-                "UUID": uuid,
-                "type": value.discriminator,
-                "url": value.url,
-                # "val": json.dumps(value.val, sort_keys=True,
-                #                   indent=4, separators=(',', ': '))
-                "val": value.val
-            }
+        # if type(value).__name__ == "KGPLInt" or "KGPLFloat" or "KGPLStr":
+        context = {
+            "UUID": uuid,
+            "type": value.discriminator,
+            "url": value.url,
+            "val": value.val
+        }
         return flask.render_template("specval.html", **context)
     else:
         return flask.abort(404)
@@ -208,8 +199,6 @@ def ReturnWikiMap():
 
 @app.route("/val/<fileid>", methods=['GET', 'POST'])
 def ReturnValue(fileid):
-
-
     # file_path = os.path.join("val", fileid)
     if flask.request.method == 'GET':
         print("****************************")
@@ -226,7 +215,8 @@ def ReturnValue(fileid):
         session.make_transient(val)
         print("--------------store value to DB---------------")
         s.StoreValues([val, ])
-        print("-----------------successfully stored duplicate value to DB ---------------")
+        print(
+            "-----------------successfully stored duplicate value to DB ---------------")
         context = {
             "id": fileid,
             "value": "received",

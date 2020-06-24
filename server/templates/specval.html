@@ -104,12 +104,41 @@
                 <th class="column1">URL
                 <td class="column2">{{ url }} &nbsp;</td>
             </tr>
+
             <tr>
                 <th class="column1">Concrete Value
-                <td class="column2">
-                    <pre style="font: inherit">{{ val | pprint }}</pre> &nbsp;
-                </td>
+                    {% if type=="KGPLInt" or type=="KGPLFloat" or type=="KGPLStr" %}
+                        <td class="column2">{{ val }} </td>
+                    {% elif type=="KGPLDict" %}
+                        <td class="column2">
+                            {<br>
+                            {% for key,value in val.items() %}
+                                "{{ key }}": <a href="/allvalues/{{ value }}" class="a">"
+                                {{ value }}"</a>,<br>
+                            {% endfor %}
+                            }
+                        </td>
+                    {% elif type=="KGPLList" %}
+                        <td class="column2">
+                            [<br>
+                            {% for one_item_in_list in val %}
+                                <a href="/allvalues/{{ one_item_in_list }}" class="a"> {{ one_item_in_list }} </a>
+                                ,<br>
+                            {% endfor %}
+                            ]
+                        </td>
+                    {% elif type=="KGPLTuple" %}
+                        <td class="column2">
+                            (<br>
+                            {% for one_item_in_list in val %}
+                                <a href="/allvalues/{{ one_item_in_list }}" class="a"> {{ one_item_in_list }} </a>
+                                ,<br>
+                            {% endfor %}
+                            )
+                        </td>
+                    {% endif %}
             </tr>
+
             </tbody>
         </table>
 

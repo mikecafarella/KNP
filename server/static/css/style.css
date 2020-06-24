@@ -160,7 +160,7 @@ a {
 }
 
 a:hover {
-    color: #0056b3;
+    color: #ffc107;
     text-decoration: underline;
 }
 
@@ -11418,7 +11418,8 @@ a {
     -webkit-transition: .3s all ease;
     -o-transition: .3s all ease;
     transition: .3s all ease;
-    color: #f8b739;
+    /*color: #f8b739;*/
+    color: #6c757d;
 }
 
 a:hover, a:focus {
