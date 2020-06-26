@@ -65,4 +65,7 @@ json.dump(label_desc, outfile)
 outfile.close()
 print("finish dump", time.time() - time1)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> d2026f1eb9c3b53c085ca4a0a4795f60ef355b1a
