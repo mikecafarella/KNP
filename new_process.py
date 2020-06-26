@@ -43,7 +43,7 @@ try:
         for i in range(0, 10):
             while True:
                 line = infile.readline()
-                if(line == ']\n'):
+                if line == ']\n':
                     raise Exception('end of line')
                 nn.append(line)
                 count = count + 1

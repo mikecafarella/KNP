@@ -7,7 +7,7 @@ import inspect
 import methods
 import glob
 import matplotlib.pyplot as plt
-import json
+import ujson as json
 import yaml
 import string
 from sklearn.metrics.pairwise import cosine_similarity
