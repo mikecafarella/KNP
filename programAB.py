@@ -1,6 +1,5 @@
-import KGType
+
 import kgpl
-import KNPSStore
 import time
 
 def programA():

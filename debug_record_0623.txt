@@ -1,0 +1,10 @@
+1. knpsstore pushvalue 加了empty_bulk_list()
+2. kgpl.py的server地址改成lasagna了
+3. valueList - when value not in the value list
+4. id 名字——内置的id函数了
+5. kgpldict.val.items() - 不是直接kgpldict.items()
+6. kgpl.py里面的register传入参数不对，应该是self.id, 而不是self
+7. 当push一个value/register一个value的时候，和它相关的value没有被assign url，应该需要assign。
+8. 尽管server的self.bulkval不应该有数据存在里面，但是server和store用到是两个connection，所以不能conn.commit?也有可能是因为空的list，导致空的conn。
+9. if/else希望一起改的，结果只改了一个分支的。。。
+10. part of a value is at local, some part of the value would not be retrieved!

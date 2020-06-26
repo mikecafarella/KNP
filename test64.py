@@ -1,7 +1,7 @@
 import kgpl
-import KNPSStore
+from kgpl import KNPSStore
 
-store = KNPSStore.KNPSStore('http://lasagna.eecs.umich.edu:4000')
+store = KNPSStore('http://lasagna.eecs.umich.edu:4000')
 a = kgpl.getValue("22a9d095-a520-4b69-9ac0-b76a26b5ed87")
 print(a.__repr__())
 

@@ -1,8 +1,7 @@
-import KNPSStore
+from kgpl import KNPSStore
 import kgpl
 import os
 import time
-import jsonpickle
 
 a = KNPSStore.KNPSStore("http://107.191.51.32:5000")
 
