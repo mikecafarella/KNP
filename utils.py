@@ -273,8 +273,10 @@ def parse_wikidata_qualifiers(qualifiers):
         property = search_entity(property_id, "property", limit=1)[0]
         key_prefix = property_id + ":" + property['label'] + "."
         for snak in snaks:
-            datatype = snak["datatype"]
-            datavalue = snak["datavalue"]
+            datatype = snak.get("datatype")
+            datavalue = snak.get("datavalue")
+            if datatype is None or datavalue is None:
+                continue
             dic = parse_wikidata_datavalue(datavalue, datatype)
             #
             # add prefix to keys

@@ -6,6 +6,10 @@ import string
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
 import utils
+import re
+
+def split_uppercase(value):
+    return re.sub(r'([A-Z])', r' \1', value)
 
 
 def _levenshtein_score(s1: str, s2: str):
@@ -14,6 +18,8 @@ def _levenshtein_score(s1: str, s2: str):
 
 
 def _cosine_similarity(s1: str, s2: str):
+    s1 = split_uppercase(s1)
+    s2 = split_uppercase(s2)
     cleaned = [utils.clean_string(s1), utils.clean_string(s2)]
     vectorizer = CountVectorizer().fit_transform(cleaned)
     vectors = vectorizer.toarray()
