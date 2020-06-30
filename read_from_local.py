@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 import time
+import kgpl
+from multiprocessing import Pool
 import ujson as json
 import numpy as np
 import bz2
 import utils
+import sqlite3
+
+conn = sqlite3.connect("KGPLData.db")
+c = conn.cursor()
 
 def generate_dict(lst):
     lst_of_dict = []
-    for x in lst:
+    for line in lst:
         dic = {}
         dic["property"] = {}
         entity_obj = json.loads(line[:-2])
@@ -37,7 +43,7 @@ def generate_dict(lst):
                 dic["property"][property_id] = dictionary
             else:
                 dic["property"][property_id] = dictionary
-        lst_of_dict.append(dic)
+        kgpl.KGPLDict(dic, None, lst_of_dict)
     #print(rst)
     return lst_of_dict
 
@@ -49,10 +55,10 @@ def generate_dict_end_file(lst):
         dic = {}
         dic["property"] = {}
         if x[-2] == ',':
-            obj = json.loads(x[:-2])
+            entity_obj = json.loads(x[:-2])
         else:
             print("last line without comma")
-            obj = json.loads(x[:-1])
+            entity_obj = json.loads(x[:-1])
         dic["entity_id"] = entity_obj["id"]
         dic["name"] = entity_obj["labels"].get("en", {}).get("value")
         dic["description"] = entity_obj["descriptions"].get("en", {}).get("value")
@@ -79,7 +85,7 @@ def generate_dict_end_file(lst):
                 dic["property"][property_id] = dictionary
             else:
                 dic["property"][property_id] = dictionary
-        lst_of_dict.append(dic)
+        kgpl.KGPLDict(dic, None, lst_of_dict)
     #print(rst)
     return lst_of_dict
 
@@ -98,7 +104,7 @@ with open('/data/wikidata/latest-all.json', 'rt') as f:
             lst_of_lines = []
             for i in range(0, 10):
                 while True:
-                    line = infile.readline()
+                    line = f.readline()
                     if line == ']\n':
                         raise Exception('end of line')
                     nn.append(line)
@@ -111,8 +117,18 @@ with open('/data/wikidata/latest-all.json', 'rt') as f:
             with Pool(10) as p:
                 final = p.map(generate_dict, lst_of_lines)
             for x in final:
-                for d in x:
-                    kgpl.KGPLDict(d)
+                for one_bulk in x:
+                    try:
+                        c.execute(
+                            "INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)",
+                            (one_bulk.id, pickle.dumps(one_bulk.val),
+                            pickle.dumps(one_bulk.lineage),
+                            one_bulk.url, one_bulk.annotations,
+                            type(one_bulk).__name__, None)
+                        )
+                    except sqlite3.IntegrityError:
+                        print("duplicate insertion: Skipping...")
+            conn.commit()
             time2 = time.time()
             total_time = total_time + (time2-time1)
             print(r, time2-time1)
@@ -122,8 +138,18 @@ with open('/data/wikidata/latest-all.json', 'rt') as f:
         with Pool(10) as p:
             final = p.map(generate_dict_end_file, lst_of_lines)
             for x in final:
-                for d in x:
-                    kgpl.KGPLDict(d)
+                for one_bulk in x:
+                    try:
+                        c.execute(
+                            "INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)",
+                            (one_bulk.id, pickle.dumps(one_bulk.val),
+                            pickle.dumps(one_bulk.lineage),
+                            one_bulk.url, one_bulk.annotations,
+                            type(one_bulk).__name__, None)
+                        )
+                    except sqlite3.IntegrityError:
+                        print("duplicate insertion: Skipping...")
+            conn.commit()
             time2 = time.time()
             total_time = total_time + (time2-time1)
             print(r, time2-time1)

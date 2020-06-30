@@ -117,7 +117,7 @@ class KGPLValue(Base):
         # TODO: KGPL Sharing Service
         #
 
-    def __init__(self, val, lineage=None):
+    def __init__(self, val, lineage=None, buffer=None):
         self.val = val
         if lineage is None:
             self.lineage = Lineage.InitFromPythonVal()
@@ -128,7 +128,10 @@ class KGPLValue(Base):
         self.url = "<unregistered>"
         self.annotations = "[]"
         ALLVALS[self.id] = self
-        store.bulk(self)
+        if buffer is not None:
+            buffer.append(self)
+        else:
+            store.bulk(self)
 
     def __str__(self):
         return str(self.val)
@@ -170,10 +173,10 @@ class KGPLInt(KGPLValue):
 
     # love = Column(Integer, nullable=True)
 
-    def __init__(self, x, lineage=None):
+    def __init__(self, x, lineage=None, buffer=None):
         # self.love = 42
 
-        super().__init__(int(x), lineage)
+        super().__init__(int(x), lineage, buffer)
 
     def __str__(self):
         return str("KGPLInt " + str(self.id) + ", " + str(self.val))
@@ -184,8 +187,8 @@ class KGPLStr(KGPLValue):
         'polymorphic_identity': 'KGPLStr'
     }
 
-    def __init__(self, x, lineage=None):
-        KGPLValue.__init__(self, str(x), lineage)
+    def __init__(self, x, lineage=None, buffer=None):
+        KGPLValue.__init__(self, str(x), lineage, buffer)
 
     def __str__(self):
         return str("KGPLStr " + str(self.id) + ", " + str(self.val))
@@ -196,8 +199,8 @@ class KGPLFloat(KGPLValue):
         'polymorphic_identity': 'KGPLFloat'
     }
 
-    def __init__(self, x, lineage=None):
-        KGPLValue.__init__(self, float(x), lineage)
+    def __init__(self, x, lineage=None, buffer=None):
+        KGPLValue.__init__(self, float(x), lineage, buffer)
 
     def __str__(self):
         return str("KGPLFloat " + str(self.id) + ", " + str(self.val))
@@ -208,12 +211,12 @@ class KGPLList(KGPLValue, list):
         'polymorphic_identity': 'KGPLList'
     }
 
-    def __init__(self, x, lineage=None):
-        x = [item.id if isinstance(item, KGPLValue) else kgval(item).id for
+    def __init__(self, x, lineage=None, buffer=None):
+        x = [item.id if isinstance(item, KGPLValue) else kgval(item, lineage, buffer).id for
              item in x]
         # x = [item if isinstance(item, KGPLValue) else kgval(item) for item in
         #      x]
-        KGPLValue.__init__(self, x, lineage)
+        KGPLValue.__init__(self, x, lineage, buffer)
 
     def __str__(self):
         return str("KGPLList " + str(self.id) + ",\n" + str(self.val))
@@ -239,15 +242,15 @@ class KGPLTuple(KGPLValue, Base):
         'polymorphic_identity': 'KGPLTuple'
     }
 
-    def __init__(self, x, lineage=None):
+    def __init__(self, x, lineage=None, buffer=None):
         temp = ()
         for item in x:
             if isinstance(item, KGPLValue):
                 temp += (item.id,)
             else:
-                temp += (kgval(item).id,)
+                temp += (kgval(item, lineage, buffer).id,)
         x = temp
-        KGPLValue.__init__(self, x, lineage)
+        KGPLValue.__init__(self, x, lineage, buffer)
 
     def __str__(self):
         return str("KGPLTuple " + str(self.id) + ",\n" + str(self.val))
@@ -272,17 +275,17 @@ class KGPLDict(KGPLValue, dict, Base):
         'polymorphic_identity': 'KGPLDict'
     }
 
-    def __init__(self, x, lineage=None):
+    def __init__(self, x, lineage=None, buffer=None):
         temp = {}
         for key, value in x.items():
             if isinstance(value, KGPLValue):
                 temp[key] = value.id
             else:
-                tempValue = kgval(value)
+                tempValue = kgval(value, lineage, buffer)
                 # tempValue.register()
                 temp[key] = tempValue.id
         x = temp
-        KGPLValue.__init__(self, x, lineage)
+        KGPLValue.__init__(self, x, lineage, buffer)
 
     def __str__(self):
         strings = []
@@ -319,8 +322,8 @@ class KGPLFuncValue(KGPLValue):
     }
     KGPLFuncValue_name = Column(PickleType, nullable=True)
 
-    def __init__(self, f, name, lineage=None):
-        super().__init__(f, lineage)
+    def __init__(self, f, name, lineage=None, buffer=None):
+        super().__init__(f, lineage, buffer)
         self.name = f.__name__ if name is None else name
         ALLFUNCS.setdefault(self.name, []).append(self)  # could be: self.id
 
@@ -369,40 +372,40 @@ class KGPLEntityValue(KGPLValue):
         return str("KGPLEntityValue " + str(self.id) + ", " + str(self.val))
 
 
-def kgint(x, lineage=None):
-    return KGPLInt(x, lineage)
+def kgint(x, lineage=None, buffer=None):
+    return KGPLInt(x, lineage, buffer)
 
 
-def kgstr(x, lineage=None):
-    return KGPLStr(x, lineage)
+def kgstr(x, lineage=None, buffer=None):
+    return KGPLStr(x, lineage, buffer)
 
 
-def kgfloat(x, lineage=None):
-    return KGPLFloat(x, lineage)
+def kgfloat(x, lineage=None, buffer=None):
+    return KGPLFloat(x, lineage, buffer=None)
 
 
 def kgplSquare(x):
     return KGPLValue(x * x)
 
 
-def kgval(x, lineage=None):
+def kgval(x, lineage=None, buffer=None):
     if isinstance(x, KGPLValue):
         return x
 
     if x is None:
         return kgstr("None")
     elif isinstance(x, int):
-        return kgint(x, lineage)
+        return kgint(x, lineage, buffer)
     elif isinstance(x, str):
-        return kgstr(x, lineage)
+        return kgstr(x, lineage, buffer)
     elif isinstance(x, float):
-        return kgfloat(x, lineage)
+        return kgfloat(x, lineage, buffer)
     elif isinstance(x, dict):
-        return KGPLDict(x, lineage)
+        return KGPLDict(x, lineage, buffer)
     elif isinstance(x, tuple):
-        return KGPLTuple(x, lineage)
+        return KGPLTuple(x, lineage, buffer)
     elif isinstance(x, list):
-        return KGPLList(x, lineage)
+        return KGPLList(x, lineage, buffer)
     #
     #
     # other values? KGPLEntity
@@ -411,8 +414,8 @@ def kgval(x, lineage=None):
         raise Exception("Cannot create KG value for", x)
 
 
-def kgfunc(f, name=None, lineage=None):
-    return KGPLFuncValue(f, name, lineage)
+def kgfunc(f, name=None, lineage=None, buffer=None):
+    return KGPLFuncValue(f, name, lineage, buffer)
 
 
 class Execution(KGPLValue):
