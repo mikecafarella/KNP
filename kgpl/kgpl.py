@@ -381,11 +381,11 @@ def kgstr(x, lineage=None, buffer=None):
 
 
 def kgfloat(x, lineage=None, buffer=None):
-    return KGPLFloat(x, lineage, buffer=None)
+    return KGPLFloat(x, lineage, buffer)
 
 
-def kgplSquare(x):
-    return KGPLValue(x * x)
+def kgplSquare(x, lineage=None, buffer=None):
+    return KGPLValue(x * x, lineage, buffer)
 
 
 def kgval(x, lineage=None, buffer=None):
@@ -393,7 +393,7 @@ def kgval(x, lineage=None, buffer=None):
         return x
 
     if x is None:
-        return kgstr("None")
+        return kgstr("None", lineage, buffer)
     elif isinstance(x, int):
         return kgint(x, lineage, buffer)
     elif isinstance(x, str):

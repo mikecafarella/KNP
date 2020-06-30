@@ -7,6 +7,7 @@ import numpy as np
 import bz2
 import utils
 import sqlite3
+import pickle
 
 conn = sqlite3.connect("KGPLData.db")
 c = conn.cursor()
@@ -91,31 +92,34 @@ def generate_dict_end_file(lst):
 
 
 
-
+total_time = 0
 start = time.time()
 with open('/data/wikidata/latest-all.json', 'rt') as f:
     start = time.time()
     f.read(2)
     try:
-        for r in range(0, 2500):
+        for r in range(0, 20):
+            print("begin reading")
             nn=[]
             count = 0
             time1=time.time()
             lst_of_lines = []
-            for i in range(0, 10):
+            for i in range(0, 20):
                 while True:
                     line = f.readline()
                     if line == ']\n':
                         raise Exception('end of line')
                     nn.append(line)
                     count = count + 1
-                    if count == 4000:
+                    if count == 50:
                         lst_of_lines.append(nn)
                         nn = []
                         count = 0
                         break
-            with Pool(10) as p:
+            print("begin map", time.time() - time1)
+            with Pool(20) as p:
                 final = p.map(generate_dict, lst_of_lines)
+            print("begin storing", time.time() - time1)
             for x in final:
                 for one_bulk in x:
                     try:

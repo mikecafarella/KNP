@@ -30,7 +30,7 @@ def parse_into_dict_end_file(lst):
     return rst
 
 infile = open('/data/wikidata/latest-all.json', "rt")
-outfile = open('label_desc.txt',"wt")
+outfile = open('tttt.txt',"wt")
 outfile.write("{\n")
 total_time = 0
 nn = infile.read(2)
