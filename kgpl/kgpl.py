@@ -32,7 +32,11 @@ import jsonpickle
 
 ALLVALS = {}
 ALLFUNCS = {}
-server_url = 'http://lasagna.eecs.umich.edu:8000'
+
+server_url = 'http://cannoli.eecs.umich.edu:8000'
+# server_url = 'http://lasagna.eecs.umich.edu:8000'
+# server_url = None
+
 # store = KNPSStore('http://lasagna.eecs.umich.edu:8080')
 store = KNPSStore(server_url)
 
@@ -56,7 +60,7 @@ def Wiki_Dict_Transformer(entity_id):
     result["description"] = IR_temp.desc
     result["name"] = IR_temp.label
     result["property"] = IR_temp.properties
-    result["modified"] = IR_temp.modified
+    # result["modified"] = IR_temp.modified
     return result
 
 

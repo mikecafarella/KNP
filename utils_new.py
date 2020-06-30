@@ -14,6 +14,16 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
 from nltk.corpus import stopwords
 from wikidata_utils import search_entity
+import time
+
+label_desc_dict = {}
+# with open('/data/wikidata/label_desc.txt') as json_file:
+#     label_desc_dict = json.load(json_file)
+
+with open('temp.txt') as json_file:
+    label_desc_dict = json.load(json_file)
+# with open('../label_desc.txt') as json_file:
+#     label_desc_dict = json.load(json_file)
 
 
 def parse(source):
@@ -65,11 +75,13 @@ def load_seaborn_dataset(name, **kws):
 def generate_mappings(variables, columns, num_rows, sample_size_of_slicing=6,
                       seed=0):
     """A generator function that yields mappings.
+
     Args:
         variables (list) (length = n): List of variable names.
         columns (list) (length = d): List of column names.
         num_rows (int): Number of rows in the dataset.
         sample_size_of_slicing (int): number of samples with different slicing for a mapping.
+
 
     Yield:
         Each mapping starts with (start_index, end_index) followed by n tuples in the form of
@@ -113,6 +125,7 @@ def test_one_mapping(method, actual_mapping, criterion="runnable"):
 
 def test_mappings(method, dataframe, criterion="runnable", output_path=None):
     """ Test the all the mappings with the criterion.
+
         Args:
             method: A ConcreteMethod.
             dataframe: A pandas.DataFrame.
@@ -186,24 +199,31 @@ def parse_wikidata_datavalue(datavalue, datatype: str):
         Args:
         datavalue (dict): a wikidata datavalue.
         datatype: wikidata datatype.
+
         Return:
             A dict represensts a row of data in the final DataFrame.
     """
     rst = {}
     if datatype == 'wikibase-item':
         assert (datavalue['type'] == 'wikibase-entityid')
-        rst = {"wikidatadata ID": datavalue['value']["id"]}
+        # rst = {"wikidatadata ID": datavalue['value']["id"]}
         # item = search_entity(datavalue['value']["id"], "item", limit=1)[0]
         # rst = {"wikidata ID": item["id"], "wikidata entity type": "item", "label": item.get("label"), "description": item.get("description"), "aliases": item.get("aliases"), "url": item["url"][2:]}
+        try:
+            rst = {"wikidata ID": datavalue['value']["id"],
+                   "wikidata entity type": "item",
+                   "label": label_desc_dict[datavalue['value']["id"]][0],
+                   "description": label_desc_dict[datavalue['value']["id"]][1]}
+        except KeyError:
+            rst = {}
     elif datatype == 'wikibase-property':
         assert (datavalue['type'] == 'wikibase-entityid')
-        property = \
-        search_entity(datavalue['value']["id"], "property", limit=1)[0]
-        rst = {"wikidata ID": property["id"],
+        # property = search_entity(datavalue['value']["id"], "property", limit=1)[0]
+        # rst = {"wikidata ID": property["id"], "wikidata entity type": "property", "label": property.get("label"), "description": property.get("description"), "aliases": property.get("aliases"), "url": property["url"][2:]}
+        rst = {"wikidata ID": datavalue['value']["id"],
                "wikidata entity type": "property",
-               "label": property.get("label"),
-               "description": property.get("description"),
-               "aliases": property.get("aliases"), "url": property["url"][2:]}
+               "label": label_desc_dict[datavalue['value']["id"]][0],
+               "description": label_desc_dict[datavalue['value']["id"]][1]}
     elif datatype == 'commonsMedia':
         #
         assert (datavalue['type'] == 'string')
@@ -250,7 +270,8 @@ def parse_wikidata_datavalue(datavalue, datatype: str):
     elif datatype == 'wikibase-sense':
         pass
     else:
-        raise ValueError("Unknown datatype {}!".format(datatype))
+        # raise ValueError("Unknown datatype {}!".format(datatype))
+        pass
     #
     # make values in rst become a list, so later rst can be used to build a DataFrame
     #
@@ -284,8 +305,8 @@ def parse_wikidata_qualifiers(qualifiers):
         return {}
     rst = {}
     for property_id, snaks in qualifiers.items():
-        property = search_entity(property_id, "property", limit=1)[0]
-        key_prefix = property_id + ":" + property['label'] + "."
+        # property = search_entity(property_id, "property", limit=1)[0]['label']
+        key_prefix = property_id + ":" + label_desc_dict[property_id][0] + "."
         for snak in snaks:
             datatype = snak.get("datatype")
             datavalue = snak.get("datavalue")

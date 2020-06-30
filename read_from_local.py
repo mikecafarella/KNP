@@ -25,7 +25,7 @@ if __name__ == '__main__':
                 print("Error!")
                 continue
             dic["entity_id"] = entity_obj["id"]
-            print(id)
+            # print(id)
             dic["name"] = entity_obj["labels"].get("en", {}).get("value")
             dic["description"] = entity_obj["descriptions"].get("en", {}).get("value")
             for property_id, snaks in entity_obj['claims'].items():
