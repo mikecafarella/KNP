@@ -9,11 +9,84 @@ import ujson as json
 # import bz2
 import sqlite3
 import load_utils
+import csv
+"""
+def insert():
+    conn = sqlite3.connect("KGPLData.db")
+    c = conn.cursor()
+    file = os.listdir("dir0")
+    f=file[0]
+    fp = open("dir0/"+f, "rt")
+    count = 1
+    tuplelist=[]
+    p = pickle.dumps(kgpl.Lineage.InitFromPythonVal())
+    while True:
+        read_id = fp.readline()
+        if (read_id != ''):
+            read_id = read_id[:-1]
+            read_val = fp.readline()[:-1]
+            read_url = fp.readline()[:-1]
+            read_annotations = fp.readline()[:-1]
+            read_type = fp.readline()[:-1]
+            
+            if count == 10000:
+                try:
+                    c.executemany("INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)", tuplelist)
+                except sqlite3.IntegrityError:
+                    print("duplicate insertion: Skipping...")
+                tuplelist=[]
+                count=1
+            else:
+                count+=1
+                tuplelist.append((read_id,read_val,p,read_url,read_annotations,read_type,None))
+            
+            # tuplelist.append((read_id,read_val,p,read_url,read_annotations,read_type,None))
+        else:
+            try:
+                c.executemany("INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)", tuplelist)
+            except sqlite3.IntegrityError:
+                print("duplicate insertion: Skipping...")
+            conn.commit()
+            fp.close()
+            #os.remove(d+"/"+f)
+            print("file end")
+            break
+
+
+def insert():
+    t0 = time.time()
+    print("loading start")
+    conn = sqlite3.connect("KGPLData.db")
+    c = conn.cursor()
+    count = 1
+    tuplelist=[]
+    p = pickle.dumps(kgpl.Lineage.InitFromPythonVal())
+    f = ""
+    fp = open("dir0/"+f, "rt")
+    while True:
+        read_id = fp.readline()
+        if (read_id != ''):
+            read_id = read_id[:-1]
+            read_val = fp.readline()[:-1]
+            read_url = fp.readline()[:-1]
+            read_annotations = fp.readline()[:-1]
+            read_type = fp.readline()[:-1]
+            tuplelist.append((read_id,read_val,p,read_url,read_annotations,read_type,None))
+        else:
+            try:
+                c.executemany("INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)", tuplelist)
+            except sqlite3.IntegrityError:
+                print("duplicate insertion: Skipping...")
+            fp.close()
+            conn.commit()
+            print("file end")
+            break
+    print("loading finished", time.time()-t0)
+"""
 
 
 def generate_dict(lst, d):
-    t1 = time.time()
-    print(os.getpid(),"started!")
+    # print(os.getpid(),"started!")
     lst_of_dict = []
     for line in lst:
         datalst = []
@@ -49,12 +122,26 @@ def generate_dict(lst, d):
         kgpl.KGPLDict(dic, None, datalst)
         lst_of_dict.append(datalst)
     #print(rst)
-    print(os.getpid(),"writing")
-    filename = d+"/"+str(os.getpid())
-    outfile = open(filename, "wb")
-    pickle.dump(lst_of_dict, outfile)
+    #print(os.getpid(),"writing")
+    filename = d+"/"+str(os.getpid())+".csv"
+    outfile = open(filename, "w", newline='')
+    """
+    for x in lst_of_dict:
+        for xx in x:
+            to_write = [xx.id + '\n', 
+                        json.dumps(xx.val) + '\n',
+                        xx.url + '\n',
+                        xx.annotations + '\n',
+                        type(xx).__name__ + '\n'
+                        ]
+            outfile.writelines(to_write)
+    """
+    writer = csv.writer(outfile)
+    for x in lst_of_dict:
+        for xx in x:
+            writer.writerow([xx.id,json.dumps(xx.val),pickle.dumps(kgpl.Lineage.InitFromPythonVal()),xx.url,xx.annotations,type(xx).__name__])
     outfile.close()
-    print("generating finished", time.time()-t1)
+    #print("generating finished")
 
 def generate_dict_dir0(lst):
     generate_dict(lst, "dir0")
@@ -63,30 +150,54 @@ def generate_dict_dir1(lst):
     generate_dict(lst, "dir1")
 
 def load_db(d):
-    t0 = time.time()
     print("loading start")
     conn = sqlite3.connect("KGPLData.db")
     c = conn.cursor()
     file = os.listdir(d)
     for f in file:
-        fp = open(d+"/"+f, "rb")
-        l =  pickle.load(fp)
-        fp.close()
-        os.remove(d+"/"+f)
-        for x in l:
-            for one_bulk in x:
+        #echo -e '.separator "," \n.import testing.csv KGPLValue' | sqlite3 KGPLData.db
+        filename = d+"/"+f
+        exe = "echo '.separator \",\"\n.mode csv\n.import {} KGPLValue' | sqlite3 KGPLData.db > /dev/null".format(filename)
+        code=os.system(exe)
+        if code !=0:
+            print("error")
+        os.remove(filename)
+        """
+        count = 1
+        tuplelist=[]
+        p = pickle.dumps(kgpl.Lineage.InitFromPythonVal())
+        while True:
+            read_id = fp.readline()
+            if (read_id != ''):
+                read_id = read_id[:-1]
+                read_val = fp.readline()[:-1]
+                read_url = fp.readline()[:-1]
+                read_annotations = fp.readline()[:-1]
+                read_type = fp.readline()[:-1]
+
+                if count == 50000:
+                    try:
+                        c.executemany("INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)", tuplelist)
+                    except sqlite3.IntegrityError:
+                        print("duplicate insertion: Skipping...")
+                    tuplelist=[]
+                    count=1
+                else:
+                    count+=1
+                    tuplelist.append((read_id,read_val,p,read_url,read_annotations,read_type,None))
+
+                # tuplelist.append((read_id,read_val,p,read_url,read_annotations,read_type,None))
+            else:
                 try:
-                    c.execute(
-                        "INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)",
-                        (one_bulk.id, pickle.dumps(one_bulk.val),
-                         pickle.dumps(one_bulk.lineage),
-                         one_bulk.url, one_bulk.annotations,
-                         type(one_bulk).__name__, None)
-                    )
+                    c.executemany("INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)", tuplelist)
                 except sqlite3.IntegrityError:
                     print("duplicate insertion: Skipping...")
-    conn.commit()
-    print("loading finished", time.time()-t0)
+                conn.commit()
+                fp.close()
+                os.remove(d+"/"+f)
+                break
+        """
+    print("loading finished")
 
 
 def generate_dict_end_file(lst):
@@ -131,9 +242,13 @@ def generate_dict_end_file(lst):
         lst_of_dict.append(datalst)
     #print(rst)
     print(os.getpid(),"writing")
-    filename = str(os.getpid())
-    outfile = open(filename, "wb")
-    pickle.dump(lst_of_dict, outfile)
+    filename = d+"/"+str(os.getpid())+".csv"
+    outfile = open(filename, "w", newline='')
+    writer = csv.writer(outfile)
+    for x in lst_of_dict:
+        for xx in x:
+            writer.writerow([xx.id,json.dumps(xx.val),pickle.dumps(kgpl.Lineage.InitFromPythonVal()),xx.url,xx.annotations,type(xx).__name__])
+    outfile.close()
     print("finish")
 
 
@@ -188,12 +303,14 @@ def main():
                     with Pool(10) as pool:
                         final = pool.map(generate_dict_dir1, lst_of_lines, 1)
                     p.join()
+                    #load_db("dir0")
                 else:
                     p = Process(target=load_db, args=("dir1",))
                     p.start()
                     with Pool(10) as pool:
                         final = pool.map(generate_dict_dir0, lst_of_lines, 1)
                     p.join()
+                    #load_db("dir1")
                 
                 time2 = time.time()
                 total_time = total_time + (time2-time1)
