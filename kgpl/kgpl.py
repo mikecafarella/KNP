@@ -26,8 +26,8 @@ from enum import Enum
 
 from .KNPSStore import KNPSStore
 
-import KGType
-from query import IR
+# import KGType
+# from query import IR
 import jsonpickle
 
 ALLVALS = {}
@@ -46,7 +46,7 @@ def getValue(id):
 def getVariable(varName):
     return store.GetVariable(varName)
 
-
+"""
 def Wiki_Dict_Transformer(entity_id):
     IR_temp = IR(entity_id, 'wikidata')
     if IR_temp.KG == "missing":
@@ -58,7 +58,7 @@ def Wiki_Dict_Transformer(entity_id):
     result["property"] = IR_temp.properties
     result["modified"] = IR_temp.modified
     return result
-
+"""
 
 class LineageKinds(Enum):
     InitFromInternalOp = 1
@@ -96,7 +96,7 @@ class Lineage:
 class KGPLValue(Base):
     __tablename__ = 'KGPLValue'
     id = Column(UnicodeText, primary_key=True)
-    val = Column(PickleType)
+    val = Column(UnicodeText)
     lineage = Column(PickleType, nullable=True)
     url = Column(UnicodeText)
     annotations = Column(UnicodeText)
@@ -348,14 +348,13 @@ class KGPLFuncValue(KGPLValue):
             resultval.lineage = Lineage.InitFromExecution(execval.id)
             return resultval
 
-
+"""
 class KGPLEntityValue(KGPLValue):
     __mapper_args__ = {
         'polymorphic_identity': 'KGPLEntityValue'
     }
 
     def __init__(self, text_reference, kg="wikidata", lineage=None):
-        """text_reference (str): KG references like Q30."""
         if kg.lower() != "wikidata":
             raise RuntimeError("Unimplemented kg {}".format(kg))
 
@@ -370,7 +369,7 @@ class KGPLEntityValue(KGPLValue):
 
     def __str__(self):
         return str("KGPLEntityValue " + str(self.id) + ", " + str(self.val))
-
+"""
 
 def kgint(x, lineage=None, buffer=None):
     return KGPLInt(x, lineage, buffer)
@@ -381,11 +380,11 @@ def kgstr(x, lineage=None, buffer=None):
 
 
 def kgfloat(x, lineage=None, buffer=None):
-    return KGPLFloat(x, lineage, buffer=None)
+    return KGPLFloat(x, lineage, buffer)
 
 
-def kgplSquare(x):
-    return KGPLValue(x * x)
+def kgplSquare(x, lineage=None, buffer=None):
+    return KGPLValue(x * x, lineage, buffer)
 
 
 def kgval(x, lineage=None, buffer=None):
@@ -393,7 +392,7 @@ def kgval(x, lineage=None, buffer=None):
         return x
 
     if x is None:
-        return kgstr("None")
+        return kgstr("None", lineage, buffer)
     elif isinstance(x, int):
         return kgint(x, lineage, buffer)
     elif isinstance(x, str):
@@ -572,7 +571,7 @@ def call_func_by_id(id, *args, **kwargs):
         raise ValueError("Function {} not found".format(id))
     return ALLVALS[id](*args, **kwargs)
 
-
+"""
 def get_type_precondition_score(kgpl_func: KGPLFuncValue, *args, **kwargs):
     func = kgpl_func.val
     #
@@ -610,6 +609,6 @@ def get_type_precondition_score(kgpl_func: KGPLFuncValue, *args, **kwargs):
     # print("Individual param socres:", scores)
     # print("Overall score: {}".format(score))
     return score
-
+"""
 
 Base.metadata.create_all()

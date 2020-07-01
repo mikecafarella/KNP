@@ -270,7 +270,7 @@ def merge_dicts(dic1, dic2):
         if key not in dic1:
             dic1[key] = value
         else:
-            if isinstance(value, list) and isinstance(value, list):
+            if isinstance(value, list) and isinstance(dic1[key], list):
                 dic1[key] += value
             elif isinstance(value, list):
                 dic1[key] = value.append(dic1[key])
