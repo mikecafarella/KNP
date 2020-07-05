@@ -29,6 +29,7 @@ if __name__ == '__main__':
             dic["description"] = entity_obj["descriptions"].get("en", {}).get("value")
             for property_id, snaks in entity_obj['claims'].items():
                 dictionary = None
+                count_snak = 0
                 for snak in snaks:
                     mainsnak = snak.get("mainsnak")
                     qualifiers = snak.get("qualifiers")
@@ -45,7 +46,15 @@ if __name__ == '__main__':
                     if dictionary is None:
                         dictionary = value_mapping
                     else:
-                        dictionary = dictionary.update(value_mapping)
+                        if (count_snak == 0):
+                            temp = dictionary
+                            dictionary = {}
+                            dictionary[0] = temp
+                            dictionary[1] = value_mapping
+                            count_snak = 2
+                        else:
+                            dictionary[count_snak] = value_mapping
+                            count_snak += 1
                 if dictionary is None:
                     dic["property"][property_id] = dictionary
                 else:
