@@ -56,6 +56,79 @@ def Wiki_Dict_Transformer(entity_id):
     return result
 
 
+def get_Entity(id: str):
+    return Entity(id)
+
+def get_Property(id: str):
+    return Property(id)
+
+
+def createType(id: str):
+    return InstanceType(id)
+
+
+def showPopulation(c: Entity):
+   # Print out the name of a city and its population
+   City = InstanceType("Q515")
+   if not City.checkType(c):
+       print(c.dictionary["name"] + " is not a city.")
+       return None
+   print("The population of " + str(c.dictionary["name"]) + " is " + str(c.dictionary["property"]["P1082"][0]["amount"]))
+
+
+class InstanceType:
+    def __init__(self, id=None):
+        self.id = id
+        if not id:
+            self.name = None
+        else:
+            self.name = Wiki_Dict_Transformer(id)["name"]
+
+    def checkType(self, entity: Entity):
+        try:
+            type_list = entity.dictionary["property"]["P31"] # a single dictionary or several dictionaries
+            if 0 in type_list.keys():
+                for _, data in type_list.items():
+                    if self.id == data["wikidata ID"]:
+                        return True
+            else:
+                if self.id == type_list["wikidata ID"]:
+                    return True
+            return False
+        except:
+            print("nb")
+
+
+class Entity:
+    def __init__(self, id=None):
+        self.id = id
+        if not id:
+            self.dictionary = None
+        else:
+            self.dictionary = Wiki_Dict_Transformer(id)
+
+    def getProperty(self, pro: Property):
+        if pro.id in self.dictionary["property"].keys():
+            return self.dictionary["property"][pro.id]["label"]
+        else:
+            return None
+
+    def __str__(self):
+        return str(self.dictionary["name"])
+
+
+class Property:
+    def __init__(self, id=None):
+        self.id = id
+        if not id:
+            self.name = None
+        else:
+            self.name = Wiki_Dict_Transformer(id)["name"]
+
+    def __str__(self):
+        return str(self.name)
+
+
 class LineageKinds(Enum):
     InitFromInternalOp = 1
     InitFromPythonValue = 2
