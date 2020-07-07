@@ -102,9 +102,6 @@ def parse_wikidata_datavalue(datavalue, datatype: str):
     return rst
 
 
-
-
-
 def parse_wikidata_qualifiers(qualifiers):
     """
         Args:

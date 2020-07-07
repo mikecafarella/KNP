@@ -26,8 +26,8 @@ from enum import Enum
 
 from .KNPSStore import KNPSStore
 
-# import KGType
-# from query import IR
+import KGType
+#from query import IR
 import jsonpickle
 
 ALLVALS = {}
@@ -36,7 +36,7 @@ server_url = 'http://lasagna.eecs.umich.edu:8000'
 # store = KNPSStore('http://lasagna.eecs.umich.edu:8080')
 store = KNPSStore(server_url)
 
-wikiMap = {}
+#wikiMap = {}
 
 
 def getValue(id):
