@@ -128,5 +128,5 @@ def parse_wikidata_qualifiers(qualifiers):
             # add prefix to keys
             #
             # dic = {key_prefix+k: v for k, v in dic.items()}
-            rst = merge_dicts(rst[key_prefix], dic)
+            rst[key_prefix] = merge_dicts(rst[key_prefix], dic)
     return rst

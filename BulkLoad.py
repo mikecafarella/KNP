@@ -43,7 +43,7 @@ def generate_dict(lst, d):
                 dic["property"][property_id] = dictionary
             else:
                 dic["property"][property_id] = dictionary
-        kgpl.KGPLDict(dic, None, datalst)
+        kgpl.KGPLDict(dic, None, datalst, wiki_utils.iddict[entity_obj["id"]])
         lst_of_dict.append(datalst)
     #print(rst)
     #print(os.getpid(),"writing")
@@ -63,7 +63,7 @@ def generate_dict(lst, d):
     writer = csv.writer(outfile)
     for x in lst_of_dict:
         for xx in x:
-            writer.writerow([xx.id,json.dumps(xx.val),pickle.dumps(kgpl.Lineage.InitFromPythonVal()),xx.url,xx.annotations,type(xx).__name__])
+            writer.writerow([xx.id,json.dumps(xx.val),pickle.dumps(kgpl.Lineage.InitFromPythonVal()),xx.url,xx.annotations,type(xx).__name__,None])
     outfile.close()
     #print("generating finished")
 
@@ -78,52 +78,17 @@ def generate_dict_dir1(lst):
 
 def load_db(d):
     print("loading start")
-    conn = sqlite3.connect("KGPLData.db")
+    conn = sqlite3.connect("ningning.db")
     c = conn.cursor()
     file = os.listdir(d)
     for f in file:
-        #echo -e '.separator "," \n.import testing.csv KGPLValue' | sqlite3 KGPLData.db
+        #echo -e '.separator "," \n.import testing.csv KGPLValue' | sqlite3 ningning.db
         filename = d+"/"+f
-        exe = "echo '.separator \",\"\n.mode csv\n.import {} KGPLValue' | sqlite3 KGPLData.db > /dev/null".format(filename)
+        exe = "echo '.separator \",\"\n.mode csv\n.import {} KGPLValue' | sqlite3 ningning.db".format(filename)
         code=os.system(exe)
         if code !=0:
             print("error")
         os.remove(filename)
-        """
-        count = 1
-        tuplelist=[]
-        p = pickle.dumps(kgpl.Lineage.InitFromPythonVal())
-        while True:
-            read_id = fp.readline()
-            if (read_id != ''):
-                read_id = read_id[:-1]
-                read_val = fp.readline()[:-1]
-                read_url = fp.readline()[:-1]
-                read_annotations = fp.readline()[:-1]
-                read_type = fp.readline()[:-1]
-
-                if count == 50000:
-                    try:
-                        c.executemany("INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)", tuplelist)
-                    except sqlite3.IntegrityError:
-                        print("duplicate insertion: Skipping...")
-                    tuplelist=[]
-                    count=1
-                else:
-                    count+=1
-                    tuplelist.append((read_id,read_val,p,read_url,read_annotations,read_type,None))
-
-                # tuplelist.append((read_id,read_val,p,read_url,read_annotations,read_type,None))
-            else:
-                try:
-                    c.executemany("INSERT INTO KGPLValue VALUES (?,?,?,?,?,?,?)", tuplelist)
-                except sqlite3.IntegrityError:
-                    print("duplicate insertion: Skipping...")
-                conn.commit()
-                fp.close()
-                os.remove(d+"/"+f)
-                break
-        """
     print("loading finished")
 
 
@@ -165,7 +130,7 @@ def generate_dict_end_file(lst):
                 dic["property"][property_id] = dictionary
             else:
                 dic["property"][property_id] = dictionary
-        kgpl.KGPLDict(dic, None, datalst)
+        kgpl.KGPLDict(dic, None, datalst,wiki_utils.iddict[entity_obj["id"]])
         lst_of_dict.append(datalst)
     #print(rst)
     print(os.getpid(),"writing")
@@ -174,7 +139,7 @@ def generate_dict_end_file(lst):
     writer = csv.writer(outfile)
     for x in lst_of_dict:
         for xx in x:
-            writer.writerow([xx.id,json.dumps(xx.val),pickle.dumps(kgpl.Lineage.InitFromPythonVal()),xx.url,xx.annotations,type(xx).__name__])
+            writer.writerow([xx.id,json.dumps(xx.val),pickle.dumps(kgpl.Lineage.InitFromPythonVal()),xx.url,xx.annotations,type(xx).__name__,None])
     outfile.close()
     print("finish")
 

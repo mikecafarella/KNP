@@ -5,7 +5,7 @@ CREATE TABLE KGPLValue(
   url TEXT NOT NULL,
   annotations TEXT NOT NULL,
   discriminator TEXT NOT NULL,
-  KGPLFuncValue TEXT NOT NULL
+  KGPLFuncValue TEXT
 );
 
 CREATE TABLE Wikimap(
