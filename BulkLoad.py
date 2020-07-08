@@ -180,7 +180,7 @@ def main():
                     while True:
                         line = f.readline()
                         if line == ']\n':
-                            raise Exception('end of line')
+                            raise Exception('end of file')
                         nn.append(line)
                         count = count + 1
                         if count == 4000:
@@ -203,7 +203,6 @@ def main():
                         final = pool.map(generate_dict_dir0, lst_of_lines, 1)
                     p.join()
                     #load_db("dir1")
-                
                 time2 = time.time()
                 total_time = total_time + (time2-time1)
                 print(r, time2-time1)
@@ -212,10 +211,24 @@ def main():
                 lst_of_lines.append(nn)
             with Pool(10) as p:
                 final = p.map(generate_dict_end_file, lst_of_lines, 1)
-                
-                time2 = time.time()
-                total_time = total_time + (time2-time1)
-                print(r, time2-time1)
+            # insert dir0 into db, pickle dump into dir1
+            if r % 2 == 1:
+                p = Process(target=load_db, args=("dir0",))
+                p.start()
+                with Pool(10) as pool:
+                    final = pool.map(generate_dict_dir1, lst_of_lines, 1)
+                p.join()
+                #load_db("dir0")
+            else:
+                p = Process(target=load_db, args=("dir1",))
+                p.start()
+                with Pool(10) as pool:
+                    final = pool.map(generate_dict_dir0, lst_of_lines, 1)
+                p.join()
+                #load_db("dir1")    
+            time2 = time.time()
+            total_time = total_time + (time2-time1)
+            print(r, time2-time1)
 
 if __name__ == '__main__':
     main()
