@@ -196,7 +196,15 @@ def parse_wikidata_datavalue(datavalue, datatype: str):
             rst = {"wikidata ID": datavalue['value']["id"], "wikidata entity type": "item", "label": label_desc_dict[datavalue['value']["id"]][0],
                    "description": label_desc_dict[datavalue['value']["id"]][1]}
         except KeyError:
-            rst = {}
+            item = get_entity(datavalue['value']["id"])
+            if 'missing' in item.keys():
+                if item['missing'] == '':
+                    rst = {}
+            else:
+                descr = item["descriptions"]
+                if descr:
+                    descr = item["descriptions"]["en"]["value"]
+                rst = {"wikidata ID": item["id"], "wikidata entity type": "item", "label": item["labels"]["en"]["value"], "description": descr}
     elif datatype == 'wikibase-property':
         assert(datavalue['type'] == 'wikibase-entityid')
         # property = search_entity(datavalue['value']["id"], "property", limit=1)[0]
