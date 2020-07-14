@@ -209,8 +209,19 @@ def parse_wikidata_datavalue(datavalue, datatype: str):
         assert(datavalue['type'] == 'wikibase-entityid')
         # property = search_entity(datavalue['value']["id"], "property", limit=1)[0]
         # rst = {"wikidata ID": property["id"], "wikidata entity type": "property", "label": property.get("label"), "description": property.get("description"), "aliases": property.get("aliases"), "url": property["url"][2:]}
-        rst = {"wikidata ID": datavalue['value']["id"], "wikidata entity type": "property", "label": label_desc_dict[datavalue['value']["id"]][0],
-               "description": label_desc_dict[datavalue['value']["id"]][1]}
+        try:
+            rst = {"wikidata ID": datavalue['value']["id"], "wikidata entity type": "property", "label": label_desc_dict[datavalue['value']["id"]][0],
+                "description": label_desc_dict[datavalue['value']["id"]][1]}
+        except KeyError:
+            item = get_entity(datavalue['value']["id"])
+            if 'missing' in item.keys():
+                if item['missing'] == '':
+                    rst = {}
+            else:
+                descr = item["descriptions"]
+                if descr:
+                    descr = item["descriptions"]["en"]["value"]
+                rst = {"wikidata ID": item["id"], "wikidata entity type": "property", "label": item["labels"]["en"]["value"], "description": descr}
     elif datatype == 'commonsMedia':
         #
         assert(datavalue['type'] == 'string')
