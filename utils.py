@@ -13,7 +13,7 @@ import string
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
 from nltk.corpus import stopwords
-from wikidata_utils import search_entity
+from wikidata_utils import search_entity, get_entity
 import time
 
 
