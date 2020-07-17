@@ -8,7 +8,8 @@ class WikidataLibrary:
         self.stdPropertyIds = {"P19": "getHometown",
                                "P31": "getInstanceOf",
                                "P26": "getSpouse",
-                               "P1082": "getPopulation"}
+                               "P1082": "getPopulation",
+                               "P1963": "getTypicalProperties"}
 
     def __getattr__(self, attrname):
         if attrname.find("Q") == 0:

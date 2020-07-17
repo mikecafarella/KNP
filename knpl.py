@@ -1,9 +1,20 @@
 #!/usr/bin/env python
 import sparql
+from abc import ABC, abstractmethod
 
 WIKIDATA_PROPERTY_PREFIX = "http://www.wikidata.org/prop/direct/%s"
+INSTANCE_OF_URI = "http://www.wikidata.org/prop/direct/P31"
 WIKIDATA_ENTITY_PREFIX = "http://www.wikidata.org/entity/%s"
 LABEL_PROPERTY = "http://www.w3.org/2000/01/rdf-schema#label"
+
+
+#
+#
+#
+class KNType(ABC):
+    pass
+    #def __instancecheck__(self, instance):
+    #    return isinstance(instance, Entity) and self.entity in instance.get(wd.P31)
 
 
 #
@@ -19,6 +30,9 @@ class KNProgramSpace:
 
     def getRegisteredProperty(self, accessorName):
         return self.registeredProperties.get(accessorName, None)
+
+    def __eq__(self, other):
+        return isinstance(other, KNProgramSpace) and self.gr == other.gr
 
     def close(self):
         self.gr.close()
@@ -47,14 +61,14 @@ class InappropriatePropertyException(PropertyException):
 
 class UnknownPropertyException(PropertyException):
     "Throw this exception if the requested property does not exist"
-    def __init__(self, entity):
-        super().__init__(entity, None)
+    def __init__(self, entity, attrname):
+        super().__init__(entity, attrname)
 
 #
 #
 #
 class Entity:
-    "Entity represnetative"
+    "Entity representative"
     def __init__(self, knps, entityUri):
         self.knps = knps
         self.entityUri = entityUri
@@ -72,6 +86,9 @@ class Entity:
 
         for prop, val in self.knps.gr.getEntityFacts(self.entityUri):
             self.facts.setdefault(prop, []).append(val)
+
+    def __eq__(self, other):
+        return self.knps == other.knps and self.entityUri == other.entityUri
             
     def get(self, prop):
         if self.facts is None:
@@ -84,7 +101,39 @@ class Entity:
         if len(x) == 1:
             return x[0]
         else:
-            return x
+            return x     
+
+    def asKNType(self):
+        "Synthesize a Python class that captures the current Entity"
+        if self.facts is None:
+            self.__populate__()
+
+        clsName = "_".join(self.facts.get(LABEL_PROPERTY))
+        clsBases = (KNType,)
+        #clsBases = (KNThing,)        
+
+        @classmethod
+        def getExamples(cls):
+            return cls.entity.knps.gr.getExamplesOfEntity(cls.entity.entityUri)
+
+        @classmethod
+        def getTypicalProperties(cls):
+            return cls.entity.get(cls.typicalPropertiesProperty)
+
+        @classmethod
+        def __instancecheck__(cls, instance):
+            print("instance test")
+            return cls.entity.get(cls.instanceProperty) == instance
+        
+        clsAttrs = {"entity": self,
+                    "typicalPropertiesProperty": Property.wikidataProperty(self.knps, "P1963", "getTypicalProperties"),
+                    "instanceProperty": Property.wikidataProperty(self.knps, "P31", "getInstanceOf"),                    
+                    "getExamples": getExamples,
+                    "__instancecheck__": __instancecheck__,
+                    "getTypicalProperties": getTypicalProperties}
+        
+        newCls = type(clsName, clsBases, clsAttrs)
+        return newCls
 
     def __str__(self):
         if self.facts is None:
@@ -92,18 +141,20 @@ class Entity:
 
         return " ".join(self.facts.get(LABEL_PROPERTY))
 
+    def __repr__(self):
+        return self.__str__()
+
     def __getattr__(self, attr):
         registeredProp = self.knps.getRegisteredProperty(attr)
         if registeredProp is not None:
             return EntityPropertyGetter(self, registeredProp)
         else:
-            raise UnknownPropertyException(self)
+            raise AttributeError()
         
     def __handleMissingProperty__(self, prop):
         # us.getHometown() should return InappropriatePropertyException
         # rome.getNominalGDP() should return MissingDataException
         raise InappropriatePropertyException(self, prop)
-
 
 class EntityPropertyGetter:
     def __init__(self, entity, prop):
@@ -112,6 +163,7 @@ class EntityPropertyGetter:
 
     def __call__(self):
         return self.entity.get(self.prop)
+
 
 class Property:
     "Property representative"
@@ -165,6 +217,25 @@ class GraphRepo:
     def __init__(self, knps, serviceurl):
         self.knps = knps
         self.serviceurl = serviceurl
+
+
+    def __eq__(self, other):
+        return isinstance(other, GraphRepo) and self.serviceurl == other.serviceurl
+
+    def getExamplesOfEntity(self, entityUri):
+        q = """SELECT ?s
+               WHERE {
+               ?s <%s> <%s>
+               }""" % (INSTANCE_OF_URI, entityUri)
+
+        result = sparql.query(self.serviceurl, (q))
+
+        for row in result:
+            vals = sparql.unpack_row(row)
+            v = vals[0]
+            if v.find(WIKIDATA_ENTITY_PREFIX % "") == 0:
+                v = Entity(self.knps, v)
+            yield v
 
     def getLiteralFacts(self, entityUri):
         q = """SELECT ?p ?o
