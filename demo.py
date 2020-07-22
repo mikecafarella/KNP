@@ -23,12 +23,25 @@ if __name__ == "__main__":
         entity = Entity.wikidataEntity(knps, args.qid)
         print("Entity:", entity)
     elif args.demo1:
-        usa = wd.Q30
-        canada = wd.Q16
-        getPopulation = wd.P1082        
+        #usa = wd.Q30
+        #canada = wd.Q16
+        #getPopulation = wd.P1082
+        #pointInTime = wd.P585
 
-        print("USA population:", usa.getPopulation())
-        print("Canada population:", canada.getPopulation())
+        #print("Canada population:", canada.getBest(getPopulation))
+
+        #for rec in canada.getRelation(getPopulation):
+        #    print(rec.get(getPopulation), rec.get(pointInTime))
+
+        trump = wd.Q22686
+        getSpouse = wd.P26
+        print("All trump spouses:", trump.get(getSpouse))
+        print("Current trump spouses:", trump.getBest(getSpouse))
+
+        #obama = wd.Q76
+        #getSpouse = wd.P26
+        #print("Obama", obama)
+        #print("Obama spouse", obama.getSpouse())
 
         #getGDP = wd.P2132
         #plotTimeline = wd.codelibrary.C99
@@ -42,8 +55,8 @@ if __name__ == "__main__":
         #code = CodeLibrary(knps)
         #result = code.compare(usa.getPopulation(), canada.getPopulation())
     elif args.demo2:
-        usa = wd.Q30
-        canada = wd.Q16
+        #usa = wd.Q30
+        #canada = wd.Q16
         
         obama = wd.Q76
         redsox = wd.Q213959
@@ -54,16 +67,16 @@ if __name__ == "__main__":
             
         michele = obama.getSpouse()
         hometown = michele.getHometown()
-        usPop = usa.getPopulation()
-        canadaPop = canada.getPopulation()
+        #usPop = usa.getPopulation()
+        #canadaPop = canada.getPopulation()
 
         getCoach = Property.wikidataProperty(knps, "P286", "getCoach")
         coaches = redsox.get(getCoach)
 
-        print("USA:", usa)
-        print("USA population:", usPop)
-        print("Canada:", canada)
-        print("Canada population:", canadaPop)
+        #print("USA:", usa)
+        #print("USA population:", usPop)
+        #print("Canada:", canada)
+        #print("Canada population:", canadaPop)
         print("Obama:", obama)            
         print("Michele:", michele)
         print("Home town:", hometown)

@@ -9,6 +9,7 @@ class WikidataLibrary:
                                "P31": "getInstanceOf",
                                "P26": "getSpouse",
                                "P1082": "getPopulation",
+                               "P585": "getPointInTime",
                                "P1963": "getTypicalProperties"}
 
     def __getattr__(self, attrname):
