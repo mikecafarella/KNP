@@ -1,22 +1,31 @@
 #!/usr/bin/env python
 import argparse
 
-from knpl import Entity, Property, KNProgramSpace
+from knpl import Entity, Property, KNProgramSpace, KGPLFunction
 from wikidataentities import WikidataLibrary
 
 knps = KNProgramSpace("http://141.212.113.104:7200/repositories/2")
 wd = WikidataLibrary(knps)
+
+
+def renderSpouse(e: Entity):
+    spouse = wd.P26
+    print("Original entity  ", e)
+    print("Entity spouse", e.get(spouse))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Try out a few GraphDB-backed items")
     parser.add_argument("--qid", help="Which QID to fetch")
     parser.add_argument("--demo1", dest="demo1", action="store_true", help="Whether to run demo 1")
     parser.add_argument("--demo2", dest="demo2", action="store_true", help="Whether to run demo 2")
-    parser.add_argument("--demo3", dest="demo3", action="store_true", help="Whether to run demo 3")            
+    parser.add_argument("--demo3", dest="demo3", action="store_true", help="Whether to run demo 3")
+    parser.add_argument("--demo4", dest="demo4", action="store_true", help="Whether to run demo 4")
+    parser.add_argument("--demo5", dest="demo5", action="store_true", help="Whether to run demo 5")                    
 
     args = parser.parse_args()
 
-    if not args.qid and not args.demo1 and not args.demo2 and not args.demo3:
+    if not args.qid and not args.demo1 and not args.demo2 and not args.demo3 and not args.demo4 and not args.demo5:
         parser.print_help()
     elif args.qid:
         print("Fetching Wikidata object " + args.qid)
@@ -120,7 +129,17 @@ if __name__ == "__main__":
         print("Examples of " + str(Human))
         for x in Human.getExamples():
             print(x)
+
+    elif args.demo4:
+        rs = KGPLFunction.registerFunction(knps, renderSpouse)
+
+    elif args.demo5:
+        funcUri = "http://kgpl.org/function/520cfbcc-cc34-11ea-9bb1-82c7c4c13c01"
+        rs = KGPLFunction.fetchFunction(knps, funcUri)
+        print("Function", rs)
+
+        obama = wd.Q76
+        rs(obama)
         
-            
 
         

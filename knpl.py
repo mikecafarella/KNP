@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 import sparql
+import inspect
+import uuid
 from abc import ABC, abstractmethod
+import requests
+
 
 WIKIDATA_ENTITY_PREFIX = "http://www.wikidata.org/entity/%s"
 WIKIDATA_STATEMENT_PREFIX = "http://www.wikidata.org/entity/statement/%s"
@@ -15,6 +19,9 @@ BESTRANK_URI = "http://wikiba.se/ontology#BestRank"
 INSTANCE_OF_URI = "http://www.wikidata.org/prop/direct/P31"
 
 LABEL_PROPERTY = "http://www.w3.org/2000/01/rdf-schema#label"
+
+KGPL_SRC_CODE_PROPERTY_URI = "http://kgpl.org/prop/P1"
+KGPL_FUNC_PREFIX = "http://kgpl.org/function/%s"
 
 
 #
@@ -316,7 +323,51 @@ class Statement(Entity):
             if rdfTypeVal.find(BESTRANK_URI) == 0:
                 return True
         return False
-        
+
+
+class KGPLFunction:
+    def __init__(self, knps, userfunc, uri):
+        self.knps = knps
+        self.userfunc = userfunc
+        self.uri = uri
+        self.facts = {}
+
+        if self.userfunc is None:
+            self.__populate__()
+
+    def __populate__(self):
+        for prop, val in self.knps.gr.getLiteralFacts(self.uri):
+            self.facts.setdefault(prop.propertyUri, []).append(val)
+            
+        for prop, val in self.knps.gr.getEntityFacts(self.uri):
+            self.facts.setdefault(prop.propertyUri, []).append(val)
+
+        srcCodeProperty = Property.wikidataPropertyFromURI(self.knps, KGPL_SRC_CODE_PROPERTY_URI)
+        self.userfunc = compile(self.facts.get(srcCodeProperty.propertyUri)[0], "", "exec")
+
+    def store(self):
+        srcCodeProperty = Property.wikidataPropertyFromURI(self.knps, KGPL_SRC_CODE_PROPERTY_URI)
+        self.knps.gr.storeFact(self.uri, srcCodeProperty.propertyUri, inspect.getsource(self.userfunc))
+        self.__populate__()
+
+    def __call__(self, arg):
+        return self.userfunc.__call__(arg)
+
+    @property
+    def funcname(self):
+        return self.userfunc.__name__
+
+    @classmethod
+    def fetchFunction(cls, knps, uri):
+        return cls(knps, None, uri)
+
+    @classmethod
+    def registerFunction(cls, knps, userfunc):
+        funcUri = KGPL_FUNC_PREFIX % str(uuid.uuid1())
+        kf = cls(knps, userfunc, funcUri)
+        kf.store()
+
+        return kf
 
 class EntityPropertyGetter:
     def __init__(self, entity, prop):
@@ -419,9 +470,25 @@ class GraphRepo:
         self.serviceurl = serviceurl
         self.propertyCache = {}
 
-
     def __eq__(self, other):
         return isinstance(other, GraphRepo) and self.serviceurl == other.serviceurl
+
+    def storeFact(self, s, p, o):
+        q = """INSERT DATA
+               {
+                 <%s> <%s> '''%s'''
+               }""" % (str(s), str(p), str(o))
+        storeURI = self.serviceurl + "/statements"
+        #storeURI = "http://gelato.eecs.umich.edu:7200/repositories/2/statements"
+        r = requests.post(url=storeURI, params={
+            "update":q
+            })
+        
+        if r.status_code == 200 or r.status_code == 204:
+            return True
+        else:
+            print("INSERT HTTP status error", r)
+            return False
 
     def getExamplesOfEntity(self, entityUri):
         q = """SELECT ?s
