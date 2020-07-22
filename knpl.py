@@ -4,6 +4,7 @@ import inspect
 import uuid
 from abc import ABC, abstractmethod
 import requests
+import pickle, codecs
 
 
 WIKIDATA_ENTITY_PREFIX = "http://www.wikidata.org/entity/%s"
@@ -21,6 +22,8 @@ INSTANCE_OF_URI = "http://www.wikidata.org/prop/direct/P31"
 LABEL_PROPERTY = "http://www.w3.org/2000/01/rdf-schema#label"
 
 KGPL_SRC_CODE_PROPERTY_URI = "http://kgpl.org/prop/P1"
+KGPL_PICKLED_CODE_PROPERTY_URI = "http://kgpl.org/prop/P2"
+KGPL_FUNC_DISPLAY_URI = "http://kgpl.org/function/F1"
 KGPL_FUNC_PREFIX = "http://kgpl.org/function/%s"
 
 
@@ -342,16 +345,23 @@ class KGPLFunction:
         for prop, val in self.knps.gr.getEntityFacts(self.uri):
             self.facts.setdefault(prop.propertyUri, []).append(val)
 
-        srcCodeProperty = Property.wikidataPropertyFromURI(self.knps, KGPL_SRC_CODE_PROPERTY_URI)
-        self.userfunc = compile(self.facts.get(srcCodeProperty.propertyUri)[0], "", "exec")
+        pickledCodeProperty = Property.wikidataPropertyFromURI(self.knps, KGPL_PICKLED_CODE_PROPERTY_URI)
+
+        pickledStr = self.facts.get(pickledCodeProperty.propertyUri)[0]
+        self.userfunc = pickle.loads(codecs.decode(pickledStr.encode(), "base64"))
 
     def store(self):
         srcCodeProperty = Property.wikidataPropertyFromURI(self.knps, KGPL_SRC_CODE_PROPERTY_URI)
+        pickledCodeProperty = Property.wikidataPropertyFromURI(self.knps, KGPL_PICKLED_CODE_PROPERTY_URI)
         self.knps.gr.storeFact(self.uri, srcCodeProperty.propertyUri, inspect.getsource(self.userfunc))
+        
+        pickledStr = codecs.encode(pickle.dumps(self.userfunc), "base64").decode()
+        self.knps.gr.storeFact(self.uri, pickledCodeProperty, pickledStr)
+        
         self.__populate__()
 
     def __call__(self, arg):
-        return self.userfunc.__call__(arg)
+        return self.userfunc(arg)
 
     @property
     def funcname(self):
@@ -362,8 +372,12 @@ class KGPLFunction:
         return cls(knps, None, uri)
 
     @classmethod
-    def registerFunction(cls, knps, userfunc):
-        funcUri = KGPL_FUNC_PREFIX % str(uuid.uuid1())
+    def registerFunction(cls, knps, userfunc, uri=None):
+        if uri is None:
+            funcUri = KGPL_FUNC_PREFIX % str(uuid.uuid1())
+        else:
+            funcUri = uri
+            
         kf = cls(knps, userfunc, funcUri)
         kf.store()
 
@@ -483,12 +497,13 @@ class GraphRepo:
         r = requests.post(url=storeURI, params={
             "update":q
             })
-        
+
+        #print("Query:", q)
+        #print("r", r)
         if r.status_code == 200 or r.status_code == 204:
             return True
         else:
-            print("INSERT HTTP status error", r)
-            return False
+            raise Exception("INSERT HTTP status error: " + str(r.status_code))
 
     def getExamplesOfEntity(self, entityUri):
         q = """SELECT ?s

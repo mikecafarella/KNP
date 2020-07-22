@@ -2,11 +2,11 @@
 import argparse
 
 from knpl import Entity, Property, KNProgramSpace, KGPLFunction
+import knpl
 from wikidataentities import WikidataLibrary
 
 knps = KNProgramSpace("http://141.212.113.104:7200/repositories/2")
 wd = WikidataLibrary(knps)
-
 
 def renderSpouse(e: Entity):
     spouse = wd.P26
@@ -131,15 +131,15 @@ if __name__ == "__main__":
             print(x)
 
     elif args.demo4:
-        rs = KGPLFunction.registerFunction(knps, renderSpouse)
+        rs = KGPLFunction.registerFunction(knps, renderSpouse, knpl.KGPL_FUNC_DISPLAY_URI)
 
     elif args.demo5:
-        funcUri = "http://kgpl.org/function/520cfbcc-cc34-11ea-9bb1-82c7c4c13c01"
-        rs = KGPLFunction.fetchFunction(knps, funcUri)
-        print("Function", rs)
-
+        rs = KGPLFunction.fetchFunction(knps, knpl.KGPL_FUNC_DISPLAY_URI)
         obama = wd.Q76
+
+        print("EXECUTING KGPL FUNCTION", rs)
         rs(obama)
+        print("DONE EXECUTING KGPL FUNCTION")        
         
 
         
