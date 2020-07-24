@@ -2,30 +2,33 @@
 
 from knpl import GraphRepo, Entity, Property, KNProgramSpace, KGPLFunction
 
+WIKIDATA_ENTITY_PREFIX = "http://www.wikidata.org/entity/%s"
+WIKIDATA_PROPERTY_PREFIX = "http://www.wikidata.org/prop/%s"
+
+
 class WikidataLibrary:
+    """A Library that enables special access to Wikidata properties and entities"""
     def __init__(self, knps):
         self.knps = knps
-        self.stdPropertyIds = {"P19": ("wd", "getHometown"),
-                               "P31": ("wd", "getInstanceOf"),
-                               "P18": ("wd", "getImage"),
-                               "P26": ("wd", "getSpouse"),
-                               "P1082": ("wd", "getPopulation"),
-                               "NameProperty": ("http://schema.org/name", "getName"),
-                               "P585": ("wd", "getPointInTime"),
-                               "P1963": ("wd", "getTypicalProperties")}
+        self.stdPropertyIds = {"name": "http://schema.org/name"}
+
+    def getEntity(self, wikidataId):
+        entityUri = WIKIDATA_ENTITY_PREFIX % str(wikidataId)
+        return Entity.entityFromURI(self.knps, entityUri)
+
+    def getProperty(self, wikidataId):
+        propertyUri = WIKIDATA_PROPERTY_PREFIX % str(wikidataId)
+        entityUri = WIKIDATA_ENTITY_PREFIX % str(wikidataId)
+        return Property.propertyFromURI(self.knps, propertyUri, entityUri)
 
     def __getattr__(self, attrname):
         if attrname.find("Q") == 0:
-            return Entity.wikidataEntity(self.knps, attrname)
-        elif attrname.find("F") == 0:
-            return KGPLFunction.fetchStandardFunction(self.knps, attrname)
+            return self.getEntity(attrname)
         elif attrname.find("P") == 0:
-            if attrname in self.stdPropertyIds:
-                src, propertyLabel = self.stdPropertyIds[attrname]
-                return Property.wikidataProperty(self.knps, attrname, propertyLabel)
+            return self.getProperty(attrname)
         elif attrname in self.stdPropertyIds:
-            srcUri, propertyLabel = self.stdPropertyIds[attrname]
-            return Property.wikidataPropertyFromURI(self.knps, srcUri, propertyLabel)
+            uri = self.stdPropertyIds[attrname]
+            return Property.propertyFromURI(self.knps, uri)
         else:
             raise AttributeError
 

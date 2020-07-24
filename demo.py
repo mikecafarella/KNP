@@ -4,21 +4,21 @@ from typing import List
 from dateutil import parser as dateparser
 
 from knpl import Entity, Property, KNProgramSpace, KGPLFunction
+from kgdata import KGData
 import knpl
 import matplotlib.pyplot as plt
-from wikidataentities import WikidataLibrary
 
-knps = KNProgramSpace("http://141.212.113.104:7200/repositories/2")
-wd = WikidataLibrary(knps)
+
+kgdata = KGData(KNProgramSpace("http://141.212.113.104:7200/repositories/2"))
 
 def renderSpouse(e: Entity):
-    spouse = wd.P26
+    spouse = kgdata.wd.P26
     print("Original entity  ", e)
     print("Entity spouse", e.get(spouse))
 
 def plotTimeSeries(entities: List[Entity], prop: Property):
-    pName = wd.NameProperty
-    pTime = wd.P585
+    pName = kgdata.wd.name
+    pTime = kgdata.wd.P585
     fig, axs = plt.subplots()
     axs.set_xlabel("Time")
     axs.set_ylabel(prop.get(pName))
@@ -41,7 +41,7 @@ def plotTimeSeries(entities: List[Entity], prop: Property):
     fig.show()
 
 
-def show(entities: List[Entities]):
+def show(entities: List[Entity]):
     # grab images
     pass
 
@@ -62,32 +62,13 @@ if __name__ == "__main__":
         parser.print_help()
     elif args.qid:
         print("Fetching Wikidata object " + args.qid)
-        entity = Entity.wikidataEntity(knps, args.qid)
+        entity = kgdata.wd.getEntity(args.qid)
         print("Entity:", entity)
     elif args.demo1:
-        #usa = wd.Q30
-        #canada = wd.Q16
-        #getPopulation = wd.P1082
-        #pointInTime = wd.P585
-
-        #print("Canada population:", canada.getBest(getPopulation))
-
-        #for rec in canada.getRelation(getPopulation):
-        #    print(rec.get(getPopulation), rec.get(pointInTime))
-
-        trump = wd.Q22686
-        getSpouse = wd.P26
-        print("All trump spouses:", trump.get(getSpouse))
-        print("Current trump spouses:", trump.getBest(getSpouse))
-
-        #obama = wd.Q76
-        #getSpouse = wd.P26
-        #print("Obama", obama)
-        #print("Obama spouse", obama.getSpouse())
-
-        #getGDP = wd.P2132
-        #plotTimeline = wd.codelibrary.C99
-        #plotTimeline(usa.getGDP().select(releaseid=8), canada.getGDP().select(releaseid=99))
+        trump = kgdata.wd.Q22686
+        spouse = kgdata.wd.P26
+        print("All trump spouses:", trump.get(spouse))
+        print("Current trump spouses:", trump.getBest(spouse))
 
         #computeInflation = aej.codelibrary.C9999
         #computeLocalWageInflationRate = aej.2015.shapiro.C1
@@ -97,28 +78,19 @@ if __name__ == "__main__":
         #code = CodeLibrary(knps)
         #result = code.compare(usa.getPopulation(), canada.getPopulation())
     elif args.demo2:
-        #usa = wd.Q30
-        #canada = wd.Q16
-        
-        obama = wd.Q76
-        redsox = wd.Q213959
+        obama = kgdata.wd.Q76
+        redsox = kgdata.wd.Q213959
             
-        getSpouse = wd.P26
-        getPopulation = wd.P1082
-        getHometown = wd.P19
+        spouse = kgdata.wd.P26
+        population = kgdata.wd.P1082
+        hometown = kgdata.wd.P19
             
-        michele = obama.getSpouse()
-        hometown = michele.getHometown()
-        #usPop = usa.getPopulation()
-        #canadaPop = canada.getPopulation()
+        michele = obama.get(spouse)
+        hometown = michele.get(hometown)
 
-        getCoach = Property.wikidataProperty(knps, "P286", "getCoach")
-        coaches = redsox.get(getCoach)
+        coach = kgdata.wd.P286
+        coaches = redsox.get(coach)
 
-        #print("USA:", usa)
-        #print("USA population:", usPop)
-        #print("Canada:", canada)
-        #print("Canada population:", canadaPop)
         print("Obama:", obama)            
         print("Michele:", michele)
         print("Home town:", hometown)
@@ -126,7 +98,7 @@ if __name__ == "__main__":
         print("Coach:", coaches)
 
     elif args.demo3:
-        cityEntity = wd.Q515
+        cityEntity = kgdata.wd.Q515
         City = cityEntity.asKNType()
         print("Type:", City)
         #for x in City.getExamples():
@@ -140,15 +112,15 @@ if __name__ == "__main__":
         #print()
         #print()
 
-        humanEntity = wd.Q5
+        humanEntity = kgdata.wd.Q5
         Human = humanEntity.asKNType()
         print("Type:", Human)        
 
-        obama = wd.Q76
-        instanceOf = wd.P31
+        obama = kgdata.wd.Q76
+        instanceOf = kgdata.wd.P31
         print("Obama:", obama)
 
-        print("Obama instance:", obama.getInstanceOf())
+        print("Obama instance:", obama.get(instanceOf))
 
         print("Is Obama a Human?", isinstance(obama, Human))
         print("Is Obama a City?", isinstance(obama, City))
@@ -164,30 +136,30 @@ if __name__ == "__main__":
             print(x)
 
     elif args.demo4:
-        rs = KGPLFunction.registerFunction(knps, renderSpouse, knpl.KGPL_FUNC_DISPLAY_URI)
+        rs = kgdata.registerFunction(renderSpouse, kgdata.KGPL_FUNC_DISPLAY_ID)
 
-        pl = KGPLFunction.registerFunction(knps, plotTimeSeries, knpl.KGPL_FUNC_TIMESERIES_URI)
+        pl = kgdata.registerFunction(plotTimeSeries, kgdata.KGPL_FUNC_TIMESERIES_ID)
 
     elif args.demo5:
-        rs = wd.F1
-        obama = wd.Q76
+        rs = kgdata.funcs.F1
+        obama = kgdata.wd.Q76
 
         print("EXECUTING KGPL FUNCTION", rs)
         rs(obama)
         print("DONE EXECUTING KGPL FUNCTION")        
 
     elif args.demo6:
-        plotTimeSeries = wd.F2
-        #usa = wd.Q30
-        #canada = wd.Q16
-        #getPopulation = wd.P1082
-        getGDP = Property.wikidataPropertyFromURI(knps, "http://www.wikidata.org/prop/P2131", "getGDP")
+        plotTimeSeries = kgdata.funcs.F2
+        usa = kgdata.wd.Q30
+        canada = kgdata.wd.Q16
+        getPopulation = kgdata.wd.P1082
+        getGDP = kgdata.wd.P2131
 
         print("Examples of getGDP():")
         for x in getGDP.getEntitiesWithThisProperty():
             print(x)
 
-        #plotTimeSeries([canada], getPopulation)
-        #plotTimeSeries([usa, canada], getGDP)
+        plotTimeSeries([canada], getPopulation)
+        plotTimeSeries([usa, canada], getGDP)
 
         
