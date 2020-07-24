@@ -23,7 +23,9 @@ LABEL_PROPERTY = "http://www.w3.org/2000/01/rdf-schema#label"
 
 KGPL_SRC_CODE_PROPERTY_URI = "http://kgpl.org/prop/P1"
 KGPL_PICKLED_CODE_PROPERTY_URI = "http://kgpl.org/prop/P2"
+
 KGPL_FUNC_DISPLAY_URI = "http://kgpl.org/function/F1"
+KGPL_FUNC_TIMESERIES_URI = "http://kgpl.org/function/F2"
 KGPL_FUNC_PREFIX = "http://kgpl.org/function/%s"
 
 
@@ -257,12 +259,15 @@ class Entity:
         newCls = type(clsName, clsBases, clsAttrs)
         return newCls
 
-    def __str__(self):
+    def label(self):
         if self.facts is None:
             self.__populate__()
 
         return " ".join(self.facts.get(LABEL_PROPERTY, []))
 
+    def __str__(self):
+        return self.entityUri
+    
     def __repr__(self):
         return self.__str__()
 
@@ -353,7 +358,7 @@ class KGPLFunction:
     def store(self):
         srcCodeProperty = Property.wikidataPropertyFromURI(self.knps, KGPL_SRC_CODE_PROPERTY_URI)
         pickledCodeProperty = Property.wikidataPropertyFromURI(self.knps, KGPL_PICKLED_CODE_PROPERTY_URI)
-        self.knps.gr.storeFact(self.uri, srcCodeProperty.propertyUri, inspect.getsource(self.userfunc))
+        #self.knps.gr.storeFact(self.uri, srcCodeProperty.propertyUri, inspect.getsource(self.userfunc))
         
         pickledStr = codecs.encode(pickle.dumps(self.userfunc), "base64").decode()
         self.knps.gr.storeFact(self.uri, pickledCodeProperty, pickledStr)
@@ -366,6 +371,11 @@ class KGPLFunction:
     @property
     def funcname(self):
         return self.userfunc.__name__
+
+    @classmethod
+    def fetchStandardFunction(cls, knps, funcid):
+        uri = KGPL_FUNC_PREFIX % str(funcid)
+        return cls(knps, None, uri)
 
     @classmethod
     def fetchFunction(cls, knps, uri):
@@ -441,6 +451,9 @@ class Property:
             
             return newProp
 
+    def getEntitiesWithThisProperty(self):
+        return self.knps.gr.getExamplesOfEntitiesWithProperty(self.propertyUri)
+
     def __populate__(self):
         self.facts = {}
 
@@ -510,6 +523,21 @@ class GraphRepo:
                WHERE {
                ?s <%s> <%s>
                }""" % (INSTANCE_OF_URI, entityUri)
+
+        result = sparql.query(self.serviceurl, (q))
+
+        for row in result:
+            vals = sparql.unpack_row(row)
+            v = vals[0]
+            if v.find(WIKIDATA_ENTITY_PREFIX % "") == 0:
+                v = Entity(self.knps, v)
+            yield v
+
+    def getExamplesOfEntitiesWithProperty(self, propertyUri):
+        q = """SELECT ?s
+               WHERE {
+               ?s <%s> ?o
+               }""" % (propertyUri)
 
         result = sparql.query(self.serviceurl, (q))
 
