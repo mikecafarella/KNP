@@ -17,5 +17,5 @@ def return_id():
     }
     return flask.jsonify(**context), 200
 
-@app.route(os.path.join(load_url, "<id>"), methods=['GET'])
-def return_val_or_var(id):
+#@app.route(os.path.join(load_url, "<id>"), methods=['GET'])
+#def return_val_or_var(id):
