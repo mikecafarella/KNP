@@ -5,34 +5,36 @@ import os
 server_url = "http://lasagna.eecs.umich.edu:80"
 next_id_url = server_url + "/next"
 val_url = server_url + "/val"
-
-load_url = server_url + "/load"
+var_url = server_url + "/var"
+loadvar_url = server_url + "/load/var"
+loadval_url = server_url + "/load/val"
 
 class KGPLValue:
-    def __init__(self, val, id=None):
+    def __init__(self, val, vid=None, timestamp=None):
         if id is None:
             # self.ID = get id from server
             r = requests.get(next_id_url)
             if r.status_code == 200:
-                self.ID = json.loads(r.text)
+                self.vid = json.loads(r.text)
             else:
                 raise Exception("not getting correct id")
 
-            r = requests.post(val_url, json=json.dumps(val))
+            r = requests.post(val_url, json={"id": self.vid, "val": val, "pyType": type(val).__name__, "timestamp": time.time()})
+            # to do: return timestamp
             if r.status_code == 201:
                 self.val = val
+                self.timestamp = r.json().get("timestamp")
             else:
-                raise Exception("created failed")
+                raise Exception("creation failed")
         else:
-            self.ID = id
+            self.vid = id
             self.val = val
+            self.timestamp = timestamp
 
 class KGPLVariable:
-    def __init__(self, val_id):
-        self.ID = None
+    def __init__(self, val_id, vid=None):
+        self.vid = None
         
-        # if valid
-        self.points_to = val_id
     
 
 
@@ -42,11 +44,22 @@ def value(val):
 def variable(val_id):
     return KGPLVariable(val_id)
 
-def load(id):
-    r = requests.get(os.path.join(load_url, str(id)))
+def load_val(vid):
+    load(vid, loadval_url)
+
+def load_var(vid):
+    load(vid, loadvar_url)
+
+def load(vid, l_url):
+    r = requests.get(os.path.join(l_url, str(id)))
     if r.status_code != 200:
         raise Exception("value not found")
-    return KGPLValue(json.loads(r.text), id)
+    context = r.json()
+    if context["pyt"] == 'tuple':
+        val = tuple(context["val"])
+    else:
+        val = context["val"]
+    return KGPLValue(val, vid, context["timestamp"])
 
 
 
