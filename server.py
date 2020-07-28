@@ -19,6 +19,7 @@ g.bind("kg", server_url + "/")
 ns = Namespace(server_url + "/")
 
 # predicates
+pointsTo = ns.pointsTo
 valueHistory = ns.valueHistory
 hasValue = ns.hasValue
 kgplType = ns.kgplType
@@ -61,14 +62,39 @@ def post_val():
     context = {"timestamp": ts}
     return flask.jsonify(**context), 201
 
+@app.route("/var", methods=['POST'])
+def post_var():
+    d = request.get_json()
+    if "id" not in d or "val_id" not in d:
+        flask.abort(400)
+    val_url = ns[str(d["val_id"])]
+    url = ns[str(d["id"])]
+    qres = g.query(
+        """ASK {
+            %s kg:kgplType kg:kgplValue
+            }""" % url
+    )
+    if not qres:
+        flask.abort(404)
+    qres = g.query(
+        """ASK {
+            %s kg:kgplType ?x
+            }""" % url
+    )
+    if qres:
+        flask.abort(400)
+    g.add((url, pointsTo, val_url))
+    g.add((url, kgplType, kgplVariable))
+    return "", 201
+
 @app.route("/load/val/<vid>", methods=['GET'])
 def get_val(vid):
-    url = os.path.join(server_url, str(vid))
+    url = ns[str(vid)]
     qres = g.query(
         """SELECT ?ts ?val ?pyt
         WHERE {
             %s kg:kgplType kg:kgplValue ;
-               kg:pyType ?pyt
+               kg:pyType ?pyt ;
                kg:valueHistory ?ts .
             ?ts kg:hasValue ?val
         }""" % url
@@ -85,9 +111,53 @@ def get_val(vid):
         return flask.jsonify(**context), 200
     elif len(qres) == 0:
         return flask.abort(404)
-    elif: 
+    else: 
         return flask.abort(400)
         
     
-#@app.route(os.path.join(load_url, "<id>"), methods=['GET'])
-#def return_val_or_var(id):
+@app.route("/load/var/<vid>", methods=['GET'])
+def get_var(vid):
+    url = ns[str(vid)]
+    qres = g.query(
+        """SELECT ?val
+        WHERE {
+            %s kg:kgplType kg:kgplVariable ;
+               kg:pointsTo ?val .
+        }""" % url
+    )
+    if len(qres) == 1:
+        val_id = qres[0]
+        context = {
+            "val_id": val_id
+        }
+        return flask.jsonify(**context), 200
+    elif len(qres) == 0:
+        return flask.abort(404)
+    else: 
+        return flask.abort(400)
+
+
+@app.route("/var", methods=['PUT'])
+def set_var():
+    d = request.get_json()
+    if "vid" not in d or "val_id" not in d:
+        flask.abort(400)
+    url = ns[str(d["vid"])]
+    val_url = ns[str(d["val_id"])]
+    qres = g.query(
+        """SELECT ?val
+        WHERE {
+            %s kg:kgplType kg:kgplVariable ;
+               kg:pointsTo ?val .
+        }""" % url
+    )
+    if len(qres) == 1:
+        g.remove((url, pointsTo, None))
+        g.add((url, pointsTo, val_url))
+        return "", 201
+    elif len(qres) == 0:
+        return flask.abort(404)
+    else: 
+        return flask.abort(400)
+
+    
