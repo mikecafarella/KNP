@@ -1,9 +1,10 @@
 from gen import ID_gen
 import flask
-import json
 from flask import request
+import json
 import time
 import os
+import atexit
 import rdflib
 from rdflib import Graph
 from rdflib import store
@@ -51,7 +52,9 @@ def post_val():
             }""" , 
             initBindings={'url': URIRef(url)}
     )
-    if qres:
+    for x in qres:
+        b = x
+    if b:
         flask.abort(400)
     val = Literal(json.dumps(d["val"]))
     pyt = Literal(d["pyType"])
@@ -71,19 +74,30 @@ def post_var():
         flask.abort(400)
     val_url = ns[str(d["val_id"])]
     url = ns[str(d["id"])]
+
+    # check if val_id is valid
     qres = g.query(
         """ASK {
-            %s kg:kgplType kg:kgplValue
-            }""" % url
+            ?url kg:kgplType kg:kgplValue
+            }""",
+            initBindings={'url': val_url}
     )
-    if not qres:
-        flask.abort(404)
+    for x in qres:
+        b = x
+    if not b:
+        print("val id not exist")
+        flask.abort(400)
+
+    # check if current id exist
     qres = g.query(
         """ASK {
-            %s kg:kgplType ?x
-            }""" % url
+            ?url kg:kgplType ?x
+            }""",
+            initBindings={'url': url}
     )
-    if qres:
+    for x in qres:
+        b = x
+    if b:
         flask.abort(400)
     g.add((url, pointsTo, val_url))
     g.add((url, kgplType, kgplVariable))
@@ -92,25 +106,27 @@ def post_var():
 @app.route("/load/val/<vid>", methods=['GET'])
 def get_val(vid):
     url = ns[str(vid)]
+    print(url)
     qres = g.query(
         """SELECT ?ts ?val ?pyt
         WHERE {
-            %s kg:kgplType kg:kgplValue ;
+            ?url kg:kgplType kg:kgplValue ;
                kg:pyType ?pyt ;
                kg:valueHistory ?ts .
-            ?ts kg:hasValue ?val
-        }""" % url
+            ?ts kg:hasValue ?val .
+        }""",
+        initBindings={'url': url}
     )
+
     if len(qres) == 1:
-        ts = qres[0][0]
-        val = json.loads(qres[0][1])
-        pyt = qres[0][2]
-        context = {
-            "timestamp": ts,
-            "val": val,
-            "pyt": pyt
-        }
-        return flask.jsonify(**context), 200
+        for ts, val, pyt in qres:
+            actual_ts = float(ts[str(ts).rfind('/') + 1:])
+            context = {
+                "timestamp": actual_ts,
+                "val": json.loads(str(val)),
+                "pyt": str(pyt)
+            }
+            return flask.jsonify(**context), 200
     elif len(qres) == 0:
         return flask.abort(404)
     else: 
@@ -123,14 +139,18 @@ def get_var(vid):
     qres = g.query(
         """SELECT ?val
         WHERE {
-            %s kg:kgplType kg:kgplVariable ;
+            ?url kg:kgplType kg:kgplVariable ;
                kg:pointsTo ?val .
-        }""" % url
+        }""",
+        initBindings={'url': url}
     )
     if len(qres) == 1:
-        val_id = qres[0]
+        for x, in qres:
+            val_url = str(x)
+        print(val_url)
+        actual_val_id = int(val_url[val_url.rfind('/') + 1 :])
         context = {
-            "val_id": val_id
+            "val_id": actual_val_id
         }
         return flask.jsonify(**context), 200
     elif len(qres) == 0:
@@ -149,9 +169,10 @@ def set_var():
     qres = g.query(
         """SELECT ?val
         WHERE {
-            %s kg:kgplType kg:kgplVariable ;
+            ?url kg:kgplType kg:kgplVariable ;
                kg:pointsTo ?val .
-        }""" % url
+        }""",
+        initBindings={'url': url}
     )
     if len(qres) == 1:
         g.remove((url, pointsTo, None))
@@ -162,4 +183,8 @@ def set_var():
     else: 
         return flask.abort(400)
 
-    
+def close_graph():
+    g.close()
+    print("server is closing")
+
+atexit.register(close_graph)    

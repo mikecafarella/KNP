@@ -57,7 +57,7 @@ class KGPLVariable:
 
 
 def load(vid, l_url):
-    r = requests.get(os.path.join(l_url, str(id)))
+    r = requests.get(os.path.join(l_url, str(vid)))
     if r.status_code != 200:
         raise Exception("value or variable not found")
     context = r.json()
@@ -92,7 +92,7 @@ def set_var(vid, val_id):
     val_id is the id of the kgplValue it should point to.
     Return the updated kgplVariable.
     """
-    r = requests.put(os.path.join(var_url, vid), json={"vid": vid, "val_id": val_id})
+    r = requests.put(var_url, json={"vid": vid, "val_id": val_id})
     if r.status_code != 201:
         if r.status_code == 404:
             print("variable not found")

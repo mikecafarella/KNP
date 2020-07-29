@@ -6,7 +6,6 @@ from rdflib import URIRef, BNode, Literal
 
 g = Graph('Sleepycat', identifier="kgpl")
 g.open('db', create=True)
-g.bind("kg", "http://lasagna.eecs.umich.edu:80/")
 """
 kgtype = n.kgpltype
 vid = n.val0
@@ -14,5 +13,34 @@ typ = Literal("kgplValue")
 trip = (vid, kgtype, typ)
 g.add(trip)
 """
-print(g.serialize(encoding="utf-8"))
+server_url = "http://127.0.0.1:5000"
+g.bind("kg", server_url + "/", override=True)
+ns = Namespace(server_url + "/")
+#url = ns["10"]
+#print(url)
+#qres = g.query(
+#    """ASK {
+#        ?x kg2:kgplType kg2:kgplValue .
+#    }"""
+#)
+#for row in qres:
+#    print(row)
+# url = ns[str(10)]
+# print(url)
+# qres = g.query(
+#         """SELECT ?ts ?val ?pyt
+#         WHERE {
+#             ?url kg:kgplType kg:kgplValue ;
+#                kg:pyType ?pyt ;
+#                kg:valueHistory ?ts .
+#             ?ts kg:hasValue ?val .
+#         }""",
+#         initBindings={'url': url}
+#     )
+# print(len(qres))
+# for a, b, c in qres:
+#     print(type(a))
+#     print(type(b))
+#     print(type(c))
+print(g.serialize(format='turtle').decode("utf-8"))
 g.close()
