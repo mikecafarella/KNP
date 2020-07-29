@@ -49,12 +49,3 @@ Change the concrete value of an existing KGPLVariable given the id of the variab
 ## Database
 
 ![Alt text](database.png?raw=true "Title")
-
-## Sharing
-
-current database:
-vid     val     timestamp
-6       (1,2,3) 1595998318.634551
-7       [4,5,6] 1595998375.016583
-8       {'gg': 'mt'}    1595998413.149163
-9       1999    1595998668.711663
