@@ -10,6 +10,13 @@ Construct a new KGPLValue given a concrete value `val`, communicate with the ser
 `kgpl.load_val(vid)`
 Load an existing KGPLValue given the id of it `vid`. The return type is KGPLValue class object.
 
+## Update KGPLValue (to do)
+
+`kgpl.set_val(vid, val)`
+Change the concrete value of an existing KGPLValue given the id of it `vid` and the value `val`.
+For `int`, `double`, `string`, `tuple`, the database will record the whole new value.
+For `list`, `dict`, the database will only recorde the change (delta update).
+
 ## Construct KGPLVariable
 
 `kgpl.variable(val_id)`
@@ -24,6 +31,10 @@ Load an existing KGPLVariable given the id of it `vid`. The return type is KGPLV
 
 `kgpl.set_var(vid,val_id)`
 Change the concrete value of an existing KGPLVariable given the id of the variable `vid` and the id of the value `val_id` and return the updated kgplVariable. The return type is KGPLVariable class object.
+
+## Workflow
+
+![Alt text](workflow.png?raw=true "Title")
 
 ## Namespace
 
@@ -47,5 +58,5 @@ Change the concrete value of an existing KGPLVariable given the id of the variab
 5. pointsTo: URIRef `kg:pointsTo`
 
 ## Database
-
-![Alt text](database.png?raw=true "Title")
+1. 
+![Alt text](database2.png?raw=true "Title")
