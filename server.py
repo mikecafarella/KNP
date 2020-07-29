@@ -20,6 +20,7 @@ g.bind("kg", server_url + "/")
 ns = Namespace(server_url + "/")
 
 # predicates
+historyOf = ns.historyOf
 pointsTo = ns.pointsTo
 valueHistory = ns.valueHistory
 hasValue = ns.hasValue
@@ -53,9 +54,8 @@ def post_val():
             initBindings={'url': URIRef(url)}
     )
     for x in qres:
-        b = x
-    if b:
-        flask.abort(400)
+        if x:
+            flask.abort(400)
     val = Literal(json.dumps(d["val"]))
     pyt = Literal(d["pyType"])
     ts = time.time()
@@ -83,10 +83,9 @@ def post_var():
             initBindings={'url': val_url}
     )
     for x in qres:
-        b = x
-    if not b:
-        print("val id not exist")
-        flask.abort(400)
+        if not x:
+            print("val id not exist")
+            flask.abort(400)
 
     # check if current id exist
     qres = g.query(
@@ -96,9 +95,8 @@ def post_var():
             initBindings={'url': url}
     )
     for x in qres:
-        b = x
-    if b:
-        flask.abort(400)
+        if x:
+            flask.abort(400)
     g.add((url, pointsTo, val_url))
     g.add((url, kgplType, kgplVariable))
     return "", 201
@@ -175,13 +173,63 @@ def set_var():
         initBindings={'url': url}
     )
     if len(qres) == 1:
+        qres = g.query(
+            """ASK {
+            ?url kg:kgplType kg:kgplValue
+            }""",
+            initBindings={'url': val_url}
+        )
+        for x in qres:
+            if not x:
+                print("val id not exist")
+                flask.abort(400)
         g.remove((url, pointsTo, None))
         g.add((url, pointsTo, val_url))
         return "", 201
     elif len(qres) == 0:
         return flask.abort(404)
     else: 
-        return flask.abort(400)
+        return flask.abort(500)
+
+
+@app.route("/val", methods=['PUT'])
+def set_val():
+    d = request.get_json()
+    if "vid" not in d or "new_val" not in d or "timestamp" not in d:
+        flask.abort(400)
+    url = ns[str(d["vid"])]
+    qres = g.query(
+        """SELECT ?ts
+        WHERE {
+            ?url kg:kgplType kg:kgplValue ;
+               kg:valueHistory ?ts .
+        }""",
+        initBindings={'url': url}
+    )
+    if len(qres) != 1:
+        if len(qres) == 0:
+            flask.abort(404)
+        else:
+            print("different kgvals have a same id")
+            flask.abort(500)
+    ts_url = URIRef(os.path.join(url, str(d["timestamp"])))
+    for ts, in qres:
+        if str(ts) == str(ts_url):
+            nts = time.time()
+            nts_url = URIRef(os.path.join(url, str(nts)))
+            new_val = Literal(json.dumps(d["new_val"]))
+            g.add((url, valueHistory, nts_url))
+            g.add((nts_url, hasValue, new_val))
+            g.add((ts_url, historyOf, nts_url))
+            g.remove((url, valueHistory, ts_url))
+            g.remove((url, pyType, None))
+            g.add((url, pyType, Literal(d["pyType"])))
+            context = {"timestamp": nts}
+            return flask.jsonify(**context), 201
+        else:
+            print("changes not based on the newest version")
+            flask.abort(403)
+
 
 def close_graph():
     g.close()

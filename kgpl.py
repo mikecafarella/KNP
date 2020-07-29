@@ -86,24 +86,28 @@ def load_var(vid):
     context = load(vid, loadvar_url)
     return KGPLVariable(context["val_id"], vid)
 
-def set_var(vid, val_id):
+def set_var(kg_var, val_id):
     """
-    vid is the id of the kgplVariable.
+    vg_var is the kgplVariable.
     val_id is the id of the kgplValue it should point to.
     Return the updated kgplVariable.
     """
-    r = requests.put(var_url, json={"vid": vid, "val_id": val_id})
+    r = requests.put(var_url, json={"vid": kg_var.vid, "val_id": val_id})
     if r.status_code != 201:
         if r.status_code == 404:
             print("variable not found")
         raise Exception("variable updating not success")
-    return KGPLVariable(val_id, vid)
+    kg_var.val_id = val_id
+    return kg_var
 
-
-
-    
-
-
-
-
-    
+def set_val(kg_val, new_val):
+    r = requests.put(val_url, json={"vid": kg_val.vid, "new_val": new_val, "pyType": type(new_val).__name__, "timestamp": kg_val.timestamp})
+    if r.status_code != 201:
+        if r.status_code == 403:
+            print("changes not based on the newest version")
+        elif r.status_code == 404:
+            print("kgpl value not found")
+        raise Exception("value updating not success")
+    kg_val.val = new_val
+    kg_val.timestamp = r.json().get("timestamp")
+    return kg_val
