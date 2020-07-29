@@ -12,7 +12,7 @@ from rdflib import URIRef, Literal
 
 app = flask.Flask(__name__)
 
-server_url = "http://lasagna.eecs.umich.edu:80"
+server_url = "http://127.0.0.1:5000"
 g = Graph('Sleepycat', identifier="kgpl")
 g.open('db', create=True)
 g.bind("kg", server_url + "/")
@@ -43,18 +43,20 @@ def post_val():
     if "id" not in d or "val" not in d or "pyType" not in d or "timestamp" not in d:
         flask.abort(400)
     url = ns[str(d["id"])]
+    print(url)
     # if using different namespace for val and var, we should change ?x into kgplValue
     qres = g.query(
         """ASK {
-            %s kg:kgplType ?x
-            }""" % url
+            ?url kg:kgplType ?x
+            }""" , 
+            initBindings={'url': URIRef(url)}
     )
     if qres:
         flask.abort(400)
     val = Literal(json.dumps(d["val"]))
     pyt = Literal(d["pyType"])
     ts = time.time()
-    timestamp = URIRef(os.path.join(url, ts))
+    timestamp = URIRef(os.path.join(url, str(ts)))
     g.add((url, valueHistory, timestamp))
     g.add((timestamp, hasValue, val))
     g.add((url, kgplType, kgplValue))

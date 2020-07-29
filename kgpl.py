@@ -1,8 +1,9 @@
 import requests
+import time
 import json
 import os
 
-server_url = "http://lasagna.eecs.umich.edu:80"
+server_url = "http://127.0.0.1:5000"
 next_id_url = server_url + "/next"
 val_url = server_url + "/val"
 var_url = server_url + "/var"
