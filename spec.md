@@ -10,12 +10,12 @@ Construct a new KGPLValue given a concrete value `val`, communicate with the ser
 `kgpl.load_val(vid)`
 Load an existing KGPLValue given the id of it `vid`. The return type is KGPLValue class object.
 
-## Update KGPLValue (to do)
+## Update KGPLValue
 
-`kgpl.set_val(vid, val)`
-Change the concrete value of an existing KGPLValue given the id of it `vid` and the value `val`.
-For `int`, `double`, `string`, `tuple`, the database will record the whole new value.
-For `list`, `dict`, the database will only recorde the change (delta update).
+`kgpl.set_val(kg_val, val)`
+Change the concrete value of an existing KGPLValue given the kgplValue `kg_val` and the value `val`.
+
+We didn't do delta update. (Confused) We saved the snapshot of the value everytime it changes.
 
 ## Construct KGPLVariable
 
@@ -29,8 +29,8 @@ Load an existing KGPLVariable given the id of it `vid`. The return type is KGPLV
 
 ## Update KGPLVariable
 
-`kgpl.set_var(vid,val_id)`
-Change the concrete value of an existing KGPLVariable given the id of the variable `vid` and the id of the value `val_id` and return the updated kgplVariable. The return type is KGPLVariable class object.
+`kgpl.set_var(kg_var,val_id)`
+Change the concrete value of an existing KGPLVariable given the variable `kg_var` and the id of the value `val_id` and return the updated kgplVariable. The return type is KGPLVariable class object.
 
 ## Workflow
 
@@ -47,16 +47,15 @@ Change the concrete value of an existing KGPLVariable given the id of the variab
 3. kgpl type: URIRef `kg:kgplValue` or `kg:kgplVariable`
 4. python type: Literal
 5. timestamp: URIRef `kg:<timestamp>`
-6. delta update: Literal
 
 ## Format of edges
 
 1. hasValue: URIRef `kg:hasValue`
 2. kgplType: URIRef `kg:kgplType`
 3. pyType: URIRef `kg:pyType`
-4. historyOf: URIRef `kg:historyOf`
-5. pointsTo: URIRef `kg:pointsTo`
+4. hasHistory: URIRef `kg:hasHistory`
+5. hasKGPLValue: URIRef `kg:hasKGPLValue`
 
 ## Database
 1. 
-![Alt text](database2.png?raw=true "Title")
+![Alt text](database.png?raw=true "Title")
