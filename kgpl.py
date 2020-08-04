@@ -10,6 +10,17 @@ var_url = server_url + "/var"
 loadvar_url = server_url + "/load/var"
 loadval_url = server_url + "/load/val"
 
+class MyEncoder(json.JSONEncoder):
+    def default(self, obj):
+       if isinstance(obj, KGPLValue): 
+          return {"vid" : obj.vid, "__kgplvalue__": True}
+       return json.JSONEncoder.default(self, obj)
+
+def hook(dct):
+    if "__kgplvalue__" in dct:
+        return load_val(dct["vid"])
+    return dct
+
 class KGPLValue:
     def __init__(self, val, vid=None):
         if vid is None:
@@ -21,7 +32,7 @@ class KGPLValue:
             else:
                 raise Exception("not getting correct id")
 
-            r = requests.post(val_url, json={"id": self.vid, "val": val, "pyType": type(val).__name__})
+            r = requests.post(val_url, json={"id": self.vid, "val": json.dumps(val, cls=MyEncoder), "pyType": type(val).__name__})
             if r.status_code == 201:
                 self.val = val
             else:
@@ -69,6 +80,8 @@ def load(vid, l_url):
 Users should only use the following functions for safety
 """
 def value(val):
+    if type(val) not in [int, float, tuple, list, dict, KGPLValue]:
+        raise Exception("cannot construct KGPLValue on this type")
     return KGPLValue(val)
 
 def variable(val_id):
@@ -77,10 +90,11 @@ def variable(val_id):
 
 def load_val(vid):
     context = load(vid, loadval_url)
+    tmp_val = json.loads(context["val"], object_hook=hook)
     if context["pyt"] == 'tuple':
-        val = tuple(context["val"])
+        val = tuple(tmp_val)
     else:
-        val = context["val"]
+        val = tmp_val
     return KGPLValue(val, vid)
 
 def load_var(vid):
@@ -107,17 +121,3 @@ def set_var(kg_var, val_id):
     kg_var.timestamp = r.json().get("timestamp")
     kg_var.val_id = val_id
     return kg_var
-
-"""
-def set_val(kg_val, new_val):
-    r = requests.put(val_url, json={"vid": kg_val.vid, "new_val": new_val, "pyType": type(new_val).__name__})
-    if r.status_code != 201:
-        if r.status_code == 403:
-            print("changes not based on the newest version")
-        elif r.status_code == 404:
-            print("kgpl value not found")
-        raise Exception("value updating not success")
-    kg_val.val = new_val
-    kg_val.timestamp = r.json().get("timestamp")
-    return kg_val
-"""

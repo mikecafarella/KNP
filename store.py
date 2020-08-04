@@ -14,7 +14,7 @@ trip = (vid, kgtype, typ)
 g.add(trip)
 """
 server_url = "http://127.0.0.1:5000"
-g.bind("kg", server_url + "/", override=True)
+g.bind("kg", server_url + "/", override=False)
 ns = Namespace(server_url + "/")
 #url = ns["10"]
 #print(url)

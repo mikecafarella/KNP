@@ -56,7 +56,7 @@ def post_val():
     for x in qres:
         if x:
             flask.abort(400)
-    val = Literal(json.dumps(d["val"]))
+    val = Literal(d["val"])
     pyt = Literal(d["pyType"])
     ts = time.time()
     g.add((url, hasValue, val))
@@ -111,8 +111,8 @@ def get_val(vid):
         """SELECT ?val ?pyt
         WHERE {
             ?url kg:kgplType kg:kgplValue ;
-               kg:pyType ?pyt .
-            ?ts kg:hasValue ?val .
+               kg:pyType ?pyt ;
+               kg:hasValue ?val .
         }""",
         initBindings={'url': url}
     )
@@ -120,7 +120,7 @@ def get_val(vid):
     if len(qres) == 1:
         for val, pyt in qres:
             context = {
-                "val": json.loads(str(val)),
+                "val": str(val),
                 "pyt": str(pyt)
             }
             return flask.jsonify(**context), 200
@@ -213,11 +213,11 @@ def set_val():
         flask.abort(400)
     url = ns[str(d["vid"])]
     qres = g.query(
-        """SELECT ?ts
+        SELECT ?ts
         WHERE {
             ?url kg:kgplType kg:kgplValue ;
                kg:valueHistory ?ts .
-        }""",
+        },
         initBindings={'url': url}
     )
     if len(qres) != 1:
