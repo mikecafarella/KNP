@@ -22,8 +22,7 @@ def plotTimeSeries(entities: List[Entity], prop: Property):
     fig, axs = plt.subplots()
     axs.set_xlabel("Time")
     axs.set_ylabel(prop.get(pName))
-    axs.set_title(prop.get(pName))
-    
+    axs.set_title(prop.get(pName)) 
     for e in entities:
         tuples = []
         for x in e.getRelation(prop):
@@ -149,17 +148,24 @@ if __name__ == "__main__":
         print("DONE EXECUTING KGPL FUNCTION")        
 
     elif args.demo6:
-        plotTimeSeries = kgdata.funcs.F2
+        #plotTimeSeries = kgdata.funcs.F2
+        from datetime import datetime
+        start = datetime.now()
         usa = kgdata.wd.Q30
         canada = kgdata.wd.Q16
         getPopulation = kgdata.wd.P1082
         getGDP = kgdata.wd.P2131
 
-        print("Examples of getGDP():")
-        for x in getGDP.getEntitiesWithThisProperty():
-            print(x)
+        #print("Examples of getGDP():")
+        #for x in getGDP.getEntitiesWithThisProperty():
+        #    print(x)
 
-        plotTimeSeries([canada], getPopulation)
-        plotTimeSeries([usa, canada], getGDP)
+        plotTimeSeries([usa, canada], getPopulation)
+        end = datetime.now()
+
+
+        print("Elapsed time:", (end-start))
+        #plotTimeSeries([usa, canada], getGDP)
+
 
         

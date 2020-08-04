@@ -22,11 +22,9 @@ class Funcs:
         
     def registerFunction(self, func, funcId):
         uri = KGPL_FUNC_PREFIX % str(funcId)
-        return KGPLFunction.registerFunction(knps, func, uri)
+        return KGPLFunction.registerFunction(self.knps, func, uri)
 
     def __getattr__(self, attrname):
         if attrname.find("F") == 0:
             uri = KGPL_FUNC_PREFIX % str(attrname)
             return KGPLFunction.fetchFunction(self.knps, uri)
-
-    

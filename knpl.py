@@ -20,16 +20,17 @@ INSTANCE_OF_URIS = ["http://www.wikidata.org/prop/direct/P31"]
 TYPICAL_PROPERTIES_URIS = ["http://www.wikidata.org/prop/P1963"]
 
 LABEL_PROPERTY = "http://www.w3.org/2000/01/rdf-schema#label"
+IMAGE_PROPERTY = "http://www.wikidata.org/prop/direct/P18"
 
 KGPL_SRC_CODE_PROPERTY_URI = "http://kgpl.org/prop/P1"
 KGPL_PICKLED_CODE_PROPERTY_URI = "http://kgpl.org/prop/P2"
 
 
 def isEntityUri(uri):
-    return uri.find(WIKIDATA_ENTITY_PREFIX % "") == 0
+    return isinstance(uri, str) and uri.find(WIKIDATA_ENTITY_PREFIX % "") == 0
 
 def isStatementUri(uri):
-    return uri.find(WIKIDATA_STATEMENT_PREFIX % "") == 0
+    return isinstance(uri, str) and uri.find(WIKIDATA_STATEMENT_PREFIX % "") == 0
 
 #
 #
@@ -114,6 +115,10 @@ class Entity:
             Entity.knownEntities[entityUri] = newEntity
             return newEntity
 
+    def startPopulate(self):
+        if self.facts is None:
+            self.facts = {}
+        
     def __populate__(self):
         self.facts = {}
 
@@ -138,7 +143,12 @@ class Entity:
         # datasets. Moreover, it might be doing other magic that we can't see.
         #
         #
-        for prop, val in self.knps.gr.getEntityFacts(self.entityUri):
+        #for prop, val in self.knps.gr.getEntityFacts(self.entityUri):
+        #    self.facts.setdefault(prop.propertyUri, []).append(val)
+        for prop, val in self.knps.gr.getEntityStatementFacts(self.entityUri):
+            self.facts.setdefault(prop.propertyUri, []).append(val)
+
+        for prop, val in self.knps.gr.getEntityNonstatementFacts(self.entityUri):
             self.facts.setdefault(prop.propertyUri, []).append(val)
 
     def __eq__(self, other):
@@ -159,12 +169,12 @@ class Entity:
     # d) getBestRelation(): Return the "best" full relation (non-simple values)
     #
     #
-    def __get(self, prop):
+    def __get(self, prop, ignoreNone=False):
         if self.facts is None:
             self.__populate__()
 
         x = self.facts.get(prop.propertyUri)
-        if x is None:
+        if x is None and not ignoreNone:
             self.__handleMissingProperty__(prop)
 
         return x
@@ -191,9 +201,19 @@ class Entity:
         else:
             return x
 
-    def getBest(self, prop):
+    def getBestSingleton(self, prop, ignoreNone=False):
+        b = self.getBest(prop, ignoreNone=ignoreNone)
+        if b is not None:
+            return b[0]
+        else:
+            return b
+
+    def getBest(self, prop, ignoreNone=False):
         "Get best tuples, with simple property value"
-        x = self.__get(prop)
+        x = self.__get(prop, ignoreNone=ignoreNone)
+
+        if x is None:
+            return x
 
         if len(x) == 1:
             stmt = x[0]
@@ -263,11 +283,29 @@ class Entity:
 
         return " ".join(self.facts.get(LABEL_PROPERTY, []))
 
+    def imageUrl(self):
+        if self.facts is None:
+            self.__populate__()
+
+        imgUrls = self.facts.get(IMAGE_PROPERTY, [])
+        if len(imgUrls) == 0:
+            return None
+        else:
+            return imgUrls[0]
+
     def __str__(self):
-        return self.entityUri
+        return self.entityUri + " (" + self.label() + ")"
     
     def __repr__(self):
         return self.__str__()
+
+    def _repr_html_(self):
+        members = [self.entityUri, self.label()]
+        htmlStr = "<tr><td>" + "</td><td>".join(members) + "</td>"
+        if self.imageUrl() is not None:
+            htmlStr += f'<td><img width=100 src="{self.imageUrl()}">'
+        htmlStr += "</td></tr>"
+        return htmlStr 
 
     def __getattr__(self, attr):
         registeredProp = self.knps.getRegisteredProperty(attr)
@@ -468,6 +506,12 @@ class Property:
 
     def __hash__(self):
         return hash(self.propertyUri)
+
+    def label(self):
+        if self.facts is None:
+            self.__populate__()
+
+        return " ".join(self.facts.get(LABEL_PROPERTY, []))
             
     def __str__(self):
         if self.facts is None:
@@ -492,17 +536,19 @@ class GraphRepo:
                  <%s> <%s> '''%s'''
                }""" % (str(s), str(p), str(o))
         storeURI = self.serviceurl + "/statements"
-        #storeURI = "http://gelato.eecs.umich.edu:7200/repositories/2/statements"
         r = requests.post(url=storeURI, params={
             "update":q
             })
 
-        #print("Query:", q)
-        #print("r", r)
         if r.status_code == 200 or r.status_code == 204:
             return True
         else:
             raise Exception("INSERT HTTP status error: " + str(r.status_code))
+
+    def findEntityViaText(self, strs):
+        q = """SELECT ?s
+        WHERE {
+        }""" % ()
 
     def getExamplesOfEntity(self, entityUri):
         q = """SELECT ?s
@@ -542,13 +588,80 @@ class GraphRepo:
                FILTER((!(isLiteral(?o) && strlen(lang(?o)) > 0)) || (lang(?o) = "en"))
                } """ % (entityUri)
         result = sparql.query(self.serviceurl, (q))
-
+        
         for row in result:
             vals = sparql.unpack_row(row)
             p = vals[0]
             p = Property.propertyFromURI(self.knps, p)
             
             yield p, vals[1]
+
+    def getEntityStatementFacts(self, entityUri):
+        q = """SELECT ?p ?o ?p2 ?o2
+               WHERE {
+               <%s> ?p ?o
+               FILTER(! isLiteral(?o))
+               FILTER regex(str(?o), "^http://www.wikidata.org/entity/statement/")
+               FILTER((!(isLiteral(?o) && strlen(lang(?o)) > 0)) || (lang(?o) = "en")).
+               ?o ?p2 ?o2
+               } """ % (entityUri)
+        result = sparql.query(self.serviceurl, (q))
+
+        seen = set()
+        for row in result:
+            vals = sparql.unpack_row(row)
+            p = vals[0]
+            v = vals[1]
+            key = p + "_" + v
+            
+            p = Property.propertyFromURI(self.knps, p)
+
+            if isStatementUri(v):
+                v = Statement.statementFromURI(self.knps, v)
+            elif isEntityUri(v):
+                v = Entity.entityFromURI(self.knps, v)
+
+            p2 = vals[2]
+            p2 = Property.propertyFromURI(self.knps, p2)
+            v2 = vals[3]
+            if isStatementUri(v2):
+                v2 = Statement.statementFromURI(self.knps, v2)
+            elif isEntityUri(v2):
+                v2 = Entity.entityFromURI(self.knps, v2)
+
+            v.startPopulate()
+            v.facts.setdefault(p2.propertyUri, []).append(v2)
+
+            if key in seen:
+                continue
+            else:
+                seen.add(key)
+                yield p, v
+
+
+    def getEntityNonstatementFacts(self, entityUri):
+        q = """SELECT ?p ?o
+               WHERE {
+               <%s> ?p ?o
+               FILTER(! isLiteral(?o))
+               FILTER regex(str(?o), "^((?!statement).)*")
+               FILTER((!(isLiteral(?o) && strlen(lang(?o)) > 0)) || (lang(?o) = "en"))
+               } """ % (entityUri)
+        result = sparql.query(self.serviceurl, (q))
+        
+        for row in result:
+            vals = sparql.unpack_row(row)
+            p = vals[0]
+            v = vals[1]
+
+            p = Property.propertyFromURI(self.knps, p)
+
+            if isStatementUri(v):
+                v = Statement.statementFromURI(self.knps, v)
+            elif isEntityUri(v):
+                v = Entity.entityFromURI(self.knps, v)
+            
+            yield p, v
 
     def getEntityFacts(self, entityUri):
         q = """SELECT ?p ?o
@@ -558,7 +671,7 @@ class GraphRepo:
                FILTER((!(isLiteral(?o) && strlen(lang(?o)) > 0)) || (lang(?o) = "en"))
                } """ % (entityUri)
         result = sparql.query(self.serviceurl, (q))
-
+        
         for row in result:
             vals = sparql.unpack_row(row)
             p = vals[0]
