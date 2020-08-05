@@ -42,6 +42,40 @@ class KGPLValue:
             self.vid = vid
             self.val = val
 
+    def getVid(self):
+        return self.vid
+    
+    def getConcreteVal(self):
+        return self.val
+
+    def __repr__(self):
+        if type(self.val) in [int, str, float]:
+            return self.val.__repr__()
+        elif type(self.val) in [list, tuple]:
+            rst = []
+            for x in self.val:
+                if type(x) is KGPLValue:
+                    rst.append("KGPLValue with ID:" + str(x.vid))
+                else:
+                    rst.append(x.__repr__())
+            if type(self.val) is tuple:
+                return str(tuple(rst))
+            return str(rst)
+        elif type(self.val) is dict:
+            rst = {}
+            for k in self.val:
+                v = self.val[k]
+                if type(v) is KGPLValue:
+                    rst[k] = "KGPLValue with ID:" + str(v.vid)
+                else:
+                    rst[k] = v.__repr__()
+            return str(rst)
+        elif type(self.val) is KGPLValue:
+            rst = "KGPLValue with ID:" + str(self.val.vid)
+            return str(rst)
+        else:
+            raise Exception("val type invalid")
+
 class KGPLVariable:
     def __init__(self, val_id, vid=None, timestamp=None):
         self.val_id = val_id
@@ -60,7 +94,7 @@ class KGPLVariable:
                     print("value id not found")
                 raise Exception("creation failed")
             ts = r.json().get("timestamp")
-            this.timestamp = ts
+            self.timestamp = ts
         else:
             # generate an existing kgplVariable
             self.vid = vid
@@ -80,7 +114,7 @@ def load(vid, l_url):
 Users should only use the following functions for safety
 """
 def value(val):
-    if type(val) not in [int, float, tuple, list, dict, KGPLValue]:
+    if type(val) not in [int, float, tuple, list, dict, str, KGPLValue]:
         raise Exception("cannot construct KGPLValue on this type")
     return KGPLValue(val)
 
@@ -102,7 +136,7 @@ def load_var(vid):
     return KGPLVariable(context["val_id"], vid, context["timestamp"])
 
 def get_val_of_var(kg_var):
-    concrete_val = load_val(this.val_id)
+    concrete_val = load_val(kg_var.val_id)
     print(concrete_val.__dict__)
 
 def set_var(kg_var, val_id):

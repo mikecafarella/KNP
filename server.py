@@ -144,7 +144,7 @@ def get_var(vid):
     )
     if len(qres) == 1:
         for ts, val_url in qres:
-            val_url = str(x)
+            val_url = str(val_url)
             ts = str(ts)
         print(val_url)
         actual_val_id = int(val_url[val_url.rfind('/') + 1 :])
