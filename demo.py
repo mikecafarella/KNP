@@ -38,4 +38,6 @@ newDict = kgpl.load_val(sales.val_id).getConcreteVal()
 day3sales = kgpl.value(450)
 newDict["day-3-sales"] = day3sales
 
-kgpl.set_var(sales, kgpl.value(newDict).vid)
+v = kgpl.set_var(sales, kgpl.value(newDict).vid)
+l = kgpl.get_history(v)
+print(l)
