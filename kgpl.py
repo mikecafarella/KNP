@@ -12,13 +12,17 @@ loadval_url = server_url + "/load/val"
 
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):
-       if isinstance(obj, KGPLValue): 
-          return {"vid" : obj.vid, "__kgplvalue__": True}
-       return json.JSONEncoder.default(self, obj)
+        if isinstance(obj, KGPLValue): 
+            return {"vid": obj.vid, "__kgplvalue__": True}
+        elif isinstance(obj, KGPLVariable):
+            return {"vid": obj.vid, "__kgplvariable__": True}
+        return json.JSONEncoder.default(self, obj)
 
 def hook(dct):
     if "__kgplvalue__" in dct:
         return load_val(dct["vid"])
+    elif "__kgplvariable__" in dct:
+        return load_var(dct["vid"])
     return dct
 
 class KGPLValue:
@@ -100,7 +104,13 @@ class KGPLVariable:
             self.vid = vid
             self.val_id = val_id
             self.timestamp = timestamp # should always initialzie the value of self.timestamp afterwards.
-
+    
+    def getVid(self):
+        return self.vid
+    """
+    to do:
+    def getValid(self):
+    """
 
 def load(vid, l_url):
     r = requests.get(os.path.join(l_url, str(vid)))
@@ -114,7 +124,7 @@ def load(vid, l_url):
 Users should only use the following functions for safety
 """
 def value(val):
-    if type(val) not in [int, float, tuple, list, dict, str, KGPLValue]:
+    if type(val) not in [int, float, tuple, list, dict, str, KGPLValue, KGPLVariable]:
         raise Exception("cannot construct KGPLValue on this type")
     return KGPLValue(val)
 
