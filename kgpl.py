@@ -155,3 +155,10 @@ def set_var(kg_var, val_id):
     kg_var.timestamp = r.json().get("timestamp")
     kg_var.val_id = val_id
     return kg_var
+
+def get_history(kg_var):
+    r = requests.get(os.path.join(server_url, "gethistory"), json={"vid": kg_var.vid})
+    if r.status_code != 200:
+        raise Exception("getting history failed")
+    l = r.json()["list"]
+    return l

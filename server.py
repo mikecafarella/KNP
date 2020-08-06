@@ -245,6 +245,46 @@ def set_val():
             flask.abort(403)
 """
 
+@app.route("/gethistory", methods=['GET'])
+def gethistory():
+    d = request.get_json()
+    if "vid" not in d:
+        flask.abort(400)
+    url = ns[str(d["vid"])]
+    qres = g.query(
+        """SELECT ?ts ?val_uri
+        WHERE {
+            ?url kg:kgplType kg:kgplVariable ;
+               kg:valueHistory ?ts .
+            ?ts kg:hasKGPLValue ?val_uri
+        }""",
+        initBindings={'url': url}
+    )
+    rst = []
+    if len(qres) != 1:
+        flask.abort(500)
+    for x, val_uri in qres:
+        current_ts = x
+        rst.append(int(val_uri[val_uri.rfind('/') + 1 :]))
+    while True:
+        qres = g.query(
+            """SELECT ?ts ?val_uri
+            WHERE {
+                ?current_ts kg:hasHistory ?ts .
+                ?ts kg:hasKGPLValue ?val_uri .
+            }""",
+            initBindings={'current_ts': current_ts}
+        )
+        if len(qres) == 0:
+            break
+        elif len(qres) != 1:
+            flask.abort(500)
+        for ts,val_uri in  qres:
+            current_ts = ts
+            rst.append(int(val_uri[val_uri.rfind('/') + 1 :]))
+    context = {"list": rst}
+    return flask.jsonify(**context), 200
+
 def close_graph():
     g.close()
     print("server is closing")
