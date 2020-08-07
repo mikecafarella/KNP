@@ -58,7 +58,6 @@ def post_val():
             flask.abort(400)
     val = Literal(d["val"])
     pyt = Literal(d["pyType"])
-    ts = time.time()
     g.add((url, hasValue, val))
     g.add((url, kgplType, kgplValue))
     g.add((url, pyType, pyt))
@@ -284,6 +283,38 @@ def gethistory():
             rst.append(int(val_uri[val_uri.rfind('/') + 1 :]))
     context = {"list": rst}
     return flask.jsonify(**context), 200
+
+@app.route("/getLatest", methods=['GET'])
+def getLatest():
+    d = request.get_json()
+    if "val_id" not in d:
+        flask.abort(400)
+    
+    url = ns[str(d["val_id"])]
+    qres = g.query(
+        """SELECT ?ts ?val_uri
+        WHERE {
+            ?url kg:kgplType kg:kgplVariable ;
+               kg:valueHistory ?ts .
+            ?ts kg:hasKGPLValue ?val_uri
+        }""",
+        initBindings={'url': url}
+    )
+    if len(qres) == 1:
+        for ts, val_url in qres:
+            val_url = str(val_url)
+            ts = str(ts)
+        actual_val_id = int(val_url[val_url.rfind('/') + 1 :])
+        actual_ts = float(ts[ts.rfind('/') + 1:])
+        context = {
+            "val_id": actual_val_id,
+            "timestamp": actual_ts
+        }
+        return flask.jsonify(**context), 200
+    elif len(qres) == 0:
+        return flask.abort(404)
+    else:
+        return flask.abort(500)
 
 def close_graph():
     g.close()

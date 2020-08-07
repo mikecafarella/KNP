@@ -9,6 +9,7 @@ val_url = server_url + "/val"
 var_url = server_url + "/var"
 loadvar_url = server_url + "/load/var"
 loadval_url = server_url + "/load/val"
+update_url = server_url + "/getLatest"
 
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -107,10 +108,14 @@ class KGPLVariable:
     
     def getVid(self):
         return self.vid
-    """
-    to do:
-    def getValid(self):
-    """
+
+    def getLatest(self):
+        r = requests.get(update_url, json={"val_id": self.vid})
+        if r.status_code != 200:
+            raise Exception("fail to get latest information")
+        self.val_id = r.json().get("val_id")
+        self.timestamp = r.json().get("timestamp")
+
 
 def load(vid, l_url):
     r = requests.get(os.path.join(l_url, str(vid)))
@@ -120,9 +125,6 @@ def load(vid, l_url):
     return context
     
 
-"""
-Users should only use the following functions for safety
-"""
 def value(val):
     if type(val) not in [int, float, tuple, list, dict, str, KGPLValue, KGPLVariable]:
         raise Exception("cannot construct KGPLValue on this type")
