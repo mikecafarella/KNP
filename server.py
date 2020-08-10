@@ -31,13 +31,20 @@ pyType = ns.pyType
 kgplValue = ns.kgplValue
 kgplVariable = ns.kgplVariable
 
+
+@app.route("/", methods=['GET'])
+def main():
+    return "KGPL", 200
+
+
 @app.route("/next", methods=['GET'])
 def return_id():
     vid = ID_gen.next()
-    context = {   
+    context = {
         "id": vid
     }
     return flask.jsonify(**context), 200
+
 
 @app.route("/val", methods=['POST'])
 def post_val():
@@ -50,8 +57,8 @@ def post_val():
     qres = g.query(
         """ASK {
             ?url kg:kgplType ?x
-            }""" , 
-            initBindings={'url': url}
+            }""",
+        initBindings={'url': url}
     )
     for x in qres:
         if x:
@@ -62,6 +69,7 @@ def post_val():
     g.add((url, kgplType, kgplValue))
     g.add((url, pyType, pyt))
     return "", 201
+
 
 @app.route("/var", methods=['POST'])
 def post_var():
@@ -74,11 +82,19 @@ def post_var():
     # check if val_id is valid
     qres = g.query(
         """ASK {
-            ?url kg:kgplType kg:kgplValue
-            }""",
-            initBindings={'url': val_url}
+            {?url kg:kgplType kg:kgplValue}
+            }
+        """,
+        initBindings={'url': val_url}
     )
+    # UNION
+    # {?url
+    # kg: kgplType
+    # kg: kgplVariable}
+    # }
+    # print(qres)
     for x in qres:
+        # print(x)
         if not x:
             print("val id not exist")
             flask.abort(400)
@@ -88,7 +104,7 @@ def post_var():
         """ASK {
             ?url kg:kgplType ?x
             }""",
-            initBindings={'url': url}
+        initBindings={'url': url}
     )
     for x in qres:
         if x:
@@ -101,6 +117,7 @@ def post_var():
     g.add((url, kgplType, kgplVariable))
     context = {"timestamp": ts}
     return flask.jsonify(**context), 201
+
 
 @app.route("/load/val/<vid>", methods=['GET'])
 def get_val(vid):
@@ -125,10 +142,10 @@ def get_val(vid):
             return flask.jsonify(**context), 200
     elif len(qres) == 0:
         return flask.abort(404)
-    else: 
+    else:
         return flask.abort(500)
-        
-    
+
+
 @app.route("/load/var/<vid>", methods=['GET'])
 def get_var(vid):
     url = ns[str(vid)]
@@ -146,7 +163,7 @@ def get_var(vid):
             val_url = str(val_url)
             ts = str(ts)
         print(val_url)
-        actual_val_id = int(val_url[val_url.rfind('/') + 1 :])
+        actual_val_id = int(val_url[val_url.rfind('/') + 1:])
         actual_ts = float(ts[ts.rfind('/') + 1:])
         context = {
             "val_id": actual_val_id,
@@ -155,7 +172,7 @@ def get_var(vid):
         return flask.jsonify(**context), 200
     elif len(qres) == 0:
         return flask.abort(404)
-    else: 
+    else:
         return flask.abort(500)
 
 
@@ -201,8 +218,9 @@ def set_var():
         return flask.jsonify(**context), 201
     elif len(qres) == 0:
         return flask.abort(404)
-    else: 
+    else:
         return flask.abort(500)
+
 
 """
 @app.route("/val", methods=['PUT'])
@@ -244,6 +262,7 @@ def set_val():
             flask.abort(403)
 """
 
+
 @app.route("/gethistory", methods=['GET'])
 def gethistory():
     d = request.get_json()
@@ -264,7 +283,7 @@ def gethistory():
         flask.abort(500)
     for x, val_uri in qres:
         current_ts = x
-        rst.append(int(val_uri[val_uri.rfind('/') + 1 :]))
+        rst.append(int(val_uri[val_uri.rfind('/') + 1:]))
     while True:
         qres = g.query(
             """SELECT ?ts ?val_uri
@@ -278,18 +297,19 @@ def gethistory():
             break
         elif len(qres) != 1:
             flask.abort(500)
-        for ts,val_uri in  qres:
+        for ts, val_uri in qres:
             current_ts = ts
-            rst.append(int(val_uri[val_uri.rfind('/') + 1 :]))
+            rst.append(int(val_uri[val_uri.rfind('/') + 1:]))
     context = {"list": rst}
     return flask.jsonify(**context), 200
+
 
 @app.route("/getLatest", methods=['GET'])
 def getLatest():
     d = request.get_json()
     if "val_id" not in d:
         flask.abort(400)
-    
+
     url = ns[str(d["val_id"])]
     qres = g.query(
         """SELECT ?ts ?val_uri
@@ -304,7 +324,7 @@ def getLatest():
         for ts, val_url in qres:
             val_url = str(val_url)
             ts = str(ts)
-        actual_val_id = int(val_url[val_url.rfind('/') + 1 :])
+        actual_val_id = int(val_url[val_url.rfind('/') + 1:])
         actual_ts = float(ts[ts.rfind('/') + 1:])
         context = {
             "val_id": actual_val_id,
@@ -316,8 +336,10 @@ def getLatest():
     else:
         return flask.abort(500)
 
+
 def close_graph():
     g.close()
     print("server is closing")
 
-atexit.register(close_graph)    
+
+atexit.register(close_graph)

@@ -3,7 +3,7 @@ import time
 import json
 import os
 
-server_url = "http://127.0.0.1:5000"
+server_url = "http://lasagna.eecs.umich.edu:8000/"
 next_id_url = server_url + "/next"
 val_url = server_url + "/val"
 var_url = server_url + "/var"
@@ -32,14 +32,16 @@ class KGPLValue:
             # generate a new kgplValue
             # self.ID = get id from server
             r = requests.get(next_id_url)
+            self.val = val
             if r.status_code == 200:
                 self.vid = r.json()["id"]
+
             else:
                 raise Exception("not getting correct id")
 
             r = requests.post(val_url, json={"id": self.vid, "val": json.dumps(val, cls=MyEncoder), "pyType": type(val).__name__})
             if r.status_code == 201:
-                self.val = val
+                print("Created: KGPLValue with ID", self.vid, "$", self)
             else:
                 raise Exception("creation failed")
         else:
@@ -90,6 +92,7 @@ class KGPLVariable:
             r = requests.get(next_id_url)
             if r.status_code == 200:
                 self.vid = r.json()["id"]
+                print("Created KGPLVariable with ID",self.vid,"$ KGPLValue with ID:", self.val_id)
             else:
                 raise Exception("not getting correct id")
 
@@ -166,6 +169,7 @@ def set_var(kg_var, val_id):
         raise Exception("variable updating not success")
     kg_var.timestamp = r.json().get("timestamp")
     kg_var.val_id = val_id
+    print("KGPLVariable",kg_var.vid,"Updated.","New val_id:",kg_var.val_id)
     return kg_var
 
 def get_history(kg_var):

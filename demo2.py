@@ -1,18 +1,19 @@
+from time import sleep
 import rdflib
-from rdflib import Graph
-from rdflib import store
-from rdflib import Namespace
-from rdflib import URIRef, BNode, Literal
-import requests
 import kgpl
-"""
-g = Graph('Sleepycat', identifier="kgpl")
-g.open('db', create=True)
+import pprint
 
-print(g.serialize(format='xml').decode("utf-8"))
+if __name__ == "__main__":
 
+    node_a = kgpl.value("node A")
+    node_b = kgpl.value("node B")
 
-print(l)
-g.close()
-"""
-a = kgpl.value(12)
+    my_edge = "parentOf" # Edges names are assumed to have no spaces in between
+    kgpl.set_edge(node_a, node_b, my_edge)
+
+    g = rdflib.Graph('Sleepycat', identifier="kgpl")
+    g.open('db', create=True)
+    for stmt in g:
+        pprint.pprint(stmt)
+    g.serialize("parent_test.ttl", format="turtle")
+    g.close()

@@ -1,0 +1,27 @@
+@prefix kg: <http://127.0.0.1:5000/> .
+
+kg:1 kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://127.0.0.1:5000/1/1597034263.41> .
+
+kg:3 kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://127.0.0.1:5000/3/1597034239.52> .
+
+kg:0 kg:hasValue "dict from web";
+     kg:kgplType kg:kgplValue ;
+     kg:pyType "dict" .
+
+<http://127.0.0.1:5000/1/1597034218.36> kg:hasKGPLValue kg:0 .
+
+<http://127.0.0.1:5000/1/1597034263.41> kg:hasHistory <http://127.0.0.1:5000/1/1597034218.36> ;
+    kg:hasKGPLValue kg:4 .
+
+kg:2 kg:hasValue "prediction result";
+     kg:kgplType kg:kgplValue ;
+    kg:pyType "dict" .
+
+<http://127.0.0.1:5000/3/1597034239.52> kg:hasKGPLValue kg:2 .
+
+kg:4 kg:hasValue "dict from web";
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "dict" .
+
