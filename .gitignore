@@ -4,3 +4,5 @@ env/
 db/
 __pycache__
 log
+.idea*
+data/*
