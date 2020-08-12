@@ -20,9 +20,10 @@ import kgpl
 
 
 # It ends one day earlier.
+PREV_VAR_ID = 3
 def step2(_):
     DATE_TO_PREDICT = int(
-        (datetime.today() - timedelta(days=1)).strftime('%Y%m%d'))
+        (datetime.today()).strftime('%Y%m%d'))
     # print(DATE_TO_PREDICT)
     # DATE_TO_PREDICT = 20200601
     VAR_ID_GIVEN_BY_USER1 = 1
@@ -72,48 +73,9 @@ def step2(_):
     myval = kgpl.value(rst).vid
     print( "Below is the variable containing a dict "
           "with the prediction of all states for tomorrow: ")
-    kgpl.variable(myval)
+    prev_var = kgpl.load_var(PREV_VAR_ID)
+    kgpl.set_var(prev_var, myval)
 
 
 if __name__ == "__main__":
     step2(1)
-
-    # with open("rst", "w") as output_file:
-    #     json.dump(rst, output_file)
-    # d=datetime.today().strftime('%Y%m%d')
-    # print(d)
-    # file name can be decreasing.
-    # KGPLVariable can also be decreasing.
-    # data_date = datetime.today() - timedelta(days=3) # Since the data is not 100% up to date
-
-    # path = os.walk("data")
-    # for root, directories, files in path:
-    #     for file in files:
-    #         file_date = int(file)
-    #         if file_date < DATE_TO_PREDICT and file_date >= int(start):
-    #             with open("data/"+file, "r") as input_file:
-    #                 for line in input_file:
-    #                     print(line)
-    #                     tuple_val = json.loads(line.strip())
-    #                     data_source[tuple_val[0]].append(tuple_val[1])
-
-    # print(data_source)
-
-    #     # X = np.array([[1, 2], [1, 2], [2, 4], [2, 4]]).reshape((-1, 1))
-    #     X = np.array([1,2,3]).reshape((-1,1))  # put your dates in here
-    #     y = [2,4,6]  # put your kwh in here
-    #     # y = 2
-    #     model = LinearRegression()
-    #     model.fit(X, y)
-    #     print('coefficient of determination:',  model.score(X, y))
-    #     X_predict =np.array([5, 20]).reshape((-1,1)) # put the dates of which you want to predict kwh here
-    #     y_predict = model.predict(X_predict)
-    #     print(y_predict)
-    #     for one_item  in y_predict:
-    #         print(one_item.item())
-    #         print(type(one_item.item()))
-    #         print(int(round(one_item.item())))
-    # # Assume the user will enter a valid date
-    # # i.e. before the latest data can provide
-    # # and after 20200714
-    #

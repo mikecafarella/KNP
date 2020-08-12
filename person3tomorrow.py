@@ -4,6 +4,7 @@ import plotly.express as px
 # the variables ids we use
 total_vid = 3
 incr_vid = 5
+prev_vid = 7
 
 # Get the variable and value
 total_var = kgpl.load_var(total_vid)
@@ -46,4 +47,5 @@ for i in range(1, 11):
     least_list.append(L[i][0])
 
 least_val = kgpl.value(least_list)
-least_var = kgpl.variable(least_val.vid)
+least_var = kgpl.load_var(prev_vid)
+kgpl.set_var(least_var, least_val.getVid())

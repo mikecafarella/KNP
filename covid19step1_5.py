@@ -16,10 +16,10 @@ PREV_VAR_ID = 1
 
 def step1_5(_):
 
-
-    twenty_days = datetime.today() - timedelta(days=20)
-    before_20 = int (twenty_days.strftime('%Y%m%d'))
-
+    today = datetime.today() - timedelta(days=1)
+    twenty_days = today - timedelta(days=20)
+    before_20 = int(twenty_days.strftime('%Y%m%d'))
+    today = int(today.strftime('%Y%m%d'))
 
     r = requests.get("https://api.covidtracking.com/v1/states/daily.json")
     # print(r)
@@ -30,6 +30,8 @@ def step1_5(_):
 
     for one_item in data_list:
         file_name = "data/" + str(one_item["date"])
+        if one_item["date"] > today:
+            continue
         if one_item["date"] < before_20:
             break
         rst[one_item["state"]].append((one_item["date"], one_item["positive"]))

@@ -22,10 +22,10 @@ import kgpl
 # It ends one day earlier.
 def step3(_):
     DATE_TO_PREDICT = int(
-        (datetime.today() + timedelta(days=1)).strftime('%Y%m%d'))
+        (datetime.today() - timedelta(days=1)).strftime('%Y%m%d'))
     # print(DATE_TO_PREDICT)
     # DATE_TO_PREDICT = 20200601
-    VAR_ID_GIVEN_BY_USER1 = 5
+    VAR_ID_GIVEN_BY_USER1 = 1
     TRAIN_LENGTH = 20
 
     date = datetime.strptime(str(DATE_TO_PREDICT), '%Y%m%d')

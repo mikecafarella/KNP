@@ -151,10 +151,6 @@ def load_var(vid):
     context = load(vid, loadvar_url)
     return KGPLVariable(context["val_id"], vid, context["timestamp"])
 
-def get_val_of_var(kg_var):
-    concrete_val = load_val(kg_var.val_id)
-    print(concrete_val.__dict__)
-
 def set_var(kg_var, val_id):
     """
     vg_var is the kgplVariable.
