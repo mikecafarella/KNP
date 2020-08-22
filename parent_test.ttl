@@ -1,27 +1,110 @@
-@prefix kg: <http://127.0.0.1:5000/> .
+@prefix kg: <http://global.url/> .
 
 kg:1 kg:kgplType kg:kgplVariable ;
-    kg:valueHistory <http://127.0.0.1:5000/1/1597034263.41> .
+    kg:valueHistory <http://global.url/1/1598134712.0392272> .
+
+kg:11 kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://global.url/11/1598134794.2797875> .
+
+kg:13 kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://global.url/13/1598134794.3215747> .
+
+kg:15 kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://global.url/15/1598134794.3865561> .
+
+kg:17 kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://global.url/17/1598134794.4516058> .
+
+kg:19 kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://global.url/19/1598134794.5397003> .
+
+kg:21 kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://global.url/21/1598134794.6354885> .
+
+kg:23 kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://global.url/23/1598134794.744427> .
 
 kg:3 kg:kgplType kg:kgplVariable ;
-    kg:valueHistory <http://127.0.0.1:5000/3/1597034239.52> .
+    kg:valueHistory <http://global.url/3/1598134712.071395> .
 
-kg:0 kg:hasValue "dict from web";
-     kg:kgplType kg:kgplValue ;
-     kg:pyType "dict" .
+kg:5 kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://global.url/5/1598134794.1376758> .
 
-<http://127.0.0.1:5000/1/1597034218.36> kg:hasKGPLValue kg:0 .
+kg:7 kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://global.url/7/1598134794.1773102> .
 
-<http://127.0.0.1:5000/1/1597034263.41> kg:hasHistory <http://127.0.0.1:5000/1/1597034218.36> ;
-    kg:hasKGPLValue kg:4 .
+kg:9 kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://global.url/9/1598134794.2277112> .
 
-kg:2 kg:hasValue "prediction result";
-     kg:kgplType kg:kgplValue ;
-    kg:pyType "dict" .
-
-<http://127.0.0.1:5000/3/1597034239.52> kg:hasKGPLValue kg:2 .
-
-kg:4 kg:hasValue "dict from web";
+kg:0 kg:hasValue "\"First Value.\"" ;
     kg:kgplType kg:kgplValue ;
-    kg:pyType "dict" .
+    kg:pyType "str" .
+
+<http://global.url/1/1598134712.0392272> kg:hasKGPLValue kg:0 .
+
+kg:10 kg:hasValue "\"value3\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://global.url/11/1598134794.2797875> kg:hasKGPLValue kg:10 .
+
+kg:12 kg:hasValue "\"value4\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://global.url/13/1598134794.3215747> kg:hasKGPLValue kg:12 .
+
+kg:14 kg:hasValue "\"value5\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://global.url/15/1598134794.3865561> kg:hasKGPLValue kg:14 .
+
+kg:16 kg:hasValue "\"value6\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://global.url/17/1598134794.4516058> kg:hasKGPLValue kg:16 .
+
+kg:18 kg:hasValue "\"value7\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://global.url/19/1598134794.5397003> kg:hasKGPLValue kg:18 .
+
+kg:2 kg:hasValue "\"Second Value.\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+kg:20 kg:hasValue "\"value8\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://global.url/21/1598134794.6354885> kg:hasKGPLValue kg:20 .
+
+kg:22 kg:hasValue "\"value9\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://global.url/23/1598134794.744427> kg:hasKGPLValue kg:22 .
+
+<http://global.url/3/1598134712.071395> kg:hasKGPLValue kg:2 .
+
+kg:4 kg:hasValue "\"value0\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://global.url/5/1598134794.1376758> kg:hasKGPLValue kg:4 .
+
+kg:6 kg:hasValue "\"value1\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://global.url/7/1598134794.1773102> kg:hasKGPLValue kg:6 .
+
+kg:8 kg:hasValue "\"value2\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://global.url/9/1598134794.2277112> kg:hasKGPLValue kg:8 .
 

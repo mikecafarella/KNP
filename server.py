@@ -1,19 +1,19 @@
-from gen import ID_gen
+import atexit
+import os
+import time
+
 import flask
 from flask import request
-import json
-import time
-import os
-import atexit
-import rdflib
 from rdflib import Graph
-from rdflib import store
 from rdflib import Namespace
 from rdflib import URIRef, Literal
 
+from gen import ID_gen
+
 app = flask.Flask(__name__)
 
-server_url = "http://127.0.0.1:5000"
+# server_url = "http://127.0.0.1:5000"
+server_url = "http://global.url"
 g = Graph('Sleepycat', identifier="kgpl")
 g.open('db', create=True)
 g.bind("kg", server_url + "/")

@@ -21,7 +21,7 @@ import kgpl
 
 # It ends one day earlier.
 PREV_VAR_ID = 3
-def step2(_):
+def step2_5(_):
     DATE_TO_PREDICT = int(
         (datetime.today()).strftime('%Y%m%d'))
     # print(DATE_TO_PREDICT)
@@ -71,11 +71,11 @@ def step2(_):
     # print(rst)
     # do prediction
     myval = kgpl.value(rst).vid
-    print( "Below is the variable containing a dict "
+    print("Below is the variable containing a dict "
           "with the prediction of all states for tomorrow: ")
     prev_var = kgpl.load_var(PREV_VAR_ID)
     kgpl.set_var(prev_var, myval)
 
 
 if __name__ == "__main__":
-    step2(1)
+    step2_5(1)
