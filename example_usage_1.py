@@ -22,6 +22,7 @@ def example2():
         kgpl.variable(myval.vid)
 
 
+
 if __name__ == "__main__":
     example1()
     example2()

@@ -5,20 +5,24 @@ import requests
 
 # server_url = "http://lasagna.eecs.umich.edu:8000/"
 server_url = "http://127.0.0.1:5000"
-next_id_url = server_url + "/next"
+next_val_id_url = server_url + "/nextval"
+next_var_id_url = server_url + "/nextvar"
+
 val_url = server_url + "/val"
 var_url = server_url + "/var"
 loadvar_url = server_url + "/load/var"
 loadval_url = server_url + "/load/val"
 update_url = server_url + "/getLatest"
 
+
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, KGPLValue): 
+        if isinstance(obj, KGPLValue):
             return {"vid": obj.vid, "__kgplvalue__": True}
         elif isinstance(obj, KGPLVariable):
             return {"vid": obj.vid, "__kgplvariable__": True}
         return json.JSONEncoder.default(self, obj)
+
 
 def hook(dct):
     if "__kgplvalue__" in dct:
@@ -27,12 +31,13 @@ def hook(dct):
         return load_var(dct["vid"])
     return dct
 
+
 class KGPLValue:
     def __init__(self, val, vid=None):
         if vid is None:
             # generate a new kgplValue
             # self.ID = get id from server
-            r = requests.get(next_id_url)
+            r = requests.get(next_val_id_url)
             self.val = val
             if r.status_code == 200:
                 self.vid = r.json()["id"]
@@ -40,7 +45,10 @@ class KGPLValue:
             else:
                 raise Exception("not getting correct id")
 
-            r = requests.post(val_url, json={"id": self.vid, "val": json.dumps(val, cls=MyEncoder), "pyType": type(val).__name__})
+            r = requests.post(val_url, json={"id": self.vid,
+                                             "val": json.dumps(val,
+                                                               cls=MyEncoder),
+                                             "pyType": type(val).__name__})
             if r.status_code == 201:
                 print("Created: KGPLValue with ID", self.vid, "$", self)
             else:
@@ -52,7 +60,7 @@ class KGPLValue:
 
     def getVid(self):
         return self.vid
-    
+
     def getConcreteVal(self):
         return self.val
 
@@ -84,20 +92,23 @@ class KGPLValue:
         else:
             raise Exception("val type invalid")
 
+
 class KGPLVariable:
     def __init__(self, val_id, vid=None, timestamp=None):
         self.val_id = val_id
         if not vid:
             # generate a new kgplVariable
             # self.ID = get id from server
-            r = requests.get(next_id_url)
+            r = requests.get(next_var_id_url)
             if r.status_code == 200:
                 self.vid = r.json()["id"]
-                print("Created KGPLVariable with ID",self.vid,"$ KGPLValue with ID:", self.val_id)
+                print("Created KGPLVariable with ID", self.vid,
+                      "$ KGPLValue with ID:", self.val_id)
             else:
                 raise Exception("not getting correct id")
 
-            r = requests.post(var_url, json={"id": self.vid, "val_id": self.val_id})
+            r = requests.post(var_url,
+                              json={"id": self.vid, "val_id": self.val_id})
             if r.status_code != 201:
                 if r.status_code == 404:
                     print("value id not found")
@@ -108,8 +119,8 @@ class KGPLVariable:
             # generate an existing kgplVariable
             self.vid = vid
             self.val_id = val_id
-            self.timestamp = timestamp # should always initialzie the value of self.timestamp afterwards.
-    
+            self.timestamp = timestamp  # should always initialzie the value of self.timestamp afterwards.
+
     def getVid(self):
         return self.vid
 
@@ -127,16 +138,19 @@ def load(vid, l_url):
         raise Exception("value or variable not found")
     context = r.json()
     return context
-    
+
 
 def value(val):
-    if type(val) not in [int, float, tuple, list, dict, str, KGPLValue, KGPLVariable]:
+    if type(val) not in [int, float, tuple, list, dict, str, KGPLValue,
+                         KGPLVariable]:
         raise Exception("cannot construct KGPLValue on this type")
     return KGPLValue(val)
+
 
 def variable(val_id):
     # val_id is the id of the kgplValue this variable should point to.
     return KGPLVariable(val_id)
+
 
 def load_val(vid):
     context = load(vid, loadval_url)
@@ -147,9 +161,11 @@ def load_val(vid):
         val = tmp_val
     return KGPLValue(val, vid)
 
+
 def load_var(vid):
     context = load(vid, loadvar_url)
     return KGPLVariable(context["val_id"], vid, context["timestamp"])
+
 
 def set_var(kg_var, val_id):
     """
@@ -157,7 +173,8 @@ def set_var(kg_var, val_id):
     val_id is the id of the kgplValue it should point to.
     Return the updated kgplVariable.
     """
-    r = requests.put(var_url, json={"vid": kg_var.vid, "val_id": val_id, "timestamp": kg_var.timestamp})
+    r = requests.put(var_url, json={"vid": kg_var.vid, "val_id": val_id,
+                                    "timestamp": kg_var.timestamp})
     if r.status_code != 201:
         if r.status_code == 404:
             print("variable not found")
@@ -166,11 +183,13 @@ def set_var(kg_var, val_id):
         raise Exception("variable updating not success")
     kg_var.timestamp = r.json().get("timestamp")
     kg_var.val_id = val_id
-    print("KGPLVariable",kg_var.vid,"Updated.","New val_id:",kg_var.val_id)
+    print("KGPLVariable", kg_var.vid, "Updated.", "New val_id:", kg_var.val_id)
     return kg_var
 
+
 def get_history(kg_var):
-    r = requests.get(os.path.join(server_url, "gethistory"), json={"vid": kg_var.vid})
+    r = requests.get(os.path.join(server_url, "gethistory"),
+                     json={"vid": kg_var.vid})
     if r.status_code != 200:
         raise Exception("getting history failed")
     l = r.json()["list"]
