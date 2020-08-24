@@ -130,13 +130,15 @@ class KGPLVariable:
     def getVid(self):
         return self.vid
 
-    def getLatest(self):
+    def refresh(self):
         r = requests.get(update_url, json={"val_id": self.vid})
         if r.status_code != 200:
             raise Exception("fail to get latest information")
         self.val_id = r.json().get("val_id")
         self.timestamp = r.json().get("timestamp")
 
+    def getConcreteVal(self):
+        return load_val(self.val_id)
 
 def load(vid, l_url):
     par = {"vid": vid}
@@ -160,6 +162,8 @@ def value(val, comment):
 
 
 def variable(val_id, comment):
+    if type(val_id) not str:
+        raise Exception("cannot construct KGPLVariable")
     if type(comment) != str:
         raise Exception("Comment needs to be a string.")
     return KGPLVariable(val_id, comment)

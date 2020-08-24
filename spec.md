@@ -2,15 +2,15 @@
 
 ## Construct KGPLValue
 
-`kgpl.value(val)`  
-Construct a new KGPLValue given a concrete value `val`, communicate with the server to get the next available id. The return type is KGPLValue class object.
+`kgpl.value(val, comment)`  
+Construct a new KGPLValue given a concrete value `val` and the description for it `comment`, communicate with the server to get the next available id. The return type is KGPLValue class object.
 
 ## Load KGPLValue
 
-`kgpl.load_val(vid)`
-Load an existing KGPLValue given the id of it `vid`. The return type is KGPLValue class object.
+`kgpl.load_val(vid, comment)`
+Load an existing KGPLValue given the id of it `vid` and the description for it `comment`. The return type is KGPLValue class object.
 
-## Update KGPLValue
+## Member functions of KGPLValue object
 
 `kgpl.set_val(kg_val, val)`
 Change the concrete value of an existing KGPLValue given the kgplValue `kg_val` and the value `val`.

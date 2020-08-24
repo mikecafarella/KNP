@@ -1,11 +1,11 @@
 import kgpl
 
 def person4():
-    idSharedbyPerson3 = 7
-    idSharedbyPerson2 = 3
-    idSharedbyPerson1 = 1
-    # actual number of positive cases of each state 
-    updated_dict_val = kgpl.load_val(kgpl.load_var(idSharedbyPerson1).val_id)
+    idSharedbyPerson3 = "http://127.0.0.1:5000/var/5"
+    idSharedbyPerson2 = "http://127.0.0.1:5000/var/3"
+    idSharedbyPerson1 = "http://127.0.0.1:5000/var/1"
+    # the actual number of positive cases of each state 
+    updated_dict_val = kgpl.load_var(idSharedbyPerson1).getConcreteVal()
     updated_dict = updated_dict_val.getConcreteVal()
     # 10 states that actually have the least positive cases
     L = [(k, v) for (k, v) in updated_dict.items()]
