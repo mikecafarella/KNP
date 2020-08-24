@@ -23,7 +23,7 @@ def person4():
     ll = kgpl.get_history(predicted_least_list_var)
     assert(len(ll)>=2)
     predicted_least_list = kgpl.load_val(ll[1]).getConcreteVal()
-    # deviation
+    # print the deviation of prediction from reality
     dict_of_deviation = {}
     for state, inform in updated_dict.items():
         assert(state in yesterday_predicted_dict)

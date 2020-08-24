@@ -6,3 +6,5 @@ __pycache__
 log
 .idea*
 data/*
+log_val_id
+log_var_id
