@@ -41,9 +41,12 @@ if __name__ == "__main__":
     #
     # with open("date-(state,positive)", "w") as output_file_2:
     #     json.dump(rst_2, output_file_2)
+    val_comment = "The COVID-19 cumulative positive cases for all states in the US from" + str(
+        before_20) + "to" + str(today)
+    var_comment = "The COVID-19 cumulative positive cases for all states in the US in the last 20 days"
 
-    myval = kgpl.value(dict(rst))
-    kgpl.variable(myval.vid)
+    myval = kgpl.value(dict(rst), val_comment)
+    kgpl.variable(myval.vid, var_comment)
         # with open(file_name, "a+") as output_file:
         #     output_file.write(
         #         "(" + one_item["state"] + ", "+str(one_item["positive"]) + ")\n")

@@ -48,13 +48,22 @@ def test2():
     myval = kgpl.value(my_test_string)
     kgpl.variable(myval.vid)
 
-
 def test3():
     my_test_string = "First Value."
-    my_test_comment = "value comment."
-    my_test_comment2 = ""
+    my_test_comment = "value comment 1"
+    my_test_comment2 = "variable comment 1"
     myval = kgpl.value(my_test_string, my_test_comment)
     kgpl.variable(myval.vid, my_test_comment2)
+
+
+def test3_1():
+    my_test_string = "Second Value."
+    my_test_comment = "value comment 2."
+    # my_test_comment2 = "variable comment 2."
+    myval = kgpl.value(my_test_string, my_test_comment)
+    # kgpl.variable(myval.vid, my_test_comment2)
+
+
 
 
 def test4():
@@ -89,7 +98,7 @@ def test6():
 def test7():
     test_load_val = kgpl.load_val("http://127.0.0.1:5000/val/1")
     test_load_var = kgpl.load_var("http://127.0.0.1:5000/var/0")
-    kgpl.set_var(test_load_var, test_load_val.vid)
+    kgpl.set_var(test_load_var, test_load_val.vid, "reassign to val 1")
     print("place holder")
 
 def test8():
@@ -104,8 +113,9 @@ def test9():
     kgpl.viewNamespace()
 
 if __name__ == "__main__":
-    # test3() # init for KGPLValue and KGPLVariable
+    test3() # Create new KGPLValues and KGPLVariables
+    test3_1() # Create another KGPLValue
     # test6() # Load val and var
-    # test7() # reassign
+    test7() # reassign
     # test8() # get history
-    test9()
+    # test9() # test Namespace changes

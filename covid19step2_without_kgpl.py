@@ -31,7 +31,7 @@ if __name__ == "__main__":
     starting_date = date - timedelta(days=14)
     start = starting_date.strftime('%Y%m%d')
     temp_dict = {}
-    with open("state-(date,positive)", "r") as input_file:
+    with open("outdated/state-(date,positive)", "r") as input_file:
         data_source = json.load(input_file)
         for key, val in data_source.items():
             temp_list = []
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     print(rst)
     # do prediction
 
-    with open("rst", "w") as output_file:
+    with open("outdated/rst", "w") as output_file:
         json.dump(rst, output_file)
     # d=datetime.today().strftime('%Y%m%d')
     # print(d)

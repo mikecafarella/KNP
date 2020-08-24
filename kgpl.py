@@ -184,16 +184,16 @@ def load_var(vid):
     return KGPLVariable(context["val_id"], context["comment"], vid,
                         context["timestamp"])
 
-
-def set_var(kg_var, val_id):
+# TODO: add comment
+def set_var(kg_var, val_id, new_comment):
     """
-    vg_var is the kgplVariable.
+    kg_var is the kgplVariable.
     val_id is the id of the kgplValue it should point to.
     Return the updated kgplVariable.
     """
     r = requests.put(var_url, json={"vid": kg_var.vid, "val_id": val_id,
                                     "timestamp": kg_var.timestamp,
-                                    "comment": kg_var.comment})
+                                    "new_comment": new_comment})
     if r.status_code != 201:
         if r.status_code == 404:
             print("variable not found")

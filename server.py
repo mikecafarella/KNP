@@ -124,7 +124,7 @@ def post_var():
     g.add((url, valueHistory, ts_url))
     g.add((ts_url, hasKGPLValue, val_url))
     g.add((url, kgplType, kgplVariable))
-    g.add((url, hasComment, com))
+    g.add((ts_url, hasComment, com))
     context = {"timestamp": ts}
     return flask.jsonify(**context), 201
 
@@ -162,14 +162,14 @@ def get_val():
 def get_var():
     vid = request.args.get('vid')
     url = URIRef(vid)
-    print(url)
+    # print(url)
     qres = g.query(
         """SELECT ?ts ?val_url ?com
         WHERE {
             ?url kg:kgplType kg:kgplVariable ;
-                kg:valueHistory ?ts ;
+                kg:valueHistory ?ts .
+            ?ts kg:hasKGPLValue ?val_url ;
                 kg:hasComment ?com .
-            ?ts kg:hasKGPLValue ?val_url .
         }""",
         initBindings={'url': url}
     )
@@ -194,26 +194,30 @@ def get_var():
 @app.route("/var", methods=['PUT'])
 def set_var():
     d = request.get_json()
-    if "vid" not in d or "val_id" not in d or "timestamp" not in d or "comment" not in d:
+    if "vid" not in d or "val_id" not in d or "timestamp" not in d or "new_comment" not in d:
         flask.abort(400)
     url = URIRef(d["vid"])
     val_url = URIRef(d["val_id"])
     ts = d["timestamp"]
-    print("URI: ",url)
+    # print("URI: ", url)
     qres = g.query(
         """SELECT ?ts_url
         WHERE {
             ?url kg:kgplType kg:kgplVariable ;
-                 kg:valueHistory ?ts_url ;
-                 kg:hasComment ?comment .
+                 kg:valueHistory ?ts_url .
         }""",
         initBindings={'url': url}
     )
     ots_url = URIRef(url+"/ts/"+str(ts))
+    # print(ots_url)
     # ots_url = URIRef(os.path.join(url, str(ts)))
     if len(qres) == 1:
         for ts_url, in qres:
             if ts_url != ots_url:
+                print(ts_url)
+                print(type(ts_url))
+                print(type(ots_url))
+                print(ots_url)
                 print("version conflict")
                 flask.abort(403)
             qres = g.query(
@@ -233,6 +237,7 @@ def set_var():
             g.add((url, valueHistory, nts_url))
             g.add((nts_url, hasKGPLValue, val_url))
             g.add((nts_url, hasHistory, ts_url))
+            g.add((nts_url, hasComment, Literal(d["new_comment"])))
             context = {"timestamp": ts}
             return flask.jsonify(**context), 201
     elif len(qres) == 0:

@@ -34,7 +34,7 @@ Change the concrete value of an existing KGPLVariable given the variable `kg_var
 
 ## Workflow
 
-![Alt text](workflow.png?raw=true "Title")
+![Alt text](outdated/workflow.png?raw=true "Title")
 
 ## Namespace
 
@@ -58,4 +58,4 @@ Change the concrete value of an existing KGPLVariable given the variable `kg_var
 
 ## Database
 1. 
-![Alt text](database.png?raw=true "Title")
+![Alt text](outdated/database.png?raw=true "Title")
