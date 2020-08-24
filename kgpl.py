@@ -33,12 +33,13 @@ def hook(dct):
 
 
 class KGPLValue:
-    def __init__(self, val, vid=None):
+    def __init__(self, val, comment, vid=None):
         if vid is None:
             # generate a new kgplValue
             # self.ID = get id from server
             r = requests.get(next_val_id_url)
             self.val = val
+            self.comment = comment
             if r.status_code == 200:
                 self.vid = r.json()["id"]
 
@@ -48,7 +49,9 @@ class KGPLValue:
             r = requests.post(val_url, json={"id": self.vid,
                                              "val": json.dumps(val,
                                                                cls=MyEncoder),
-                                             "pyType": type(val).__name__})
+                                             "pyType": type(val).__name__,
+                                             "comment": json.dumps(comment,
+                                                                   cls=MyEncoder)}, )
             if r.status_code == 201:
                 print("Created: KGPLValue with ID", self.vid, "$", self)
             else:
@@ -57,6 +60,7 @@ class KGPLValue:
             # generate an existing kgplValue
             self.vid = vid
             self.val = val
+            self.comment = comment
 
     def getVid(self):
         return self.vid
@@ -94,8 +98,9 @@ class KGPLValue:
 
 
 class KGPLVariable:
-    def __init__(self, val_id, vid=None, timestamp=None):
+    def __init__(self, val_id, comment, vid=None, timestamp=None):
         self.val_id = val_id
+        self.comment = comment
         if not vid:
             # generate a new kgplVariable
             # self.ID = get id from server
@@ -108,7 +113,8 @@ class KGPLVariable:
                 raise Exception("not getting correct id")
 
             r = requests.post(var_url,
-                              json={"id": self.vid, "val_id": self.val_id})
+                              json={"id": self.vid, "val_id": self.val_id,
+                                    "comment": comment})
             if r.status_code != 201:
                 if r.status_code == 404:
                     print("value id not found")
@@ -133,23 +139,30 @@ class KGPLVariable:
 
 
 def load(vid, l_url):
-    r = requests.get(os.path.join(l_url, str(vid)))
+    par = {"vid": vid}
+    r = requests.get(l_url, params=par)
     if r.status_code != 200:
         raise Exception("value or variable not found")
     context = r.json()
     return context
 
 
-def value(val):
+# ---------------------------API-----------------------------------#
+
+
+def value(val, comment):
     if type(val) not in [int, float, tuple, list, dict, str, KGPLValue,
                          KGPLVariable]:
         raise Exception("cannot construct KGPLValue on this type")
-    return KGPLValue(val)
+    if type(comment) != str:
+        raise Exception("Comment needs to be a string.")
+    return KGPLValue(val, comment)
 
 
-def variable(val_id):
-    # val_id is the id of the kgplValue this variable should point to.
-    return KGPLVariable(val_id)
+def variable(val_id, comment):
+    if type(comment) != str:
+        raise Exception("Comment needs to be a string.")
+    return KGPLVariable(val_id, comment)
 
 
 def load_val(vid):
@@ -159,12 +172,13 @@ def load_val(vid):
         val = tuple(tmp_val)
     else:
         val = tmp_val
-    return KGPLValue(val, vid)
+    return KGPLValue(val, context["comment"], vid)
 
 
 def load_var(vid):
     context = load(vid, loadvar_url)
-    return KGPLVariable(context["val_id"], vid, context["timestamp"])
+    return KGPLVariable(context["val_id"], context["comment"], vid,
+                        context["timestamp"])
 
 
 def set_var(kg_var, val_id):
@@ -174,7 +188,8 @@ def set_var(kg_var, val_id):
     Return the updated kgplVariable.
     """
     r = requests.put(var_url, json={"vid": kg_var.vid, "val_id": val_id,
-                                    "timestamp": kg_var.timestamp})
+                                    "timestamp": kg_var.timestamp,
+                                    "comment": kg_var.comment})
     if r.status_code != 201:
         if r.status_code == 404:
             print("variable not found")
@@ -194,3 +209,17 @@ def get_history(kg_var):
         raise Exception("getting history failed")
     l = r.json()["list"]
     return l
+
+
+def changeNamespace(new_url):
+    global server_url
+    print("Old Server: ", server_url)
+    new_url = new_url.rstrip('/')
+    server_url = new_url
+    print("New Server: ", server_url)
+    return new_url
+
+
+def viewNamespace():
+    print("Current Server: ", server_url)
+    return server_url

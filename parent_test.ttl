@@ -1,11 +1,32 @@
 @prefix kg: <http://127.0.0.1:5000/> .
 
-<http://127.0.0.1:5000/var/0> kg:kgplType kg:kgplVariable ;
-    kg:valueHistory <http://127.0.0.1:5000/var/0/ts/1598157587.9902341> .
+<http://127.0.0.1:5000/var/0> kg:hasComment "" ;
+    kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://127.0.0.1:5000/var/0/ts/1598293012.788573> .
 
-<http://127.0.0.1:5000/val/0> kg:hasValue "\"First Value.\"" ;
+<http://127.0.0.1:5000/var/2> kg:hasComment "" ;
+    kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://127.0.0.1:5000/var/2/ts/1598286463.3726978> .
+
+<http://127.0.0.1:5000/val/0> kg:hasComment "\"value comment.\"" ;
+    kg:hasValue "\"First Value.\"" ;
     kg:kgplType kg:kgplValue ;
     kg:pyType "str" .
 
-<http://127.0.0.1:5000/var/0/ts/1598157587.9902341> kg:hasKGPLValue <http://127.0.0.1:5000/val/0> .
+<http://127.0.0.1:5000/val/1> kg:hasComment "\"value comment.\"" ;
+    kg:hasValue "\"First Value.\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://127.0.0.1:5000/val/2> kg:hasComment "\"value comment.\"" ;
+    kg:hasValue "\"First Value.\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://127.0.0.1:5000/var/0/ts/1598276539.4321585> kg:hasKGPLValue <http://127.0.0.1:5000/val/0> .
+
+<http://127.0.0.1:5000/var/0/ts/1598293012.788573> kg:hasHistory <http://127.0.0.1:5000/var/0/ts/1598276539.4321585> ;
+    kg:hasKGPLValue <http://127.0.0.1:5000/val/1> .
+
+<http://127.0.0.1:5000/var/2/ts/1598286463.3726978> kg:hasKGPLValue <http://127.0.0.1:5000/val/2> .
 
