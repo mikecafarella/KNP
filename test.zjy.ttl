@@ -1,0 +1,22 @@
+@prefix kg: <http://127.0.0.1:5000/> .
+
+<http://127.0.0.1:5000/var/0> kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://127.0.0.1:5000/var/0/ts/1598303854.5772753> .
+
+<http://127.0.0.1:5000/val/0> kg:hasComment "\"value comment 1\"" ;
+    kg:hasValue "\"First Value.\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://127.0.0.1:5000/val/1> kg:hasComment "\"value comment 2.\"" ;
+    kg:hasValue "\"Second Value.\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://127.0.0.1:5000/var/0/ts/1598303854.47428> kg:hasComment "variable comment 1" ;
+    kg:hasKGPLValue <http://127.0.0.1:5000/val/0> .
+
+<http://127.0.0.1:5000/var/0/ts/1598303854.5772753> kg:hasComment "reassign to val 1" ;
+    kg:hasHistory <http://127.0.0.1:5000/var/0/ts/1598303854.47428> ;
+    kg:hasKGPLValue <http://127.0.0.1:5000/val/1> .
+

@@ -5,7 +5,7 @@ from rdflib import Namespace
 from rdflib import URIRef, BNode, Literal
 
 g = Graph('Sleepycat', identifier="kgpl")
-g.open('db', create=True)
+g.open('../db', create=True)
 """
 kgtype = n.kgpltype
 vid = n.val0

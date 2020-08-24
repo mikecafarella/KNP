@@ -25,7 +25,7 @@ def step2(_):
         (datetime.today() - timedelta(days=1)).strftime('%Y%m%d'))
     # print(DATE_TO_PREDICT)
     # DATE_TO_PREDICT = 20200601
-    VAR_ID_GIVEN_BY_USER1 = 1
+    VAR_ID_GIVEN_BY_USER1 = "http://127.0.0.1:5000/var/0"
     TRAIN_LENGTH = 20
 
     date = datetime.strptime(str(DATE_TO_PREDICT), '%Y%m%d')
@@ -69,10 +69,13 @@ def step2(_):
         rst[key] = int(round(y_predict[0].item()))
     # print(rst)
     # do prediction
-    myval = kgpl.value(rst).vid
+    val_comment = "Prediction for COVID-19 cumulative positive cases for all states in the US for" + str(DATE_TO_PREDICT)
+    var_comment = "Prediction for COVID-19 cumulative positive cases for all states in the US in the next day"
+
+    myval = kgpl.value(rst,val_comment).vid
     print( "Below is the variable containing a dict "
           "with the prediction of all states for tomorrow: ")
-    kgpl.variable(myval)
+    kgpl.variable(myval, var_comment)
 
 
 if __name__ == "__main__":
