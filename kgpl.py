@@ -162,7 +162,7 @@ def value(val, comment):
 
 
 def variable(val_id, comment):
-    if type(val_id) not str:
+    if type(val_id) is not str:
         raise Exception("cannot construct KGPLVariable")
     if type(comment) != str:
         raise Exception("Comment needs to be a string.")
