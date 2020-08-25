@@ -184,6 +184,7 @@ def load_var(vid):
     return KGPLVariable(context["val_id"], context["comment"], vid,
                         context["timestamp"])
 
+
 # TODO: add comment
 def set_var(kg_var, val_id, new_comment):
     """
@@ -202,6 +203,7 @@ def set_var(kg_var, val_id, new_comment):
         raise Exception("variable updating not success")
     kg_var.timestamp = r.json().get("timestamp")
     kg_var.val_id = val_id
+    kg_var.comment = new_comment
     print("KGPLVariable", kg_var.vid, "Updated.", "New val_id:", kg_var.val_id)
     return kg_var
 

@@ -22,8 +22,23 @@ Load an existing KGPLVariable given the id of it `vid`. The return type is KGPLV
 
 ## Update KGPLVariable
 
-```kgpl.set_var(kg_var, val_id, comment)```
-Change the concrete value of an existing KGPLVariable given the KGPLvariable `kg_var`, the id of the value `val_id` and a new description about it, and return the updated kgplVariable. The return type is KGPLVariable class object.
+```kgpl.set_var(kg_var, val_id, new_comment)```
+Change the concrete value of an existing KGPLVariable given the KGPLvariable `kg_var`, the id of the value `val_id` and a new description `new_comment` about it, and return the updated kgplVariable. The return type is KGPLVariable class object.
+
+## Get history of KGPLVariable
+
+```kgpl.getHistory(kg_var)```
+Get the history of KGPLValues the KGPLVariable `kg_var` once referred to and return it as a list of the url of KGPLValues. The return type is list.
+
+## Change namespace
+
+```kgpl.changeNamespace(new_url)```
+Change the namespace of KGPLVariables and KGPLValues you want to work on.
+
+## View current namespace
+
+```kgpl.viewNamespace()```
+Return the current namespace.
 
 ## Member functions of KGPLValue
 
@@ -41,7 +56,7 @@ Return the url of the KGPLVariable
 ```kgpl.KGPLVariable.getConcreteVal()```
 Return the KGPLValue of the KGPLVariable. Note that the KGPLVariable in a user's program may not have the latest version of its own if some other users change the KGPLValue it refers to, so the KGPLValue this method returns is what the KGPLVariable refers to in this user's probram, which may not be the same as latest version of the KGPLVariable.
 
-```kgpl.KGPLVariable.getLatest()```
+```kgpl.KGPLVariable.refresh()```
 Refresh the version of KGPLVariable so that the KGPLVariable in the user's program has the latest version.
 
 ## Workflow
