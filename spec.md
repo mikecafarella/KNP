@@ -2,39 +2,51 @@
 
 ## Construct KGPLValue
 
-`kgpl.value(val, comment)`  
-Construct a new KGPLValue given a concrete value `val` and the description for it `comment`, communicate with the server to get the next available id. The return type is KGPLValue class object.
+```kgpl.value(val, comment)```  
+Construct a new KGPLValue given a concrete value `val` and the description about this KGPLValue `comment`, communicate with the server to get the next available id. The return type is KGPLValue class object.
 
 ## Load KGPLValue
 
-`kgpl.load_val(vid, comment)`
-Load an existing KGPLValue given the id of it `vid` and the description for it `comment`. The return type is KGPLValue class object.
-
-## Member functions of KGPLValue object
-
-`kgpl.set_val(kg_val, val)`
-Change the concrete value of an existing KGPLValue given the kgplValue `kg_val` and the value `val`.
-
-We didn't do delta update. (Confused) We saved the snapshot of the value everytime it changes.
+```kgpl.load_val(vid)```
+Load an existing KGPLValue given the id of it `vid`. The return type is KGPLValue class object.
 
 ## Construct KGPLVariable
 
-`kgpl.variable(val_id)`
-Construct a new KGPLValue given the id of the concrete value `val_id`, communicate with the server to get the next available id. The return type is KGPLVariable class object.
+```kgpl.variable(val_id, comment)```
+Construct a new KGPLValue given the id of the KGPLvalue `val_id` and the description about this KGPLVariable `comment`, communicate with the server to get the next available id. The return type is KGPLVariable class object.
 
 ## Load KGPLVariable
 
-`kgpl.load_var(vid)`
+```kgpl.load_var(vid)```
 Load an existing KGPLVariable given the id of it `vid`. The return type is KGPLVariable class object.
 
 ## Update KGPLVariable
 
-`kgpl.set_var(kg_var,val_id)`
-Change the concrete value of an existing KGPLVariable given the variable `kg_var` and the id of the value `val_id` and return the updated kgplVariable. The return type is KGPLVariable class object.
+```kgpl.set_var(kg_var, val_id, comment)```
+Change the concrete value of an existing KGPLVariable given the KGPLvariable `kg_var`, the id of the value `val_id` and a new description about it, and return the updated kgplVariable. The return type is KGPLVariable class object.
+
+## Member functions of KGPLValue
+
+```kgpl.KGPLValue.getVid()```
+Return the url of the KGPLValue.
+
+```kgpl.KGPLValue.getConcreteVal()```
+Return the concrete value of the KGPLValue.
+
+## Member functions of KGPLVariable
+
+```kgpl.KGPLVariable.getVid()```
+Return the url of the KGPLVariable
+
+```kgpl.KGPLVariable.getConcreteVal()```
+Return the KGPLValue of the KGPLVariable. Note that the KGPLVariable in a user's program may not have the latest version of its own if some other users change the KGPLValue it refers to, so the KGPLValue this method returns is what the KGPLVariable refers to in this user's probram, which may not be the same as latest version of the KGPLVariable.
+
+```kgpl.KGPLVariable.getLatest()```
+Refresh the version of KGPLVariable so that the KGPLVariable in the user's program has the latest version.
 
 ## Workflow
 
-![Alt text](outdated/workflow.png?raw=true "Title")
+![Alt text](workflow.png?raw=true "Title")
 
 ## Namespace
 
@@ -55,6 +67,7 @@ Change the concrete value of an existing KGPLVariable given the variable `kg_var
 3. pyType: URIRef `kg:pyType`
 4. hasHistory: URIRef `kg:hasHistory`
 5. hasKGPLValue: URIRef `kg:hasKGPLValue`
+6. hasComment: URIRef `kg:hasComment`
 
 ## Database
 1. 
