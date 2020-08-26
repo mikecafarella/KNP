@@ -13,7 +13,7 @@ Load an existing KGPLValue given the id of it `vid`. The return type is KGPLValu
 ## Construct KGPLVariable
 
 ```kgpl.variable(val_id, comment)```
-Construct a new KGPLValue given the id of the KGPLvalue `val_id` and the description about this KGPLVariable `comment`, communicate with the server to get the next available id. The return type is KGPLVariable class object.
+Construct a new KGPLValue given the KGPLvalue or the id of it `val_id` and the description about this KGPLVariable `comment`, communicate with the server to get the next available id. The return type is KGPLVariable class object.
 
 ## Load KGPLVariable
 
@@ -23,12 +23,12 @@ Load an existing KGPLVariable given the id of it `vid`. The return type is KGPLV
 ## Update KGPLVariable
 
 ```kgpl.set_var(kg_var, val_id, new_comment)```
-Change the concrete value of an existing KGPLVariable given the KGPLvariable `kg_var`, the id of the value `val_id` and a new description `new_comment` about it, and return the updated kgplVariable. The return type is KGPLVariable class object.
+Change the concrete value of an existing KGPLVariable given the KGPLvariable `kg_var`, the id of the value `val_id` and a new description `new_comment` about it, and return the updated kgplVariable. The return type is KGPLVariable class object. Note that if `kg_var` isn't the latest version of its own, this method will fail to remind the user to catch up.
 
 ## Get history of KGPLVariable
 
 ```kgpl.getHistory(kg_var)```
-Get the history of KGPLValues the KGPLVariable `kg_var` once referred to and return it as a list of the url of KGPLValues. The return type is list.
+Get the history of KGPLValues the KGPLVariable `kg_var` once referred to and return it as a list of the urls of KGPLValues. The first url in the list is that of the KGPLValue referred by the latest version of the KGPLVariable. The latter one in the list is the predecessor of the former one. The return type is list.
 
 ## Change namespace
 
@@ -53,8 +53,11 @@ Return the concrete value of the KGPLValue.
 ```kgpl.KGPLVariable.getVid()```
 Return the url of the KGPLVariable
 
+```kgpl.KGPLVariable.getValid()```
+Return the url of the KGPLValue the KGPLVariable refers to. Note that the KGPLVariable in a user's program may not be the latest version of its own if some other users change the KGPLValue it refers to, so the url this method returns is what the KGPLVariable refers to in this user's probram, which may not be the same as latest version of the KGPLVariable.
+
 ```kgpl.KGPLVariable.getConcreteVal()```
-Return the KGPLValue of the KGPLVariable. Note that the KGPLVariable in a user's program may not have the latest version of its own if some other users change the KGPLValue it refers to, so the KGPLValue this method returns is what the KGPLVariable refers to in this user's probram, which may not be the same as latest version of the KGPLVariable.
+Return the KGPLValue of the KGPLVariable. Note that the KGPLVariable in a user's program may not be the latest version of its own if some other users change the KGPLValue it refers to, so the KGPLValue this method returns is what the KGPLVariable refers to in this user's probram, which may not be the same as latest version of the KGPLVariable.
 
 ```kgpl.KGPLVariable.refresh()```
 Refresh the version of KGPLVariable so that the KGPLVariable in the user's program has the latest version.

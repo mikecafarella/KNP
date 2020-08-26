@@ -130,6 +130,9 @@ class KGPLVariable:
     def getVid(self):
         return self.vid
 
+    def getValid(self):
+        return self.val_id
+
     def refresh(self):
         r = requests.get(update_url, json={"val_id": self.vid})
         if r.status_code != 200:
@@ -162,8 +165,10 @@ def value(val, comment):
 
 
 def variable(val_id, comment):
-    if type(val_id) is not str:
+    if type(val_id) not in [str, KGPLValue]:
         raise Exception("cannot construct KGPLVariable")
+    if type(val_id) is KGPLValue:
+        val_id = val_id.getVid()
     if type(comment) != str:
         raise Exception("Comment needs to be a string.")
     return KGPLVariable(val_id, comment)
