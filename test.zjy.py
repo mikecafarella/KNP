@@ -91,18 +91,18 @@ def test5():
     print(type(ns["/var/1"]))
 
 def test6():
-    test_load_val = kgpl.load_val("http://127.0.0.1:5000/val/0")
-    test_load_var = kgpl.load_var("http://127.0.0.1:5000/var/0")
+    test_load_val = kgpl.load_val("http://lasagna.eecs.umich.edu:5000/val/0")
+    test_load_var = kgpl.load_var("http://lasagna.eecs.umich.edu:5000/var/0")
     print(test_load_val)
 
 def test7():
-    test_load_val = kgpl.load_val("http://127.0.0.1:5000/val/1")
-    test_load_var = kgpl.load_var("http://127.0.0.1:5000/var/0")
+    test_load_val = kgpl.load_val("http://lasagna.eecs.umich.edu:5000/val/1")
+    test_load_var = kgpl.load_var("http://lasagna.eecs.umich.edu:5000/var/0")
     kgpl.set_var(test_load_var, test_load_val.vid, "reassign to val 1")
     print("place holder")
 
 def test8():
-    test_load_var = kgpl.load_var("http://127.0.0.1:5000/var/0")
+    test_load_var = kgpl.load_var("http://lasagna.eecs.umich.edu:5000/var/0")
     his = kgpl.get_history(test_load_var)
     print(his)
     print("place holder")
@@ -115,7 +115,7 @@ def test9():
 if __name__ == "__main__":
     test3() # Create new KGPLValues and KGPLVariables
     test3_1() # Create another KGPLValue
-    # test6() # Load val and var
+    test6() # Load val and var
     test7() # reassign
     # test8() # get history
     # test9() # test Namespace changes

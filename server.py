@@ -257,14 +257,15 @@ def gethistory():
         """SELECT ?ts ?val_uri
         WHERE {
             ?url kg:kgplType kg:kgplVariable ;
-                 kg:valueHistory ?ts ;
-                 kg:hasComment ?comment .
-            ?ts kg:hasKGPLValue ?val_uri
+                 kg:valueHistory ?ts .
+            ?ts kg:hasKGPLValue ?val_uri ;
+                kg:hasComment ?com .
         }""",
         initBindings={'url': url}
     )
     rst = []
     if len(qres) != 1:
+        print(len(qres))
         print("place one")
         flask.abort(500)
     for x, val_uri in qres:

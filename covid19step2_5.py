@@ -20,13 +20,13 @@ import kgpl
 
 
 # It ends one day earlier.
-PREV_VAR_ID = 3
+PREV_VAR_ID = "http://127.0.0.1:5000/var/1"
 def step2_5(_):
     DATE_TO_PREDICT = int(
         (datetime.today()).strftime('%Y%m%d'))
     # print(DATE_TO_PREDICT)
     # DATE_TO_PREDICT = 20200601
-    VAR_ID_GIVEN_BY_USER1 = 1
+    VAR_ID_GIVEN_BY_USER1 = "http://127.0.0.1:5000/var/0"
     TRAIN_LENGTH = 20
 
     date = datetime.strptime(str(DATE_TO_PREDICT), '%Y%m%d')
@@ -70,11 +70,15 @@ def step2_5(_):
         rst[key] = int(round(y_predict[0].item()))
     # print(rst)
     # do prediction
-    myval = kgpl.value(rst).vid
+
+    var_comment = "Prediction for COVID-19 cumulative positive cases for all states in the US in the next day"
+    val_comment = "Prediction for COVID-19 cumulative positive cases for all states in the US for" + (
+        datetime.today()).strftime('%Y%m%d')
+    myval = kgpl.value(rst,val_comment).vid
     print("Below is the variable containing a dict "
           "with the prediction of all states for tomorrow: ")
     prev_var = kgpl.load_var(PREV_VAR_ID)
-    kgpl.set_var(prev_var, myval)
+    kgpl.set_var(prev_var, myval,var_comment)
 
 
 if __name__ == "__main__":
