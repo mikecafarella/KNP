@@ -12,7 +12,9 @@ from gen import ID_gen_val
 from gen import ID_gen_var
 
 app = flask.Flask(__name__)
+app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
 
+# server_url = "http://lasagna.eecs.umich.edu:5000"
 server_url = "http://127.0.0.1:5000"
 # server_url = "http://global.url"  # The namespace, should be adjusted on every server
 g = Graph('Sleepycat', identifier="kgpl")
@@ -334,20 +336,23 @@ def frontend_val(vid):
 
     print(url)
     qres = g.query(
-        """SELECT ?val ?pyt
+        """SELECT ?val ?pyt ?com
         WHERE {
             ?url kg:kgplType kg:kgplValue ;
                kg:pyType ?pyt ;
-               kg:hasValue ?val .
+               kg:hasValue ?val ;
+               kg:hasComment ?com .
         }""",
         initBindings={'url': url}
     )
 
     if len(qres) == 1:
-        for val, pyt in qres:
+        for val, pyt, com in qres:
             context = {
-                "val": str(val),
-                "pyt": str(pyt)
+                "KGPLValue": str(url),
+                "Current Value: ": str(val),
+                "Python Type": str(pyt),
+                "Comments": str(com)
             }
             return flask.jsonify(**context), 200
     elif len(qres) == 0:
@@ -360,27 +365,60 @@ def frontend_val(vid):
 @app.route("/var/<vid>", methods=['GET'])
 def frontend_var(vid):
     url = ns["var/" + str(vid)]
+    his = []
     qres = g.query(
-        """SELECT ?ts ?val_url
+        """SELECT ?ts ?val_url ?com
         WHERE {
             ?url kg:kgplType kg:kgplVariable ;
                kg:valueHistory ?ts .
-            ?ts kg:hasKGPLValue ?val_url .
+            ?ts kg:hasKGPLValue ?val_url ;
+                kg:hasComment ?com .
         }""",
         initBindings={'url': url}
     )
     if len(qres) == 1:
-        for ts, val_url in qres:
+        for ts, val_url, com in qres:
+            his.append(ts)
             val_url = str(val_url)
+            ts_for_query = ts
             ts = str(ts)
-        print(val_url)
-        actual_val_id = int(val_url[val_url.rfind('/') + 1:])
-        actual_ts = float(ts[ts.rfind('/') + 1:])
-        context = {
-            "val_id": actual_val_id,
-            "timestamp": actual_ts
-        }
-        return flask.jsonify(**context), 200
+            com = str(com)
+            # print(val_url)
+            # actual_val_id = int(val_url[val_url.rfind('/') + 1:])
+            actual_ts = float(ts[ts.rfind('/') + 1:])
+
+            while True:
+                qres = g.query(
+                    """SELECT ?history ?val_uri
+                    WHERE {
+                        ?url kg:hasComment ?com ;
+                             kg:hasHistory ?history ;
+                             kg:hasKGPLValue ?val_uri .
+                    }""",
+                    initBindings={'url': ts_for_query}
+                )
+                print(ts)
+                if len(qres) == 0:
+                    print("end")
+                    break
+                elif len(qres) != 1:
+                    print("place two")
+
+                    flask.abort(500)
+                for history, val_uri in qres:
+                    ts_for_query = history
+                    # rst.append(int(val_uri[val_uri.rfind('/') + 1:]))
+                    his.append(history)
+            context = {
+                "KGPLVariable": str(url),
+                "Currently containing KGPLValue": val_url,
+                "Current comment": com,
+                "Last modified timestamp": actual_ts,
+                "Last modified": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(actual_ts)),
+                "History": his
+            }
+
+            return flask.jsonify(**context), 200
     elif len(qres) == 0:
         return flask.abort(404)
     else:
@@ -409,10 +447,11 @@ def frontend_timestamp(vid, ts):
     )
 
     if len(qres) == 1:
-        for kgval in qres:
+        for kgval, in qres:
             context = {
+                "KGPLVariable \""+str(url)+"\" at":time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(ts))),
                 "timestamp": ts,
-                "val": kgval
+                "KGPLValue": kgval
             }
             return flask.jsonify(**context), 200
     elif len(qres) == 0:
