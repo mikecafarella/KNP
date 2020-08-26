@@ -6,7 +6,7 @@ total_vid = "http://127.0.0.1:5000/var/3"
 
 # Get the variable and value
 total_var = kgpl.load_var(total_vid)
-total_val = kgpl.load_val(total_var.val_id)
+total_val = total_var.getConcreteVal()
 
 # process the data for total cases
 loc = []
@@ -30,4 +30,4 @@ for i in range(1, 11):
     least_list.append(L[i][0])
 
 least_val = kgpl.value(least_list, "least ten states")
-least_var = kgpl.variable(least_val.vid, "variable holding least ten states")
+least_var = kgpl.variable(least_val, "variable holding least ten states")
