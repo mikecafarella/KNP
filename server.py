@@ -16,10 +16,14 @@ app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
 
 # server_url = "http://lasagna.eecs.umich.edu:5000"
 server_url = "http://127.0.0.1:5000"
-# server_url = "http://global.url"  # The namespace, should be adjusted on every server
 g = Graph('Sleepycat', identifier="kgpl")
 g.open('db', create=True)
 g.bind("kg", server_url + "/")
+
+dg = Graph('Sleepycat', identifier="dependency")
+dg.open('db', create=True)
+dg.bind("kg", server_url + "/")
+
 ns = Namespace(server_url + "/")
 
 # predicates
@@ -30,6 +34,8 @@ hasValue = ns.hasValue
 kgplType = ns.kgplType
 pyType = ns.pyType
 hasComment = ns.hasComment
+belongTo = ns.belongTo
+derive = ns.derive
 
 # kgplType
 kgplValue = ns.kgplValue
@@ -64,7 +70,7 @@ def return_var_id():
 @app.route("/val", methods=['POST'])
 def post_val():
     d = request.get_json()
-    if "id" not in d or "val" not in d or "pyType" not in d or "comment" not in d:
+    if "id" not in d or "val" not in d or "pyType" not in d or "comment" not in d or "user" not in d or "dependency" not in d:
         flask.abort(400)
     url = URIRef(d["id"])
     # print(url)
@@ -81,6 +87,12 @@ def post_val():
     val = Literal(d["val"])
     pyt = Literal(d["pyType"])
     com = Literal(d["comment"])
+    ownername = Literal(d["user"])
+    g.add((url, belongTo, ownername))
+    for d in d["dependency"]:
+        durl = URIRef(d)
+        dg.add((durl, derive, url))
+    dg.add((url, belongTo, ownername))
     g.add((url, hasValue, val))
     g.add((url, kgplType, kgplValue))
     g.add((url, pyType, pyt))
@@ -91,7 +103,7 @@ def post_val():
 @app.route("/var", methods=['POST'])
 def post_var():
     d = request.get_json()
-    if "id" not in d or "val_id" not in d or "comment" not in d:
+    if "id" not in d or "val_id" not in d or "comment" not in d or "user" not in d:
         flask.abort(400)
     val_url = URIRef(d["val_id"])
     url = URIRef(d["id"])
@@ -123,6 +135,8 @@ def post_var():
     ts = time.time()
     ts_url = URIRef(url + "/ts/" + str(ts))
     com = Literal(d["comment"])
+    ownername = Literal(d["user"])
+    g.add((url, belongTo, ownername))
     g.add((url, valueHistory, ts_url))
     g.add((ts_url, hasKGPLValue, val_url))
     g.add((url, kgplType, kgplVariable))
@@ -136,23 +150,39 @@ def get_val():
     vid = request.args.get('vid')
     url = URIRef(vid)
     qres = g.query(
-        """SELECT ?val ?pyt ?com
+        """SELECT ?val ?pyt ?com ?user
         WHERE {
             ?url kg:kgplType kg:kgplValue ;
                kg:pyType ?pyt ;
-               kg:hasComment ?com;
-               kg:hasValue ?val .
+               kg:hasComment ?com ;
+               kg:hasValue ?val ;
+               kg:belongTo ?user .
         }""",
         initBindings={'url': url}
     )
 
     if len(qres) == 1:
-        for val, pyt, com in qres:
+        for val, pyt, com, user in qres:
             context = {
                 "val": str(val),
                 "pyt": str(pyt),
-                "comment": str(com)
+                "comment": str(com),
+                "user": str(user)
             }
+            dqres = dg.query(
+                """SELECT ?durl
+                WHERE {
+                    ?durl kg:derive ?url .
+                }""",
+                initBindings={'url': url}
+            )
+            if len(dqres) == 0:
+                context["dependency"] = None
+            else:
+                dependency = []
+                for durl, in dqres:
+                    dependency.append(str(durl))
+                context["dependency"] = dependency
             return flask.jsonify(**context), 200
     elif len(qres) == 0:
         return flask.abort(404)
@@ -166,9 +196,10 @@ def get_var():
     url = URIRef(vid)
     # print(url)
     qres = g.query(
-        """SELECT ?ts ?val_url ?com
+        """SELECT ?ts ?val_url ?com ?user
         WHERE {
             ?url kg:kgplType kg:kgplVariable ;
+                kg:belongTo ?user ;
                 kg:valueHistory ?ts .
             ?ts kg:hasKGPLValue ?val_url ;
                 kg:hasComment ?com .
@@ -176,7 +207,7 @@ def get_var():
         initBindings={'url': url}
     )
     if len(qres) == 1:
-        for ts, val_url, com in qres:
+        for ts, val_url, com, user in qres:
             val_url = str(val_url)
             ts = str(ts)
             com = str(com)
@@ -184,7 +215,8 @@ def get_var():
             context = {
                 "val_id": val_url,
                 "timestamp": actual_ts,
-                "comment": com
+                "comment": com,
+                "user": user
             }
             return flask.jsonify(**context), 200
     elif len(qres) == 0:
@@ -362,6 +394,94 @@ def frontend_val(vid):
         return flask.abort(500)
 
 
+"""frontend"""
+
+
+@app.route("/visualization", methods=['GET'])
+def sendHTML():
+    return flask.render_template("visualization.html")
+
+@app.route("/getDBjson", methods=['GET'])
+def get_json():
+    json = {"nodes": [], "links": []}
+    current = ID_gen_val.current
+    for x in range(0, current):
+        url = ns["val/" + str(x)]
+        qres = g.query(
+            """SELECT ?user
+            WHERE {
+                ?url kg:belongTo ?user .
+            }""",
+            initBindings={'url': url}
+        )
+        if len(qres) != 1:
+            print("user")
+            flask.abort(500)
+        else:
+            for user, in qres:
+                json["nodes"].append({"name": user, "label": str(url), "id": x})
+
+        dqres = dg.query(
+            """SELECT ?durl
+            WHERE {
+                ?url kg:derive ?durl .
+            }""",
+            initBindings={'url': url}    
+        )
+        for durl, in dqres:
+            target = int(str(durl)[str(durl).rfind("/") + 1:])
+            json["links"].append({"source": x, "target": target})
+    """
+    json = {
+        "nodes": [
+          {
+            "name": "Peter",
+            "label": "Person",
+            "id": 1
+          },
+          {
+            "name": "Michael",
+            "label": "Person",
+            "id": 2
+          },
+          {
+            "name": "Neo4j",
+            "label": "Database",
+            "id": 3
+          },
+          {
+            "name": "Graph Database",
+            "label": "Database",
+            "id": 4
+          }
+        ],
+        "links": [
+          {
+            "source": 1,
+            "target": 2,
+            "type": "KNOWS",
+            "since": 2010
+          },
+          {
+            "source": 1,
+            "target": 3,
+            "type": "FOUNDED"
+          },
+          {
+            "source": 2,
+            "target": 3,
+            "type": "WORKS_ON"
+          },
+          {
+            "source": 3,
+            "target": 4,
+            "type": "IS_A"
+          }
+        ]
+    }
+    """
+    return flask.jsonify(json)
+
 @app.route("/var/<vid>", methods=['GET'])
 def frontend_var(vid):
     url = ns["var/" + str(vid)]
@@ -462,6 +582,7 @@ def frontend_timestamp(vid, ts):
 
 def close_graph():
     g.close()
+    dg.close()
     print("server is closing")
 
 

@@ -4,7 +4,7 @@ import os
 import requests
 
 # server_url = "http://lasagna.eecs.umich.edu:8000/"
-server_url = "http://lasagna.eecs.umich.edu:5000"
+server_url = "http://127.0.0.1:5000"
 next_val_id_url = server_url + "/nextval"
 next_var_id_url = server_url + "/nextvar"
 
@@ -33,25 +33,26 @@ def hook(dct):
 
 
 class KGPLValue:
-    def __init__(self, val, comment, vid=None):
+    def __init__(self, val, comment, user="anonymous", dependency=[], vid=None):
         if vid is None:
             # generate a new kgplValue
             # self.ID = get id from server
             r = requests.get(next_val_id_url)
             self.val = val
             self.comment = comment
+            self.dependency = dependency
+            self.user = user
             if r.status_code == 200:
                 self.vid = r.json()["id"]
-
             else:
                 raise Exception("not getting correct id")
-
             r = requests.post(val_url, json={"id": self.vid,
                                              "val": json.dumps(val,
                                                                cls=MyEncoder),
                                              "pyType": type(val).__name__,
                                              "comment": json.dumps(comment,
-                                                                   cls=MyEncoder)}, )
+                                                                   cls=MyEncoder),
+                                             "user": user, "dependency": dependency},)
             if r.status_code == 201:
                 print("Created: KGPLValue with ID", self.vid, "$", self)
             else:
@@ -98,9 +99,10 @@ class KGPLValue:
 
 
 class KGPLVariable:
-    def __init__(self, val_id, comment, vid=None, timestamp=None):
+    def __init__(self, val_id, comment, user="anonymous", vid=None, timestamp=None):
         self.val_id = val_id
         self.comment = comment
+        self.user = user
         if not vid:
             # generate a new kgplVariable
             # self.ID = get id from server
@@ -114,7 +116,7 @@ class KGPLVariable:
 
             r = requests.post(var_url,
                               json={"id": self.vid, "val_id": self.val_id,
-                                    "comment": comment})
+                                    "comment": comment, "user": user})
             if r.status_code != 201:
                 if r.status_code == 404:
                     print("value id not found")
@@ -155,23 +157,27 @@ def load(vid, l_url):
 # ---------------------------API-----------------------------------#
 
 
-def value(val, comment):
+def value(val, comment, user="anonymous", dependency=[]):
     if type(val) not in [int, float, tuple, list, dict, str, KGPLValue,
                          KGPLVariable]:
         raise Exception("cannot construct KGPLValue on this type")
     if type(comment) != str:
         raise Exception("Comment needs to be a string.")
-    return KGPLValue(val, comment)
+    if type(dependency) != list:
+        raise Exception("Dependency must be a list of url.")
+    if type(user) != str:
+        raise Exception("user name must be a string.")
+    return KGPLValue(val, comment, user, dependency)
 
 
-def variable(val_id, comment):
+def variable(val_id, comment, user="anonymous"):
     if type(val_id) not in [str, KGPLValue]:
         raise Exception("cannot construct KGPLVariable")
     if type(val_id) is KGPLValue:
         val_id = val_id.getVid()
     if type(comment) != str:
         raise Exception("Comment needs to be a string.")
-    return KGPLVariable(val_id, comment)
+    return KGPLVariable(val_id, comment, user)
 
 
 def load_val(vid):
@@ -181,16 +187,15 @@ def load_val(vid):
         val = tuple(tmp_val)
     else:
         val = tmp_val
-    return KGPLValue(val, context["comment"], vid)
+    return KGPLValue(val, context["comment"], context["user"], context["dependency"], vid)
 
 
 def load_var(vid):
     context = load(vid, loadvar_url)
-    return KGPLVariable(context["val_id"], context["comment"], vid,
+    return KGPLVariable(context["val_id"], context["comment"], context["user"], vid,
                         context["timestamp"])
 
-
-# TODO: add comment
+# to do: ask if set_var change the owner of the variable? I prefer not but still neet to make this clear.
 def set_var(kg_var, val_id, new_comment):
     """
     kg_var is the kgplVariable.
