@@ -40,6 +40,13 @@ class KGPLValue:
             r = requests.get(next_val_id_url)
             self.val = val
             self.comment = comment
+            for i,d in enumerate(dependency):
+                if isinstance(d, KGPLValue):
+                    dependency[i] = d.getVid()
+                elif isinstance(d, KGPLVariable):
+                    dependency[i] = d.getValid()
+                elif not isinstance(d, str):
+                    raise Exception("dependency list not valid")
             self.dependency = dependency
             self.user = user
             if r.status_code == 200:
@@ -59,6 +66,7 @@ class KGPLValue:
                 raise Exception("creation failed")
         else:
             # generate an existing kgplValue
+            # never use this method
             self.vid = vid
             self.val = val
             self.comment = comment
@@ -125,6 +133,7 @@ class KGPLVariable:
             self.timestamp = ts
         else:
             # generate an existing kgplVariable
+            # never use this method
             self.vid = vid
             self.val_id = val_id
             self.timestamp = timestamp  # should always initialzie the value of self.timestamp afterwards.
@@ -195,7 +204,7 @@ def load_var(vid):
     return KGPLVariable(context["val_id"], context["comment"], context["user"], vid,
                         context["timestamp"])
 
-# to do: ask if set_var change the owner of the variable? I prefer not but still neet to make this clear.
+# to do: ask if set_var change the owner of the variable?
 def set_var(kg_var, val_id, new_comment):
     """
     kg_var is the kgplVariable.

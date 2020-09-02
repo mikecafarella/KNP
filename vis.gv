@@ -1,0 +1,71 @@
+digraph G {
+subgraph cluster_0 {
+node [style=filled];
+color=blue;
+label=Wendy;
+val0;
+subgraph clusterofval1 {
+node [style=filled];
+color=black;
+label=var0;
+val1;
+}
+subgraph clusterofval2 {
+node [style=filled];
+color=black;
+label=var1;
+val2;
+}
+}
+subgraph cluster_1 {
+node [style=filled];
+color=blue;
+label=Tony;
+val3;
+subgraph clusterofval4 {
+node [style=filled];
+color=black;
+label=var2;
+val4;
+}
+}
+subgraph cluster_2 {
+node [style=filled];
+color=blue;
+label=Peter;
+val5;
+subgraph clusterofval6 {
+node [style=filled];
+color=black;
+label=var3;
+val6;
+}
+}
+subgraph cluster_3 {
+node [style=filled];
+color=blue;
+label=Wendy;
+val7;
+}
+subgraph cluster_4 {
+node [style=filled];
+color=blue;
+label=anonymous;
+subgraph clusterofval8 {
+node [style=filled];
+color=black;
+label=var4;
+val8;
+}
+}
+val1 -> val2;
+val0 -> val2;
+val1 -> val3;
+val1 -> val4;
+val2 -> val4;
+val2 -> val5;
+val4 -> val6;
+val6 -> val7;
+val4 -> val8;
+val6 -> val8;
+}

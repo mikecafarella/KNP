@@ -92,7 +92,6 @@ def post_val():
     for d in d["dependency"]:
         durl = URIRef(d)
         dg.add((durl, derive, url))
-    dg.add((url, belongTo, ownername))
     g.add((url, hasValue, val))
     g.add((url, kgplType, kgplValue))
     g.add((url, pyType, pyt))
@@ -396,17 +395,17 @@ def frontend_val(vid):
 
 """frontend"""
 
+@app.route("/graph1.svg", methods=['GET'])
+def get_svg():
+    return flask.send_file("graph1.svg")
 
 @app.route("/visualization", methods=['GET'])
-def sendHTML():
-    return flask.render_template("visualization.html")
-
-@app.route("/getDBjson", methods=['GET'])
-def get_json():
-    json = {"nodes": [], "links": []}
+def visual():
+    user_dict = {}
+    depend_dict = {}
     current = ID_gen_val.current
-    for x in range(0, current):
-        url = ns["val/" + str(x)]
+    for vn in range(0, current):
+        url = ns["val/" + str(vn)]
         qres = g.query(
             """SELECT ?user
             WHERE {
@@ -419,68 +418,113 @@ def get_json():
             flask.abort(500)
         else:
             for user, in qres:
-                json["nodes"].append({"name": user, "label": str(url), "id": x})
-
+                user_dict[vn] = str(user)
+                # json["values"][str(url)] = str(user)
+        depend_dict[vn] = []
         dqres = dg.query(
             """SELECT ?durl
             WHERE {
-                ?url kg:derive ?durl .
+                ?durl kg:derive ?url .
             }""",
             initBindings={'url': url}    
         )
         for durl, in dqres:
-            target = int(str(durl)[str(durl).rfind("/") + 1:])
-            json["links"].append({"source": x, "target": target})
-    """
-    json = {
-        "nodes": [
-          {
-            "name": "Peter",
-            "label": "Person",
-            "id": 1
-          },
-          {
-            "name": "Michael",
-            "label": "Person",
-            "id": 2
-          },
-          {
-            "name": "Neo4j",
-            "label": "Database",
-            "id": 3
-          },
-          {
-            "name": "Graph Database",
-            "label": "Database",
-            "id": 4
-          }
-        ],
-        "links": [
-          {
-            "source": 1,
-            "target": 2,
-            "type": "KNOWS",
-            "since": 2010
-          },
-          {
-            "source": 1,
-            "target": 3,
-            "type": "FOUNDED"
-          },
-          {
-            "source": 2,
-            "target": 3,
-            "type": "WORKS_ON"
-          },
-          {
-            "source": 3,
-            "target": 4,
-            "type": "IS_A"
-          }
-        ]
-    }
-    """
-    return flask.jsonify(json)
+            src = int(str(durl)[str(durl).rfind("/") + 1:])
+            depend_dict[vn].append(src)
+    cluster = []
+    cluster_dict = {}
+    # cluster_depend = []
+    for x in range(0, current):
+        added = False
+        if user_dict[x] == "anonymous":
+            cluster.append(["anonymous", [x]])
+            # cluster_depend.append("don't care")
+            cluster_dict[x] = len(cluster) - 1
+            continue
+        lowest_level = 0
+        for j in depend_dict[x]:
+            if cluster_dict[j] > lowest_level:
+                lowest_level = cluster_dict[j]
+        for i in range(lowest_level, len(cluster)):
+            l = cluster[i]
+            if l[0] == user_dict[x]:
+                added = True
+                cluster[i][1].append(x)
+                cluster_dict[x] = i
+                break
+            """
+            if depend_dict[x] == []:
+                cluster[i][1].append(x)
+                added = True
+                break
+            depend_set = {cluster_dict[j] for j in depend_dict[x]}
+            if cluster_depend < lowest_level:
+                continue
+            if depend_set > cluster_depend[i]:
+                cluster_depend[i] = depend_set
+            cluster[i][1].append(x)
+            cluster_dict[x] = i
+            added = True
+            break
+            """
+        if not added:
+            cluster.append([user_dict[x], [x]])
+            cluster_dict[x] = len(cluster) - 1
+            # cluster_depend.append({cluster_dict[j] for j in depend_dict[x]})
+        """
+        print(cluster)
+        print(cluster_depend)
+        print(cluster_dict)
+        """
+    with open("vis.gv", "w") as file:
+        file.write("digraph G {\n")
+        for i,l in enumerate(cluster):
+            file.write("subgraph cluster_" + str(i) + " {\nnode [style=filled];\ncolor=blue;\nlabel=" + l[0] + ";\n")
+            for node in l[1]:
+                val_url = ns["val/" + str(node)]
+                qres = g.query(
+                    """SELECT ?var_url
+                    WHERE {
+                        ?var_url kg:kgplType kg:kgplVariable ;
+                            kg:valueHistory ?ts .
+                        ?ts kg:hasKGPLValue ?val_url .
+                    }""",
+                    initBindings={'val_url': val_url}
+                )
+                if len(qres) == 0:
+                    file.write("val" + str(node) + ";\n")
+                else:
+                    label = ""
+                    c = 1
+                    for var_url, in qres:
+                        label += "var" + str(var_url)[str(var_url).rfind("/") + 1:]
+                        if c == len(qres):
+                            break;
+                        label += ", "
+                        c += 1
+                    file.write("subgraph clusterofval" + str(node) + " {\nnode [style=filled];\ncolor=black;\nlabel=" + label + ";\n")
+                    file.write("val" + str(node) + ";\n")
+                    file.write("}\n")
+            file.write("}\n")
+        for x in depend_dict:
+            vn = "val" + str(x)
+            for t in depend_dict[x]:
+                file.write("val" + str(t) + " -> " + vn + ";\n")
+        file.write("}\n")
+    os.system("dot -Tpng vis.gv -o templates/graph.png")
+    return flask.render_template("visualization.html")
+
+@app.route("/css/graphviz.svg.css", methods=['GET'])
+def get_css():
+    return flask.send_file("css/graphviz.svg.css")
+
+@app.route("/js/jquery.graphviz.svg.js", methods=['GET'])
+def get_js():
+    return flask.send_file("js/jquery.graphviz.svg.js")
+
+@app.route("/graph.png", methods=['GET'])
+def pic():
+    return flask.send_file("templates/graph.png")
 
 @app.route("/var/<vid>", methods=['GET'])
 def frontend_var(vid):
