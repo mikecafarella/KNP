@@ -44,38 +44,7 @@ kgplVariable = ns.kgplVariable
 
 @app.route("/", methods=['GET'])
 def main():
-    cur_val = []
-    qres = g.query(
-        """SELECT ?url ?com
-        WHERE {
-            ?url kg:kgplType kg:kgplValue ;
-               kg:pyType ?pyt ;
-               kg:hasComment ?com;
-               kg:hasValue ?val .
-        }""",
-    )
-
-    for url,com in qres:
-        cur_val.append((url,com))
-    cur_var = []
-    qres = g.query(
-        """SELECT ?url ?com
-        WHERE {
-            ?url kg:kgplType kg:kgplVariable ;
-                 kg:valueHistory ?ts .
-            ?ts  kg:hasComment ?com;
-                 kg:hasKGPLValue ?val .
-        }""",
-    )
-
-    for url, com in qres:
-        cur_var.append((url,com))
-    context = {
-        "KGPLValue": cur_val,
-        "KGPLVariable":cur_var
-    }
-
-    return flask.jsonify(**context), 200
+    return "KGPL", 200
 
 
 @app.route("/nextval", methods=['GET'])
