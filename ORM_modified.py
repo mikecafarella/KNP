@@ -155,62 +155,52 @@ class Relation:
     It contains string field with query.
     We call Relation.query when we need to do the query.
     """
-    def __init__(self, entity_id: str, property_id: str, isSubject: bool, limit: int, rowVerbose: bool, colVerbose: bool, time_property: str, time: str):
+    def __init__(self, entity_id: str, property_id: str, isSubject: bool, limit: int, rowVerbose: bool, colVerbose: bool, time_property: str, time: str, name: str):
         self.entity_id = entity_id
         self.query_str = ""
         self.dic = {}
         self.result_dic = {"Entity ID": []}
-        self.column_dic = {}
         self.count = 0
         self.time_property = time_property
         self.time = time
         self.limit = limit
+        self.focus = "Entity ID"
         if property_id:
-            self.count += 1
-            self.dic[self.count] = {}
-            self.dic[self.count]["property_id"] = property_id
-            self.dic[self.count]["isSubject"] = isSubject
-            self.dic[self.count]["limit"] = limit
-            self.dic[self.count]["rowVerbose"] = rowVerbose
-            self.dic[self.count]["colVerbose"] = colVerbose
-            self.dic[self.count]['time_property'] = time_property
-            self.dic[self.count]['time'] = time
-            self.query_str = self.define_query_relation()
+            self.extend(property_id, isSubject, name, rowVerbose, colVerbose, limit, time_property, time)
 
     def query(self):
-        # TODO: We hardcode date here, require change later (assume only one time that rowverbose or colverbose can be true)
-        # TODO: The item num here cannot exceed 10
         if self.query_str == "":
             self.result_dic = {"Entity ID": ['http://www.wikidata.org/entity/' + str(self.entity_id)]}
             return self.result_dic
         results = get_results(endpoint_url, self.query_str)
         result_dict = {"Entity ID": ['http://www.wikidata.org/entity/' + str(self.entity_id)]}
-        # result_dict[get_name(self.entity_id)] = []
         for i in range(1, self.count + 1):
-            result_dict[get_name(self.dic[i]["property_id"])] = []
+            result_dict[self.dic[i]["name"]] = []
             if self.dic[i]["colVerbose"]:
-                result_dict["date"] = []
+                result_dict[self.dic[i]["name"]+"_2"] = []
         for result in results['results']['bindings']:
             for key, value in result.items():
                 if key[-2] == "_":
                     if key[-1] == "1":
-                        result_dict[get_name(self.dic[int(key[-3])]["property_id"])].append(value['value'])
+                        result_dict[self.dic[i]["name"]].append(value['value'])
                     else:
                         if self.dic[i]["colVerbose"]:
-                            result_dict["date"].append(value['value'])
+                            result_dict[self.dic[i]["name"]+"_2"].append(value['value'])
                 else:
-                    result_dict[get_name(self.dic[int(key[-1])]["property_id"])].append(value['value'])
+                    result_dict[key].append(value['value'])
         if self.dic[i]["colVerbose"] and not self.dic[i]["rowVerbose"]:
-            idx = result_dict["date"].index(max(result_dict["date"]))
-            result_dict["date"] = [max(result_dict["date"])]
-            result_dict[get_name(self.dic[int(key[-3])]["property_id"])] = [result_dict[get_name(self.dic[int(key[-3])]["property_id"])][idx]]
-        result_dict["Entity ID"] = ['http://www.wikidata.org/entity/' + str(self.entity_id)] * len(result_dict[get_name(self.dic[self.count]["property_id"])])
+            idx = result_dict[self.dic[i]["name"]+"_2"].index(max(result_dict[self.dic[i]["name"]+"_2"]))
+            result_dict[self.dic[i]["name"]+"_2"] = [max(result_dict[self.dic[i]["name"]+"_2"])]
+            result_dict[self.dic[i]["name"]] = [result_dict[self.dic[i]["name"]][idx]]
+        result_dict["Entity ID"] = ['http://www.wikidata.org/entity/' + str(self.entity_id)] * len(result_dict[self.dic[self.count]["name"]])
         self.result_dic = result_dict
         return result_dict
 
-    def extend(self, property_id: str, isSubject: bool, rowVerbose=False, colVerbose=False, limit=None, time_property=None, time=None):
+    def extend(self, property_id: str, isSubject: bool, name: str, rowVerbose=False, colVerbose=False, limit=None, time_property=None, time=None):
         self.count += 1
         self.dic[self.count] = {}
+        self.dic[self.count]["name"] = name
+        self.dic[self.count]["focus"] = self.focus
         self.dic[self.count]["property_id"] = property_id
         self.dic[self.count]["isSubject"] = isSubject
         self.dic[self.count]["limit"] = limit
@@ -225,6 +215,9 @@ class Relation:
             self.limit = limit
         self.query_str = self.define_query_relation()
 
+    def changeFocus(self, name = "Entity ID"):
+        self.focus = name
+
     def define_query_relation(self):
 
         rdf_triple, time_filter, limit_statement = """""", """""", """"""
@@ -232,32 +225,34 @@ class Relation:
         if self.count < 1:
             return None
 
-        #TODO: Fix the implementation
-        # The else is perfect, which means isVerbose=False before, which is the most cases
-        # We should focus on small modification of rowVerbose and colVerbose
-        # Maybe the current implementation is perfect, we can fix in query part
-        if self.dic[1]["rowVerbose"] or self.dic[1]["colVerbose"]:
-            rdf_triple = """ wd:""" + self.entity_id + """ p:""" + self.dic[1]['property_id'] + """ ?dummy .""" +\
-                          """?dummy """ + """ps:""" + self.dic[1]['property_id'] + """ ?""" + item + str(1) + """_1""" + """; """ + """pq:P585""" + """ ?""" + item + str(1) + """_2""" + """ ."""
-        else:
-            if self.dic[1]["isSubject"]:
-                rdf_triple = """?""" + item + str(1) + """ wdt:""" + self.dic[1]["property_id"] + """ wd:""" + self.entity_id + """ ."""
-            else:
-                rdf_triple = """wd:""" + self.entity_id + """ wdt:""" + self.dic[1]["property_id"] + """ ?""" + item + str(1) + """ ."""
-
-        for i in range(2, self.count + 1):
-            if self.dic[i]["rowVerbose"] or self.dic[1]["colVerbose"]:
-                rdf_triple += """?""" + item + str(i-1) + """ p:""" + self.dic[i]['property_id'] + """ ?dummy .""" + \
-                             """?dummy """ + """ps:""" + self.dic[i]['property_id'] + """ ?""" + item + str(i) + """_1""" + """; """ + """pq:P585""" + """ ?""" + item + str(i) + """_2""" + """ ."""
-            else:
-                if self.dic[i]["isSubject"]:
-                    rdf_triple += """?""" + item + str(i) + """ wdt:""" + self.dic[i]["property_id"] + """ ?""" + item + str(i-1) + """ ."""
+        # TODO: May be some problems regarding verbose
+        for i in range(1, self.count + 1):
+            if self.dic[i]["rowVerbose"] or self.dic[i]["colVerbose"]:
+                if self.dic[i]["focus"] == "Entity ID":
+                    rdf_triple += """wd:""" + self.entity_id + """ p:""" + self.dic[i]['property_id'] + """ ?statement.""" + \
+                                """?statement """ + """ps:""" + self.dic[i]['property_id'] + """ ?""" + self.dic[i]['name'] + """_1.""" + \
+                                """?statement """ + """?pq """ + """?""" + self.dic[i]['name'] + """_2.""" + \
+                                """?qual wikibase:qualifier ?pq."""
                 else:
-                    rdf_triple += """?""" +item + str(i-1) + """ wdt:""" + self.dic[i]["property_id"] + """ ?""" + item + str(i) + """ ."""
-
+                    rdf_triple += """?""" + self.dic[i]["focus"] + """ p:""" + self.dic[i]['property_id'] + """ ?statement.""" + \
+                                  """?statement """ + """ps:""" + self.dic[i]['property_id'] + """ ?""" + self.dic[i]['name'] + """_1.""" + \
+                                  """?statement """ + """?pq """ + """?""" + self.dic[i]['name'] + """_2.""" + \
+                                  """?qual wikibase:qualifier ?pq."""
+            # none-verbose version
+            else:
+                if self.dic[i]["focus"] == "Entity ID":
+                    if self.dic[i]["isSubject"]:
+                        rdf_triple += """?""" + self.dic[i]["name"] + """ wdt:""" + self.dic[i]["property_id"] + """ wd:""" + self.entity_id + """ ."""
+                    else:
+                        rdf_triple += """wd:""" + self.entity_id + """ wdt:""" + self.dic[i]["property_id"] + """ ?""" + self.dic[i]["name"] + """ ."""
+                else:
+                    if self.dic[i]["isSubject"]:
+                        rdf_triple += """?""" + self.dic[i]["name"] + """ wdt:""" + self.dic[i]["property_id"] + """ ?""" + self.dic[i]["focus"] + """ ."""
+                    else:
+                        rdf_triple += """?""" + self.dic[i]["focus"] + """ wdt:""" + self.dic[i]["property_id"] + """ ?""" + self.dic[i]["name"] + """ ."""
 
         if self.time_property is not None:
-            time_filter = """?""" + item + str(1) + """ p:""" + self.time_property + """ ?pubdateStatement.
+            time_filter = """?""" + self.dic[1]["name"] + """ p:""" + self.time_property + """ ?pubdateStatement.
                           ?pubdateStatement ps:""" + self.time_property + """ ?date
                           FILTER (YEAR(?date) = """ + self.time + """)"""
 
@@ -267,21 +262,40 @@ class Relation:
         label_statement = """Service wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en" }"""
 
         query = """SELECT DISTINCT """
-        if self.count >= 1:
-            for i in range(1, self.count+1):
-                if self.dic[i]["rowVerbose"] or self.dic[i]["colVerbose"]:
-                    query += """?""" + item + str(i) + """_1 ?""" + item + str(i) + """_2 """
-                else:
-                    query += """?""" + item + str(i) + """ """
+        for i in range(1, self.count+1):
+            if self.dic[i]["rowVerbose"] or self.dic[i]["colVerbose"]:
+                query += """?""" + self.dic[i]["name"] + """_1 ?""" + self.dic[i]["name"] + """_2 """
+            else:
+                query += """?""" + self.dic[i]["name"] + """ """
         query += """ WHERE {""" + rdf_triple + time_filter + label_statement + """} """ + limit_statement
 
         return query
 
     def __str__(self):
-        return self.query_str
+        string = "{\n"
+        flag = True
+        for key, value in self.result_dic.items():
+            if flag:
+                string += key + ": " + str(value)
+                flag = False
+            else:
+                string += ",\n" + key + ": " + str(value)
+        string += "\n}"
+        return string
 
-def createRelation(entity_id: str, property_id=None, isSubject=None, limit=None, rowVerbose=None, colVerbose=None, time_property=None, time=None):
-    return Relation(entity_id, property_id, isSubject, limit, rowVerbose, colVerbose, time_property, time)
+    def __getattr__(self, col_name):
+        if col_name in self.result_dic.keys():
+            return self.result_dic[col_name]
+        else:
+            print(col_name + " has not been found.")
+            return None
+
+
+def createRelation(entity_id: str, property_id=None, isSubject=None, limit=None, rowVerbose=None, colVerbose=None, time_property=None, time=None, name=None):
+    if property_id and not name:
+        print("Please specify the name of the first column")
+        return None
+    return Relation(entity_id, property_id, isSubject, limit, rowVerbose, colVerbose, time_property, time, name)
 
 def get_examples_new(temp_id: str, contain_property:str, isSubject : bool, limit, time_property: str, time:str):
     results = Result(temp_id, contain_property, isSubject, limit, time_property, time)
@@ -497,41 +511,41 @@ def intersect_dict(join_id: str, dict1: {str: list}, dict2: {str: list}):
 
 
 if __name__ == '__main__':
-    # print("USA population history")
-    # r = createRelation("Q30")
-    # r.extend("P1082", isSubject=False, isVerbose=True)
-    # print(r)
-    # r.query()
-    # print(r.result_dic)
-    #
-    # print()
-    # print("Latest population of Canada")
-    # r = createRelation("Q16", "P1082", isSubject=False)
-    # print(r)
-    # r.query()
-    # print(r.result_dic)
-    #
-    # print()
-    # print("Population of the capital city of every country in the European Union")
-    # r = createRelation("Q458", "P150", isSubject=False)
-    # print(r)
-    # r.extend("P36", isSubject=False)
-    # print(r)
-    # r.extend("P1082", isSubject=False, isVerbose=True)
-    # print(r)
-    # r.query()
-    # print(r.result_dic)
-    #
-    # print()
-    # print("Film Actor")
-    # r = createRelation("Q10800557", "P106", isSubject=True, limit=10)
-    # print(r)
-    # r.extend("P19", isSubject=False)
-    # print(r)
-    # r.extend("P1082", isSubject=False)
-    # print(r)
-    # r.query()
-    # print(r.result_dic)
+    print("USA population history")
+    r = createRelation("Q30")
+    r.extend("P1082", isSubject=False, isVerbose=True)
+    print(r)
+    r.query()
+    print(r.result_dic)
+
+    print()
+    print("Latest population of Canada")
+    r = createRelation("Q16", "P1082", isSubject=False)
+    print(r)
+    r.query()
+    print(r.result_dic)
+
+    print()
+    print("Population of the capital city of every country in the European Union")
+    r = createRelation("Q458", "P150", isSubject=False)
+    print(r)
+    r.extend("P36", isSubject=False)
+    print(r)
+    r.extend("P1082", isSubject=False, isVerbose=True)
+    print(r)
+    r.query()
+    print(r.result_dic)
+
+    print()
+    print("Film Actor")
+    r = createRelation("Q10800557", "P106", isSubject=True, limit=10)
+    print(r)
+    r.extend("P19", isSubject=False)
+    print(r)
+    r.extend("P1082", isSubject=False)
+    print(r)
+    r.query()
+    print(r.result_dic)
 
     print("USA population history")
     print("Multiple rows")
@@ -558,65 +572,111 @@ if __name__ == '__main__':
     r.query()
     print(r.result_dic)
 
-    # print()
-    # print("Examples of books published in 1998")
-    # r = createRelation("Q571", "P31", isSubject=True, limit=10, time="1998", time_property="P577")
-    # print(r)
-    # r.query()
-    # print(r.result_dic)
-    #
-    #
+    print()
+    print("Examples of books published in 1998")
+    r = createRelation("Q571", "P31", isSubject=True, limit=10, time="1998", time_property="P577")
+    print(r)
+    r.query()
+    print(r.result_dic)
 
 
-    # print("USA population history")
-    # result = direct_query("Q30", "P1082", None, "P585")
-    # print(result)
-    #
-    # print()
-    # print("Latest population of Canada")
-    # result = direct_query("Q16", "P1082")
-    # print(result)
-    #
-    # print()
-    # print("GDP of every country in the European Union")
-    # result = get_examples_new("Q458", "P150", False, None, None, None)
-    # print(result)
-    # result.extend("Q458", "P2131", False, None, None)
-    # print(result)
-    # print(result.query())
-    #
-    # print()
-    # print("Examples of books published in 1998")
-    # result = get_examples_new("Q571", "P31", True, 10, "P577", "1998")
-    # print(result)
-    # print(result.query())
-    #
-    #
-    # print()
-    # print("Film Actor")
-    # result = get_examples_new("Q10800557", "P106", True, 10, None, None)
-    # print(result)
-    # result.extend("Q10800557", "P19", False, None, None)
-    # print(result)
-    # result.extend("P19", "P1082", False, None, None)
-    # print(result)
-    # print(result.query())
 
-# print(get_name("Q10800557"))
-#
-# print("new_dict_filter:")
-# new_dict_filter = filters_for_dict()
-# new_dict_filter.add_filter('P1082', '>', 38115, True)
-# print(new_dict_filter.entity_list)
-# print(new_dict_filter.comparison_list)
-# print(new_dict_filter.value_list)
-# new_dict_filter.filter(result)
-# print(result)
-#
-#
-# print('Test merge & intersection')
-# dict1 = {'Q1': ['1', '2', '4', '8'], 'Q2': ['100', '200', '300', '400']}
-# dict2 = {'Q1': ['2', '4', '6', '8'], 'Q3': ['-100', '-200', '-300', '-400']}
-# print(merge_dict('Q1', dict1, dict2))
-# print(intersect_dict('Q1', dict1, dict2))
+
+    print("USA population history")
+    result = direct_query("Q30", "P1082", None, "P585")
+    print(result)
+
+    print()
+    print("Latest population of Canada")
+    result = direct_query("Q16", "P1082")
+    print(result)
+
+    print()
+    print("GDP of every country in the European Union")
+    result = get_examples_new("Q458", "P150", False, None, None, None)
+    print(result)
+    result.extend("Q458", "P2131", False, None, None)
+    print(result)
+    print(result.query())
+
+    print()
+    print("Examples of books published in 1998")
+    result = get_examples_new("Q571", "P31", True, 10, "P577", "1998")
+    print(result)
+    print(result.query())
+
+
+    print()
+    print("Film Actor")
+    result = get_examples_new("Q10800557", "P106", True, 10, None, None)
+    print(result)
+    result.extend("Q10800557", "P19", False, None, None)
+    print(result)
+    result.extend("P19", "P1082", False, None, None)
+    print(result)
+    print(result.query())
+
+    print(get_name("Q10800557"))
+
+    print("new_dict_filter:")
+    new_dict_filter = filters_for_dict()
+    new_dict_filter.add_filter('P1082', '>', 38115, True)
+    print(new_dict_filter.entity_list)
+    print(new_dict_filter.comparison_list)
+    print(new_dict_filter.value_list)
+    new_dict_filter.filter(result)
+    print(result)
+
+
+    print('Test merge & intersection')
+    dict1 = {'Q1': ['1', '2', '4', '8'], 'Q2': ['100', '200', '300', '400']}
+    dict2 = {'Q1': ['2', '4', '6', '8'], 'Q3': ['-100', '-200', '-300', '-400']}
+    print(merge_dict('Q1', dict1, dict2))
+    print(intersect_dict('Q1', dict1, dict2))
+
+    print("European Union")
+    r = createRelation("Q458")
+    r.extend("P150", False, "Countries")
+    print(r.query_str)
+    r.changeFocus("Countries")
+    r.extend("P2131", False, "GDP")
+    print(r.query_str)
+    r.extend("P36", False, "Capitals")
+    print(r.query_str)
+    r.changeFocus("Capitals")
+    r.extend("P1082", False, "Population_of_capitals")
+    print(r.query_str)
+    r.query()
+    print(r)
+    print("Capitals")
+    print(r.Capitals)
+
+    print()
+    print("Obama")
+    r = createRelation("Q76")
+    r.extend("P26", False, "Spouse")
+    print(r.query_str)
+    r.extend("P19", False, "Place_of_birth_president")
+    print(r.query_str)
+    r.changeFocus("Spouse")
+    r.extend("P19", False, "Place_of_birth_spouse")
+    print(r.query_str)
+    r.changeFocus("Place_of_birth_spouse")
+    r.extend("P1082", False, "population", rowVerbose=True, colVerbose=True)
+    print(r.query_str)
+    r.query()
+    print(r)
+    print(r.Place_of_birth_spouse)
+
+    print()
+    print("President")
+    r = createRelation("Q11696")
+    r.extend("P39", True, "Presidents")
+    r.changeFocus("Presidents")
+    r.extend("P26", False, "Spouses")
+    r.extend("P569", False, "Date_of_birth_president")
+    r.changeFocus("Spouses")
+    r.extend("P569", False, "Date_of_birth_spouse")
+    r.query()
+    print(r)
 
