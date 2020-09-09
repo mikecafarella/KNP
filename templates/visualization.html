@@ -117,6 +117,45 @@
                                 le[i].style.visibility = "visible"
                             }
                         }
+
+
+                        // iterate through all clusters
+                        var clusters = document.getElementsByClassName("cluster");
+                        for (var i = 0; i < clusters.length; ++i) {
+                            //console.log(clusters[i].outerHTML.match(/<title>(.*?)<\/title>/)[1]);
+                            //console.log(clusters[i].firstChild.innerHTML);
+                            var title = clusters[i].outerHTML.match(/<title>(.*?)<\/title>/)[1];
+                            var ulist = [];
+                            for (var j = 0; j < title.length; ++j) {
+                                if (title.charAt(j) == "_") {
+                                    ulist.push(j)
+                                }
+                            }
+
+                            var id_list = []
+                            for (var j = 0; j < ulist.length - 1; ++j) {
+                                id_list.push(parseInt(title.substring(ulist[j]+1, ulist[j+1])))
+                            }
+                            
+                            var flag = false; // hidden
+                            for (var j = 0; j < id_list.length; ++j) {
+                                console.log(id_list[j]);
+                                var name = "val" + id_list[j].toString();
+                                console.log(name);
+                                console.log(gv.nodesByName());
+                                var status = gv.nodesByName()[name].getAttribute("data-collapse")
+                                if (status == 0){ // not hidden
+                                    flag = true // not hidden
+                                }
+                            }
+
+                            if (!flag) { // hidden
+                                clusters[i].style.visibility = "hidden"
+                            }
+                            else {
+                                clusters[i].style.visibility = "visible"
+                            }
+                        }
                     }
                         /*console.log(gv.nodes())
                         gv.nodes().click(function () {
@@ -150,7 +189,9 @@
                             gv.bringToFront($set)
                         }) */
                         gv.nodes().dblclick(function() {
-                            var url = this.attributes[2].value
+                            var url = this.attributes[2].value;
+                            url = url.substring(0, 3) + "/" + url.substring(3, url.length);
+                            console.log(url)
                             window.open(url, "_blank")
                         })
                         $(document).keydown(function (evt) {

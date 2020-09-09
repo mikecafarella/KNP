@@ -10,52 +10,52 @@
 <title>G</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-583 234,-583 234,4 -4,4"/>
 <g id="clust1" class="cluster">
-<title>cluster_0</title>
+<title>clusterusr_0_1_2_</title>
 <polygon fill="none" stroke="blue" points="60,-374 60,-571 210,-571 210,-374 60,-374"/>
 <text text-anchor="middle" x="135" y="-555.8" font-family="Times,serif" font-size="14.00">Wendy</text>
 </g>
 <g id="clust2" class="cluster">
-<title>clusterofval1</title>
+<title>clustervar_1_</title>
 <polygon fill="none" stroke="black" points="68,-465 68,-540 138,-540 138,-465 68,-465"/>
 <text text-anchor="middle" x="103" y="-524.8" font-family="Times,serif" font-size="14.00">var0</text>
 </g>
 <g id="clust3" class="cluster">
-<title>clusterofval2</title>
+<title>clustervar_2_</title>
 <polygon fill="none" stroke="black" points="130,-382 130,-457 200,-457 200,-382 130,-382"/>
 <text text-anchor="middle" x="165" y="-441.8" font-family="Times,serif" font-size="14.00">var1</text>
 </g>
 <g id="clust4" class="cluster">
-<title>cluster_1</title>
+<title>clusterusr_3_4_</title>
 <polygon fill="none" stroke="blue" points="8,-252 8,-366 158,-366 158,-252 8,-252"/>
 <text text-anchor="middle" x="83" y="-350.8" font-family="Times,serif" font-size="14.00">Tony</text>
 </g>
 <g id="clust5" class="cluster">
-<title>clusterofval4</title>
+<title>clustervar_4_</title>
 <polygon fill="none" stroke="black" points="80,-260 80,-335 150,-335 150,-260 80,-260"/>
 <text text-anchor="middle" x="115" y="-319.8" font-family="Times,serif" font-size="14.00">var2</text>
 </g>
 <g id="clust6" class="cluster">
-<title>cluster_2</title>
+<title>clusterusr_5_6_</title>
 <polygon fill="none" stroke="blue" points="72,-130 72,-244 222,-244 222,-130 72,-130"/>
 <text text-anchor="middle" x="147" y="-228.8" font-family="Times,serif" font-size="14.00">Peter</text>
 </g>
 <g id="clust7" class="cluster">
-<title>clusterofval6</title>
+<title>clustervar_6_</title>
 <polygon fill="none" stroke="black" points="80,-138 80,-213 150,-213 150,-138 80,-138"/>
 <text text-anchor="middle" x="115" y="-197.8" font-family="Times,serif" font-size="14.00">var3</text>
 </g>
 <g id="clust8" class="cluster">
-<title>cluster_3</title>
+<title>clusterusr_7_</title>
 <polygon fill="none" stroke="blue" points="105,-16 105,-91 175,-91 175,-16 105,-16"/>
 <text text-anchor="middle" x="140" y="-75.8" font-family="Times,serif" font-size="14.00">Wendy</text>
 </g>
 <g id="clust9" class="cluster">
-<title>cluster_4</title>
+<title>clusterusr_8_</title>
 <polygon fill="none" stroke="blue" points="11,-8 11,-122 97,-122 97,-8 11,-8"/>
 <text text-anchor="middle" x="54" y="-106.8" font-family="Times,serif" font-size="14.00">anonymous</text>
 </g>
 <g id="clust10" class="cluster">
-<title>clusterofval8</title>
+<title>clustervar_8_</title>
 <polygon fill="none" stroke="black" points="19,-16 19,-91 89,-91 89,-16 19,-16"/>
 <text text-anchor="middle" x="54" y="-75.8" font-family="Times,serif" font-size="14.00">var4</text>
 </g>
