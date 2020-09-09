@@ -399,6 +399,107 @@ def frontend_val(vid):
 def get_svg():
     return flask.send_file("graph1.svg")
 
+#
+#@app.route("/getCollapsedGraph", methods=['GET'])
+#def get_collapsed_graph():
+#    left = requests.get_json()
+#    nodes = left["nodes"]
+#    nodes.sort()
+#    edges = left["edges"]
+#    depend_dict = {}
+#    user_dict = {}
+#    var_dict = {}
+#    for e in edges:
+#        if e[0] in depend_dict:
+#            depend_dict[e[0]].append(e[1])
+#        else:
+#            depend_dict[e[0]] = [e[1]]
+#    for vn in nodes:
+#        url = ns["val/" + str(vn)]
+#        qres = g.query(
+#            """SELECT ?user
+#            WHERE {
+#                ?url kg:belongTo ?user .
+#            }""",
+#            initBindings={'url': url}
+#        )
+#        if len(qres) != 1:
+#            print("user")
+#            flask.abort(500)
+#        else:
+#            for user, in qres:
+#                user_dict[vn] = str(user)
+#    cluster = []
+#    cluster_dict = {}
+#    for x in nodes:
+#        added = False
+#        if user_dict[x] == "anonymous":
+#            cluster.append(["anonymous", [x]])
+#            # cluster_depend.append("don't care")
+#            cluster_dict[x] = len(cluster) - 1
+#            continue
+#        lowest_level = 0
+#        for j in depend_dict[x]:
+#            if cluster_dict[j] > lowest_level:
+#                lowest_level = cluster_dict[j]
+#        for i in range(lowest_level, len(cluster)):
+#            l = cluster[i]
+#            if l[0] == user_dict[x]:
+#                added = True
+#                cluster[i][1].append(x)
+#                cluster_dict[x] = i
+#                break
+#            """
+#            qres = g.query(
+#                """SELECT ?var_url
+#                WHERE {
+#                    ?var_url kg:kgplType kg:kgplVariable ;
+#                        kg:valueHistory ?ts .
+#                    ?ts kg:hasKGPLValue ?val_url .
+#                }""",
+#                initBindings={'val_url': url}
+#            )
+#            if len(qres) != 0:
+#                for var_url, in qres:
+#                    str(var_url)[str(var_url).rfind("/") + 1:]
+#            """
+#    with open("vis.gv", "w") as file:
+#        file.write("digraph G {\n")
+#        for i,l in enumerate(cluster):
+#            file.write("subgraph cluster_" + str(i) + " {\nnode [style=filled];\ncolor=blue;\nlabel=" + l[0] + ";\n")
+#            for node in l[1]:
+#                val_url = ns["val/" + str(node)]
+#                qres = g.query(
+#                    """SELECT ?var_url
+#                    WHERE {
+#                        ?var_url kg:kgplType kg:kgplVariable ;
+#                            kg:valueHistory ?ts .
+#                        ?ts kg:hasKGPLValue ?val_url .
+#                    }""",
+#                    initBindings={'val_url': val_url}
+#                )
+#                if len(qres) == 0:
+#                    file.write("val" + str(node) + ";\n")
+#                else:
+#                    label = ""
+#                    c = 1
+#                    for var_url, in qres:
+#                        label += "var" + str(var_url)[str(var_url).rfind("/") + 1:]
+#                        if c == len(qres):
+#                            break;
+#                        label += ", "
+#                        c += 1
+#                    file.write("subgraph clusterofval" + str(node) + " {\nnode [style=filled];\ncolor=black;\nlabel=" + label + ";\n")
+#                    file.write("val" + str(node) + ";\n")
+#                    file.write("}\n")
+#            file.write("}\n")
+#        for x in depend_dict:
+#            vn = "val" + str(x)
+#            for t in depend_dict[x]:
+#                file.write("val" + str(t) + " -> " + vn + ";\n")
+#        file.write("}\n")
+#    os.system("dot -Tpng vis.gv -o templates/graph.png")
+
 @app.route("/visualization", methods=['GET'])
 def visual():
     user_dict = {}
@@ -479,7 +580,11 @@ def visual():
     with open("vis.gv", "w") as file:
         file.write("digraph G {\n")
         for i,l in enumerate(cluster):
-            file.write("subgraph cluster_" + str(i) + " {\nnode [style=filled];\ncolor=blue;\nlabel=" + l[0] + ";\n")
+            title = ""
+            for idx, node in enumerate(l[1]):
+                title += str(node)
+                title += "_"
+            file.write("subgraph clusterusr_" + title + " {\nnode [style=filled];\ncolor=blue;\nlabel=" + l[0] + ";\n")
             for node in l[1]:
                 val_url = ns["val/" + str(node)]
                 qres = g.query(
@@ -502,7 +607,7 @@ def visual():
                             break;
                         label += ", "
                         c += 1
-                    file.write("subgraph clusterofval" + str(node) + " {\nnode [style=filled];\ncolor=black;\nlabel=" + label + ";\n")
+                    file.write("subgraph clustervar_" + str(node) + "_ {\nnode [style=filled];\ncolor=black;\nlabel=" + label + ";\n")
                     file.write("val" + str(node) + ";\n")
                     file.write("}\n")
             file.write("}\n")
@@ -511,7 +616,7 @@ def visual():
             for t in depend_dict[x]:
                 file.write("val" + str(t) + " -> " + vn + ";\n")
         file.write("}\n")
-    os.system("dot -Tpng vis.gv -o templates/graph.png")
+    os.system("dot -Tsvg vis.gv -o graph1.svg")
     return flask.render_template("visualization.html")
 
 @app.route("/css/graphviz.svg.css", methods=['GET'])
