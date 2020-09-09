@@ -49,14 +49,106 @@
                     url: "graph1.svg", 
                     ready: function() {
                         var gv = this
+                        gv.nodes().attr("data-collapse", 0)
+                        gv.nodes().attr("data-collapsed", false)
+                        var le = gv.edges()
+                        for (var i=0; i<le.length; ++i) {                           
+                            var s = le[i].getAttribute("data-name")
+                            le[i].setAttribute("data-s", s.substring(0, s.indexOf("-")))
+                            le[i].setAttribute("data-t", s.substring(s.indexOf(">") + 1, s.length))
+                        }
+                        //console.log(gv.nodesByName())
+                        //console.log(gv.edges())
+                        update();
+
+                        function update() {
+                            var ln = gv.nodes()
+                            for (var i = 0; i < ln.length; ++i) {
+                                if (ln[i].getAttribute("data-collapse") != 0) {
+                                    ln[i].style.visibility = "hidden"
+                                }
+                                else {
+                                    ln[i].style.visibility = "visible"
+                                    ln[i].onclick = function () {
+                                        console.log("clicked")
+                                        var collapsed = this.getAttribute("data-collapsed")
+                                        var inc = (collapsed == "true") ? -1 : 1;
+                                        console.log(inc)
+                                        recurse(this);
+                            
+                                        function recurse(s) {
+                                            var le = gv.edges()
+                                            for (var i = 0; i < le.length; ++i) {
+                                                f(le[i], s)
+                                            }
+                                        }
+
+                                        function f(l, s) {
+                                            var lsid = l.getAttribute("data-s")
+                                            var sid = s.getAttribute("data-name")
+                                            if (sid === lsid) {
+                                                var lt = gv.nodesByName()[l.getAttribute("data-t")]
+                                                var ltc = lt.getAttribute("data-collapse")
+                                                lt.setAttribute("data-collapse",parseInt(ltc)+inc)
+                                                recurse(lt)
+                                            }
+                                        }
+
+                                    this.setAttribute("data-collapsed", !(collapsed == "true"))
+                                    /*var $set = $()
+                                    $set.push(this)
+                                    $set = $set.add(gv.linkedFrom(this, true))
+                                    $set = $set.add(gv.linkedTo(this, true))
+                                    gv.highlight($set, true)
+                                    gv.bringToFront($set)*/
+                                    update();
+                                }
+                            }
+                        }
+
+                        var le = gv.edges()
+                        for (var i = 0; i < le.length; ++i) {
+                            var source = gv.nodesByName()[le[i].getAttribute("data-s")];
+                            var target = gv.nodesByName()[le[i].getAttribute("data-t")];
+                            if (!(source.getAttribute("data-collapse") == 0 && target.getAttribute("data-collapse") == 0)) {
+                                le[i].style.visibility = "hidden"
+                            }
+                            else {
+                                le[i].style.visibility = "visible"
+                            }
+                        }
+                    }
+                        /*console.log(gv.nodes())
                         gv.nodes().click(function () {
+                            console.log("clicked")
+                            var collapsed = this.getAttribute("data-collapsed")
+                            var inc = (collapsed == true) ? -1 : 1;
+                            console.log(inc)
+                            recurse(this);
+                            
+                            function recurse(s) {
+                                gv.edges().each(
+                                    l => {
+                                        var lsid = l.getAttribute("data-s")
+                                        var sid = s.getAttribute("data-name")
+                                        if (sid === lsid) {
+                                            var lt = gv.nodesByName()[l.getAttribute("data-t")]
+                                            var ltc = lt.getAttribute("data-collapse")
+                                            lt.setAttribute("data-collapse",parseInt(ltc)+inc)
+                                            recurse(lt)
+                                        }
+                                    }
+                                )
+                            }
+
+                            this.setAttribute("data-collapsed", !(collapsed == true))
                             var $set = $()
                             $set.push(this)
                             $set = $set.add(gv.linkedFrom(this, true))
                             $set = $set.add(gv.linkedTo(this, true))
                             gv.highlight($set, true)
                             gv.bringToFront($set)
-                        })
+                        }) */
                         gv.nodes().dblclick(function() {
                             var url = this.attributes[2].value
                             window.open(url, "_blank")
