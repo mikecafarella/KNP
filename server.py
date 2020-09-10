@@ -604,7 +604,7 @@ def visual():
                     for var_url, in qres:
                         label += "var" + str(var_url)[str(var_url).rfind("/") + 1:]
                         if c == len(qres):
-                            break;
+                            break
                         label += ", "
                         c += 1
                     file.write("subgraph clustervar_" + str(node) + "_ {\nnode [style=filled];\ncolor=black;\nlabel=" + label + ";\n")
