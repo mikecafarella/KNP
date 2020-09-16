@@ -1,0 +1,91 @@
+@prefix kg: <http://127.0.0.1:5000/> .
+
+<http://127.0.0.1:5000/val/0> kg:belongTo "Wendy" ;
+    kg:hasComment "\"initial\"" ;
+    kg:hasValue "\"excellent\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://127.0.0.1:5000/val/3> kg:belongTo "Tony" ;
+    kg:hasComment "\"inference\"" ;
+    kg:hasValue "\"0 pts is bad\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://127.0.0.1:5000/val/5> kg:belongTo "Peter" ;
+    kg:hasComment "\"I agree\"" ;
+    kg:hasValue "\"60 pts is bad enough\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://127.0.0.1:5000/val/7> kg:belongTo "Wendy" ;
+    kg:hasComment "\"haha\"" ;
+    kg:hasValue "\"wendy again\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://127.0.0.1:5000/var/0> kg:belongTo "Wendy" ;
+    kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://127.0.0.1:5000/var/0/ts/1600223369.6673968> .
+
+<http://127.0.0.1:5000/var/1> kg:belongTo "Wendy" ;
+    kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://127.0.0.1:5000/var/1/ts/1600223369.789097> .
+
+<http://127.0.0.1:5000/var/2> kg:belongTo "Tony" ;
+    kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://127.0.0.1:5000/var/2/ts/1600223369.9799297> .
+
+<http://127.0.0.1:5000/var/3> kg:belongTo "Tony" ;
+    kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://127.0.0.1:5000/var/3/ts/1600223370.164735> .
+
+<http://127.0.0.1:5000/var/4> kg:belongTo "anonymous" ;
+    kg:kgplType kg:kgplVariable ;
+    kg:valueHistory <http://127.0.0.1:5000/var/4/ts/1600223370.3588378> .
+
+<http://127.0.0.1:5000/val/1> kg:belongTo "Wendy" ;
+    kg:hasComment "\"initial\"" ;
+    kg:hasValue "\"bad\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://127.0.0.1:5000/val/2> kg:belongTo "Wendy" ;
+    kg:hasComment "\"initial\"" ;
+    kg:hasValue "\"60 pts is bad\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://127.0.0.1:5000/val/4> kg:belongTo "Tony" ;
+    kg:hasComment "\"argue\"" ;
+    kg:hasValue "\"60 pts is not bad\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://127.0.0.1:5000/val/6> kg:belongTo "Peter" ;
+    kg:hasComment "\"I disagree now\"" ;
+    kg:hasValue "\"OK 0 pts is worse\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://127.0.0.1:5000/val/8> kg:belongTo "anonymous" ;
+    kg:hasComment "\"haha\"" ;
+    kg:hasValue "\"I agree but I will never get 0\"" ;
+    kg:kgplType kg:kgplValue ;
+    kg:pyType "str" .
+
+<http://127.0.0.1:5000/var/0/ts/1600223369.6673968> kg:hasComment "shareWithTony" ;
+    kg:hasKGPLValue <http://127.0.0.1:5000/val/1> .
+
+<http://127.0.0.1:5000/var/1/ts/1600223369.789097> kg:hasComment "shareWithPeter&Tony" ;
+    kg:hasKGPLValue <http://127.0.0.1:5000/val/2> .
+
+<http://127.0.0.1:5000/var/2/ts/1600223369.9799297> kg:hasComment "conclusion" ;
+    kg:hasKGPLValue <http://127.0.0.1:5000/val/4> .
+
+<http://127.0.0.1:5000/var/3/ts/1600223370.164735> kg:hasComment "my conclusion" ;
+    kg:hasKGPLValue <http://127.0.0.1:5000/val/6> .
+
+<http://127.0.0.1:5000/var/4/ts/1600223370.3588378> kg:hasComment "I am so clever" ;
+    kg:hasKGPLValue <http://127.0.0.1:5000/val/8> .
+

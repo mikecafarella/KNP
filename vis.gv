@@ -1,57 +1,57 @@
 digraph G {
-subgraph cluster_0 {
+subgraph clusterusr_0_1_2_ {
 node [style=filled];
 color=blue;
 label=Wendy;
 val0;
-subgraph clusterofval1 {
+subgraph clustervar_1_ {
 node [style=filled];
 color=black;
 label=var0;
 val1;
 }
-subgraph clusterofval2 {
+subgraph clustervar_2_ {
 node [style=filled];
 color=black;
 label=var1;
 val2;
 }
 }
-subgraph cluster_1 {
+subgraph clusterusr_3_4_ {
 node [style=filled];
 color=blue;
 label=Tony;
 val3;
-subgraph clusterofval4 {
+subgraph clustervar_4_ {
 node [style=filled];
 color=black;
 label=var2;
 val4;
 }
 }
-subgraph cluster_2 {
+subgraph clusterusr_5_6_ {
 node [style=filled];
 color=blue;
 label=Peter;
 val5;
-subgraph clusterofval6 {
+subgraph clustervar_6_ {
 node [style=filled];
 color=black;
 label=var3;
 val6;
 }
 }
-subgraph cluster_3 {
+subgraph clusterusr_7_ {
 node [style=filled];
 color=blue;
 label=Wendy;
 val7;
 }
-subgraph cluster_4 {
+subgraph clusterusr_8_ {
 node [style=filled];
 color=blue;
 label=anonymous;
-subgraph clusterofval8 {
+subgraph clustervar_8_ {
 node [style=filled];
 color=black;
 label=var4;

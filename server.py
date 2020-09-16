@@ -367,29 +367,99 @@ def frontend_val(vid):
 
     print(url)
     qres = g.query(
-        """SELECT ?val ?pyt ?com
+        """SELECT ?val ?pyt ?com ?user
         WHERE {
             ?url kg:kgplType kg:kgplValue ;
                kg:pyType ?pyt ;
                kg:hasValue ?val ;
-               kg:hasComment ?com .
+               kg:hasComment ?com ;
+               kg:belongTo ?user.
         }""",
         initBindings={'url': url}
     )
 
     if len(qres) == 1:
-        for val, pyt, com in qres:
+        for val, pyt, com, user in qres:
             context = {
                 "KGPLValue": str(url),
-                "Current Value: ": str(val),
-                "Python Type": str(pyt),
-                "Comments": str(com)
+                "Current_Value": str(val),
+                "Python_Type": str(pyt),
+                "Comments": str(com),
+                "Owner":str(user)
             }
-            return flask.jsonify(**context), 200
+            return flask.render_template("val_meta_page.html",**context)
+            # return flask.jsonify(**context), 200
     elif len(qres) == 0:
         return flask.abort(404)
     else:
         print("Multiple Results Found, should not happen!")
+        return flask.abort(500)
+
+@app.route("/var/<vid>", methods=['GET'])
+def frontend_meta_var(vid):
+    url = ns["var/" + str(vid)]
+    his = []
+    owner=""
+    qres = g.query(
+        """SELECT ?ts ?val_url ?com ?user
+        WHERE {
+            ?url kg:kgplType kg:kgplVariable ;
+                kg:valueHistory ?ts ;
+                kg:belongTo ?user.
+            ?ts kg:hasKGPLValue ?val_url ;
+                kg:hasComment ?com .
+        }""",
+        initBindings={'url': url}
+    )
+    if len(qres) == 1:
+        for ts, val_url, com, user in qres:
+            his.append(ts)
+            val_url = str(val_url)
+            ts_for_query = ts
+            ts = str(ts)
+            com = str(com)
+            # print(val_url)
+            # actual_val_id = int(val_url[val_url.rfind('/') + 1:])
+            actual_ts = float(ts[ts.rfind('/') + 1:])
+            owner=str(user)
+
+            while True:
+                qres = g.query(
+                    """SELECT ?history ?val_uri 
+                    WHERE {
+                        ?url kg:hasComment ?com ;
+                             kg:hasHistory ?history ;
+                             kg:hasKGPLValue ?val_uri .
+                    }""",
+                    initBindings={'url': ts_for_query}
+                )
+                print(ts)
+                if len(qres) == 0:
+                    print("end")
+                    break
+                elif len(qres) != 1:
+                    print("place two")
+
+                    flask.abort(500)
+                for history, val_uri in qres:
+                    ts_for_query = history
+                    # rst.append(int(val_uri[val_uri.rfind('/') + 1:]))
+                    his.append(history)
+               
+            context = {
+                "KGPLVariable": str(url),
+                "Currently_containing_KGPLValue": val_url,
+                "Current_comment": com,
+                "Last_modified_timestamp": actual_ts,
+                "Last_modified": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(actual_ts)),
+                "History": his,
+                "Owner": str(owner)
+            }
+
+            return flask.render_template("var_meta_page.html",**context)
+    elif len(qres) == 0:
+        return flask.abort(404)
+    else:
         return flask.abort(500)
 
 
