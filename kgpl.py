@@ -13,7 +13,7 @@ var_url = server_url + "/var"
 loadvar_url = server_url + "/load/var"
 loadval_url = server_url + "/load/val"
 update_url = server_url + "/getLatest"
-
+upload_url = server_url + "/upload"
 
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -31,6 +31,19 @@ def hook(dct):
         return load_var(dct["vid"])
     return dct
 
+
+def upload_file(filename, value_id):
+    with open(filename, 'rb') as img:
+        vid = value_id.split("/")[-1]
+        # print(vid)
+        name_img= os.path.basename(filename)
+        file_to_upload = {
+            'file': open(name_img,'rb'),
+            "value_id": open(str(vid),'w+')
+        }
+        os.remove(str(vid))
+        r = requests.post(upload_url, files=file_to_upload)
+        return r.json()["filename_stored"]
 
 class KGPLValue:
     def __init__(self, val, comment, user="anonymous", dependency=[], vid=None):
@@ -53,13 +66,23 @@ class KGPLValue:
                 self.vid = r.json()["id"]
             else:
                 raise Exception("not getting correct id")
+            
+            
+            #if this is a picture/pdf/other files
+            if isinstance(val,dict):
+                if "__file__" in val.keys():
+                    # if val["__file__"] is "pic":
+                    stored_file_name = upload_file(val["original_name"], self.vid)
+                    val["stored_name"] = stored_file_name
+
+            
             r = requests.post(val_url, json={"id": self.vid,
-                                             "val": json.dumps(val,
-                                                               cls=MyEncoder),
-                                             "pyType": type(val).__name__,
-                                             "comment": json.dumps(comment,
-                                                                   cls=MyEncoder),
-                                             "user": user, "dependency": dependency},)
+                                            "val": json.dumps(val,
+                                                                cls=MyEncoder),
+                                            "pyType": type(val).__name__,
+                                            "comment": json.dumps(comment,
+                                                                    cls=MyEncoder),
+                                            "user": user, "dependency": dependency},)
             if r.status_code == 201:
                 print("Created: KGPLValue with ID", self.vid, "$", self)
             else:
@@ -192,8 +215,18 @@ def variable(val_id, comment, user="anonymous"):
 def load_val(vid):
     context = load(vid, loadval_url)
     tmp_val = json.loads(context["val"], object_hook=hook)
+
     if context["pyt"] == 'tuple':
         val = tuple(tmp_val)
+    elif context["pyt"] == 'dict':
+        val = {
+            "filename": tmp_val["original_name"],
+            "type": tmp_val["__file__"]
+            }
+        r = requests.get(upload_url+"s/"+tmp_val["stored_name"])
+        if r.status_code!=200:
+            raise Exception("file cannot be download")
+        open(tmp_val["original_name"],'wb').write(r.content)
     else:
         val = tmp_val
     return KGPLValue(val, context["comment"], context["user"], context["dependency"], vid)

@@ -4,15 +4,27 @@ import time
 
 import flask
 from flask import request
+from flask import send_from_directory
+from flask import Flask, flash, redirect, url_for
+
 from rdflib import Graph
 from rdflib import Namespace
 from rdflib import URIRef, Literal
 
 from gen import ID_gen_val
 from gen import ID_gen_var
+from werkzeug.utils import secure_filename
+
+
 
 app = flask.Flask(__name__)
 app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
+app.secret_key = b'\x13f0\x97\x86QUOHc\xfa\xe7(\xa1\x8d1'
+
+
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # server_url = "http://lasagna.eecs.umich.edu:5000"
 server_url = "http://127.0.0.1:5000"
@@ -463,6 +475,9 @@ def frontend_meta_var(vid):
         return flask.abort(500)
 
 
+
+
+
 """frontend"""
 
 @app.route("/graph1.svg", methods=['GET'])
@@ -803,6 +818,57 @@ def close_graph():
     g.close()
     dg.close()
     print("server is closing")
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part')
+            print("No file part")
+            return redirect("/upload")
+        file = request.files['file']
+        file_id = request.files['value_id']
+        # print(file_id)
+        # print(type(file_id))
+
+        # print(file_id.filename)
+        # if user does not select file, browser also
+        # submit an empty part without filename
+        if file.filename == '':
+            flash('No selected file')
+            print("No selected file")
+            return redirect("/upload")
+        if file and allowed_file(file.filename):
+            # print(type(file.filename))
+            # print(file.filename)
+
+            # print(type(add_id))
+            # new_name_before = "val_"+add_id+"_" + str(file.filename)
+            # print(new_name_before)
+            new_name = secure_filename("val_"+file_id.filename+"_"+str(file.filename))
+            print("allow")
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], new_name))
+            # add a kgplvalue
+            context = {
+                "filename_stored": new_name
+            }
+            return flask.jsonify(**context), 200
+
+    # return flask.render_template("upload.html")
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    print(app.config['UPLOAD_FOLDER']+filename)
+    return send_from_directory(app.config['UPLOAD_FOLDER'],
+                               filename), 200
+
 
 
 atexit.register(close_graph)
