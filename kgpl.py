@@ -219,6 +219,7 @@ def load_val(vid):
     if context["pyt"] == 'tuple':
         val = tuple(tmp_val)
     elif context["pyt"] == 'dict':
+        if 
         val = {
             "filename": tmp_val["original_name"],
             "type": tmp_val["__file__"]

@@ -49,10 +49,10 @@ def test5():
 
 def main():
 
-    test2()
-    # test3()
-    test4()
-    # test5()
+    # test2()
+    test3()
+    # test4()
+    test5()
 
 
 if __name__=="__main__":

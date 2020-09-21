@@ -1,14 +1,1 @@
-@prefix kg: <http://127.0.0.1:5000/> .
-
-<http://127.0.0.1:5000/val/0> kg:belongTo "Alice_Zou" ;
-    kg:hasComment "\"file upload test\"" ;
-    kg:hasValue "{\"__file__\": \"pic\", \"original_name\": \"sunrise.jpg\", \"stored_name\": \"val_0_sunrise.jpg\"}" ;
-    kg:kgplType kg:kgplValue ;
-    kg:pyType "dict" .
-
-<http://127.0.0.1:5000/val/1> kg:belongTo "Peter_Chen" ;
-    kg:hasComment "\"file upload test 2\"" ;
-    kg:hasValue "{\"__file__\": \"pdf\", \"original_name\": \"01.pdf\", \"stored_name\": \"val_1_01.pdf\"}" ;
-    kg:kgplType kg:kgplValue ;
-    kg:pyType "dict" .
 
