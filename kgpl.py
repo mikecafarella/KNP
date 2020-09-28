@@ -16,10 +16,6 @@ loadval_url = server_url + "/load/val"
 update_url = server_url + "/getLatest"
 upload_url = server_url + "/upload"
 
-class Image:
-    def __init__(self, fname):
-        self.fname = fname
-
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, KGPLValue):
@@ -74,8 +70,6 @@ class KGPLValue:
             
             
             #if this is a picture/pdf/other files
-            if isinstance(val, Image):
-                upload_file(val.)
             if isinstance(val, dict):
                 if "__file__" in val.keys():
                     # if val["__file__"] is "pic":
