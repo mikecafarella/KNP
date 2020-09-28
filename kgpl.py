@@ -5,7 +5,7 @@ import pandas
 import requests
 
 # server_url = "http://lasagna.eecs.umich.edu:8000/"
-server_url = "http://127.0.0.1:5000"
+server_url = "http://lasagna.eecs.umich.edu:5000"
 next_val_id_url = server_url + "/nextval"
 next_var_id_url = server_url + "/nextvar"
 
