@@ -3,9 +3,11 @@ import os
 import pandas
 
 import requests
+import ORM_client as ORM
 
 # server_url = "http://lasagna.eecs.umich.edu:8000/"
-server_url = "http://lasagna.eecs.umich.edu:5000"
+# server_url = "http://lasagna.eecs.umich.edu:5000"
+server_url = "http://127.0.0.1:5000"
 next_val_id_url = server_url + "/nextval"
 next_var_id_url = server_url + "/nextvar"
 
@@ -16,13 +18,30 @@ loadval_url = server_url + "/load/val"
 update_url = server_url + "/getLatest"
 upload_url = server_url + "/upload"
 
+
+
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, KGPLValue):
             return {"vid": obj.vid, "__kgplvalue__": True}
         elif isinstance(obj, KGPLVariable):
             return {"vid": obj.vid, "__kgplvariable__": True}
+        elif isinstance(obj, ORM.Relation):
+            return {
+                "entity_id": obj.entity_id,
+                "query_str": obj.query_str,
+                "dic": obj.dic,
+                "result_dic": obj.result_dic,
+                "df": obj.df.to_json(),
+                "count": obj.count,
+                "time_property": obj.time_property,
+                "time": obj.time,
+                "limit": obj.limit,
+                "focus": obj.focus,
+                "__relation__": True
+            }
         return json.JSONEncoder.default(self, obj)
+
 
 
 def hook(dct):
@@ -30,21 +49,37 @@ def hook(dct):
         return load_val(dct["vid"])
     elif "__kgplvariable__" in dct:
         return load_var(dct["vid"])
+    elif "__relation__" in dct:
+        #  entity_id: str, property_id: str, isSubject: bool, limit: int, rowVerbose: bool,
+        #  colVerbose: bool, time_property: str, time: str, name: str, reconstruct={}):
+        dct["df"] = pandas.read_json(dct["df"])
+        temp_dict = {}
+        # dct["dic"] is a dict with integer keys.
+        for k,v in dct["dic"].items():
+            try:
+                key = int(k)
+                temp_dict[key] = dct["dic"][k]
+            except Exception as ex:
+                pass
+        dct["dic"] = temp_dict
+        return ORM.Relation("dummy", "dummy,", False, 42, False, False, "dummy", "dummy", "dummy", dct)
     return dct
+
 
 
 def upload_file(filename, value_id):
     with open(filename, 'rb') as img:
         vid = value_id.split("/")[-1]
         # print(vid)
-        name_img= os.path.basename(filename)
+        name_img = os.path.basename(filename)
         file_to_upload = {
-            'file': open(name_img,'rb'),
-            "value_id": open(str(vid),'w+')
+            'file': open(name_img, 'rb'),
+            "value_id": open(str(vid), 'w+')
         }
         os.remove(str(vid))
         r = requests.post(upload_url, files=file_to_upload)
         return r.json()["filename_stored"]
+
 
 class KGPLValue:
     def __init__(self, val, comment, user="anonymous", dependency=[], vid=None):
@@ -54,7 +89,7 @@ class KGPLValue:
             r = requests.get(next_val_id_url)
             self.val = val
             self.comment = comment
-            for i,d in enumerate(dependency):
+            for i, d in enumerate(dependency):
                 if isinstance(d, KGPLValue):
                     dependency[i] = d.getVid()
                 elif isinstance(d, KGPLVariable):
@@ -67,21 +102,22 @@ class KGPLValue:
                 self.vid = r.json()["id"]
             else:
                 raise Exception("not getting correct id")
-            
-            
-            #if this is a picture/pdf/other files
+
+            # if this is a picture/pdf/other files
             if isinstance(val, dict):
                 if "__file__" in val.keys():
                     # if val["__file__"] is "pic":
-                    stored_file_name = upload_file(val["original_name"], self.vid)
+                    stored_file_name = upload_file(
+                        val["original_name"], self.vid)
                     val["stored_name"] = stored_file_name
-            
-            val_json = val.to_json() if isinstance(val, pandas.DataFrame) else json.dumps(val, cls=MyEncoder)
+
+            val_json = val.to_json() if isinstance(
+                val, pandas.DataFrame) else json.dumps(val, cls=MyEncoder)
             r = requests.post(val_url, json={"id": self.vid,
-                                            "val": val_json,
-                                            "pyType": type(val).__name__,
-                                            "comment": comment,
-                                            "user": user, "dependency": dependency},)
+                                             "val": val_json,
+                                             "pyType": type(val).__name__,
+                                             "comment": comment,
+                                             "user": user, "dependency": dependency},)
             if r.status_code == 201:
                 print("Created: KGPLValue with ID", self.vid, "$", self)
             else:
@@ -124,6 +160,8 @@ class KGPLValue:
         elif type(self.val) is KGPLValue:
             rst = "KGPLValue with ID:" + str(self.val.vid)
             return str(rst)
+        elif type(self.val) is ORM.Relation:
+            return str(self.val)
         else:
             raise Exception("val type invalid")
 
@@ -158,7 +196,8 @@ class KGPLVariable:
             # never use this method
             self.vid = vid
             self.val_id = val_id
-            self.timestamp = timestamp  # should always initialzie the value of self.timestamp afterwards.
+            # should always initialzie the value of self.timestamp afterwards.
+            self.timestamp = timestamp
 
     def getVid(self):
         return self.vid
@@ -176,6 +215,7 @@ class KGPLVariable:
     def getConcreteVal(self):
         return load_val(self.val_id)
 
+
 def load(vid, l_url):
     par = {"vid": vid}
     r = requests.get(l_url, params=par)
@@ -190,7 +230,7 @@ def load(vid, l_url):
 
 def value(val, comment, user="anonymous", dependency=[]):
     if type(val) not in [int, float, tuple, list, dict, str, KGPLValue,
-                         KGPLVariable, pandas.DataFrame]:
+                         KGPLVariable, pandas.DataFrame, ORM.Relation]:
         raise Exception("cannot construct KGPLValue on this type")
     if type(comment) != str:
         raise Exception("Comment needs to be a string.")
@@ -221,16 +261,17 @@ def load_val(vid):
         val = {
             "filename": tmp_val["original_name"],
             "type": tmp_val["__file__"]
-            }
+        }
         r = requests.get(upload_url+"s/"+tmp_val["stored_name"])
-        if r.status_code!=200:
+        if r.status_code != 200:
             raise Exception("file cannot be download")
-        open(tmp_val["original_name"],'wb').write(r.content)
+        open(tmp_val["original_name"], 'wb').write(r.content)
     elif context["pyt"] == 'DataFrame':
         val = pandas.read_json(context["val"])
     else:
         val = tmp_val
-    return KGPLValue(val, json.loads(context["comment"]), context["user"], context["dependency"], vid)
+
+    return KGPLValue(val, context["comment"], context["user"], context["dependency"], vid)
 
 
 def load_var(vid):
@@ -239,6 +280,8 @@ def load_var(vid):
                         context["timestamp"])
 
 # to do: ask if set_var change the owner of the variable?
+
+
 def set_var(kg_var, val_id, new_comment):
     """
     kg_var is the kgplVariable.

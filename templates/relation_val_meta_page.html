@@ -1,17 +1,39 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     {#    <link rel="stylesheet" href="./style.css"/>#}
 
     <script src="https://d3js.org/d3.v4.js"></script>
     <style>
+        html,
+        body,
+        table {
+            height: 100%;
+            width: 100%;
+            padding: 1px;
+            margin: 1px;
+        }
 
-        table, th, td {
+        td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-wrap: break-word;
+        }
+
+        table {
+            table-layout: fixed;
+        }
+
+        table,
+        th,
+        td {
             border: 1px solid black;
             border-collapse: collapse;
         }
 
-        th, td {
+        th,
+        td {
             padding: 10px;
         }
 
@@ -58,36 +80,48 @@
         }
     </style>
 </head>
+
 <body>
-{#                "KGPLValue": str(url),
+    {#                "KGPLValue": str(url),
 {#                "Current Value: ": str(val),
 {#                "Python Type": str(pyt),
 {#                "Comments": str(com)#}
-<!-- <div class="row"> -->
+    <!-- <div class="row"> -->
     <!-- <div class="column"> -->
-        <h2>Metadata for {{ KGPLValue }}</h2>
-        <table>
-            <tr>
-                <td>KGPLValue</td>
-                <td>{{ KGPLValue }}</td>
-            </tr>
-            <tr>
-                <td>Current Value</td>
-                <td>{{ Current_Value}}</td>
-            </tr>
-            <tr>
-                <td>Python Type</td>
-                <td>{{ Python_Type }}</td>
-            </tr>
-            <tr>
-                <td>Comments</td>
-                <td>{{ Comments }}</td>
-            </tr>
-            <tr>
-                <td>Owner</td>
-                <td>{{ Owner }}</td>
-            </tr>
-        </table>
+    <h2>Metadata for {{ KGPLValue }}</h2>
+    <table>
+        <tr>
+            <td width="25%">KGPLValue</td>
+            <td>{{ KGPLValue }}</td>
+        </tr>
+        <tr>
+            <td>Python Type</td>
+            <td>{{ Python_Type }}</td>
+        </tr>
+        <tr>
+            <td>Comments</td>
+            <td>{{ Comments }}</td>
+        </tr>
+        <tr>
+            <td>Owner</td>
+            <td>{{ Owner }}</td>
+        </tr>
+        <tr>
+            <td>Base Entity</td>
+            <td>{{ entity_id }}</td>
+        </tr>
+        <tr>
+            <td class="wordWrap">Query String</td>
+            <td>{{ query_str }}</td>
+        </tr>
+
+        <tr>
+            <td>Data Frame</td>
+            <td> {{df|safe}}</td>
+        </tr>
+    </table>
+
+
     <!-- </div>
     <div class="column" style="background-color:#fff;">
         <h2>Dependency Tree</h2>
@@ -96,4 +130,5 @@
 </div> -->
 
 </body>
+
 </html>
