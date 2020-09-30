@@ -23,7 +23,7 @@ app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
 app.secret_key = b'\x13f0\x97\x86QUOHc\xfa\xe7(\xa1\x8d1'
 
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
