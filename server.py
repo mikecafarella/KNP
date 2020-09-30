@@ -24,7 +24,7 @@ app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
 app.secret_key = b'\x13f0\x97\x86QUOHc\xfa\xe7(\xa1\x8d1'
 
 m = Lock()
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = 'static/uploads/'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -416,11 +416,8 @@ def frontend_val(vid):
                 }
 
                 return flask.render_template("relation_val_meta_page.html", **context)
-            elif str(pyt) == "dict":
-                my_dict = json.loads(current_value)
-                # print(my_dict)
-                if "__file__" in my_dict:
-                    file_name = my_dict["stored_name"]
+            elif str(pyt) == "Image":
+                file_name = vid[vid.rfind('/') + 1:]
 
             context = {
                 "KGPLValue": str(url),
@@ -958,7 +955,7 @@ def upload_file():
     # return flask.render_template("upload.html")
 
 
-@app.route('/uploads/<filename>')
+@app.route('/static/uploads/<filename>')
 def uploaded_file(filename):
     print(app.config['UPLOAD_FOLDER']+filename)
     return send_from_directory(app.config['UPLOAD_FOLDER'],
