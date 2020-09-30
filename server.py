@@ -8,6 +8,7 @@ import flask
 from flask import request
 from flask import send_from_directory
 from flask import Flask, flash, redirect, url_for
+from threading import Lock
 
 from rdflib import Graph
 from rdflib import Namespace
@@ -22,7 +23,7 @@ app = flask.Flask(__name__)
 app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
 app.secret_key = b'\x13f0\x97\x86QUOHc\xfa\xe7(\xa1\x8d1'
 
-
+m = Lock()
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -59,7 +60,7 @@ kgplVariable = ns.kgplVariable
 def main():
     return "KGPL", 200
 
-
+"""
 @app.route("/nextval", methods=['GET'])
 def return_val_id():
     vid = ID_gen_val.next()
@@ -78,47 +79,57 @@ def return_var_id():
     }
 
     return flask.jsonify(**context), 200
-
+"""
 
 @app.route("/val", methods=['POST'])
 def post_val():
-    d = request.get_json()
-    if "id" not in d or "val" not in d or "pyType" not in d or "comment" not in d or "user" not in d or "dependency" not in d:
+    d = request.form
+    if "val" not in d or "pyType" not in d or "comment" not in d or "user" not in d or "dependency" not in d:
         flask.abort(400)
-    url = URIRef(d["id"])
+    dependency = json.loads(d["dependency"])
+    if d["pyType"] == "Image":
+        if "file" not in request.files:
+            flask.abort(400)
+        image = json.loads(d["val"])
+        if "filename" not in image:
+            flask.abort(400)
+        if not allowed_file(image["filename"]):
+            flask.abort(400)
+    m.acquire()
+    vid = ID_gen_val.current
+    for de in dependency:
+        did = int(de[de.rfind('/') + 1:])
+        if did >= vid:
+            flask.abort(400)
+    vid = ID_gen_val.next()
+    m.release()
+    url = URIRef(ns["val/" + str(vid)])
+    if d["pyType"] == "Image":
+        request.files["file"].save(os.path.join(app.config['UPLOAD_FOLDER'], str(vid)))
     # print(url)
     # if using different namespace for val and var, we should change ?x into kgplValue
-    qres = g.query(
-        """ASK {
-            ?url kg:kgplType kg:kgplValue
-            }""",
-        initBindings={'url': url}
-    )
-    for x in qres:
-        if x:
-            flask.abort(400)
     val = Literal(d["val"])
     pyt = Literal(d["pyType"])
     com = Literal(d["comment"])
     ownername = Literal(d["user"])
     g.add((url, belongTo, ownername))
-    for d in d["dependency"]:
-        durl = URIRef(d)
+    for de in dependency:
+        durl = URIRef(de)
         dg.add((durl, derive, url))
     g.add((url, hasValue, val))
     g.add((url, kgplType, kgplValue))
     g.add((url, pyType, pyt))
     g.add((url, hasComment, com))
-    return "", 201
+    context = { "url": str(url) }
+    return flask.jsonify(**context), 201
 
 
 @app.route("/var", methods=['POST'])
 def post_var():
     d = request.get_json()
-    if "id" not in d or "val_id" not in d or "comment" not in d or "user" not in d:
+    if "val_id" not in d or "comment" not in d or "user" not in d:
         flask.abort(400)
     val_url = URIRef(d["val_id"])
-    url = URIRef(d["id"])
 
     # check if val_id is valid
     qres = g.query(
@@ -132,18 +143,10 @@ def post_var():
         if not x:
             print("val id not exist")
             flask.abort(400)
-
-    # check if current id exist
-    qres = g.query(
-        """ASK {
-            ?url kg:kgplType kg:kgplVariable
-            }""",
-        initBindings={'url': url}
-    )
-    for x in qres:
-        if x:
-            print("current id exists")
-            flask.abort(400)
+    m.acquire()
+    vid = ID_gen_var.next()
+    m.release()
+    url = URIRef(ns["var/" + str(vid)])
     ts = time.time()
     ts_url = URIRef(url + "/ts/" + str(ts))
     com = Literal(d["comment"])
@@ -153,7 +156,7 @@ def post_var():
     g.add((ts_url, hasKGPLValue, val_url))
     g.add((url, kgplType, kgplVariable))
     g.add((ts_url, hasComment, com))
-    context = {"timestamp": ts}
+    context = {"url": url, "timestamp": ts}
     return flask.jsonify(**context), 201
 
 
@@ -189,7 +192,7 @@ def get_val():
                 initBindings={'url': url}
             )
             if len(dqres) == 0:
-                context["dependency"] = None
+                context["dependency"] = []
             else:
                 dependency = []
                 for durl, in dqres:
@@ -530,24 +533,32 @@ def get_compacthtml(vid):
         see_more_info = "<p> See more info <a href='val/" + \
             str(vid) + "'><u> here </u></a> </p>"
         val = json.loads(val)
-        if str(ty) == "dict":
-            if "__file__" in val:
-                if val["__file__"] == "pic":
-                    header = "<h3> Data type: image</h3> <h3> URL: " + \
-                        str(url) + "</h3>"
-                    content = "<img src='" + \
-                        os.path.join(
-                            app.config['UPLOAD_FOLDER'], val["stored_name"]) + "' alt=image width='35%' height='35%'>"
-                    return json.dumps({"html": header + content + see_more_info})
-                else:
-                    header = "<h3> Data type: " + \
-                        val["__file__"] + " file</h3> <h3>URL: " + \
-                        str(url) + "</h3>"
-                    return json.dumps({"html": header + see_more_info})
+        if str(ty) == "Image":
+            if "filename" not in val:
+                print("cannot find filename")
+                flask.abort(500)
+            filename = val["filename"]
+            filetype = filename.rsplit('.', 1)[1].lower()
+            if filetype in ['png', 'jpg', 'jpeg', 'gif']:
+                header = "<h3> Data type: image</h3> <h3> URL: " + \
+                    str(url) + "</h3>"
+                content = "<img src='" + \
+                    os.path.join(
+                        app.config['UPLOAD_FOLDER'], str(vid)) + "' alt=image width='35%' height='35%'>"
+                return json.dumps({"html": header + content + see_more_info})
+            else:
+                header = "<h3> Data type: " + \
+                    val["__file__"] + " file</h3> <h3>URL: " + \
+                    str(url) + "</h3>"
+                return json.dumps({"html": header + see_more_info})
         elif str(ty) == "Relation":
             return ""
         elif str(ty) == "DataFrame":
             return ""
+        elif str(ty) == "dict":
+            header = "<h3> Data type: " + \
+                str(ty) + "</h3><h3> URL: " + str(url) + "</h3>"
+            return json.dumps({"val": val, "header": header, "more_info": see_more_info})
         else:
             header = "<h3> Data type: " + \
                 str(ty) + "</h3><h3> URL: " + str(url) + "</h3>"
@@ -560,9 +571,7 @@ def get_compacthtml(vid):
             else:
                 content = "<div id='pre_text'><pre>" + content + "</pre></div>"
             return json.dumps({"html": header + content + see_more_info})
-        header = "<h3> Data type: " + \
-            str(ty) + "</h3><h3> URL: " + str(url) + "</h3>"
-        return json.dumps({"val": val, "header": header, "more_info": see_more_info})
+        
 #
 # @app.route("/getCollapsedGraph", methods=['GET'])
 # def get_collapsed_graph():
