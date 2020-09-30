@@ -393,7 +393,7 @@ def frontend_val(vid):
     pandas.set_option('display.float_format', lambda x: '%.1f' % x)
     if len(qres) == 1:
         for val, pyt, com, user in qres:
-
+            file_name = None
             current_value = pandas.read_json(val).to_html() if str(
                 pyt) == "DataFrame" else str(val)
 
@@ -413,14 +413,20 @@ def frontend_val(vid):
                 }
 
                 return flask.render_template("relation_val_meta_page.html", **context)
+            elif str(pyt) == "dict":
+                my_dict = json.loads(current_value)
+                # print(my_dict)
+                if "__file__" in my_dict:
+                    file_name = my_dict["stored_name"]
 
-                context = {
-                    "KGPLValue": str(url),
-                    "Current_Value": current_value,
-                    "Python_Type": str(pyt),
-                    "Comments": str(com),
-                    "Owner": str(user)
-                }
+            context = {
+                "KGPLValue": str(url),
+                "Current_Value": current_value,
+                "Python_Type": str(pyt),
+                "Comments": str(com),
+                "Owner": str(user),
+                "file_name":file_name
+            }
             return flask.render_template("val_meta_page.html", **context)
             # return flask.jsonify(**context), 200
     elif len(qres) == 0:

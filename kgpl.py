@@ -258,14 +258,17 @@ def load_val(vid):
     if context["pyt"] == 'tuple':
         val = tuple(tmp_val)
     elif context["pyt"] == 'dict':
-        val = {
-            "filename": tmp_val["original_name"],
-            "type": tmp_val["__file__"]
-        }
-        r = requests.get(upload_url+"s/"+tmp_val["stored_name"])
-        if r.status_code != 200:
-            raise Exception("file cannot be download")
-        open(tmp_val["original_name"], 'wb').write(r.content)
+        if "__file__" in tmp_val:
+            val = {
+                "filename": tmp_val["original_name"],
+                "type": tmp_val["__file__"]
+            }
+            r = requests.get(upload_url+"s/"+tmp_val["stored_name"])
+            if r.status_code != 200:
+                raise Exception("file cannot be download")
+            open(tmp_val["original_name"], 'wb').write(r.content)
+        else:
+            val = tmp_val
     elif context["pyt"] == 'DataFrame':
         val = pandas.read_json(context["val"])
     else:
