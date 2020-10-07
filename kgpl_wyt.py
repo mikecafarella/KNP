@@ -6,8 +6,8 @@ import requests
 import ORM_client as ORM
 
 # server_url = "http://lasagna.eecs.umich.edu:8000/"
-server_url = "http://lasagna.eecs.umich.edu:5000"
-# server_url = "http://127.0.0.1:5000"
+# server_url = "http://lasagna.eecs.umich.edu:5000"
+server_url = "http://127.0.0.1:5000"
 next_val_id_url = server_url + "/nextval"
 next_var_id_url = server_url + "/nextvar"
 
@@ -182,7 +182,7 @@ class KGPLVariable:
                 raise Exception("not getting correct id")
             """
             r = requests.post(var_url,
-                              json={"val_id": self.val_id,
+                              json={"id": self.vid, "val_id": self.val_id,
                                     "comment": comment, "user": user})
             if r.status_code != 201:
                 if r.status_code == 404:

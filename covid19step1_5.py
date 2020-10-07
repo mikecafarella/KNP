@@ -12,7 +12,7 @@ import json
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-PREV_VAR_ID = "http://127.0.0.1:5000/var/0"
+# PREV_VAR_ID = "http://127.0.0.1:5000/var/0"
 
 def step1_5(_):
 
@@ -42,9 +42,9 @@ def step1_5(_):
        before_20) + "to" + str(today)
     var_comment = "The COVID-19 cumulative positive cases for all states in the US in the last 20 days"
 
-    myval = kgpl.value(dict(rst), val_comment) # Enabled in the later days
-    prev_var = kgpl.load_var(PREV_VAR_ID) # Enabled in the later days
-    kgpl.set_var(prev_var, myval.vid, var_comment)
+    myval = kgpl.value(dict(rst), val_comment,"covidtracking_user") # Enabled in the later days
+    # prev_var = kgpl.load_var(PREV_VAR_ID) # Enabled in the later days
+    # kgpl.set_var(prev_var, myval.vid, var_comment)
 
 
 

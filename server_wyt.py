@@ -25,7 +25,7 @@ app.secret_key = b'\x13f0\x97\x86QUOHc\xfa\xe7(\xa1\x8d1'
 
 m = Lock()
 UPLOAD_FOLDER = 'static/uploads/'
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'csv'}
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # server_url = "http://lasagna.eecs.umich.edu:5000"
@@ -541,7 +541,7 @@ def get_compacthtml(vid):
                     str(url) + "</h3>"
                 content = "<img src='" + \
                     os.path.join(
-                        app.config['UPLOAD_FOLDER'], str(vid)) + "' alt=image style='width:auto; height:200px'>"
+                        app.config['UPLOAD_FOLDER'], str(vid)) + "' alt=image width='35%' height='35%'>"
                 return json.dumps({"html": header + content + see_more_info})
             else:
                 header = "<h3> Data type: " + \
@@ -549,10 +549,7 @@ def get_compacthtml(vid):
                     str(url) + "</h3>"
                 return json.dumps({"html": header + see_more_info})
         elif str(ty) == "Relation":
-            header = "<h3> Data type: " + \
-                str(ty) + "</h3><h3> URL: " + str(url) + "</h3>"
-            content = "<pre>" + pandas.read_json(val["df"]).iloc[0:3].to_html() + "</pre>"
-            return json.dumps({"html": header + content + see_more_info})
+            return ""
         elif str(ty) == "DataFrame":
             return ""
         elif str(ty) == "dict":

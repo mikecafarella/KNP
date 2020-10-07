@@ -137,3 +137,12 @@ db/
 
 #test files
 *zjy*
+
+# database
+log_val_id
+log_var_id
+static/uploads/*
+
+# visualization
+*.gv
+*.svg
