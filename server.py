@@ -25,7 +25,7 @@ app.secret_key = b'\x13f0\x97\x86QUOHc\xfa\xe7(\xa1\x8d1'
 
 m = Lock()
 UPLOAD_FOLDER = 'static/uploads/'
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'csv'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # server_url = "http://lasagna.eecs.umich.edu:5000"
@@ -549,7 +549,10 @@ def get_compacthtml(vid):
                     str(url) + "</h3>"
                 return json.dumps({"html": header + see_more_info})
         elif str(ty) == "Relation":
-            return ""
+            header = "<h3> Data type: " + \
+                str(ty) + "</h3><h3> URL: " + str(url) + "</h3>"
+            content = "<pre>" + pandas.read_json(val["df"]).iloc[0:3].to_html() + "</pre>"
+            return json.dumps({"html": header + content + see_more_info})
         elif str(ty) == "DataFrame":
             return ""
         elif str(ty) == "dict":
