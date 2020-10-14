@@ -772,28 +772,28 @@ def visual():
                     }""",
                     initBindings={'val_url': val_url}
                 )
-                if len(qres) == 0:
-                    qres = g.query(
-                        """SELECT ?comss
+                cqres = g.query(
+                        """SELECT ?com
                         WHERE {
-                            ?var_url kg:hasComment ?com .
+                            ?val_url kg:hasComment ?com .
                         }""",
                         initBindings={'val_url': val_url}
                     )
-                    if len(qres) != 1:
+                if len(qres) == 0:
+                    if len(cqres) != 1:
                         flask.abort(500)
-                    for com, in qres:
-                        file.write("subgraph comment_" + str(node) +
-                                "_ {\nnode [style=filled];\ncolor=black;\nlabel=\"" + str(com) + "\";\n")
-                        file.write("val" + str(node) + ";\n")
-                        file.write("}\n")
+                    for com, in cqres:
+                        # file.write("subgraph clustercomment_" + str(node) +
+                        #         "_ {\nnode [style=filled];\ncolor=grey;\nlabel=\"comment: " + str(com) + "\";\n")
+                        file.write("\"val" + str(node) + "\" [style = \"filled\" penwidth = 1 fillcolor = \"white\" fontname = \"Courier New\" shape = \"Mrecord\" label=<<table border=\"0\" cellborder=\"0\" cellpadding=\"3\" bgcolor=\"white\"><tr><td bgcolor=\"black\" align=\"center\" colspan=\"2\"><font color=\"white\">val" + str(node) + "</font></td></tr><tr><td align=\"left\" port=\"r1\">comment: "+ str(com) + "</td></tr></table>>];\n")
+                        # file.write("}\n")
                 else:
                     label = ""
                     c = 1
                     for var_url, com in qres:
                         label += "var" + \
                             str(var_url)[str(var_url).rfind("/") + 1:]
-                        label += " "
+                        label += "\ncomment: "
                         label += str(com)
                         label += "\n"
                         if c == len(qres):
@@ -802,7 +802,13 @@ def visual():
                         c += 1
                     file.write("subgraph clustervar_" + str(node) +
                                "_ {\nnode [style=filled];\ncolor=black;\nlabel=\"" + label + "\";\n")
-                    file.write("val" + str(node) + ";\n")
+                    if len(cqres) != 1:
+                        flask.abort(500)
+                    for com, in cqres:
+                        # file.write("subgraph clustercomment_" + str(node) +
+                        #         "_ {\nnode [style=filled];\ncolor=grey;\nlabel=\"comment: " + str(com) + "\";\n")
+                        file.write("\"val" + str(node) + "\" [style = \"filled\" penwidth = 1 fillcolor = \"white\" fontname = \"Courier New\" shape = \"Mrecord\" label=<<table border=\"0\" cellborder=\"0\" cellpadding=\"3\" bgcolor=\"white\"><tr><td bgcolor=\"black\" align=\"center\" colspan=\"2\"><font color=\"white\">val" + str(node) + "</font></td></tr><tr><td align=\"left\" port=\"r1\">comment: "+ str(com) + "</td></tr></table>>];\n")
+                    # file.write("val" + str(node) + ";\n")
                     file.write("}\n")
             file.write("}\n")
         for x in depend_dict:
