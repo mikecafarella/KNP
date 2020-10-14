@@ -763,28 +763,45 @@ def visual():
             for node in l[1]:
                 val_url = ns["val/" + str(node)]
                 qres = g.query(
-                    """SELECT ?var_url
+                    """SELECT ?var_url ?com
                     WHERE {
                         ?var_url kg:kgplType kg:kgplVariable ;
                             kg:valueHistory ?ts .
-                        ?ts kg:hasKGPLValue ?val_url .
+                        ?ts kg:hasKGPLValue ?val_url ;
+                            kg:hasComment ?com .
                     }""",
                     initBindings={'val_url': val_url}
                 )
                 if len(qres) == 0:
-                    file.write("val" + str(node) + ";\n")
+                    qres = g.query(
+                        """SELECT ?comss
+                        WHERE {
+                            ?var_url kg:hasComment ?com .
+                        }""",
+                        initBindings={'val_url': val_url}
+                    )
+                    if len(qres) != 1:
+                        flask.abort(500)
+                    for com, in qres:
+                        file.write("subgraph comment_" + str(node) +
+                                "_ {\nnode [style=filled];\ncolor=black;\nlabel=\"" + str(com) + "\";\n")
+                        file.write("val" + str(node) + ";\n")
+                        file.write("}\n")
                 else:
                     label = ""
                     c = 1
-                    for var_url, in qres:
+                    for var_url, com in qres:
                         label += "var" + \
                             str(var_url)[str(var_url).rfind("/") + 1:]
+                        label += " "
+                        label += str(com)
+                        label += "\n"
                         if c == len(qres):
                             break
                         label += ", "
                         c += 1
                     file.write("subgraph clustervar_" + str(node) +
-                               "_ {\nnode [style=filled];\ncolor=black;\nlabel=" + label + ";\n")
+                               "_ {\nnode [style=filled];\ncolor=black;\nlabel=\"" + label + "\";\n")
                     file.write("val" + str(node) + ";\n")
                     file.write("}\n")
             file.write("}\n")
