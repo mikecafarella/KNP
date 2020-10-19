@@ -25,7 +25,7 @@ app.secret_key = b'\x13f0\x97\x86QUOHc\xfa\xe7(\xa1\x8d1'
 
 m = Lock()
 UPLOAD_FOLDER = 'static/uploads/'
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'csv'}
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'csv','ipynb'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # server_url = "http://lasagna.eecs.umich.edu:5000"
@@ -60,6 +60,7 @@ kgplVariable = ns.kgplVariable
 def main():
     return "KGPL", 200
 
+
 """
 @app.route("/nextval", methods=['GET'])
 def return_val_id():
@@ -80,6 +81,7 @@ def return_var_id():
 
     return flask.jsonify(**context), 200
 """
+
 
 @app.route("/val", methods=['POST'])
 def post_val():
@@ -105,7 +107,8 @@ def post_val():
     m.release()
     url = URIRef(ns["val/" + str(vid)])
     if d["pyType"] == "Image":
-        request.files["file"].save(os.path.join(app.config['UPLOAD_FOLDER'], str(vid)))
+        request.files["file"].save(os.path.join(
+            app.config['UPLOAD_FOLDER'], str(vid)))
     # print(url)
     # if using different namespace for val and var, we should change ?x into kgplValue
     val = Literal(d["val"])
@@ -120,7 +123,7 @@ def post_val():
     g.add((url, kgplType, kgplValue))
     g.add((url, pyType, pyt))
     g.add((url, hasComment, com))
-    context = { "url": str(url) }
+    context = {"url": str(url)}
     return flask.jsonify(**context), 201
 
 
@@ -425,7 +428,7 @@ def frontend_val(vid):
                 "Python_Type": str(pyt),
                 "Comments": str(com),
                 "Owner": str(user),
-                "file_name":file_name
+                "file_name": file_name
             }
             return flask.render_template("val_meta_page.html", **context)
             # return flask.jsonify(**context), 200
@@ -516,19 +519,26 @@ def get_svg():
 def get_compacthtml(vid):
     url = ns["val/" + str(vid)]
     qres = g.query(
-        """SELECT ?kgval ?ty
+        """SELECT ?kgval ?ty ?com
         WHERE {
             ?url kg:hasValue ?kgval ;
-                kg:pyType ?ty .
+                kg:pyType ?ty ;
+                kg:hasComment ?com.
         }""",
         initBindings={'url': url}
     )
     if len(qres) != 1:
         print(url)
         return "ERROR: data not found or data found not single"
-    for val, ty in qres:
+    for val, ty, com in qres:
         see_more_info = "<p> See more info <a href='val/" + \
             str(vid) + "'><u> here </u></a> </p>"
+        if len(com) > 300:
+            com = com[:300]
+            comment = "<h3> Comment: "+com+"... </h3>"
+        else:
+            comment = "<h3> Comment: "+com+"</h3>"
+
         val = json.loads(val)
         if str(ty) == "Image":
             if "filename" not in val:
@@ -542,22 +552,24 @@ def get_compacthtml(vid):
                 content = "<img src='" + \
                     os.path.join(
                         app.config['UPLOAD_FOLDER'], str(vid)) + "' alt=image style='width:auto; height:200px'>"
-                return json.dumps({"html": header + content + see_more_info})
+                return json.dumps({"html": header + comment + content + see_more_info})
             else:
                 header = "<h3> Data type: " + \
                     val["__file__"] + " file</h3> <h3>URL: " + \
                     str(url) + "</h3>"
-                return json.dumps({"html": header + see_more_info})
+                return json.dumps({"html": header + comment + see_more_info})
         elif str(ty) == "Relation":
             header = "<h3> Data type: " + \
                 str(ty) + "</h3><h3> URL: " + str(url) + "</h3>"
-            content = "<pre>" + pandas.read_json(val["df"]).iloc[0:3].to_html() + "</pre>"
-            return json.dumps({"html": header + content + see_more_info})
+            content = "<pre>" + \
+                pandas.read_json(val["df"]).iloc[0:3].to_html() + "</pre>"
+            return json.dumps({"html": header + comment + content + see_more_info})
         elif str(ty) == "DataFrame":
             return ""
         elif str(ty) == "dict":
             header = "<h3> Data type: " + \
-                str(ty) + "</h3><h3> URL: " + str(url) + "</h3>"
+                str(ty) + "</h3><h3> URL: " + str(url) + "</h3>\n" +\
+                "<h3>"+comment+"</h3>"
             return json.dumps({"val": val, "header": header, "more_info": see_more_info})
         else:
             header = "<h3> Data type: " + \
@@ -570,8 +582,8 @@ def get_compacthtml(vid):
                 content = "<div id='pre_text'><pre>" + content + "...</pre></div>"
             else:
                 content = "<div id='pre_text'><pre>" + content + "</pre></div>"
-            return json.dumps({"html": header + content + see_more_info})
-        
+            return json.dumps({"html": header + comment + content + see_more_info})
+
 #
 # @app.route("/getCollapsedGraph", methods=['GET'])
 # def get_collapsed_graph():
