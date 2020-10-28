@@ -141,7 +141,7 @@ db/
 # database
 log_val_id
 log_var_id
-static/uploads/*
+# static/uploads/*
 
 # visualization
 *.gv
