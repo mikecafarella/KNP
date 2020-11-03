@@ -90,7 +90,7 @@
                         	autoOpen:false,
                         	show: "fade",
                         	hide: "fade",
-                            width:500, //orig defaults: width: 300, height: auto
+                            width: 500, //orig defaults: width: 300, height: auto
                         });
                         /*
                         function hovIn() {
@@ -112,6 +112,8 @@
                             $(this).css({'font-weight':'bold','color':'blue'});
                             var name = this.attributes[2].value;
                             var url = "compact/" + name.substring(3, name.length);
+                            var x = jQuery(document).scrollLeft();
+                            var y = jQuery(document).scrollTop();
                             $.getJSON(url, function(data) {
                                 var hstring;
                                 if (data.hasOwnProperty("html")) {
@@ -124,6 +126,7 @@
                                 eid.html(hstring);
                                 eid.dialog('open');
                                 eid.dialog("option", "title", name);
+                                eid.dialog("option", "position", [x,y]);
                             });
                         }, hovOut);
 
