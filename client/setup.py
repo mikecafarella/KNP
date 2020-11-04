@@ -1,13 +1,14 @@
 import setuptools
+import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="kgpl_client", # Replace with your own username
+    name="knps",  # Replace with your own username
     version="1.0.0",
     author="KNP team",
-    author_email="michjc@umich.edu",
+    author_email="KNPS-Group@umich.edu",
     description="KNP client pacakge",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -18,5 +19,13 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    install_requires=[
+            'requests',
+            'pandas',
+            'numpy',
+            'SPARQLWrapper'
+    ],
     python_requires='>=3.6',
 )
+
+

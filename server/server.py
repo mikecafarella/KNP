@@ -30,8 +30,8 @@ ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png',
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # server_url = "http://lasagna.eecs.umich.edu:5000"
-# server_url = "http://127.0.0.1:5000"
-server_url = "http://lasagna.eecs.umich.edu:8080"
+server_url = "http://127.0.0.1:5000"
+# server_url = "http://lasagna.eecs.umich.edu:8000"
 
 g = Graph('Sleepycat', identifier="kgpl")
 g.open('db', create=True)
