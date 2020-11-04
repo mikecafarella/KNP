@@ -5,8 +5,8 @@ import pandas
 import requests
 from . import ORM_client as ORM
 
-server_url = "http://lasagna.eecs.umich.edu:8080"
-# server_url = "http://lasagna.eecs.umich.edu:8000"
+# server_url = "http://lasagna.eecs.umich.edu:8080"
+server_url = "http://lasagna.eecs.umich.edu:8000"
 # server_url = "http://lasagna.eecs.umich.edu:5000"
 # server_url = "http://127.0.0.1:5000"
 next_val_id_url = server_url + "/nextval"
@@ -17,7 +17,7 @@ var_url = server_url + "/var"
 loadvar_url = server_url + "/load/var"
 loadval_url = server_url + "/load/val"
 update_url = server_url + "/getLatest"
-download_url = server_url + "/uploads"
+download_url = server_url + "/static/uploads"
 
 
 
