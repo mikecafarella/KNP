@@ -39,4 +39,3 @@ if __name__ == "__main__":
 
     myval = knps.value(dict(rst), val_comment, "Jiayun")
     knps.variable(myval, var_comment, "Jiayun")
-

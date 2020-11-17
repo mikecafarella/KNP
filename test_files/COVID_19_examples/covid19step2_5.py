@@ -15,14 +15,16 @@ from collections import defaultdict
 
 import knps
 
-PREV_VAR_ID = "http://lasagna.eecs.umich.edu:8000/var/1"
+SERVER_URL = knps.server_url
+
+PREV_VAR_ID = SERVER_URL + "/var/1"
 
 
 def step2_5(_):
     DATE_TO_PREDICT = int(
         (datetime.today()).strftime('%Y%m%d'))
 
-    VAR_ID_GIVEN_BY_USER1 = "http://lasagna.eecs.umich.edu:8000/var/0"
+    VAR_ID_GIVEN_BY_USER1 = SERVER_URL + "/var/0"
 
     TRAIN_LENGTH = 20
 

@@ -1,2 +1,3 @@
 export FLASK_APP=server.py
-flask run --host 0.0.0.0 --port 8080
+export FLASK_ENV=development
+python3 -m flask run --host localhost --port 4242

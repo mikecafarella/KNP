@@ -146,3 +146,7 @@ log_var_id
 # visualization
 *.gv
 *.svg
+
+*.ttl
+
+personal.yaml

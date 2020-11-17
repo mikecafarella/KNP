@@ -3,9 +3,9 @@ import plotly.express as px
 import plotly
 
 # the variables ids we use
-total_vid = "http://lasagna.eecs.umich.edu:8000/var/1"
-prev_pic = "http://lasagna.eecs.umich.edu:8000/var/2"
-prev_vid = "http://lasagna.eecs.umich.edu:8000/var/3"
+total_vid = knps.server_url + "/var/1"
+prev_pic = knps.server_url + "/var/2"
+prev_vid = knps.server_url + "/var/3"
 
 # Get the variable and value
 total_var = knps.load_var(total_vid)
