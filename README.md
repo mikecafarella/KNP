@@ -2,9 +2,11 @@ If you are in the right branch and right version: \
 After git clone/ git pull
 1. `pip install -e client`
 1. If you don't want to use the default lasagna.eecs.umich.edu address, create a `personal.yaml` file in the root directory with the following contents, setting the address and port to your liking:
-```server:
+```
+server:
   SERVER_ADDRESS: 'http://127.0.0.1'
-  SERVER_PORT: '4242'```
+  SERVER_PORT: '4242'
+```
 
 
 If you are encountering dependency issues, please manually install
