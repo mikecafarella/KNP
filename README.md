@@ -1,7 +1,11 @@
 If you are in the right branch and right version: \
 After git clone/ git pull
 1. `pip install -e client`
-1. Change the `server_url = "http://lasagna.eecs.umich.edu:8080"` in kgpl.py to the url that you opened on the server.
+1. If you don't want to use the default lasagna.eecs.umich.edu address, create a `personal.yaml` file in the root directory with the following contents, setting the address and port to your liking:
+```server:
+  SERVER_ADDRESS: 'http://127.0.0.1'
+  SERVER_PORT: '4242'```
+
 
 If you are encountering dependency issues, please manually install
 1. `pip install pandas`
@@ -22,7 +26,7 @@ If you need to delete the git repo or want to do a reinstallation:
 
 
 If the website cannot be opened normally:
-1. Check the address is correct `"http://lasagna.eecs.umich.edu:yourport`
+1. Check the address is correctly defined in the personal.yaml file as above
 1. Check whether it is redirected to https website. Currently https is not supported
 1. If you are using a Chrome Browser, and you are constantly redirected to `https://lasagna...`:\
 Open `chrome://net-internals/#hsts`, \
@@ -40,6 +44,8 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+The server URL can be retrieved programatically using `knps.server_url`
 
 More usages: See COVID_19_examples
 
