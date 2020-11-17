@@ -4,8 +4,9 @@ import pandas
 
 import requests
 from . import ORM_client as ORM
+from .settings import SERVER_URL
 
-server_url = "http://lasagna.eecs.umich.edu:8080"
+server_url = SERVER_URL
 # server_url = "http://lasagna.eecs.umich.edu:8000"
 # server_url = "http://lasagna.eecs.umich.edu:5000"
 # server_url = "http://127.0.0.1:5000"
@@ -18,8 +19,6 @@ loadvar_url = server_url + "/load/var"
 loadval_url = server_url + "/load/val"
 update_url = server_url + "/getLatest"
 download_url = server_url + "/static/uploads"
-
-
 
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -108,8 +107,8 @@ class KGPLValue:
                                              "pyType": type(val).__name__,
                                              "comment": comment,
                                              "user": user, "dependency": json.dumps(dependency)},
-                                           files = { "file": open(val.filename, "rb") }) 
-            else:               
+                                           files = { "file": open(val.filename, "rb") })
+            else:
                 r = requests.post(val_url, data={
                                              "val": val_json,
                                              "pyType": type(val).__name__,
@@ -123,7 +122,7 @@ class KGPLValue:
                     print("Created: KGPLValue with ID", self.vid)
             else:
                 raise Exception("creation failed")
-            
+
         else:
             # generate an existing kgplValue
             # never use this method
@@ -224,6 +223,8 @@ class KGPLVariable:
 
 def load(vid, l_url):
     par = {"vid": vid}
+    print(vid)
+    print(l_url)
     r = requests.get(l_url, params=par)
     if r.status_code != 200:
         raise Exception("value or variable not found")
@@ -268,7 +269,7 @@ def load_val(vid):
         if "filename" not in context["val"]:
             raise Exception("filename isn't returned by server")
         if r.status_code != 200:
-            raise Exception("file cannot be download") 
+            raise Exception("file cannot be download")
         open(tmp_val.filename, "wb").write(r.content)
         val = tmp_val
     elif context["pyt"] == 'DataFrame':
@@ -302,6 +303,7 @@ def set_var(kg_var, val_id, new_comment):
         elif r.status_code == 403:
             print("version conflict")
         raise Exception("variable updating not success")
+
     kg_var.timestamp = r.json().get("timestamp")
     kg_var.val_id = val_id
     kg_var.comment = new_comment

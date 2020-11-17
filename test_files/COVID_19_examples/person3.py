@@ -3,7 +3,7 @@ import plotly.express as px
 import plotly
 
 if __name__ == "__main__":
-    total_vid = "http://lasagna.eecs.umich.edu:8000/var/1"
+    total_vid = knps.server_url + "/var/1"
     total_var = knps.load_var(total_vid)
     total_val = knps.load_val(total_var.val_id)
 
@@ -35,4 +35,3 @@ if __name__ == "__main__":
     least_val = knps.value(least_list, "Least ten states in the prediction",
                            "Mike", [total_val, ])
     least_var = knps.variable(least_val, "variable holding least ten states")
-   

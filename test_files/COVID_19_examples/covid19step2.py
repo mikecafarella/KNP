@@ -20,7 +20,7 @@ import knps
 def step2(_):
     DATE_TO_PREDICT = int(
         (datetime.today() - timedelta(days=1)).strftime('%Y%m%d'))
-    VAR_ID_GIVEN_BY_USER1 = "http://lasagna.eecs.umich.edu:8000/var/0"
+    VAR_ID_GIVEN_BY_USER1 = knps.server_url + "/var/0"
     TRAIN_LENGTH = 20
 
     date = datetime.strptime(str(DATE_TO_PREDICT), '%Y%m%d')

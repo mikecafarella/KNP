@@ -17,7 +17,7 @@ from rdflib import URIRef, Literal
 from gen import ID_gen_val
 from gen import ID_gen_var
 from werkzeug.utils import secure_filename
-
+from settings import SERVER_URL
 
 app = flask.Flask(__name__)
 app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
@@ -29,9 +29,7 @@ ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png',
                       'jpg', 'jpeg', 'gif', 'csv', 'ipynb'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# server_url = "http://lasagna.eecs.umich.edu:5000"
-# server_url = "http://127.0.0.1:5000"
-server_url = "http://lasagna.eecs.umich.edu:8000"
+server_url = SERVER_URL
 
 g = Graph('Sleepycat', identifier="kgpl")
 g.open('db', create=True)
@@ -218,6 +216,7 @@ def get_val():
 @app.route("/load/var", methods=['GET'])
 def get_var():
     vid = request.args.get('vid')
+
     url = URIRef(vid)
     # print(url)
     qres = g.query(
@@ -231,6 +230,7 @@ def get_var():
         }""",
         initBindings={'url': url}
     )
+    print(len(qres))
     if len(qres) == 1:
         for ts, val_url, com, user in qres:
             val_url = str(val_url)
@@ -243,6 +243,7 @@ def get_var():
                 "comment": com,
                 "user": user
             }
+
             return flask.jsonify(**context), 200
     elif len(qres) == 0:
         return flask.abort(404)
@@ -476,7 +477,7 @@ def frontend_meta_var(vid):
 
             while True:
                 qres = g.query(
-                    """SELECT ?history ?val_uri 
+                    """SELECT ?history ?val_uri
                     WHERE {
                         ?url kg:hasComment ?com ;
                              kg:hasHistory ?history ;
@@ -606,6 +607,7 @@ def visual():
             }""",
             initBindings={'url': url}
         )
+
         if len(qres) != 1:
             print("user")
             flask.abort(500)
@@ -613,6 +615,7 @@ def visual():
             for user, in qres:
                 user_dict[vn] = str(user)
                 # json["values"][str(url)] = str(user)
+
         depend_dict[vn] = []
         dqres = dg.query(
             """SELECT ?durl
@@ -624,6 +627,8 @@ def visual():
         for durl, in dqres:
             src = int(str(durl)[str(durl).rfind("/") + 1:])
             depend_dict[vn].append(src)
+
+
     cluster = []
     cluster_dict = {}
     # cluster_depend = []
@@ -711,7 +716,7 @@ def visual():
                 else:
                     label = ""
                     c = 1
-                    for var_url, com in qres: 
+                    for var_url, com in qres:
                         label += "var" + \
                             str(var_url)[str(var_url).rfind("/") + 1:]
                         label += "\n"

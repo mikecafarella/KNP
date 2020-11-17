@@ -12,7 +12,7 @@ import json
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-PREV_VAR_ID = "http://lasagna.eecs.umich.edu:8000/var/0"
+PREV_VAR_ID = knps.server_url + "/var/0"
 
 
 def step1_5(_):
@@ -42,8 +42,14 @@ def step1_5(_):
     var_comment = "The COVID-19 cumulative positive cases for all states\
          in the US in the last 20 days"
     myval = knps.value(dict(rst), val_comment, "Jiayun")
-    prev_var = knps.load_var(PREV_VAR_ID)  # Enabled in the later days
-    knps.set_var(prev_var, myval.vid, var_comment)
+
+    try:
+        prev_var = knps.load_var(PREV_VAR_ID)  # Enabled in the later days
+        knps.set_var(prev_var, myval.vid, var_comment)
+    except:
+        print('except')
+
+
 
 
 if __name__ == "__main__":
