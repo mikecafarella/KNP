@@ -19,6 +19,8 @@ loadvar_url = server_url + "/load/var"
 loadval_url = server_url + "/load/val"
 update_url = server_url + "/getLatest"
 download_url = server_url + "/static/uploads"
+check_var_id_url = server_url + "/checkvarid"
+
 
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -45,7 +47,6 @@ class MyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-
 def hook(dct):
     if "__kgplvalue__" in dct:
         return load_val(dct["vid"])
@@ -57,7 +58,7 @@ def hook(dct):
         dct["df"] = pandas.read_json(dct["df"])
         temp_dict = {}
         # dct["dic"] is a dict with integer keys.
-        for k,v in dct["dic"].items():
+        for k, v in dct["dic"].items():
             try:
                 key = int(k)
                 temp_dict[key] = dct["dic"][k]
@@ -103,17 +104,17 @@ class KGPLValue:
                 val, pandas.DataFrame) else json.dumps(val, cls=MyEncoder)
             if isinstance(val, File):
                 r = requests.post(val_url, data={
-                                             "val": val_json,
-                                             "pyType": type(val).__name__,
-                                             "comment": comment,
-                                             "user": user, "dependency": json.dumps(dependency)},
-                                           files = { "file": open(val.filename, "rb") })
+                    "val": val_json,
+                    "pyType": type(val).__name__,
+                    "comment": comment,
+                    "user": user, "dependency": json.dumps(dependency)},
+                    files={"file": open(val.filename, "rb")})
             else:
                 r = requests.post(val_url, data={
-                                             "val": val_json,
-                                             "pyType": type(val).__name__,
-                                             "comment": comment,
-                                             "user": user, "dependency": json.dumps(dependency)},)
+                    "val": val_json,
+                    "pyType": type(val).__name__,
+                    "comment": comment,
+                    "user": user, "dependency": json.dumps(dependency)},)
             if r.status_code == 201:
                 self.vid = r.json()["url"]
                 if verbose:
@@ -129,6 +130,8 @@ class KGPLValue:
             self.vid = vid
             self.val = val
             self.comment = comment
+            self.user = user
+            self.dependency = dependency
 
     def getVid(self):
         return self.vid
@@ -166,42 +169,41 @@ class KGPLValue:
         else:
             raise Exception("val type invalid")
 
+    def create_label(self, label, comment):
+        return variable(label, self.vid, comment, user=self.user)
+    def update_label(self, label, new_comment):
+        temp = load_var(server_url+"/var/"+label)
+        return set_var(temp, self.vid, new_comment)
+
 
 class KGPLVariable:
-    def __init__(self, val_id, comment, user="anonymous", vid=None, timestamp=None):
+    def __init__(self, val_id, comment, vid, user="anonymous", timestamp=None):
         self.val_id = val_id
         self.comment = comment
         self.user = user
-        if not vid:
-            # generate a new kgplVariable
-            # self.ID = get id from server
-            # r = requests.get(next_var_id_url)
-            """
-            if r.status_code == 200:
-                self.vid = r.json()["id"]
-                print("Created KGPLVariable with ID", self.vid,
-                      "$ KGPLValue with ID:", self.val_id)
-            else:
-                raise Exception("not getting correct id")
-            """
+        if not timestamp:  # generate a new kgplVariable
+            r = requests.post(check_var_id_url, json={"var_id": vid})
+            if r.status_code != 201:
+                if r.status_code == 409:
+                    raise Exception("var id occupied")
+                else:
+                    raise Exception("unknown error, aborting...")
+
             r = requests.post(var_url,
-                              json={"val_id": self.val_id,
+                              json={"val_id": self.val_id, "var_id": vid,
                                     "comment": comment, "user": user})
             if r.status_code != 201:
                 if r.status_code == 404:
-                    print("value id not found")
-                raise Exception("creation failed")
+                    raise Exception("value id not found")
+                raise Exception("variable creation failed with unknown error")
             ts = r.json().get("timestamp")
             url = r.json()["url"]
             self.timestamp = ts
             self.vid = url
             print("Created: KGPLVariable with ID", self.vid)
         else:
-            # generate an existing kgplVariable
-            # never use this method
+            # generate an existing kgplVariable for load_var
             self.vid = vid
-            self.val_id = val_id
-            # should always initialzie the value of self.timestamp afterwards.
             self.timestamp = timestamp
 
     def getVid(self):
@@ -223,8 +225,8 @@ class KGPLVariable:
 
 def load(vid, l_url):
     par = {"vid": vid}
-    print(vid)
-    print(l_url)
+    # print(vid)
+    # print(l_url)
     r = requests.get(l_url, params=par)
     if r.status_code != 200:
         raise Exception("value or variable not found")
@@ -233,6 +235,9 @@ def load(vid, l_url):
 
 
 # ---------------------------API-----------------------------------#
+
+def create_value(val, comment, user="anonymous", dependency=[], verbose=False):
+    return value(val, comment, user, dependency, verbose)
 
 
 def value(val, comment, user="anonymous", dependency=[], verbose=False):
@@ -247,15 +252,17 @@ def value(val, comment, user="anonymous", dependency=[], verbose=False):
         raise Exception("user name must be a string.")
     return KGPLValue(val, comment, user, dependency, verbose=verbose)
 
+# Create a new variable
 
-def variable(val_id, comment, user="anonymous"):
+
+def variable(var_id, val_id, comment, user="anonymous"):
     if type(val_id) not in [str, KGPLValue]:
         raise Exception("cannot construct KGPLVariable")
     if type(val_id) is KGPLValue:
         val_id = val_id.getVid()
     if type(comment) != str:
         raise Exception("Comment needs to be a string.")
-    return KGPLVariable(val_id, comment, user)
+    return KGPLVariable(val_id, comment, var_id, user)
 
 
 def load_val(vid):
@@ -265,7 +272,8 @@ def load_val(vid):
     if context["pyt"] == 'tuple':
         val = tuple(tmp_val)
     elif context["pyt"] == 'File':
-        r = requests.get(os.path.join(download_url, str(vid[vid.rfind('/') + 1:])))
+        r = requests.get(os.path.join(
+            download_url, str(vid[vid.rfind('/') + 1:])))
         if "filename" not in context["val"]:
             raise Exception("filename isn't returned by server")
         if r.status_code != 200:
@@ -282,7 +290,7 @@ def load_val(vid):
 
 def load_var(vid):
     context = load(vid, loadvar_url)
-    return KGPLVariable(context["val_id"], context["comment"], context["user"], vid,
+    return KGPLVariable(context["val_id"], context["comment"], vid, context["user"],
                         context["timestamp"])
 
 # to do: ask if set_var change the owner of the variable?

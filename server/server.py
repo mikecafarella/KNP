@@ -132,11 +132,33 @@ def post_val():
     return flask.jsonify(**context), 201
 
 
+@app.route("/checkvarid", methods=['POST'])
+def checkvarid():
+    d = request.get_json()
+    if "var_id" not in d:
+        flask.abort(500, "invalid post for /checkvarid")
+    var_url = URIRef(ns["var/" + d["var_id"]])
+    qres = g.query(
+        """ASK {
+            {?url kg:kgplType kg:kgplVariable}
+            }
+        """,
+        initBindings={'url': var_url}
+    )
+    for x in qres:
+        if not x:
+            print("var id not exist")
+            return '', 201
+        else:
+            print("var id exists")
+            flask.abort(409, "var id occupied")
+
+
 @app.route("/var", methods=['POST'])
 def post_var():
     d = request.get_json()
-    if "val_id" not in d or "comment" not in d or "user" not in d:
-        flask.abort(400)
+    if "val_id" not in d or "comment" not in d or "user" not in d or "var_id" not in d:
+        flask.abort(400, "var creation parameter not complete")
     val_url = URIRef(d["val_id"])
 
     # check if val_id is valid
@@ -152,7 +174,8 @@ def post_var():
             print("val id not exist")
             flask.abort(400)
     m.acquire()
-    vid = ID_gen_var.next()
+    # vid = ID_gen_var.next()
+    vid = d["var_id"]
     m.release()
     url = URIRef(ns["var/" + str(vid)])
     ts = time.time()
@@ -216,7 +239,7 @@ def get_val():
 @app.route("/load/var", methods=['GET'])
 def get_var():
     vid = request.args.get('vid')
-
+    print(vid)
     url = URIRef(vid)
     # print(url)
     qres = g.query(
@@ -230,7 +253,7 @@ def get_var():
         }""",
         initBindings={'url': url}
     )
-    print(len(qres))
+    # print(len(qres))
     if len(qres) == 1:
         for ts, val_url, com, user in qres:
             val_url = str(val_url)
@@ -243,7 +266,6 @@ def get_var():
                 "comment": com,
                 "user": user
             }
-
             return flask.jsonify(**context), 200
     elif len(qres) == 0:
         return flask.abort(404)
@@ -269,8 +291,7 @@ def set_var():
         initBindings={'url': url}
     )
     ots_url = URIRef(url+"/ts/"+str(ts))
-    # print(ots_url)
-    # ots_url = URIRef(os.path.join(url, str(ts)))
+
     if len(qres) == 1:
         for ts_url, in qres:
             if ts_url != ots_url:
@@ -450,6 +471,7 @@ def frontend_val(vid):
 @app.route("/var/<vid>", methods=['GET'])
 def frontend_meta_var(vid):
     url = ns["var/" + str(vid)]
+    print(url)
     his = []
     owner = ""
     qres = g.query(
@@ -463,9 +485,10 @@ def frontend_meta_var(vid):
         }""",
         initBindings={'url': url}
     )
+    print("len: ", len(qres))
     if len(qres) == 1:
         for ts, val_url, com, user in qres:
-            his.append(ts)
+            his.append(str(ts))
             val_url = str(val_url)
             ts_for_query = ts
             ts = str(ts)
@@ -496,19 +519,20 @@ def frontend_meta_var(vid):
                 for history, val_uri in qres:
                     ts_for_query = history
                     # rst.append(int(val_uri[val_uri.rfind('/') + 1:]))
-                    his.append(history)
+                    his.append(str(history))
 
-            context = {
-                "KGPLVariable": str(url),
-                "Currently_containing_KGPLValue": val_url,
-                "Current_comment": com,
-                "Last_modified_timestamp": actual_ts,
-                "Last_modified": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(actual_ts)),
-                "History": his,
-                "Owner": str(owner)
-            }
 
-            return flask.render_template("var_meta_page.html", **context)
+        context = {
+            "KGPLVariable": str(url),
+            "Currently_containing_KGPLValue": val_url,
+            "Current_comment": com,
+            "Last_modified_timestamp": actual_ts,
+            "Last_modified": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(actual_ts)),
+            "History": his,
+            "Owner": str(owner)
+        }
+        # print("can render")
+        return flask.render_template("var_meta_page.html", **context)
     elif len(qres) == 0:
         return flask.abort(404)
     else:
@@ -628,7 +652,6 @@ def visual():
             src = int(str(durl)[str(durl).rfind("/") + 1:])
             depend_dict[vn].append(src)
 
-
     cluster = []
     cluster_dict = {}
     # cluster_depend = []
@@ -706,7 +729,7 @@ def visual():
                     if len(cqres) != 1:
                         flask.abort(500)
                     for com, in cqres:
-                        if len(com)>LENCOM:
+                        if len(com) > LENCOM:
                             com = com[:LENCOM] + "..."
                         # file.write("subgraph clustercomment_" + str(node) +
                         #         "_ {\nnode [style=filled];\ncolor=grey;\nlabel=\"comment: " + str(com) + "\";\n")
@@ -717,11 +740,11 @@ def visual():
                     label = ""
                     c = 1
                     for var_url, com in qres:
-                        label += "var" + \
+                        label += "var"+" " + \
                             str(var_url)[str(var_url).rfind("/") + 1:]
                         label += "\n"
                         temp = str(com)
-                        if len(temp)>LENCOM:
+                        if len(temp) > LENCOM:
                             temp = temp[:LENCOM] + "..."
                         label += temp
                         label += "\n"
@@ -734,7 +757,7 @@ def visual():
                     if len(cqres) != 1:
                         flask.abort(500)
                     for com, in cqres:
-                        if len(com)>LENCOM:
+                        if len(com) > LENCOM:
                             com = com[:LENCOM] + "..."
                         # file.write("subgraph clustercomment_" + str(node) +
                         #         "_ {\nnode [style=filled];\ncolor=grey;\nlabel=\"comment: " + str(com) + "\";\n")
@@ -764,67 +787,71 @@ def get_js():
     return flask.send_file("js/jquery.graphviz.svg.js")
 
 
-@app.route("/var/<vid>", methods=['GET'])
-def frontend_var(vid):
-    url = ns["var/" + str(vid)]
-    his = []
-    qres = g.query(
-        """SELECT ?ts ?val_url ?com
-        WHERE {
-            ?url kg:kgplType kg:kgplVariable ;
-               kg:valueHistory ?ts .
-            ?ts kg:hasKGPLValue ?val_url ;
-                kg:hasComment ?com .
-        }""",
-        initBindings={'url': url}
-    )
-    if len(qres) == 1:
-        for ts, val_url, com in qres:
-            his.append(ts)
-            val_url = str(val_url)
-            ts_for_query = ts
-            ts = str(ts)
-            com = str(com)
-            # print(val_url)
-            # actual_val_id = int(val_url[val_url.rfind('/') + 1:])
-            actual_ts = float(ts[ts.rfind('/') + 1:])
+# @app.route("/var/<vid>", methods=['GET'])
+# def frontend_var(vid):
+#     url = ns["var/" + str(vid)]
+#     his = []
+#     qres = g.query(
+#         """SELECT ?ts ?val_url ?com
+#         WHERE {
+#             ?url kg:kgplType kg:kgplVariable ;
+#                kg:valueHistory ?ts .
+#             ?ts kg:hasKGPLValue ?val_url ;
+#                 kg:hasComment ?com .
+#         }""",
+#         initBindings={'url': url}
+#     )
 
-            while True:
-                qres = g.query(
-                    """SELECT ?history ?val_uri
-                    WHERE {
-                        ?url kg:hasComment ?com ;
-                             kg:hasHistory ?history ;
-                             kg:hasKGPLValue ?val_uri .
-                    }""",
-                    initBindings={'url': ts_for_query}
-                )
-                print(ts)
-                if len(qres) == 0:
-                    print("end")
-                    break
-                elif len(qres) != 1:
-                    print("place two")
+#     if len(qres) != 0:
+#         for ts, val_url, com in qres:
+#             his.append(str(ts))
+#             print("44444444444444444444444")
+#             print(his)
+#             print(str(ts))
+#             val_url = str(val_url)
+#             ts_for_query = ts
+#             ts = str(ts)
+#             com = str(com)
+#             # print(val_url)
+#             # actual_val_id = int(val_url[val_url.rfind('/') + 1:])
+#             actual_ts = float(ts[ts.rfind('/') + 1:])
 
-                    flask.abort(500)
-                for history, val_uri in qres:
-                    ts_for_query = history
-                    # rst.append(int(val_uri[val_uri.rfind('/') + 1:]))
-                    his.append(history)
-            context = {
-                "KGPLVariable": str(url),
-                "Currently containing KGPLValue": val_url,
-                "Current comment": com,
-                "Last modified timestamp": actual_ts,
-                "Last modified": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(actual_ts)),
-                "History": his
-            }
+#             # while True:
+#             #     qres = g.query(
+#             #         """SELECT ?history ?val_uri
+#             #         WHERE {
+#             #             ?url kg:hasComment ?com ;
+#             #                  kg:hasHistory ?history ;
+#             #                  kg:hasKGPLValue ?val_uri .
+#             #         }""",
+#             #         initBindings={'url': ts_for_query}
+#             #     )
+#             #     print(ts)
+#             #     if len(qres) == 0:
+#             #         print("end")
+#             #         break
+#             #     elif len(qres) != 1:
+#             #         print("place two")
 
-            return flask.jsonify(**context), 200
-    elif len(qres) == 0:
-        return flask.abort(404)
-    else:
-        return flask.abort(500)
+#             #         flask.abort(500)
+#             #     for history, val_uri in qres:
+#             #         ts_for_query = history
+#             #         # rst.append(int(val_uri[val_uri.rfind('/') + 1:]))
+#             #         his.append(history)
+#         context = {
+#             "KGPLVariable": str(url),
+#             "Currently containing KGPLValue": val_url,
+#             "Current comment": com,
+#             "Last modified timestamp": actual_ts,
+#             "Last modified": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(actual_ts)),
+#             "History": his
+#         }
+
+#         return flask.jsonify(**context), 200
+#     elif len(qres) == 0:
+#         return flask.abort(404)
+#     else:
+#         return flask.abort(500)
 
 
 @app.route("/var/<vid>/ts/<ts>", methods=['GET'])
