@@ -740,7 +740,7 @@ def visual():
                     label = ""
                     c = 1
                     for var_url, com in qres:
-                        label += "var"+" " + \
+                        label += "label"+" " + \
                             str(var_url)[str(var_url).rfind("/") + 1:]
                         label += "\n"
                         temp = str(com)

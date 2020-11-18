@@ -15,11 +15,11 @@ from collections import defaultdict
 
 import knps
 
-
+VAR_LABEL_GIVEN_BY_ALICE = "LatestCovidData"
 # It ends one day earlier.
 def step2(_):
     DATE_TO_PREDICT = int(
-        (datetime.today() - timedelta(days=1)).strftime('%Y%m%d'))
+        (datetime.today() - timedelta(days=6)).strftime('%Y%m%d'))
     VAR_ID_GIVEN_BY_USER1 = knps.server_url + "/var/0"
     TRAIN_LENGTH = 20
 
@@ -28,10 +28,11 @@ def step2(_):
     start = starting_date.strftime('%Y%m%d')
     temp_dict = {}
 
-    needed_var_id = knps.load_var(VAR_ID_GIVEN_BY_USER1)
-    val_knps = knps.load_val(needed_var_id.val_id)
-    data_source = val_knps.val
-
+    # needed_var_id = knps.load_var(VAR_ID_GIVEN_BY_USER1)
+    # val_knps = knps.load_val(needed_var_id.val_id)
+    # data_source = val_knps.val
+    data_source = knps.get_var_content(VAR_LABEL_GIVEN_BY_ALICE)
+    # print("successfully loaded: ",data_source)
     for key, val in data_source.items():
         temp_list = []
         i = 1
@@ -61,8 +62,8 @@ def step2(_):
     var_comment = "Prediction for COVID-19 cumulative positive \
         cases for all states in the US in the next day"
 
-    myval = knps.value(rst,val_comment,"Dr.Wang",[VAR_ID_GIVEN_BY_USER1,])
-    myvar = knps.variable(myval,var_comment,"Dr.Wang")
+    myval = knps.create_value(rst,val_comment,"Betty",[VAR_LABEL_GIVEN_BY_ALICE,])
+    myval.create_label("Prediction",var_comment)
 
 
 if __name__ == "__main__":

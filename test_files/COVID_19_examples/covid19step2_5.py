@@ -17,14 +17,15 @@ import knps
 
 SERVER_URL = knps.server_url
 
-PREV_VAR_ID = SERVER_URL + "/var/1"
-
+# PREV_VAR_ID = SERVER_URL + "/var/1"
+PREV_VAR_ID = "Prediction"
+VAR_ID_GIVEN_BY_USER1 = "LatestCovidData"
 
 def step2_5(_):
     DATE_TO_PREDICT = int(
-        (datetime.today()).strftime('%Y%m%d'))
+        (datetime.today() + timedelta(days=1)).strftime('%Y%m%d'))
 
-    VAR_ID_GIVEN_BY_USER1 = SERVER_URL + "/var/0"
+    # VAR_ID_GIVEN_BY_USER1 = SERVER_URL + "/var/0"
 
     TRAIN_LENGTH = 20
 
@@ -33,9 +34,10 @@ def step2_5(_):
     start = starting_date.strftime('%Y%m%d')
     temp_dict = {}
 
-    needed_var_id = knps.load_var(VAR_ID_GIVEN_BY_USER1)
-    val_knps = knps.load_val(needed_var_id.val_id)
-    data_source = val_knps.val
+    # needed_var_id = knps.load_var(VAR_ID_GIVEN_BY_USER1)
+    # val_knps = knps.load_val(needed_var_id.val_id)
+    # data_source = val_knps.val
+    data_source = knps.get_var_content(VAR_ID_GIVEN_BY_USER1)
 
     for key, val in data_source.items():
         temp_list = []
@@ -67,10 +69,11 @@ def step2_5(_):
         cases for all states in the US in the next day"
     val_comment = "Prediction for COVID-19 cumulative positive \
         cases for all states in the US for " + \
-        (datetime.today()).strftime('%Y%m%d')
-    myval = knps.value(rst, val_comment, "Dr.Wang", [val_knps, ])
-    prev_var = knps.load_var(PREV_VAR_ID)
-    knps.set_var(prev_var, myval.vid, var_comment)
+        (datetime.today() + timedelta(days=1)).strftime('%Y%m%d')
+    myval = knps.create_value(rst, val_comment, "Betty", [VAR_ID_GIVEN_BY_USER1, ])
+    myval.update_label(PREV_VAR_ID, var_comment)
+    # prev_var = knps.load_var(PREV_VAR_ID)
+    # knps.set_var(prev_var, myval.vid, var_comment)
 
 
 if __name__ == "__main__":

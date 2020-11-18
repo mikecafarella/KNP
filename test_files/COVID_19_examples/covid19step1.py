@@ -18,7 +18,7 @@ if __name__ == "__main__":
     rst = defaultdict(list)
     rst_2 = defaultdict(list)
 
-    today = datetime.today() - timedelta(days=2)
+    today = datetime.today() - timedelta(days=10)
     twenty_days = today - timedelta(days=20)
     before_20 = int(twenty_days.strftime('%Y%m%d'))
     today = int(today.strftime('%Y%m%d'))
@@ -37,5 +37,5 @@ if __name__ == "__main__":
     var_comment = "The COVID-19 cumulative positive cases for all states \
         in the US in the last 20 days"
 
-    myval = knps.value(dict(rst), val_comment, "Jiayun")
-    knps.variable(myval, var_comment, "Jiayun")
+    myval = knps.create_value(dict(rst), val_comment, "Alice")
+    myval.create_label("LatestCovidData", var_comment)

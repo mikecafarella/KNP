@@ -107,7 +107,8 @@ class KGPLValue:
                     "val": val_json,
                     "pyType": type(val).__name__,
                     "comment": comment,
-                    "user": user, "dependency": json.dumps(dependency)},
+                    "user": user, 
+                    "dependency": json.dumps(dependency)},
                     files={"file": open(val.filename, "rb")})
             else:
                 r = requests.post(val_url, data={
@@ -237,7 +238,21 @@ def load(vid, l_url):
 # ---------------------------API-----------------------------------#
 
 def create_value(val, comment, user="anonymous", dependency=[], verbose=False):
-    return value(val, comment, user, dependency, verbose)
+    # dependency list can be KGPLValue/KGPLVariable/Label
+    refined_dependency = []
+    for d in dependency:
+        if d not in [KGPLValue, KGPLVariable]:
+            if type(d)!= str:
+                raise Exception("dependency list can only be KGPLValue/KGPLVariable/Label")
+            else:
+                vid = server_url+"/var/" + d
+                context = load(vid, loadvar_url)
+                temp = KGPLVariable(context["val_id"], context["comment"], vid, context["user"],
+                        context["timestamp"])
+                refined_dependency.append(temp)
+        else:
+            refined_dependency.append(d)
+    return value(val, comment, user, refined_dependency, verbose)
 
 
 def value(val, comment, user="anonymous", dependency=[], verbose=False):
@@ -293,6 +308,7 @@ def load_var(vid):
     return KGPLVariable(context["val_id"], context["comment"], vid, context["user"],
                         context["timestamp"])
 
+
 # to do: ask if set_var change the owner of the variable?
 
 
@@ -340,3 +356,8 @@ def changeNamespace(new_url):
 def viewNamespace():
     print("Current Server: ", server_url)
     return server_url
+
+def get_var_content(label):
+    vid = server_url+"/var/"+label
+    temp_var = load_var(vid)
+    return load_val(temp_var.val_id).val
