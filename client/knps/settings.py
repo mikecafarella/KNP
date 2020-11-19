@@ -10,7 +10,7 @@ try:
             for k in personal['server'].keys():
                 cfg[k] = personal['server'][k]
 except:
-    print("persona.yaml failed to load for kgpl.py")
+    print("Didn't find personal.yaml file. Using default settings."
     pass
 
 SERVER_URL = '{}:{}'.format(cfg['SERVER_ADDRESS'], cfg['SERVER_PORT'])
