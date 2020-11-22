@@ -17,7 +17,7 @@ from rdflib import URIRef, Literal
 from gen import ID_gen_val
 from gen import ID_gen_var
 from werkzeug.utils import secure_filename
-from settings import SERVER_URL
+from settings import SERVER_URL, SERVER_ENVIRONMENT
 
 app = flask.Flask(__name__)
 app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
@@ -27,9 +27,14 @@ m = Lock()
 UPLOAD_FOLDER = 'static/uploads/'
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png',
                       'jpg', 'jpeg', 'gif', 'csv', 'ipynb'}
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 server_url = SERVER_URL
+app.config['SERVER_NAME'] = server_url.split('//')[1]
+app.config['ENV'] = SERVER_ENVIRONMENT
+if SERVER_ENVIRONMENT == 'development':
+    app.config['DEBUG'] = True
 
 g = Graph('Sleepycat', identifier="kgpl")
 g.open('db', create=True)
@@ -946,5 +951,7 @@ def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'],
                                filename), 200
 
-
 atexit.register(close_graph)
+
+if __name__ == '__main__':
+    app.run()
