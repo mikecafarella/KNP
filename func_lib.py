@@ -53,4 +53,52 @@ def temp5(x):
     # r = requests.get(url)
     return url
 
-func_list = [temp0, temp1, temp2, temp3, temp4, temp5]
+# get_entity_id(url)
+# return the entity if (ex. Q76) of an entity
+# F6
+def get_entity_id(url):
+    return url.split('/')[-1]
+
+# return the wikipedia url for an entity
+# F7
+def get_wikipedia_url(wikidata_id):
+    lang = 'en'
+    url = (
+        'https://www.wikidata.org/w/api.php'
+        '?action=wbgetentities'
+        '&props=sitelinks/urls'
+        f'&ids={wikidata_id}'
+        '&format=json')
+    json_response = requests.get(url).json()
+    entities = json_response.get('entities')
+    if entities:
+        entity = entities.get(wikidata_id)
+        if entity:
+            sitelinks = entity.get('sitelinks')
+            if sitelinks:
+                sitelink = sitelinks.get(f'{lang}wiki')
+                if sitelink:
+                    wiki_url = sitelink.get('url')
+                    if wiki_url:
+                        return requests.utils.unquote(wiki_url)
+    return None
+
+# return the textual_summary of the wikipedia page
+# F8
+def textual_summary(url):
+    print(url)
+    if not url:
+        return "None"
+    s = requests.session()
+    r = s.get(url)
+    soup = BeautifulSoup(r.content, 'html.parser')
+    results = soup.find(id='bodyContent')
+    results = results.find(id='mw-content-text')
+    results = results.find_all('p')
+    i = 0
+    for i in range(len(results)):
+        if results[i].text != '\n':
+            break
+    return results[i].text
+
+func_list = [temp0, temp1, temp2, temp3, temp4, temp5, get_entity_id, get_wikipedia_url, textual_summary]
