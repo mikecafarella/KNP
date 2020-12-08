@@ -2,7 +2,6 @@ certifi==2020.6.20
 chardet==3.0.4
 idna==2.10
 isodate==0.6.0
--e git+https@github.com:mikecafarella/KNP.git@bb67f4e94d8da18cabc5d74e7bc35dc13fc530fb#egg=kgpl_client&subdirectory=client
 numpy==1.19.4
 pandas==1.1.4
 #pkg-resources==0.0.0
@@ -15,3 +14,5 @@ six==1.15.0
 SPARQLWrapper==1.8.5
 urllib3==1.25.11
 pyyaml
+#-e git+https@github.com:mikecafarella/KNP.git@bb67f4e94d8da18cabc5d74e7bc35dc13fc530fb#egg=kgpl_client&subdirectory=client
+
