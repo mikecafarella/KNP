@@ -38,13 +38,13 @@ if SERVER_ENVIRONMENT == 'development':
 
 g = Graph('Sleepycat', identifier="kgpl")
 g.open('db', create=True)
-g.bind("kg", server_url + "/")
+g.bind("kg",  "{}/".format(server_url))
 
 dg = Graph('Sleepycat', identifier="dependency")
 dg.open('db', create=True)
-dg.bind("kg", server_url + "/")
+dg.bind("kg", "{}/".format(server_url))
 
-ns = Namespace(server_url + "/")
+ns = Namespace("{}/".format(server_url))
 
 # predicates
 hasHistory = ns.hasHistory
@@ -95,6 +95,9 @@ def return_var_id():
 
 @app.route("/val", methods=['POST'])
 def post_val():
+    """
+        Method for adding a new value, via POST
+    """
     d = request.form
     if "val" not in d or "pyType" not in d or "comment" not in d or "user" not in d or "dependency" not in d:
         flask.abort(400)
@@ -629,6 +632,7 @@ def visual():
     current = ID_gen_val.current
     for vn in range(0, current):
         url = ns["val/" + str(vn)]
+        print(url)
         qres = g.query(
             """SELECT ?user
             WHERE {

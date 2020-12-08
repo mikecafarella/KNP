@@ -77,6 +77,22 @@ class File:
 
 
 class KGPLValue:
+    """
+    KGPLValue object.
+
+    Example::
+
+        val = KGPLValue('http://example.com')
+        c.crawl()
+
+    :param val: Number of seconds to wait between searches
+    :param comment: Paths to ignore
+    :param user: User
+    :param dependency: THe Dependency
+    :param vid: What's a vid?
+    :param verbose: Be verbose about it.
+
+    """
     def __init__(self, val, comment, user="anonymous", dependency=[], vid=None, verbose=False):
         if vid is None:
             # generate a new kgplValue
@@ -93,12 +109,12 @@ class KGPLValue:
                     raise Exception("dependency list not valid")
             self.dependency = dependency
             self.user = user
-            """
-            if r.status_code == 200:
-                self.vid = r.json()["id"]
-            else:
-                raise Exception("not getting correct id")
-            """
+            # """
+            # if r.status_code == 200:
+            #     self.vid = r.json()["id"]
+            # else:
+            #     raise Exception("not getting correct id")
+            # """
             # if this is a picture/pdf/other files
             val_json = val.to_json() if isinstance(
                 val, pandas.DataFrame) else json.dumps(val, cls=MyEncoder)
@@ -107,7 +123,7 @@ class KGPLValue:
                     "val": val_json,
                     "pyType": type(val).__name__,
                     "comment": comment,
-                    "user": user, 
+                    "user": user,
                     "dependency": json.dumps(dependency)},
                     files={"file": open(val.filename, "rb")})
             else:
@@ -135,9 +151,15 @@ class KGPLValue:
             self.dependency = dependency
 
     def getVid(self):
+        """
+        Return the vid
+        """
         return self.vid
 
     def getConcreteVal(self):
+        """
+        Return the concrete value
+        """
         return self.val
 
     def __repr__(self):
@@ -171,13 +193,42 @@ class KGPLValue:
             raise Exception("val type invalid")
 
     def create_label(self, label, comment):
+        """
+        Create a label for this KGPLValue
+
+        :param label: The label
+        :param comment: A comment
+        """
         return variable(label, self.vid, comment, user=self.user)
+
     def update_label(self, label, new_comment):
+        """
+        Update the label for this KGPLValue
+
+        :param label: The label
+        :param new_comment: A new comment
+        """
         temp = load_var(server_url+"/var/"+label)
         return set_var(temp, self.vid, new_comment)
 
 
 class KGPLVariable:
+    """
+    KGPLVariable object.
+
+    Example::
+
+        # REPLACE THIS WITH REAL STUFF
+        val = KGPLVariable('http://example.com')
+        val.do_something()
+
+    :param val_id: Number of seconds to wait between searches
+    :param comment: Paths to ignore
+    :param vid: What's a vid?
+    :param user: User
+    :param timestamp: timestamp
+
+    """
     def __init__(self, val_id, comment, vid, user="anonymous", timestamp=None):
         self.val_id = val_id
         self.comment = comment
