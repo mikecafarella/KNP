@@ -1,4 +1,4 @@
-requests,
-pandas,
-numpy,
+requests
+pandas
+numpy
 SPARQLWrapper
