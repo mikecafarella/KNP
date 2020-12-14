@@ -80,17 +80,24 @@ class KGPLValue:
     """
     KGPLValue object.
 
-    Example::
+    Example:
 
         val = KGPLValue('http://example.com')
-        c.crawl()
+        val.do_something()
 
-    :param val: Number of seconds to wait between searches
-    :param comment: Paths to ignore
-    :param user: User
-    :param dependency: THe Dependency
-    :param vid: What's a vid?
-    :param verbose: Be verbose about it.
+    ###### Parameters
+    - `val`
+        Number of seconds to wait between searches
+    - `comment`
+        Paths to ignore
+    - `user`
+        User
+    - `dependency`
+        THe Dependency
+    - `vid`
+        What's a vid?
+    - `verbose`
+        Be verbose about it.
 
     """
     def __init__(self, val, comment, user="anonymous", dependency=[], vid=None, verbose=False):
@@ -195,9 +202,11 @@ class KGPLValue:
     def create_label(self, label, comment):
         """
         Create a label for this KGPLValue
-
-        :param label: The label
-        :param comment: A comment
+        ###### Parameters
+        - `label`
+            A label identifier for the value
+        - `comment`
+            Descriptive comment for the value
         """
         return variable(label, self.vid, comment, user=self.user)
 
@@ -205,8 +214,11 @@ class KGPLValue:
         """
         Update the label for this KGPLValue
 
-        :param label: The label
-        :param new_comment: A new comment
+        ###### Parameters
+        - `label`
+            A new label identifier for the value
+        - `comment`
+            A new comment
         """
         temp = load_var(server_url+"/var/"+label)
         return set_var(temp, self.vid, new_comment)
@@ -222,11 +234,17 @@ class KGPLVariable:
         val = KGPLVariable('http://example.com')
         val.do_something()
 
-    :param val_id: Number of seconds to wait between searches
-    :param comment: Paths to ignore
-    :param vid: What's a vid?
-    :param user: User
-    :param timestamp: timestamp
+    ###### Parameters
+    - `val_id`
+        Value ID
+    - `comment`
+        User-readable comment about the variable
+    - `vid`
+        What's a vid?
+    - `user`
+        User
+    - `timestamp`
+        Timestamp of the variable creation
 
     """
     def __init__(self, val_id, comment, vid, user="anonymous", timestamp=None):
@@ -365,9 +383,14 @@ def load_var(vid):
 
 def set_var(kg_var, val_id, new_comment):
     """
-    kg_var is the kgplVariable.
-    val_id is the id of the kgplValue it should point to.
-    Return the updated kgplVariable.
+    Update a KGPLVariable and return it.
+    ###### Parameters
+    - `kg_var`
+        KGPLVariable to be updated
+    - `val_id`
+        ID of the KGPLValue the KGPLVariable should now point to
+    - `new_comment`
+        Descriptive comment for the value
     """
     r = requests.put(var_url, json={"vid": kg_var.vid, "val_id": val_id,
                                     "timestamp": kg_var.timestamp,

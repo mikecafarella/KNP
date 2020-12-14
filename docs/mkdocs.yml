@@ -1,0 +1,17 @@
+site_name: Knowledge Graph Programming Language
+nav:
+  - Welcome: index.md
+  - A Tour of KGPL: tour.md
+  - Values: values.md
+  - Variables: variables.md
+  - API Documentation: api.md
+  - About: about.md
+theme: readthedocs
+
+extra_css:
+    - css/custom.css
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - mkautodoc
