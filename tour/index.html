@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="../css/theme.css" />
   <link rel="stylesheet" href="../css/theme_extra.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
+  <link href="../css/custom.css" rel="stylesheet" />
   
   <script>
     // Current page data
@@ -87,6 +88,10 @@
                 </ul>
                 <ul>
                     <li class="toctree-l1"><a class="reference internal" href="../variables/">Variables</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../api/">API Documentation</a>
                     </li>
                 </ul>
                 <ul>
@@ -164,15 +169,15 @@ available to the consumer. This means every KGPL program output can be
 examined for how it was computed. This is helpful for
 sharing datasets in a scientific, engineering, or policy context.</p>
 <p>You can observe all of the KGPL value fields at the Python REPL:</p>
-<pre><code>&gt;&gt;&gt; import kgpl
-&gt;&gt;&gt; from kgpl import kgplSquare
-&gt;&gt;&gt; kgplSquare(3)
-concrete-value: 9
-id: 0051051e-6e0e-11ea-b7d5-8c859062bac5
-lineage: &lt;kgpl.Lineage object at 0x10cd02470&gt;
-url: &lt;unregistered&gt;
-annotations: []
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">kgpl</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">kgpl</span> <span class="kn">import</span> <span class="n">kgplSquare</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">kgplSquare</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">concrete</span><span class="o">-</span><span class="n">value</span><span class="p">:</span> <span class="mi">9</span>
+<span class="nb">id</span><span class="p">:</span> <span class="mf">0051051e-6</span><span class="n">e0e</span><span class="o">-</span><span class="mi">11</span><span class="n">ea</span><span class="o">-</span><span class="n">b7d5</span><span class="o">-</span><span class="mi">8</span><span class="n">c859062bac5</span>
+<span class="n">lineage</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">kgpl</span><span class="o">.</span><span class="n">Lineage</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x10cd02470</span><span class="o">&gt;</span>
+<span class="n">url</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">unregistered</span><span class="o">&gt;</span>
+<span class="n">annotations</span><span class="p">:</span> <span class="p">[]</span>
+</code></pre></div>
 
 <h2 id="variables">Variables</h2>
 <p>KGPL variables are named objects that refer to a particular KGPL value
@@ -206,40 +211,40 @@ better search results.</p>
 immediately transmitted to its registered sharing service.</p>
 <p>You can observe all of the KGPL variable fields --- and those of its
 current value --- at the Python REPL:</p>
-<pre><code>&gt;&gt;&gt; import kgpl
-&gt;&gt;&gt; from kgpl import kgplSquare
-&gt;&gt;&gt; from kgpl import KGPLVariable
-&gt;&gt;&gt;
-&gt;&gt;&gt; x = KGPLVariable(kgplSquare(3))
-&gt;&gt;&gt; x
-id: 8cf28bb1-ea67-4c37-a949-7d8bab2be6f8
-owner: michjc
-url: &lt;unregistered&gt;
-annotations: []
-current-value: 9
-&gt;&gt;&gt;
-&gt;&gt;&gt; x.currentvalue
-concrete-value: 9
-id: 01f9da67-9206-499f-a985-30d734ffbbef
-lineage: &lt;kgpl.Lineage object at 0x101338588&gt;
-url: &lt;unregistered&gt;
-annotations: []
-&gt;&gt;&gt;
-&gt;&gt;&gt; x.reassign(kgplSquare(4))
-&gt;&gt;&gt; x
-id: 8cf28bb1-ea67-4c37-a949-7d8bab2be6f8
-owner: michjc
-url: &lt;unregistered&gt;
-annotations: []
-current-value: 16
-&gt;&gt;&gt;
-&gt;&gt;&gt; x.currentvalue
-concrete-value: 16
-id: 2ac5abea-e790-4100-828c-39f3637e9bc5
-lineage: &lt;kgpl.Lineage object at 0x101417080&gt;
-url: &lt;unregistered&gt;
-annotations: []
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">kgpl</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">kgpl</span> <span class="kn">import</span> <span class="n">kgplSquare</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">kgpl</span> <span class="kn">import</span> <span class="n">KGPLVariable</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">KGPLVariable</span><span class="p">(</span><span class="n">kgplSquare</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span>
+<span class="nb">id</span><span class="p">:</span> <span class="mi">8</span><span class="n">cf28bb1</span><span class="o">-</span><span class="n">ea67</span><span class="o">-</span><span class="mi">4</span><span class="n">c37</span><span class="o">-</span><span class="n">a949</span><span class="o">-</span><span class="mi">7</span><span class="n">d8bab2be6f8</span>
+<span class="n">owner</span><span class="p">:</span> <span class="n">michjc</span>
+<span class="n">url</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">unregistered</span><span class="o">&gt;</span>
+<span class="n">annotations</span><span class="p">:</span> <span class="p">[]</span>
+<span class="n">current</span><span class="o">-</span><span class="n">value</span><span class="p">:</span> <span class="mi">9</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">currentvalue</span>
+<span class="n">concrete</span><span class="o">-</span><span class="n">value</span><span class="p">:</span> <span class="mi">9</span>
+<span class="nb">id</span><span class="p">:</span> <span class="mo">01</span><span class="n">f9da67</span><span class="o">-</span><span class="mi">9206</span><span class="o">-</span><span class="mi">499</span><span class="n">f</span><span class="o">-</span><span class="n">a985</span><span class="o">-</span><span class="mi">30</span><span class="n">d734ffbbef</span>
+<span class="n">lineage</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">kgpl</span><span class="o">.</span><span class="n">Lineage</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x101338588</span><span class="o">&gt;</span>
+<span class="n">url</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">unregistered</span><span class="o">&gt;</span>
+<span class="n">annotations</span><span class="p">:</span> <span class="p">[]</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">reassign</span><span class="p">(</span><span class="n">kgplSquare</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span>
+<span class="nb">id</span><span class="p">:</span> <span class="mi">8</span><span class="n">cf28bb1</span><span class="o">-</span><span class="n">ea67</span><span class="o">-</span><span class="mi">4</span><span class="n">c37</span><span class="o">-</span><span class="n">a949</span><span class="o">-</span><span class="mi">7</span><span class="n">d8bab2be6f8</span>
+<span class="n">owner</span><span class="p">:</span> <span class="n">michjc</span>
+<span class="n">url</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">unregistered</span><span class="o">&gt;</span>
+<span class="n">annotations</span><span class="p">:</span> <span class="p">[]</span>
+<span class="n">current</span><span class="o">-</span><span class="n">value</span><span class="p">:</span> <span class="mi">16</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">currentvalue</span>
+<span class="n">concrete</span><span class="o">-</span><span class="n">value</span><span class="p">:</span> <span class="mi">16</span>
+<span class="nb">id</span><span class="p">:</span> <span class="mi">2</span><span class="n">ac5abea</span><span class="o">-</span><span class="n">e790</span><span class="o">-</span><span class="mi">4100</span><span class="o">-</span><span class="mi">828</span><span class="n">c</span><span class="o">-</span><span class="mi">39</span><span class="n">f3637e9bc5</span>
+<span class="n">lineage</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">kgpl</span><span class="o">.</span><span class="n">Lineage</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x101417080</span><span class="o">&gt;</span>
+<span class="n">url</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">unregistered</span><span class="o">&gt;</span>
+<span class="n">annotations</span><span class="p">:</span> <span class="p">[]</span>
+</code></pre></div>
 
 <p>Variables are pretty rich objects in KGPL.  <a href="../variables/">You can read more about
 them here</a>.</p>
@@ -262,16 +267,16 @@ but the intention is for it to be general-purpose and comprehensive.</p>
 The core types are named as <code>/core/&lt;typelabel&gt;</code>, like
 <code>/core/Politician</code>, <code>/core/GDPData</code>, and so on.</p>
 <p>You use a KGPL type in Python code like this:</p>
-<pre><code>def computeElectoralWinRatio(p: /core/Politician):
-  winCount = 0
-  totalElections = 0
-  for election, didWin in p.elections:
-    totalElections += 1
-    if didWin:
-      winCount += 1
+<div class="codehilite"><pre><span></span><code><span class="n">def</span> <span class="n">computeElectoralWinRatio</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="o">/</span><span class="n">core</span><span class="o">/</span><span class="n">Politician</span><span class="p">):</span>
+  <span class="n">winCount</span> <span class="o">=</span> <span class="mi">0</span>
+  <span class="n">totalElections</span> <span class="o">=</span> <span class="mi">0</span>
+  <span class="k">for</span> <span class="n">election</span><span class="p">,</span> <span class="n">didWin</span> <span class="k">in</span> <span class="n">p</span><span class="p">.</span><span class="n">elections</span><span class="p">:</span>
+    <span class="n">totalElections</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">didWin</span><span class="p">:</span>
+      <span class="n">winCount</span> <span class="o">+=</span> <span class="mi">1</span>
 
-  return winCount / float(totalElections)
-</code></pre>
+  <span class="k">return</span> <span class="n">winCount</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">totalElections</span><span class="p">)</span>
+</code></pre></div>
 
 <p>A type in KGPL is a value that is treated in certain special
 ways. Its <code>concrete-value</code> field is a tuple of two fields:</p>

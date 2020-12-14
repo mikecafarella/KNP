@@ -9,16 +9,17 @@
   
   
   <link rel="shortcut icon" href="../img/favicon.ico">
-  <title>Functions - Knowledge Graph Programming Language</title>
+  <title>Docs - Knowledge Graph Programming Language</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
 
   <link rel="stylesheet" href="../css/theme.css" />
   <link rel="stylesheet" href="../css/theme_extra.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
+  <link href="../css/custom.css" rel="stylesheet" />
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Functions";
+    var mkdocs_page_name = "Docs";
     var mkdocs_page_input_path = "docs.md";
     var mkdocs_page_url = null;
   </script>
@@ -64,6 +65,10 @@
                     </li>
                 </ul>
                 <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../api/">API Documentation</a>
+                    </li>
+                </ul>
+                <ul>
                     <li class="toctree-l1"><a class="reference internal" href="../about/">About</a>
                     </li>
                 </ul>
@@ -88,7 +93,7 @@
     
       
     
-    <li>Functions</li>
+    <li>Docs</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -99,72 +104,7 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="functions">Functions</h1>
-<p>A function is a piece of executable code.  A function is another kind
-of value.  It can be created, but not edited, destroyed, or versioned.</p>
-<p>When a function is executed, it yields the standard results (that is
-values), as well as an <strong>Execution</strong> value.  This value encapsulates
-the execution event via three fields. The <code>source-function</code> field is
-the identifier of the value that represents the function that was
-executed.  The <code>timestamp</code> value simply indicates when the function
-was run. The <code>log</code> value indicates any information emitted by the
-function during execution.</p>
-<p>Some of the nodes in a value's directed lineage tree are <strong>Execution</strong>
-values. </p>
-<p>Like other values, a function can be assigned to a variable.  That
-variable can change its value over time, like any other variable.  It
-might be shared, become well-known, etc.</p>
-<p>A function value is fixed, but most of the time when programming or
-sharing with others, users refer to functions via a variable name.</p>
-<p>Since type membership is probabilistic, it is possible that a single
-function invocation may satisfy multiple functions simultaneously.  In
-these cases, the system will invoke the maximally-probable function.</p>
-<h1 id="program-code">Program Code</h1>
-<p>The body of a KGPL Function is simply Python code, with a few minor
-differences:</p>
-<ul>
-<li>The function signature must declare types for all of its input
-  parameters. These can include KGPL Types.</li>
-<li>Function inputs are KGPL variables.  </li>
-<li>The function will be executed in a VM-style environment that will be
-  destroyed immediately after execution, so the programmer cannot rely
-  on retaining side effects.  All important results must be returned
-  by the function call.</li>
-<li>The function must create KGPL-style results to be returned. In
-  particular, it must create an <strong>Execution</strong> value and appropriate
-  KGPL-style values (with unique identifiers and lineage) for all
-  returned items.</li>
-</ul>
-<p>Building an accurate lineage graph for each output value can be
-burdensome. If the function's outputs are created using special KGPL
-helper functions, this output lineage graph will be generated
-automatically.</p>
-<h1 id="interfaces">Interfaces</h1>
-<p>How is a KGPL function started?  The system can present several possible
-interfaces to the user.</p>
-<h3 id="unambiguous-invocation">Unambiguous Invocation</h3>
-<p>The most straightforward is the <strong>unambiguous interface</strong>, intended
-for data scientists and developers.  This is essentially the same as
-how an KGPL function invokes another function.  The function name and
-its parameters are unambiguously indicated by the user's code.  The only
-ambiguity around which method is invoked is driven by
-identically-named functions with different type signatures.</p>
-<h3 id="method-ambiguous-invocation">Method-Ambiguous Invocation</h3>
-<p>Slightly more user-friendly is the <strong>method-ambiguous interface</strong>,
-in which parameters and their order are indicated entirely
-unambigously, but the method name is indicated via text keywords.</p>
-<p>In this scenario, we can imagine that the chosen function is given an
-additional "virtual precondition" that tests whether the candidate
-function was indicated by the user's set of keywords.  This can be
-quantified with a probability.</p>
-<h3 id="implicit-invocation">Implicit Invocation</h3>
-<p>Finally, the most user-friendly input mode is one in which the
-function, its parameters, and their order are given by the user
-entirely via a text-style or voice-driven interface.  Again, the
-interface adds a virtual precondition that measures whether the
-method, the identified parameter values, AND the mapping from values
-to slots were all indeed intended by the user.</p>
-<h3 id="execution-environments">Execution Environments</h3>
+                <h3 id="execution-environments">Execution Environments</h3>
 <p>Every invocation of a KGPL function entails a small
 custom set of KG entities that describe the <strong>execution
 environment</strong>.  These values can be used by a function to
@@ -174,14 +114,15 @@ large screen, or in voice mode.  If the system returns a table, it
 might make sense to present the entire result on a scrollable laptop
 screen, but in a voice setting it would only make sense to read the
 first tuple aloud.  How can this be implemented?</p>
-<pre><code>RenderTable(t: __Table__): __Table__ {
-  if (__Environment__.isVoiceOnly) {
-    return t[0]
-  } else {
-    return t
-  }
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="err">RenderTable(t: __Table__): __Table__ {</span>
+<span class="err">  if (__Environment__.isVoiceOnly) {</span>
+<span class="err">    return t[0]</span>
+<span class="err">  } else {</span>
+<span class="err">    return t</span>
+<span class="err">  }</span>
+<span class="err">}</span>
+</code></pre></div>
+
 <p>The conditional statement overall always has a precondition
 probability of 1.  One particular branch has a precondition
 probability that depends on whether its tested condition is true (or,
