@@ -1,4 +1,4 @@
-To build the docs, run:
+To build the docs, from the repo root directory, run:
 
 `mkdocs gh-deploy --config-file docs/mkdocs.yml --remote-branch gh-pages`
 
