@@ -55,15 +55,23 @@
                     </li>
                 </ul>
                 <ul>
-                    <li class="toctree-l1"><a class="reference internal" href="tour/">A Tour of KGPL</a>
+                    <li class="toctree-l1"><a class="" href="tour.md">Tutorial</a>
                     </li>
                 </ul>
                 <ul>
-                    <li class="toctree-l1"><a class="reference internal" href="values/">Values</a>
+                    <li class="toctree-l1"><a class="reference internal" href="knowledgeclient/">Knowledge Client</a>
                     </li>
                 </ul>
                 <ul>
-                    <li class="toctree-l1"><a class="reference internal" href="variables/">Variables</a>
+                    <li class="toctree-l1"><a class="reference internal" href="lineage/">Lineage</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="sharingservice/">Sharing Service</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="restapi/">REST API</a>
                     </li>
                 </ul>
                 <ul>
@@ -106,30 +114,41 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="the-knowledge-graph-programming-language">The Knowledge Graph Programming Language</h1>
-<p>The Knowledge Graph Programming Language, or <strong>KGPL</strong>, is a programming
-language that takes Knowledge Graphs as its core data model and
-inspiration.</p>
-<p>KGPL has a few distinctive qualities:</p>
+                <h1 id="the-knowledge-network-programming-system">The Knowledge Network Programming System</h1>
+<p>The <strong>Knowledge Network Programming System</strong>, or <strong>KNPS</strong>, is a programming
+system for building knowledge-powered applications. It allows users to more easily use existing knowledge and to curate new knowledge.</p>
+<p>It has two main components:</p>
 <ul>
-<li><strong>Real World Values and Types</strong>: KGPL covers the "real world" just
+<li>
+<p>The <a href="knowledgeclient/"><strong>Knowledge Client</strong></a> allows users to easily specify a desired relational table, suitable for immediate application use.  Specifying almost any desired table can be done in just a few lines of simple code.  This table
+is automatically populated from a comprehensive back-end knowledge graph that includes raw data and data-processing functions on a vast range of topics. In most cases, the user can avoid the typical tedious process of data discovery, marshalling, cleaning, and curation.</p>
+</li>
+<li>
+<p>The <a href="sharingservice/"><strong>Universal Knowledge Collaboration Network</strong></a> is the back-end knowledge graph that powers the <strong>Knowledge Client</strong>.  In many ways it is similar to existing knowledge graphs like Wikidata and others: it hosts data, contains entities and properties, offers a variety of query interfaces, can host both well-known objects and unpopular objects, and relies on social processes for scalable curation. The <strong>UKCN</strong> is distinctive in that it contains a much wider array of datatypes than is typical: in addition to concrete entities, it can contain files, databases, schemas, properties, execution events, functions, and other items. As a result, the contents of the UKCN can model both the "real" world as well as the computational one. </p>
+</li>
+</ul>
+<!-- KGPL has a few distinctive qualities:
+
+- __Real World Values and Types__: KGPL covers the "real world" just
   like a Knowledge Graph does. Its enormous standard class library has
   data values and types that reflect the real world: there's a value for
-  <code>Barack_Obama</code> and one for <code>Boston_Red_Sox</code>. There's a type for
-  <code>Politician</code> and one for <code>Cartoons</code>.  These are built using the
+  `Barack_Obama` and one for `Boston_Red_Sox`. There's a type for
+  `Politician` and one for `Cartoons`.  These are built using the
   popular Wikidata Knowledge Graph. You can add your own data values
-  and types using your own KG. </li>
-<li><strong>Run Once, Share Everywhere</strong>: Every KGPL output carries lineage
+  and types using your own KG. 
+- __Run Once, Share Everywhere__: Every KGPL output carries lineage
   information and has a globally-unique URL. That means every program
   output of every execution can be examined, debugged, and extended by
-  every other user. </li>
-<li><strong>Integration With Data Pipelines</strong>: KGPL assumes its inputs come
+  every other user. 
+- __Integration With Data Pipelines__: KGPL assumes its inputs come
   from data pipelines and its outputs will used to feed data
   pipelines. The language makes data quality tracking, debugging, and
-  iterative refinement an easy part of every program. </li>
-</ul>
-<p>KGPL also has one <strong>very undistinctive quality</strong>: programs are
-basically Python.  Your daily programming habits remain 99% unchanged.</p>
+  iterative refinement an easy part of every program. 
+
+KGPL also has one __very undistinctive quality__: programs are
+basically Python.  Your daily programming habits remain 99% unchanged.
+
+-->
               
             </div>
           </div>
@@ -137,7 +156,7 @@ basically Python.  Your daily programming habits remain 99% unchanged.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="tour/" class="btn btn-neutral float-right" title="A Tour of KGPL">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="knowledgeclient/" class="btn btn-neutral float-right" title="Knowledge Client">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
     </div>
@@ -165,7 +184,7 @@ basically Python.  Your daily programming habits remain 99% unchanged.</p>
       
       
       
-        <span style="margin-left: 15px"><a href="tour/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="knowledgeclient/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
@@ -183,5 +202,5 @@ basically Python.  Your daily programming habits remain 99% unchanged.</p>
 
 <!--
 MkDocs version : 1.1.2
-Build Date UTC : 2020-12-14 18:47:25.053780+00:00
+Build Date UTC : 2021-01-11 16:06:32.594731+00:00
 -->

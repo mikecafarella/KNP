@@ -9,7 +9,7 @@
   
   
   <link rel="shortcut icon" href="../img/favicon.ico">
-  <title>Docs - Knowledge Graph Programming Language</title>
+  <title>REST API - Knowledge Graph Programming Language</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
 
   <link rel="stylesheet" href="../css/theme.css" />
@@ -19,8 +19,8 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Docs";
-    var mkdocs_page_input_path = "docs.md";
+    var mkdocs_page_name = "REST API";
+    var mkdocs_page_input_path = "restapi.md";
     var mkdocs_page_url = null;
   </script>
   
@@ -53,15 +53,27 @@
                     </li>
                 </ul>
                 <ul>
-                    <li class="toctree-l1"><a class="reference internal" href="../tour/">A Tour of KGPL</a>
+                    <li class="toctree-l1"><a class="" href="../tour.md">Tutorial</a>
                     </li>
                 </ul>
                 <ul>
-                    <li class="toctree-l1"><a class="reference internal" href="../values/">Values</a>
+                    <li class="toctree-l1"><a class="reference internal" href="../knowledgeclient/">Knowledge Client</a>
                     </li>
                 </ul>
                 <ul>
-                    <li class="toctree-l1"><a class="reference internal" href="../variables/">Variables</a>
+                    <li class="toctree-l1"><a class="reference internal" href="../lineage/">Lineage</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../sharingservice/">Sharing Service</a>
+                    </li>
+                </ul>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">REST API</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#show-examples-of-locally-running-data-production-code-how-you-grab-data-how-you-make-new-data-and-how-you-upload-metadata-to-the-service-try-using-the-code-that-is-in-the-covid-example">Show examples of locally-running data production code.  How you grab data, how you make new data, and how you upload metadata to the service.  Try using the code that is in the COVID example.</a>
+    </li>
+    </ul>
                     </li>
                 </ul>
                 <ul>
@@ -93,7 +105,7 @@
     
       
     
-    <li>Docs</li>
+    <li>REST API</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -104,63 +116,25 @@
           <div role="main">
             <div class="section">
               
-                <h3 id="execution-environments">Execution Environments</h3>
-<p>Every invocation of a KGPL function entails a small
-custom set of KG entities that describe the <strong>execution
-environment</strong>.  These values can be used by a function to
-control output depending on the execution environment.</p>
-<p>For example, the same code might be runnable either on a laptop with a
-large screen, or in voice mode.  If the system returns a table, it
-might make sense to present the entire result on a scrollable laptop
-screen, but in a voice setting it would only make sense to read the
-first tuple aloud.  How can this be implemented?</p>
-<div class="codehilite"><pre><span></span><code><span class="err">RenderTable(t: __Table__): __Table__ {</span>
-<span class="err">  if (__Environment__.isVoiceOnly) {</span>
-<span class="err">    return t[0]</span>
-<span class="err">  } else {</span>
-<span class="err">    return t</span>
-<span class="err">  }</span>
-<span class="err">}</span>
-</code></pre></div>
-
-<p>The conditional statement overall always has a precondition
-probability of 1.  One particular branch has a precondition
-probability that depends on whether its tested condition is true (or,
-for the else branch, (1-p)).</p>
-<h3 id="managing-uncertainty-thresholds">Managing Uncertainty Thresholds</h3>
-<p>In some cases, the precondition probability is useful for comparing
-different alternatives.  The user might have invoked <code>Compare(x, y)</code>;
-depending on the values for <code>x</code> and <code>y</code>, either <code>Compare(x: Person,
-y:Person)</code> or <code>Compare(x: TimeSeries, y: TimeSeries)</code> might be more
-probable.</p>
-<p>But what should be done when the precondition probability of the
-maximally-probable option is still quite low?  The right course of
-action depends on the environment and context. For example, the
-unambiguous interface probably should always run whatever the user
-asks for, while the implicit invocation interface should probably only
-run code when the confidence is above a certain threshold.</p>
-<p>Each invocation interface can register two special values: the minimum
-probability for function execution, and the minimum probability for
-warning the user prior to function execution.</p>
-<p>Finally, there is the probability associated with conditionals.  The
-<strong>True</strong> branch is always evaluated when its probability is 95% or
-higher.</p>
-<ul>
-<li><strong>Run Once, Debug Everywhere</strong>: It is easy to share, examine,
-  discuss, copy, and modify single executions.</li>
-<li><strong>The Universal Class Library</strong>: KGPL offers a class library of more
-  than <strong>70 million</strong> individual and easily-understood types. These
-  types reflect real-world categories, such as Presidents, Buildings,
-  Emotions, Satellites, and many more</li>
-<li><strong>Easy Fine-Grained Code Sharing</strong>: KGPL makes it easy to share
-  even individual variables with other programs.</li>
-<li><strong>Practical Python</strong>: Despite all of the above features, KGPL looks and
-  feels like Python 99% of the time</li>
-</ul>
+                <h1 id="rest-api">REST API</h1>
+<p>The <a href="../sharingservice/"><strong>UKCN</strong></a> offers a REST API for integration with existing data pipelines. This lets users and organizations who have data product jobs:
+- Obtain source data for data pipeline inputs
+- Upload new data pipeline outputs
+- Upload metadata about the pipeline execution itself</p>
+<h2 id="show-examples-of-locally-running-data-production-code-how-you-grab-data-how-you-make-new-data-and-how-you-upload-metadata-to-the-service-try-using-the-code-that-is-in-the-covid-example">Show examples of locally-running data production code.  How you grab data, how you make new data, and how you upload metadata to the service.  Try using the code that is in the COVID example.</h2>
               
             </div>
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../api/" class="btn btn-neutral float-right" title="API Documentation">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../sharingservice/" class="btn btn-neutral" title="Sharing Service"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>
@@ -184,6 +158,10 @@ higher.</p>
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
+        <span><a href="../sharingservice/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../api/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

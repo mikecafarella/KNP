@@ -9,7 +9,7 @@
   
   
   <link rel="shortcut icon" href="../img/favicon.ico">
-  <title>KGPL Sharing Services - Knowledge Graph Programming Language</title>
+  <title>Sharing Service - Knowledge Graph Programming Language</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
 
   <link rel="stylesheet" href="../css/theme.css" />
@@ -19,7 +19,7 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "KGPL Sharing Services";
+    var mkdocs_page_name = "Sharing Service";
     var mkdocs_page_input_path = "sharingservice.md";
     var mkdocs_page_url = null;
   </script>
@@ -53,15 +53,35 @@
                     </li>
                 </ul>
                 <ul>
-                    <li class="toctree-l1"><a class="reference internal" href="../tour/">A Tour of KGPL</a>
+                    <li class="toctree-l1"><a class="" href="../tour.md">Tutorial</a>
                     </li>
                 </ul>
                 <ul>
-                    <li class="toctree-l1"><a class="reference internal" href="../values/">Values</a>
+                    <li class="toctree-l1"><a class="reference internal" href="../knowledgeclient/">Knowledge Client</a>
                     </li>
                 </ul>
                 <ul>
-                    <li class="toctree-l1"><a class="reference internal" href="../variables/">Variables</a>
+                    <li class="toctree-l1"><a class="reference internal" href="../lineage/">Lineage</a>
+                    </li>
+                </ul>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">Sharing Service</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#using-the-ukcn">Using the UKCN</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#data-model">Data Model</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#deployment">Deployment</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#interfaces">Interfaces</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting Started</a>
+    </li>
+    </ul>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../restapi/">REST API</a>
                     </li>
                 </ul>
                 <ul>
@@ -93,7 +113,7 @@
     
       
     
-    <li>KGPL Sharing Services</li>
+    <li>Sharing Service</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -104,39 +124,88 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="kgpl-sharing-services">KGPL Sharing Services</h1>
-<h2 id="permissions">Permissions</h2>
-<p>Values do not have access control. They simply exist. In most cases,
+                <h1 id="the-univeral-knowledge-collaboration-network">The Univeral Knowledge Collaboration Network</h1>
+<p>The <strong>UKCN</strong> is a knowledge graph that is similar to other Wikidata-style knowledge graphs. Like existing systems, it:
+- Hosts data
+- Contains entities and properties
+- Offers a range of query interfaces, such as SPARQL and the <a href="../knowledgeclient/"><strong>Knowledge Client</strong></a>
+- Hosts both well-known objects (e.g., Barack Obama) and obscure ones (e.g., a random uploaded image file)
+- Largely relies on social processes for data curation</p>
+<p>Unlike existing systems, the <strong>UKCN</strong> also models the computational world, with support for storing files, databases, schemas, execution events, functions, and other items. This allows the <strong>UKCN</strong> to apply the virtues of traditional knowledge graph systems --- topic flexibility and efficient curation --- to all the data that an application developer might need.</p>
+<h2 id="using-the-ukcn">Using the UKCN</h2>
+<p>Like Wikidata, the <strong>UKCN</strong> presents an HTML browser interface for users.  Anyone can search and retrieve data from the <strong>UKCN</strong>.  With an account, a user can create new <strong>UKCN</strong> objects, annotate and edit existing ones, run functions, and carry out a range of other tasks.</p>
+<p>Every data object in the <strong>UKCN</strong> has its own URL. This URL can be used in the browser to find an object. The same URL can be provided to the <a href="../knowledgeclient/"><strong>Knowledge Client</strong></a> for various use cases.  Sharing data with a colleague is as easy as sharing a webpage: just send your friend the appropriate URL.</p>
+<p>Every data object in the <strong>UKCN</strong> has an affiliated user account as its owner. In the current version of the <strong>UKCN</strong>, all data objects are world-readable and world-writable. Future versions will implement user permissions that prevent unauthorized access and edits.</p>
+<h2 id="data-model">Data Model</h2>
+<p>Data objects in <strong>UKCN</strong> are immutable: with one important exception, they can never change and are never deleted.</p>
+<p>Every immutable data object has an <em>obscure identifier</em>. This can be used to fetch the data object, forever. Because <em>obscure identifers</em> are never recycled, and because data objects can never be modified, <strong>UKCN</strong> can be used for long-term provenance tracking.  An object with an obscure identifier is akin to a particular version of a particular entity in Wikidata; it might be useful and popular, but probably not.</p>
+<p>The <strong>UKCN</strong> also offers <em>well-known identifiers</em>. This is the only kind of value in the <strong>UKCN</strong> that can change over time.  A well-known identifier starts with the letter 'X', followed by an integer.  It is akin to the set of top-level entities in Wikidata, such as Q76 (Barack Obama).</p>
+<p>A well-known identifier always points to a single immutable data object (which, of course, also has an obscure identifier).  This is similar to the way in which a high-level Wikidata identifier (e.g, Q76) at any moment in time points to a particular version of the entity.</p>
+<p>In practice, users can mostly ignore this distinction. Most people will mostly deal with <em>well-known</em> objects; that is, objects currently pointed-to by a <em>well-known identifier</em>.  Non-well-known objects are generally only of interest when looking at past versions (e.g., for provenance tracking reasons).</p>
+<p>Users retrieving <strong>UKCN</strong> objects using a single query interface, whether its via an obscure identifier or a well-known identifier, </p>
+<h2 id="deployment">Deployment</h2>
+<p>There is a single <strong>UKCN</strong> that is implemented across multiple servers, in the same way there is a single World Wide Web implemented across multiple web servers.  This will allow users and institutions to host data that might be tied to a particular location, while allowing users to ignore physical placement when annotating and curating data.</p>
+<p>However, the current <strong>UKCN</strong> software implements only "single-server mode".</p>
+<h2 id="interfaces">Interfaces</h2>
+<p>The <strong>UKCN</strong> allows users to access it in three ways:
+1. When building applications, via the <a href="../knowledgeclient/"><strong>Knowledge Client</strong></a>
+2. When curating and sharing data, via the HTML Browser interface
+3. When uploading novel data artifacts programmatically, via the <a href="../restapi/">REST API</a></p>
+<p>This last interface is primarily useful when integrating the <strong>UKCN</strong> with existing data pipelines.</p>
+<h2 id="getting-started">Getting Started</h2>
+<p><a href="../install/">Go here</a> to install and run the <strong>UKCN</strong> system.</p>
+<!--
+
+# Obsolete Text
+## Permissions
+
+Values do not have access control. They simply exist. In most cases,
 the best way to keep a value secret from someone is to not share it
-with that person.</p>
-<p>But in many cases scoped sharing would be useful. For example, people
+with that person.
+
+But in many cases scoped sharing would be useful. For example, people
 inside an organization want to be able to share data internally, but
-not with external people or with an external central service.</p>
-<p>It is therefore possible to run a <strong>private KGPL sharing service</strong>.
+not with external people or with an external central service.
+
+It is therefore possible to run a __private KGPL sharing service__.
 This service is not visible to all users in the universe. Controlling
 access to this service is outside the scope of KGPL.  Just treat the
-private KGPL service like an intranet URL.</p>
-<p>A single value might have a lineage tree that refers to several KGPL
-sharing services. Consider a company that publishes a <code>profits</code> value,
+private KGPL service like an intranet URL.
+
+A single value might have a lineage tree that refers to several KGPL
+sharing services. Consider a company that publishes a `profits` value,
 based on substantial amounts of internal data. The profits quantity,
 and its method of computation, should be public but the raw data
 should be private. In this case, external users of the value would be
 able to observe its lineage up to the point where it relied on private
-data.</p>
-<p>In some cases, organizations might want to publicly share
+data.
+
+In some cases, organizations might want to publicly share
 previously-secret values.  Or they might want to temporarily share
 private data with an external governmental organization.  In all of
-these cases, the <code>id</code> field stays stable.  Sharing this private data
+these cases, the `id` field stays stable.  Sharing this private data
 entails simply re-registering the entire lineage chain with an
-external service.</p>
-<p>Because values can never change, sharing a value with another service
+external service.
+
+Because values can never change, sharing a value with another service
 is always safe to do, with no version control problems.  A service can
 simply union its current set of known values with all the values it
-ever hears about.</p>
+ever hears about.
+
+-->
               
             </div>
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../restapi/" class="btn btn-neutral float-right" title="REST API">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../lineage/" class="btn btn-neutral" title="Lineage"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>
@@ -160,6 +229,10 @@ ever hears about.</p>
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
+        <span><a href="../lineage/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../restapi/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

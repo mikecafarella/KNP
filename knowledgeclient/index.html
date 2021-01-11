@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Knowledge Client - Knowledge Graph Programming Language</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
+  <link href="../css/custom.css" rel="stylesheet" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Knowledge Client";
+    var mkdocs_page_input_path = "knowledgeclient.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Knowledge Graph Programming Language</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="..">Welcome</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="" href="../tour.md">Tutorial</a>
+                    </li>
+                </ul>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">Knowledge Client</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#data-model">Data Model</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#execution-model">Execution Model</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#insert-preexisting-jupyter-notebook-walkthrough-text-here">INSERT PREEXISTING JUPYTER NOTEBOOK WALKTHROUGH TEXT HERE.</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#also-we-need-to-figure-out-the-data-model-distinction-between-using-wikidata-vs-using-the-sharing-service-right-now-the-client-only-exploits-wikidata-but-this-should-change-very-soon">ALSO: WE NEED TO FIGURE OUT THE DATA MODEL DISTINCTION BETWEEN USING WIKIDATA VS USING THE SHARING SERVICE.  RIGHT NOW THE CLIENT ONLY EXPLOITS WIKIDATA, BUT THIS SHOULD CHANGE VERY SOON.</a>
+    </li>
+    </ul>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../lineage/">Lineage</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../sharingservice/">Sharing Service</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../restapi/">REST API</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../api/">API Documentation</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../about/">About</a>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Knowledge Graph Programming Language</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Knowledge Client</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="the-knowledge-client">The Knowledge Client</h1>
+<p>This document describes the <strong>Knowledge Client</strong>, and how to use it to build data-powered applications very quickly.</p>
+<p>The main goal of the <strong>Knowledge Client</strong> is to allow users to quickly obtain a high-quality relation, on any topic.  It is intended for integration into applications or data science workflows.  The client obtains its data from the backing <a href="../sharingservice/"><strong>Universal Knowledge Collaboration Network</strong></a>.  Users may have to consult the <strong>UKCN</strong> in order to find the right identifiers for data objects and properties.</p>
+<p>The current client is written in Python, though there is nothing    Python-specific about it: future clients could be written to integrate with programs in Go, Rust, Swift, etc.</p>
+<h2 id="data-model">Data Model</h2>
+<p>A relation in both the <strong>Knowledge Client</strong> and the <strong>UKCN</strong> is akin to a traditional RDBMS relation: it's got rows and columns.  However, our relations differ in two important ways:
+1. Each row has a globally-unique identifier. This is roughly similar to the <em>rowid</em> that some database systems provide. However, our row ids are globally-unique identifiers.
+2. Like a traditional RDBMS, each column has a human-understandable <em>name</em> (e.g., "Salary") and a <em>type</em> (e.g., "float"). In addition, in our system each column has a <em>semantic label</em>. These labels are drawn from a dictionary maintained by the <strong>UKCN</strong>. For example, a column might be annotated by a label <em>/properties/wikidata/P3618</em>, which indicates "base salary".</p>
+<h2 id="execution-model">Execution Model</h2>
+<p>The client allows the programmer to build a single relation at a time.
+The sequence of steps that the <strong>Knowledge Client</strong> performs can be thought of as a single "table initialization step", followed by a series of joins that grow the table's rows and columns.  </p>
+<p>Some common kinds of initialization include:
+- Creating a table of a single row and a single column. For example, consider a single column that identifies a KG object, with a single row that represents the <em>Barack Obama</em> object.
+- Creating a table of many rows and a single column. For example, consider a single column that identifies a KG object, with multiple rows that represent members of a class, such as all instances of the <em>City</em> object.
+- Creating a table that corresponds to a pre-made table in the <strong>UKCN</strong>. For example, the programmer may grab a table of dollar-to-Euro exchange statistics.</p>
+<p>After initialization, the user performs a series of joins that potentially add rows and columns to the table. With some naming guidance from the user, the system synthesizes all of the appropriate column metadata for each new row and column.</p>
+<p>The system does not try to extract or clean <strong>UKCN</strong> data at the time of use, apart from a few important exceptions.  At the individual fact level, everything the user sees inside a relation created by the <strong>Knowledge Client</strong> can be found in the <strong>UKCN</strong>.</p>
+<p>The exceptions surround cases when the system believes that facts in the <strong>UKCN</strong> are correct at the individual level, but will yield a relation that is internally inconsistent.  Unfortunately, this is a well-known problem in knowledge graphs. Consider the example that <em>Tim Berners-Lee</em> is an example of <em>Computer Scientist</em>, while <em>Computer Scientist</em> is an example of <em>profession</em>. A <strong>Knowledge Client</strong> user trying to create a table of professions might inadvertently obtain one that includes <em>Tim Berners-Lee</em>.  When appropriate, the <strong>Knowledge Client</strong> will either silently fix these issues, or will issue a warning to the user.</p>
+<h2 id="examples">Examples</h2>
+<p>Let's try to show a few examples of using the <strong>Knowledge Client</strong>.</p>
+<h2 id="insert-preexisting-jupyter-notebook-walkthrough-text-here">INSERT PREEXISTING JUPYTER NOTEBOOK WALKTHROUGH TEXT HERE.</h2>
+<h2 id="also-we-need-to-figure-out-the-data-model-distinction-between-using-wikidata-vs-using-the-sharing-service-right-now-the-client-only-exploits-wikidata-but-this-should-change-very-soon">ALSO: WE NEED TO FIGURE OUT THE DATA MODEL DISTINCTION BETWEEN USING WIKIDATA VS USING THE SHARING SERVICE.  RIGHT NOW THE CLIENT ONLY EXPLOITS WIKIDATA, BUT THIS SHOULD CHANGE VERY SOON.</h2>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../lineage/" class="btn btn-neutral float-right" title="Lineage">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href=".." class="btn btn-neutral" title="Welcome"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href=".." style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../lineage/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
