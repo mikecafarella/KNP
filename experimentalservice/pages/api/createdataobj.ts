@@ -40,9 +40,6 @@ export default async function handle(req, res) {
             schemaLabel5,
             schemaType5,
         } = metadata
-    console.log("Upload info", metadata)
-    console.log("Trying to create", name)
-    console.log("Files", files)
     let jobj = null
         switch (datatype) {
             case "/datatypes/json": {
@@ -260,24 +257,17 @@ export default async function handle(req, res) {
             }
         }
     if (jobj) {
-        console.log(jobj)
-        console.log("Logging the CREATE for " + jobj.dobj.NameAssignment.ObjectName.id + " and user " + ownerid)
-        /**
-         * THERE IS A REALLY BIG PROBLEM WITH THE WHOLE DATA OBJECT UNIQUE IDENTIFIER STORY RIGHT NOW
-         * I GOTTA FIGURE IT OUT!!!
         const jobj2 = await prisma.timeline.create( {
             data: {
                 op: "create",
                 ref: {connect: {
-                    id: jobj.dobj.NameAssignment.ObjectName.id
+                    id: jobj.dobjid
                 }},
                 owner: {connect: {
                     id: ownerid
                 }}
             }
         })
-        console.log("Did it work?" + jobj2)
-         */
 
         res.json({"resultcode": "success", "data": jobj})
     } else {

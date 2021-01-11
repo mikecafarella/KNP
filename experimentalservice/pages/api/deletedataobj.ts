@@ -22,8 +22,6 @@ export default async function handle(req, res) {
     const { deleteId, 
             ownerid,
         } = metadata
-    console.log("Upload info", metadata)
-    console.log("Deleting item" + deleteId)
 
     const jobj = await prisma.objectName.updateMany( {
         where: {id: deleteId},
@@ -33,7 +31,6 @@ export default async function handle(req, res) {
     })
 
     if (jobj) {
-        console.log("Timeline for " + ownerid)
         const jobj2 = await prisma.timeline.create( {
             data: {
                 op: "delete",

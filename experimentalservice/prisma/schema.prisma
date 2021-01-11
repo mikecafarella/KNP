@@ -23,8 +23,10 @@ model Timeline {
   id      Int         @id @default(autoincrement())
   op      String
   timestamp DateTime  @default(now())
-  owner   User        
-  ref    ObjectName?
+  ownerid Int
+  owner   User        @relation(fields: [ownerid], references: [id])
+  refid   Int        
+  ref     ObjectName  @relation(fields: [refid], references: [id])
 }
 
 model NameAssignment {
