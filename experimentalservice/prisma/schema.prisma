@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+
+model ObjectName {
+  id       Int        @id @default(autoincrement())
+  name     String     @default("")
+  desc     String     @default("")
+  versionid Int
+  version  NameAssignment @relation(fields: [versionid], references: [id])
+  ownerid  Int
+  owner    User      @relation(fields: [ownerid], references: [id])
+  isdeleted Int       @default(0)
+}
+
+model Timeline {
+  id      Int         @id @default(autoincrement())
+  op      String
+  timestamp DateTime  @default(now())
+  owner   User        
+  ref    ObjectName?
+}
+
+model NameAssignment {
+  id       Int        @id @default(autoincrement())
+  dobjid   Int
+  dobj     DataObject @relation(fields: [dobjid], references: [id])
+  timestamp DateTime  @default(now())
+}
+
+model DataObject {
+  id        Int       @id @default(autoincrement())
+  timestamp DateTime  @default(now())
+  datatype  String
+  comment   String    @default("")
+  ownerid   Int  
+  owner     User     @relation(fields: [ownerid], references: [id])
+  predecessors  DataObject[]
+  isdeleted Int       @default(0)
+}
+
+model ImgData {
+  id           Int    @id @default(autoincrement()) 
+  dobjid       Int
+  dobj         DataObject   @relation(fields: [dobjid], references: [id])
+  img          String
+}
+
+model CsvData {
+  id           Int    @id @default(autoincrement()) 
+  dobjid       Int
+  dobj         DataObject   @relation(fields: [dobjid], references: [id])
+  csvdata      String
+}
+
+model JsonData {
+  id           Int    @id @default(autoincrement()) 
+  dobjid       Int
+  dobj         DataObject   @relation(fields: [dobjid], references: [id])
+  jsondata     String
+}
+
+model ColumnData {
+  id           Int    @id @default(autoincrement()) 
+  dobjid       Int
+  dobj         DataObject   @relation(fields: [dobjid], references: [id])
+  headerlabel     String
+  typedesc     String
+}
+
+model SchemaData {
+  id           Int    @id @default(autoincrement()) 
+  dobjid       Int
+  dobj         DataObject   @relation(fields: [dobjid], references: [id])
+  colname1     String
+  coldesc1     Int
+  colname2     String?
+  coldesc2     Int?
+  colname3     String?
+  coldesc3     Int?
+  colname4     String?
+  coldesc4     Int?
+  colname5     String?
+  coldesc5     Int?
+}
+
+model PyNumData {
+  id           Int    @id @default(autoincrement()) 
+  dobjid       Int
+  dobj         DataObject   @relation(fields: [dobjid], references: [id])
+  val          Float
+}
+
+model PyStrData {
+  id           Int    @id @default(autoincrement()) 
+  dobjid       Int
+  dobj         DataObject   @relation(fields: [dobjid], references: [id])
+  val          String
+}
+
+
+model Post {
+  authorId  Int?
+  content   String?
+  id        Int     @id @default(autoincrement())
+  published Boolean @default(false)
+  title     String
+  author    User?   @relation(fields: [authorId], references: [id])
+}
+
+model User {
+  email String  @unique
+  id    Int     @id @default(autoincrement())
+  name  String?
+  posts Post[]
+}
+
