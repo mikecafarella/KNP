@@ -3,7 +3,7 @@
 The __UKCN__ is a knowledge graph that is similar to other Wikidata-style knowledge graphs. Like existing systems, it:
 - Hosts data
 - Contains entities and properties
-- Offers a range of query interfaces, such as SPARQL and the __Knowledge Client__
+- Offers a range of query interfaces, such as SPARQL and the [__Knowledge Client__](knowledgeclient.md)
 - Hosts both well-known objects (e.g., Barack Obama) and obscure ones (e.g., a random uploaded image file)
 - Largely relies on social processes for data curation
 
