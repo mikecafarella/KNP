@@ -20,7 +20,13 @@ export type DataContentProps = {
 }
 
 const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) => {
-
+    var imgstr = ""
+    if (datacontent.datatype == "/datatypes/img") {
+        console.log("IMAGE")
+        const imgBytes = JSON.parse(datacontent.ImgData[0].img).contents.data 
+        console.log(imgBytes)
+        imgstr = "data:image/png;base64, " + new Buffer(imgBytes).toString('base64')
+    }
     return (
         <Pane overflowY="scroll" background="tint1" padding={majorScale(1)}>
         { datacontent.datatype == "/datatypes/json" &&
@@ -50,6 +56,14 @@ const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) =
             </Table>
              */}
           </Pane>
+        }
+
+        { datacontent.datatype == "/datatypes/img" &&
+            <Pane display="flex" >
+                <Pre>
+                <img src={imgstr}/>
+                </Pre>
+            </Pane>
         }
 
         { datacontent.datatype == "/datatypes/datacolumn" &&

@@ -17,6 +17,7 @@ export default async function handle(req, res) {
             resolve({ fields, files });
         });
       });
+
       
     const {fields, files} = data
     const metadata = JSON.parse(fields["metadata"])
@@ -110,7 +111,7 @@ export default async function handle(req, res) {
                 fs.unlinkSync(files.imgpath.path)
                 jobj = await prisma.imgData.create( {
                     data: {
-                        csvdata: JSON.stringify(datacontents),      
+                        img: JSON.stringify(datacontents),      
                         dobj: { create: {   owner: {connect: 
                                                     {id: ownerid}}, 
                                             comment: comment, 

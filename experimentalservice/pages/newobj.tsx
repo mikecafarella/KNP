@@ -11,7 +11,7 @@ const NewObj: React.FC = (props) => {
   const [description, setDescription] = useState('')
   const [comment, setComment] = useState('')
   const [datatype, setDataType] = useState('')
-  const [imagepath, setImagePath] = useState('')
+  const [imgpath, setImagePath] = useState('')
   const [csvpath, setCSVPath] = useState()
   const [jsonpath, setJSONPath] = useState()
   const [pynumber, setPyNumber] = useState(0)
@@ -43,6 +43,10 @@ const NewObj: React.FC = (props) => {
         }
         case "/datatypes/csv": {
           fd.append("csvpath", csvpath, "filecontents")
+          break
+        }
+        case "/datatypes/img": {
+          fd.append("imgpath", imgpath, "filecontents")
           break
         }
         default: {
@@ -163,7 +167,7 @@ const NewObj: React.FC = (props) => {
              </Pane>   
              <FilePicker
                 width={majorScale(50)}
-                onChange={e => setImagePath(e)}
+                onChange={e => setImagePath(e[0])}
                 name="imgfile"
                 placeholder="Choose the image file here"/>
            </Pane>  
@@ -291,7 +295,7 @@ const NewObj: React.FC = (props) => {
             <Button type="submit" 
                 disabled={!name ||!description || !datatype || 
                   (datatype=="/datatypes/json" && !jsonpath) || 
-                  (datatype=="/datatypes/img" && !imagepath) || 
+                  (datatype=="/datatypes/img" && !imgpath) || 
                   (datatype=="/datatypes/csv" && !csvpath) || 
                   (datatype=="/datatypes/pynum" && !pynumber) || 
                   (datatype=="/datatypes/datacolumn" && !datacolumnheader && !datacolumntype) || 
