@@ -51,7 +51,7 @@ Go here to install and run the __UKCN__ system.
 
 
 
-
+<!--
 
 # Obsolete Text
 ## Permissions
@@ -88,4 +88,6 @@ Because values can never change, sharing a value with another service
 is always safe to do, with no version control problems.  A service can
 simply union its current set of known values with all the values it
 ever hears about.
+
+-->
 
