@@ -150,3 +150,6 @@ log_var_id
 *.ttl
 
 personal.yaml
+
+# docs
+site
