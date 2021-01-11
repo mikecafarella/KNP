@@ -6,3 +6,5 @@ __INSTALL DETAILS HERE__
 
 
 ## Tutorial
+
+Now that you've installed the system, [try out the tutorial](tutorial.md).

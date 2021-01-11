@@ -2,9 +2,9 @@
 
 This document describes the __Knowledge Client__, and how to use it to build data-powered applications very quickly.
 
-The main goal of the __Knowledge Client__ is to allow users to quickly obtain a high-quality relation, on any topic.  It is intended for integration into applications or data science workflows.  The client obtains its data from the backing __Universal Knowledge Collaboration Network__.  Users may have to consult the __UKCN__ in order to find the right identifiers for data objects and properties.
+The main goal of the __Knowledge Client__ is to allow users to quickly obtain a high-quality relation, on any topic.  It is intended for integration into applications or data science workflows.  The client obtains its data from the backing [__Universal Knowledge Collaboration Network__](sharingservice.md).  Users may have to consult the __UKCN__ in order to find the right identifiers for data objects and properties.
 
-The current client is written in Python, though there is nothing Python-specific about it: future clients could be written to integrate with programs in Go, Rust, Swift, etc.
+The current client is written in Python, though there is nothing    Python-specific about it: future clients could be written to integrate with programs in Go, Rust, Swift, etc.
 
 ## Data Model
 A relation in both the __Knowledge Client__ and the __UKCN__ is akin to a traditional RDBMS relation: it's got rows and columns.  However, our relations differ in two important ways:
@@ -26,7 +26,7 @@ The system does not try to extract or clean __UKCN__ data at the time of use, ap
 
 The exceptions surround cases when the system believes that facts in the __UKCN__ are correct at the individual level, but will yield a relation that is internally inconsistent.  Unfortunately, this is a well-known problem in knowledge graphs. Consider the example that *Tim Berners-Lee* is an example of *Computer Scientist*, while *Computer Scientist* is an example of *profession*. A __Knowledge Client__ user trying to create a table of professions might inadvertently obtain one that includes *Tim Berners-Lee*.  When appropriate, the __Knowledge Client__ will either silently fix these issues, or will issue a warning to the user.
 
-## Walkthrough
+## Examples
 
 Let's try to show a few examples of using the __Knowledge Client__.
 
