@@ -12,7 +12,7 @@ Unlike existing systems, the __UKCN__ also models the computational world, with 
 ## Using the UKCN
 Like Wikidata, the __UKCN__ presents an HTML browser interface for users.  Anyone can search and retrieve data from the __UKCN__.  With an account, a user can create new __UKCN__ objects, annotate and edit existing ones, run functions, and carry out a range of other tasks.
 
-Every data object in the __UKCN__ has its own URL. This URL can be used in the browser to find an object. The same URL can be provided to the __Knowledge Client__ for various use cases.  Sharing data with a colleague is as easy as sharing a webpage: just send your friend the appropriate URL.
+Every data object in the __UKCN__ has its own URL. This URL can be used in the browser to find an object. The same URL can be provided to the [__Knowledge Client__](knowledgeclient.md) for various use cases.  Sharing data with a colleague is as easy as sharing a webpage: just send your friend the appropriate URL.
 
 Every data object in the __UKCN__ has an affiliated user account as its owner. In the current version of the __UKCN__, all data objects are world-readable and world-writable. Future versions will implement user permissions that prevent unauthorized access and edits.
 
@@ -36,14 +36,14 @@ However, the current __UKCN__ software implements only "single-server mode".
 
 ## Interfaces
 The __UKCN__ allows users to access it in three ways:
-1. When building applications, via the __Knowledge Client__
+1. When building applications, via the [__Knowledge Client__](knowledgeclient.md)
 2. When curating and sharing data, via the HTML Browser interface
-3. When uploading novel data artifacts programmatically, via the REST API
+3. When uploading novel data artifacts programmatically, via the [REST API](restapi.md)
 
 This last interface is primarily useful when integrating the __UKCN__ with existing data pipelines.
 
 ## Getting Started
-Go here to install and run the __UKCN__ system.
+[Go here](install.md) to install and run the __UKCN__ system.
 
 
 
