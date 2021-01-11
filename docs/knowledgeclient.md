@@ -30,9 +30,15 @@ The exceptions surround cases when the system believes that facts in the __UKCN_
 
 Let's try to show a few examples of using the __Knowledge Client__.
 
-## INSERT PREEXISTING JUPYTER NOTEBOOK WALKTHROUGH TEXT HERE.
-
-## ALSO: WE NEED TO FIGURE OUT THE DATA MODEL DISTINCTION BETWEEN USING WIKIDATA VS USING THE SHARING SERVICE.  RIGHT NOW THE CLIENT ONLY EXPLOITS WIKIDATA, BUT THIS SHOULD CHANGE VERY SOON.
-
+## Tutorial 1: Basic dataset construction with the presidents
+__Dinghao, Tian, Kexin: can we add a simple example here?  Just add basic entity data that's already in the knowledge graph.  Presidents, their spouses, and their places and dates of birth. That's it.__
 
 
+## Tutorial 2: Adding numerical data from the European Union
+__Dinghao, Tian, Kexin: here let's add a bit more complicated stuff.  The European Union and GDP data.  Then let's do inflation-adjustment for the GDP data.__
+
+## Tutorial 3: Whole-table functions with National Parks data
+__Jenny, let's do the National Parks inception data here, and show how to do whole-table function invocation__.
+
+
+## REMINDER: WE NEED TO FIGURE OUT THE DATA MODEL DISTINCTION BETWEEN USING WIKIDATA VS USING THE SHARING SERVICE.  RIGHT NOW THE CLIENT ONLY EXPLOITS WIKIDATA, BUT THIS SHOULD CHANGE VERY SOON.
