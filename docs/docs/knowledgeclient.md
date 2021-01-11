@@ -6,7 +6,7 @@ The main goal of the __Knowledge Client__ is to allow users to quickly obtain a 
 
 The current client is written in Python, though there is nothing Python-specific about it: future clients could be written to integrate with programs in Go, Rust, Swift, etc.
 
-## Execution Model
+## Data Model
 A relation in both the __Knowledge Client__ and the __UKCN__ is akin to a traditional RDBMS relation: it's got rows and columns.  However, our relations differ in two important ways:
 1. Each row has a globally-unique identifier. This is roughly similar to the *rowid* that some database systems provide. However, our row ids are globally-unique identifiers.
 2. Like a traditional RDBMS, each column has a human-understandable *name* (e.g., "Salary") and a *type* (e.g., "float"). In addition, in our system each column has a *semantic label*. These labels are drawn from a dictionary maintained by the __UKCN__. For example, a column might be annotated by a label */properties/wikidata/P3618*, which indicates "base salary".

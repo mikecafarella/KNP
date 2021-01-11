@@ -11,7 +11,9 @@ is automatically populated from a comprehensive back-end knowledge graph that in
 - The __Universal Knowledge Collaboration Network__ is the back-end knowledge graph that powers the __Knowledge Client__.  In many ways it is similar to existing knowledge graphs like Wikidata and others: it hosts data, contains entities and properties, offers a variety of query interfaces, can host both well-known objects and unpopular objects, and relies on social processes for scalable curation. The __UKCN__ is distinctive in that it contains a much wider array of datatypes than is typical: in addition to concrete entities, it can contain files, databases, schemas, properties, execution events, functions, and other items. As a result, the contents of the UKCN can model both the "real" world as well as the computational one. 
 
 
-KGPL has a few distinctive qualities:
+
+
+<!-- KGPL has a few distinctive qualities:
 
 - __Real World Values and Types__: KGPL covers the "real world" just
   like a Knowledge Graph does. Its enormous standard class library has
@@ -31,3 +33,5 @@ KGPL has a few distinctive qualities:
 
 KGPL also has one __very undistinctive quality__: programs are
 basically Python.  Your daily programming habits remain 99% unchanged.
+
+-->
