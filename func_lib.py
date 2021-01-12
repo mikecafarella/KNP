@@ -100,5 +100,34 @@ def textual_summary(url):
         if results[i].text != '\n':
             break
     return results[i].text
+# return the annual GDP growth rate of a country
+# F9
+def growth_rate(df, name, gdp, time):
+    df.sort_values(by=[time], ascending=False, inplace=True)
+    df.reset_index(drop=True, inplace=True)
+    df[name] = df[gdp]
+    for i in range(len(df)-1):
+        df.loc[i, name] = (
+            (float(df.loc[i, gdp]) - float(df.loc[i+1, gdp])) / float(df.loc[i+1, gdp]))
+    df.loc[len(df)-1, name] = float('NaN')
+    return df
 
-func_list = [temp0, temp1, temp2, temp3, temp4, temp5, get_entity_id, get_wikipedia_url, textual_summary]
+# return none-normalized, none-compounding annual GDP growth rate based on presidential term
+# F10
+
+def gdp_growth_perPresidentialTerm(df, name, president, end_time, start_time):
+    df = df[[president, end_time, start_time]]
+    df[end_time] = df[end_time].apply(transform)
+    df[start_time] = df[start_time].apply(transform)
+    
+    df[name] = 0
+    for index, row in df.iterrows():
+        df.loc[index, name] = r.df[(r.df['GDP_point_in_time_P2131_P585'] >= row[start_time]) & (
+            r.df['GDP_point_in_time_P2131_P585'] <= row[end_time])]['growth_rate'].sum()
+    return df
+
+# transform wikidata time to have year only
+# F11
+def time_transform(time):
+    return time[0:4]
+func_list = [temp0, temp1, temp2, temp3, temp4, temp5, get_entity_id, get_wikipedia_url, textual_summary, growth_rate, gdp_growth_perPresidentialTerm, time_transform]
