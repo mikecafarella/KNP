@@ -18,8 +18,9 @@ import knps
 SERVER_URL = knps.server_url
 
 # PREV_VAR_ID = SERVER_URL + "/var/1"
-PREV_VAR_ID = "Prediction"
+PREV_VAR_ID = "CovidPrediction"
 VAR_ID_GIVEN_BY_USER1 = "LatestCovidData"
+
 
 def step2_5(_):
     DATE_TO_PREDICT = int(
@@ -70,8 +71,11 @@ def step2_5(_):
     val_comment = "Prediction for COVID-19 cumulative positive \
         cases for all states in the US for " + \
         (datetime.today() + timedelta(days=1)).strftime('%Y%m%d')
-    myval = knps.create_value(rst, val_comment, "Betty", [VAR_ID_GIVEN_BY_USER1, ])
-    myval.update_label(PREV_VAR_ID, var_comment)
+
+    knps.publish_update(rst, val_comment, PREV_VAR_ID,
+                        "Betty", [VAR_ID_GIVEN_BY_USER1, ])
+    # myval = knps.create_value(rst, val_comment, "Betty", [VAR_ID_GIVEN_BY_USER1, ])
+    # myval.update_label(PREV_VAR_ID, var_comment)
     # prev_var = knps.load_var(PREV_VAR_ID)
     # knps.set_var(prev_var, myval.vid, var_comment)
 

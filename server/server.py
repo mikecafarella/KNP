@@ -80,17 +80,19 @@ def return_val_id():
     }
     return flask.jsonify(**context), 200
 
+"""
 
 @app.route("/nextvar", methods=['GET'])
 def return_var_id():
     vid = ID_gen_var.next()
     context = {
         # "id": "var/" + str(vid)
-        "id": ns["var/" + str(vid)]
+        # "id": ns["var/" + str(vid)]
+        "id":"KNPS_"+str(vid)
     }
 
-    return flask.jsonify(**context), 200
-"""
+    return flask.jsonify(**context), 201
+
 
 
 @app.route("/val", methods=['POST'])

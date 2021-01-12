@@ -17,6 +17,8 @@ import knps
 
 VAR_LABEL_GIVEN_BY_ALICE = "LatestCovidData"
 # It ends one day earlier.
+
+
 def step2(_):
     DATE_TO_PREDICT = int(
         (datetime.today() - timedelta(days=6)).strftime('%Y%m%d'))
@@ -62,8 +64,10 @@ def step2(_):
     var_comment = "Prediction for COVID-19 cumulative positive \
         cases for all states in the US in the next day"
 
-    myval = knps.create_value(rst,val_comment,"Betty",[VAR_LABEL_GIVEN_BY_ALICE,])
-    myval.create_label("Prediction",var_comment)
+    knps.publish_new(rst, val_comment, "CovidPrediction",
+                     "Betty", [VAR_LABEL_GIVEN_BY_ALICE, ])
+    # myval = knps.create_value(rst,val_comment,"Betty",[VAR_LABEL_GIVEN_BY_ALICE,])
+    # myval.create_label("Prediction",var_comment)
 
 
 if __name__ == "__main__":

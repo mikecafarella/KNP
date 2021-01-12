@@ -37,5 +37,7 @@ if __name__ == "__main__":
     var_comment = "The COVID-19 cumulative positive cases for all states \
         in the US in the last 20 days"
 
-    myval = knps.create_value(dict(rst), val_comment, "Alice")
-    myval.create_label("LatestCovidData", var_comment)
+    result = dict(rst)
+    knps.publish_new(result,val_comment,"LatestCovidData","Alice")
+    # myval = knps.create_value(dict(rst), val_comment, "Alice")
+    # myval.create_label("LatestCovidData", var_comment)

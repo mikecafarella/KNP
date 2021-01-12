@@ -41,9 +41,12 @@ def step1_5(_):
          in the US from " + str(before_20) + " to " + str(today)
     var_comment = "The COVID-19 cumulative positive cases for all states\
          in the US in the last 20 days"
-    myval = knps.create_value(dict(rst), val_comment, "Alice")
-    myval.update_label(PREV_VAR_ID,var_comment)
-    # try:
+
+    result = dict(rst)
+    knps.publish_update(result,val_comment,PREV_VAR_ID,"Alice")
+    # myval = knps.create_value(dict(rst), val_comment, "Alice")
+    # myval.update_label(PREV_VAR_ID,var_comment)
+    #     # try:
     #     prev_var = knps.load_var(PREV_VAR_ID)  # Enabled in the later days
     #     knps.set_var(prev_var, myval.vid, var_comment)
     # except:

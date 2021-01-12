@@ -39,6 +39,7 @@ class MyEncoder(json.JSONEncoder):
                 "time_property": obj.time_property,
                 "time": obj.time,
                 "limit": obj.limit,
+                "subclass":obj.subclass,
                 "focus": obj.focus,
                 "__relation__": True
             }
@@ -65,7 +66,7 @@ def hook(dct):
             except Exception:
                 print("Count should be an integer")
         dct["dic"] = temp_dict
-        return ORM.Relation("dummy", "dummy,", False, 42, False, False, "dummy", "dummy", "dummy", dct)
+        return ORM.Relation("dummy", "dummy,", False, False, False, "dummy", "dummy", "dummy", False,10000,False, dct)
     elif "__image__" in dct:
         return File(dct["filename"])
     return dct
@@ -223,6 +224,20 @@ class KGPLValue:
         temp = load_var(server_url+"/var/"+label)
         return set_var(temp, self.vid, new_comment)
 
+def check_label_occupied(vid):
+    r = requests.post(check_var_id_url, json={"var_id": vid})
+    if r.status_code != 201:
+        if r.status_code == 409:
+            raise Exception("var id occupied")
+        else:
+            raise Exception("unknown error, aborting...")
+
+def get_default_label():
+    r = requests.get(next_var_id_url)
+    if r.status_code != 201:
+        raise Exception("unknown error when get default label, aborting...")
+    else:
+        return r.json()["id"]
 
 class KGPLVariable:
     """
@@ -252,13 +267,7 @@ class KGPLVariable:
         self.comment = comment
         self.user = user
         if not timestamp:  # generate a new kgplVariable
-            r = requests.post(check_var_id_url, json={"var_id": vid})
-            if r.status_code != 201:
-                if r.status_code == 409:
-                    raise Exception("var id occupied")
-                else:
-                    raise Exception("unknown error, aborting...")
-
+            # check_label_occupied() # No need to check because the API check!!! If API change, it needs to check
             r = requests.post(var_url,
                               json={"val_id": self.val_id, "var_id": vid,
                                     "comment": comment, "user": user})
@@ -435,3 +444,18 @@ def get_var_content(label):
     vid = server_url+"/var/"+label
     temp_var = load_var(vid)
     return load_val(temp_var.val_id).val
+
+def publish_new(val, comment, label = None, user="anonymous", dependency=[], verbose=False, label_comment = ""):
+    if label:
+        if (label[0:5]=="KNPS_"):
+            raise Exception("Customized label name cannot start with KNPS_")
+        check_label_occupied(label)
+    else:
+        label = get_default_label()
+
+    temp = create_value(val, comment, user, dependency, verbose)
+    return temp.create_label(label, label_comment)
+
+def publish_update(val, comment, label, user="anonymous", dependency=[], verbose=False, label_comment = ""):
+    temp = create_value(val, comment, user, dependency, verbose)
+    return temp.update_label(label, label_comment)
