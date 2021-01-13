@@ -2,3 +2,7 @@ requests
 pandas
 numpy
 SPARQLWrapper
+bs4
+pyyaml
+flask
+bsddb3

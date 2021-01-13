@@ -23,7 +23,11 @@ setuptools.setup(
             'requests',
             'pandas',
             'numpy',
-            'SPARQLWrapper'
+            'SPARQLWrapper',
+            'bs4',
+            'pyyaml',
+            'flask',
+            'bsddb3'
     ],
     python_requires='>=3.6',
 )
