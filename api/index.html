@@ -136,7 +136,7 @@
 <li><code>filename</code>
     The absolute or relative path to the file .</li>
 </ul>
-<h6 id="examples">Examples</h6>
+<h6 id="example">Example</h6>
 <pre class="codehilite"><code>    import knps
     file = knps.File(&quot;picture.png&quot;)
     kgplvalue = knps.create_values(file, &quot;a picture&quot;)
@@ -151,11 +151,11 @@
 <li><code>val</code>
     The concrete value stored in the KGPLValue object.</li>
 <li><code>comment</code>
-    A comment (of type <code>str</code>) associated with this KGPLValue object.</li>
+    A user-readable comment (of type <code>str</code>) associated with this KGPLValue object.</li>
 <li><code>user</code>
     Username of the owner of the KGPLValue object.</li>
 <li><code>dependency</code>
-    THe Dependency</li>
+    A list consisting of the KGPL objects depended on this KGPLValue</li>
 <li><code>vid</code>
     The unique identifier assigned by the server.</li>
 <li><code>verbose</code>
@@ -191,35 +191,39 @@ TODO</p>
 <h2 id="kgplvariable">KGPLVariable</h2>
 <div class="autodoc">
 <div class="autodoc-signature"><em>class </em><code>knps.kgpl.<strong>KGPLVariable</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">val_id</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">vid</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">user='anonymous'</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">timestamp=None</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"><p>KGPLVariable object.</p>
-<p>Example::</p>
-<pre class="codehilite"><code># REPLACE THIS WITH REAL STUFF
-val = KGPLVariable('http://example.com')
-val.do_something()
-</code></pre>
-
+<div class="autodoc-docstring"><p>Python representation of a KGPLVariable. Users should not user the constructor to create a KGPLVariable object directly. Instead, use the <code>variable</code> function described below.</p>
 <h6 id="parameters">Parameters</h6>
 <ul>
 <li><code>val_id</code>
-    Value ID</li>
+    The vid of the KGPLValue to be stored</li>
 <li><code>comment</code>
-    User-readable comment about the variable</li>
+    A user-readable comment (of type <code>str</code>) associated with this KGPLVariable object.</li>
 <li><code>vid</code>
-    What's a vid?</li>
+   The unique identifier assigned by the server.</li>
 <li><code>user</code>
-    User</li>
+    Username of the owner of the KGPLVariable object.</li>
 <li><code>timestamp</code>
     Timestamp of the variable creation</li>
 </ul></div>
 <div class="autodoc-members">
 <div class="autodoc-signature"><code><strong>getVid</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">self</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"></div>
+<div class="autodoc-docstring"><p>Get the vid</p>
+<h6 id="return">Return</h6>
+<pre class="codehilite"><code>- the vid of this KGPLVariable.
+</code></pre></div>
 <div class="autodoc-signature"><code><strong>getValid</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">self</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"></div>
+<div class="autodoc-docstring"><p>Get the vid of the contained KGPLValue</p>
+<h6 id="return">Return</h6>
+<pre class="codehilite"><code>- the vid of the KGPLValue this variable refers to.
+</code></pre></div>
 <div class="autodoc-signature"><code><strong>refresh</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">self</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"></div>
+<div class="autodoc-docstring"><p>Synchronize with the server to get the newest state of the variable in case of users work on the same
+variable concurrently.</p></div>
 <div class="autodoc-signature"><code><strong>getConcreteVal</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">self</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"></div>
+<div class="autodoc-docstring"><p>Get the KGPLValue stored in this KGPLVariable object</p>
+<h6 id="return">Return</h6>
+<pre class="codehilite"><code>- The KGPLValue object stored in this variable
+</code></pre></div>
 </div>
 </div>
 <h2 id="api-methods">API Methods</h2>
@@ -255,6 +259,10 @@ val.do_something()
 <div class="autodoc-signature"><code><strong>viewNamespace</strong></code><span class="autodoc-punctuation">(</span><span class="autodoc-punctuation">)</span></div>
 <div class="autodoc-docstring"></div>
 <div class="autodoc-signature"><code><strong>get_label_content</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">label</em><span class="autodoc-punctuation">)</span></div>
+<div class="autodoc-docstring"></div>
+<div class="autodoc-signature"><code><strong>check_label_occupied</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">vid</em><span class="autodoc-punctuation">)</span></div>
+<div class="autodoc-docstring"></div>
+<div class="autodoc-signature"><code><strong>get_default_label</strong></code><span class="autodoc-punctuation">(</span><span class="autodoc-punctuation">)</span></div>
 <div class="autodoc-docstring"></div>
 </div>
 </div>
