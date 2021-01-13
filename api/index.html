@@ -128,7 +128,12 @@
 <h2 id="kgplvalue">KGPLValue</h2>
 <div class="autodoc">
 <div class="autodoc-signature"><em>class </em><code>knps.kgpl.<strong>KGPLValue</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">val</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">user='anonymous'</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">dependency=[]</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">vid=None</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">verbose=False</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"><p>KGPLValue class is used as the internal python representation of a KGPLValue. Users shouldn't use the constructor to construct a KGPLValue object. Instead, they should use the <code>create_value</code> function described below.</p>
+<div class="autodoc-docstring"><p>KGPLValue object.</p>
+<p>Example:</p>
+<pre class="codehilite"><code>val = KGPLValue('http://example.com')
+val.do_something()
+</code></pre>
+
 <h6 id="parameters">Parameters</h6>
 <ul>
 <li><code>val</code>
@@ -145,6 +150,8 @@
     Be verbose about it.</li>
 </ul></div>
 <div class="autodoc-members">
+<div class="autodoc-signature"><code><strong>getVid</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">self</em><span class="autodoc-punctuation">)</span></div>
+<div class="autodoc-docstring"><p>Return the vid</p></div>
 <div class="autodoc-signature"><code><strong>getConcreteVal</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">self</em><span class="autodoc-punctuation">)</span></div>
 <div class="autodoc-docstring"><p>Return the concrete value</p></div>
 <div class="autodoc-signature"><code><strong>create_label</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">self</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">label</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">)</span></div>
@@ -207,7 +214,7 @@ val.do_something()
 <div class="autodoc-docstring"></div>
 <div class="autodoc-members">
 <div class="autodoc-signature"><code><strong>create_value</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">val</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">user='anonymous'</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">dependency=[]</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">verbose=False</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"><p>this is the function</p></div>
+<div class="autodoc-docstring"></div>
 <div class="autodoc-signature"><code><strong>value</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">val</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">user='anonymous'</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">dependency=[]</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">verbose=False</em><span class="autodoc-punctuation">)</span></div>
 <div class="autodoc-docstring"></div>
 <div class="autodoc-signature"><code><strong>variable</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">var_id</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">val_id</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">user='anonymous'</em><span class="autodoc-punctuation">)</span></div>
