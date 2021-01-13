@@ -128,12 +128,7 @@
 <h2 id="kgplvalue">KGPLValue</h2>
 <div class="autodoc">
 <div class="autodoc-signature"><em>class </em><code>knps.kgpl.<strong>KGPLValue</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">val</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">user='anonymous'</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">dependency=[]</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">vid=None</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">verbose=False</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"><p>KGPLValue object.</p>
-<p>Example:</p>
-<pre class="codehilite"><code>val = KGPLValue('http://example.com')
-val.do_something()
-</code></pre>
-
+<div class="autodoc-docstring"><p>KGPLValue class is used as the internal python representation of a KGPLValue. Users shouldn't use the constructor to construct a KGPLValue object. Instead, they should use the <code>create_value</code> function described below.</p>
 <h6 id="parameters">Parameters</h6>
 <ul>
 <li><code>val</code>
