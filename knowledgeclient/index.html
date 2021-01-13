@@ -67,6 +67,8 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#execution-model">Execution Model</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#basic-usages">Basic Usages</a>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#tutorial-1-basic-dataset-construction-with-the-presidents">Tutorial 1: Basic dataset construction with the presidents</a>
@@ -150,66 +152,74 @@ The sequence of steps that the <strong>Knowledge Client</strong> performs can be
 <p>After initialization, the user performs a series of joins that potentially add rows and columns to the table. With some naming guidance from the user, the system synthesizes all of the appropriate column metadata for each new row and column.</p>
 <p>The system does not try to extract or clean <strong>UKCN</strong> data at the time of use, apart from a few important exceptions.  At the individual fact level, everything the user sees inside a relation created by the <strong>Knowledge Client</strong> can be found in the <strong>UKCN</strong>.</p>
 <p>The exceptions surround cases when the system believes that facts in the <strong>UKCN</strong> are correct at the individual level, but will yield a relation that is internally inconsistent.  Unfortunately, this is a well-known problem in knowledge graphs. Consider the example that <em>Tim Berners-Lee</em> is an example of <em>Computer Scientist</em>, while <em>Computer Scientist</em> is an example of <em>profession</em>. A <strong>Knowledge Client</strong> user trying to create a table of professions might inadvertently obtain one that includes <em>Tim Berners-Lee</em>.  When appropriate, the <strong>Knowledge Client</strong> will either silently fix these issues, or will issue a warning to the user.</p>
+<h2 id="basic-usages">Basic Usages</h2>
+<p><strong>Relation.extend(self, property_id: str, isSubject: bool, name: str, rowVerbose=False, colVerbose=False, limit=None,
+               time_property=None, time=None, search=None, label=False, subclass=False, showid=False)</strong>
+This function extends a column upon the current focus with a specified property.
+<strong>Parameters:</strong>
+- property_id: string
+    the Wikidata property identifier (e.g., 'P31')
+- isSubject: bool
+    indicates whether the column to be extended is the subject in the (subject-&gt;property-&gt;object) triple. (e.g., If the base entity is 'Q33999' (actor) and the property to extend upon is 'P106' (has occupation), isSubject should be True since we want to find who has an occupation as an actor.)
+- name: string
+    name of the extended column (use underscore for all spaces). The property identifier will be automatically appended in the final result. (e.g., If specifying name='population' and property_id='P1082', the column in the dataframe will finally be called 'population_P1082'.)
+- rowVerbose: bool, default False
+    indicates whether all the results of the extended column should be displayed. If rowVerbose=False, it only returns the results with preferred rank.
+- colVerbose: bool, default False
+    indicates whether the qualifiers of the extended column and all the other metadata should be displayed. e.g., If colVerbose=True and property_id='P1082' (population), the time for each population value will be shown as another column, since 'P585' (point in time) is a qualifier associated with 'P1082'.
+- limit: int, default None
+    the max number of rows displayed
+- time_property: string, default None
+    the time qualifier constraint used to select the results. Used with parameter 'time'
+- time: int, default None
+    specifying the year constraint needed. Used with parameter 'time_property'. e.g., If property_id='P1082' (population), time_property='P585' and time=2010, it will only return the population in 2010.
+- search: str or pair, default None
+    select the results </p>
 <h2 id="examples">Examples</h2>
 <p>Let's try to show a few examples of using the <strong>Knowledge Client</strong>.</p>
 <h2 id="tutorial-1-basic-dataset-construction-with-the-presidents">Tutorial 1: Basic dataset construction with the presidents</h2>
 <p><strong>Dinghao, Tian, Kexin: can we add a simple example here?  Just add basic entity data that's already in the knowledge graph.  Presidents, their spouses, and their places and dates of birth. That's it.</strong></p>
 <p>Construct a relation of US presidents, their spouses, their dates of birth and places of births: </p>
-<pre class="codehilite"><code>r = createRelation('Q11696') # Q11696 - 'President of the United States' in wikidata
-r.extend('P39',True, 'President', limit=20, label=True) # P39 - 'position held'
-r.changeFocus('President_P39')
-r.extend('P26', False, 'Spouse', label=True) # P26 - 'spouse'
-r.extend('P569', False, 'date_of_birth', label=True) # P569 - 'date of birth'
-r.extend('P19',False, 'Place_of_birth', label=True) #P19 - 'place of birth'
-r.query()
-r.df
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="err">r = createRelation(&#39;Q11696&#39;) # Q11696 - &#39;President of the United States&#39; in wikidata</span>
+<span class="err">r.extend(&#39;P39&#39;,True, &#39;President&#39;, limit=20, label=True) # P39 - &#39;position held&#39;</span>
+<span class="err">r.changeFocus(&#39;President_P39&#39;)</span>
+<span class="err">r.extend(&#39;P26&#39;, False, &#39;Spouse&#39;, label=True) # P26 - &#39;spouse&#39;</span>
+<span class="err">r.extend(&#39;P569&#39;, False, &#39;date_of_birth&#39;, label=True) # P569 - &#39;date of birth&#39;</span>
+<span class="err">r.extend(&#39;P19&#39;,False, &#39;Place_of_birth&#39;, label=True) #P19 - &#39;place of birth&#39;</span>
+<span class="err">r.query()</span>
+<span class="err">r.df</span>
+</code></pre></div>
 
-<p>Sample Results:
-| Entity ID | President_P39 | President_P39Label | Spouse_P26 | Spouse_P26Label | date_of_birth_P569 | date_of_birth_P569Label | Place_of_birth_P19 | Place_of_birth_P19Label | Basic ID |
-| :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: |
-| http://www.wikidata.org/entity/Q11696 | http://www.wikidata.org/entity/Q35686 | Rutherford B. Hayes | http://www.wikidata.org/entity/Q234275 | Lucy Webb Hayes | 1822-10-04T00:00:00Z | 1822-10-04T00:00:00Z | http://www.wikidata.org/entity/Q934308 | Fremont | Q11696 |
-| http://www.wikidata.org/entity/Q11696    | http://www.wikidata.org/entity/Q35171      | Grover Cleveland     | http://www.wikidata.org/entity/Q233644     | Frances Cleveland     | 1837-03-18T00:00:00Z     | 1837-03-18T00:00:00Z     | http://www.wikidata.org/entity/Q717516    | Caldwell    | Q11696 |</p>
 <h2 id="tutorial-2-adding-numerical-data-from-the-european-union">Tutorial 2: Adding numerical data from the European Union</h2>
 <p><strong>Dinghao, Tian, Kexin: here let's add a bit more complicated stuff.  The European Union and GDP data.  Then let's do inflation-adjustment for the GDP data.</strong></p>
 <p>Here is an example of all countries in the European Union and their population, as well as the population of the whole Europe:</p>
-<pre class="codehilite"><code>r = createRelation('Q458') # Q458 - 'European Union' in wikidata
-r.extend('P150',False,'Countries',label=True) # P150 - 'contains administrative territorial entity'
-r.extend('P1082',False, 'Total_population') # P1082 - 'Population'
-r.changeFocus('Countries_P150')
-r.extend('P1082',False, 'population')
-r.query()
-r.df
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="err">r = createRelation(&#39;Q458&#39;) # Q458 - &#39;European Union&#39; in wikidata</span>
+<span class="err">r.extend(&#39;P150&#39;,False,&#39;Countries&#39;,label=True) # P150 - &#39;contains administrative territorial entity&#39;</span>
+<span class="err">r.extend(&#39;P1082&#39;,False, &#39;Total_population&#39;) # P1082 - &#39;Population&#39;</span>
+<span class="err">r.changeFocus(&#39;Countries_P150&#39;)</span>
+<span class="err">r.extend(&#39;P1082&#39;,False, &#39;population&#39;)</span>
+<span class="err">r.query()</span>
+<span class="err">r.df</span>
+</code></pre></div>
 
-<p>Sample Results:
-| Entity ID | Countries_P150 | Countries_P150Label | Total_population_P1082 | population_P1082 | Basic ID |
-| :----: | :----: | :----: | :----: | :----: | :----: |
-| http://www.wikidata.org/entity/Q458 | http://www.wikidata.org/entity/Q219 | Bulgaria | 447706209 | 7000039 | Q458 |
-| http://www.wikidata.org/entity/Q458    | http://www.wikidata.org/entity/Q33      | Finland     | 447706209     | 5501043     | Q458     |</p>
 <p>Here is another example of inflation-adjusted US GDP data, with the base year of 2014: </p>
-<pre class="codehilite"><code>import math
-def adjustedGDP(gdp: WikiDataProperty(['P2131', 'P2132']), timestamp: WikiDataProperty(['P585'])):
-      inflationIndex = pd.read_csv('inflation_data_found_online.csv')
-      base = inflationIndex.iloc[-1]['Index']
-      timestamp = timestamp[:10]
-      inflationIndex.set_index('Date',inplace=True)
-      if timestamp in inflationIndex.index:
-          return math.floor(float(gdp) / inflationIndex.loc[timestamp]['Index'] * base)
-      return math.floor(float(gdp))
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">math</span>
+<span class="k">def</span> <span class="nf">adjustedGDP</span><span class="p">(</span><span class="n">gdp</span><span class="p">:</span> <span class="n">WikiDataProperty</span><span class="p">([</span><span class="s1">&#39;P2131&#39;</span><span class="p">,</span> <span class="s1">&#39;P2132&#39;</span><span class="p">]),</span> <span class="n">timestamp</span><span class="p">:</span> <span class="n">WikiDataProperty</span><span class="p">([</span><span class="s1">&#39;P585&#39;</span><span class="p">])):</span>
+      <span class="n">inflationIndex</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;inflation_data_found_online.csv&#39;</span><span class="p">)</span>
+      <span class="n">base</span> <span class="o">=</span> <span class="n">inflationIndex</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;Index&#39;</span><span class="p">]</span>
+      <span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
+      <span class="n">inflationIndex</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;Date&#39;</span><span class="p">,</span><span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">timestamp</span> <span class="ow">in</span> <span class="n">inflationIndex</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+          <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">gdp</span><span class="p">)</span> <span class="o">/</span> <span class="n">inflationIndex</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">timestamp</span><span class="p">][</span><span class="s1">&#39;Index&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">base</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">gdp</span><span class="p">))</span>
 
-usgdp = createRelation('Q30') # Q30 - 'United States of America'
-usgdp.extend('P2131', False, 'GDP', colVerbose=True,rowVerbose=True) # P2131 - 'nominal GDP'
-usgdp.query()
-usgdp.extendWithFunction(['GDP_P2131','GDP_point_in_time_P2131_P585'], adjustedGDP, 'adjustedGDP_P2131') # base 2014
-usgdp.df
-</code></pre>
+<span class="n">usgdp</span> <span class="o">=</span> <span class="n">createRelation</span><span class="p">(</span><span class="s1">&#39;Q30&#39;</span><span class="p">)</span> <span class="c1"># Q30 - &#39;United States of America&#39;</span>
+<span class="n">usgdp</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="s1">&#39;P2131&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="s1">&#39;GDP&#39;</span><span class="p">,</span> <span class="n">colVerbose</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">rowVerbose</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="c1"># P2131 - &#39;nominal GDP&#39;</span>
+<span class="n">usgdp</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
+<span class="n">usgdp</span><span class="o">.</span><span class="n">extendWithFunction</span><span class="p">([</span><span class="s1">&#39;GDP_P2131&#39;</span><span class="p">,</span><span class="s1">&#39;GDP_point_in_time_P2131_P585&#39;</span><span class="p">],</span> <span class="n">adjustedGDP</span><span class="p">,</span> <span class="s1">&#39;adjustedGDP_P2131&#39;</span><span class="p">)</span> <span class="c1"># base 2014</span>
+<span class="n">usgdp</span><span class="o">.</span><span class="n">df</span>
+</code></pre></div>
 
-<p>Sample Results:
-| Entity ID | GDP_P2131 | GDP_rank_P2131_rank | GDP_point_in_time_P2131_P585 | GDP_ref_P2131_P813 | GDP_ref_P2131_P248 | GDP_ref_P2131_P275 | GDP_ref_P2131_P854 | Basic ID | adjustedGDP_P2131 |
-| :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: |
-| http://www.wikidata.org/entity/Q30 | 16155255000000 | http://wikiba.se/ontology#NormalRank | 2012-01-01T00:00:00Z | 2018-10-18T00:00:00Z | http://www.wikidata.org/entity/Q21540096 | http://www.wikidata.org/entity/Q20007257 | https://data.worldbank.org/indicator/NY.GDP.MK... | Q30 | 16672060655946 |
-| http://www.wikidata.org/entity/Q30    | 1167770000000      | http://wikiba.se/ontology#NormalRank     | 1971-01-01T00:00:00Z    | 2018-10-18T00:00:00Z     | http://www.wikidata.org/entity/Q21540096     | http://www.wikidata.org/entity/Q20007257     | https://data.worldbank.org/indicator/NY.GDP.MK...    | Q30    | 6863318776884 |</p>
 <h2 id="tutorial-3-whole-table-functions-with-national-parks-data">Tutorial 3: Whole-table functions with National Parks data</h2>
 <p><strong>Jenny, let's do the National Parks inception data here, and show how to do whole-table function invocation</strong>.</p>
 <h2 id="reminder">REMINDER:</h2>

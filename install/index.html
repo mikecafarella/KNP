@@ -125,35 +125,35 @@
 <ol>
 <li>
 <p>Move to the desired directory and clone the github repository using the code below</p>
-<pre class="codehilite"><code>git clone https://github.com/mikecafarella/KNP
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="err">git clone https://github.com/mikecafarella/KNP</span>
+</code></pre></div>
 
 </li>
 <li>
 <p>Use the following command to install the Knowledge Client package. This command will isntall the client package as <code>knps</code> and some required packages. You can use <code>pip3 uninstall knps</code> to remove the package.</p>
-<pre class="codehilite"><code>pip3 install -e client
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="err">pip3 install -e client</span>
+</code></pre></div>
 
 </li>
 <li>
 <p>Up to now, the <code>knps</code> package is ready to go if you choose to use our server, use the following code in your program or python intepreter to import the package. The package APIs can be found at <a href="../api/">here</a>.</p>
-<pre class="codehilite"><code>import knps
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">knps</span>
+</code></pre></div>
 
 </li>
 <li>
 <p>To run a UKCN server locally, create a <code>personal.yaml</code> file in the repo root directory with the following contents, setting the address and port to your liking:</p>
-<pre class="codehilite"><code>server:
-  SERVER_ADDRESS: 'http://127.0.0.1'
-  SERVER_PORT: '4242'
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="n">server</span><span class="o">:</span>
+  <span class="n">SERVER_ADDRESS</span><span class="o">:</span> <span class="s1">&#39;http://127.0.0.1&#39;</span>
+  <span class="n">SERVER_PORT</span><span class="o">:</span> <span class="s1">&#39;4242&#39;</span>
+</code></pre></div>
 
 </li>
 <li>
 <p>Use the following commands to configure the flask app and run the server</p>
-<pre class="codehilite"><code>export FLASK_APP=server/server.py
-flask run
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="k">export</span> <span class="n">FLASK_APP</span><span class="o">=</span><span class="n">server</span><span class="o">/</span><span class="n">server</span><span class="o">.</span><span class="n">py</span>
+<span class="n">flask</span> <span class="n">run</span>
+</code></pre></div>
 
 </li>
 </ol>
