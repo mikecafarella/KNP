@@ -29,23 +29,39 @@ The exceptions surround cases when the system believes that facts in the __UKCN_
 ## Basic Usages
 __Relation.extend(self, property_id: str, isSubject: bool, name: str, rowVerbose=False, colVerbose=False, limit=None,
                time_property=None, time=None, search=None, label=False, subclass=False, showid=False)__
+               
 This function extends a column upon the current focus with a specified property.
+
 __Parameters:__
+
 - property_id: string
+
     the Wikidata property identifier (e.g., 'P31')
 - isSubject: bool
-    indicates whether the column to be extended is the subject in the (subject->property->object) triple. (e.g., If the base entity is 'Q33999' (actor) and the property to extend upon is 'P106' (has occupation), isSubject should be True since we want to find who has an occupation as an actor.)
+
+    indicates whether the column to be extended is the subject in the (subject->property->object) triple. 
+    
+    (e.g., If the base entity is 'Q33999' (actor) and the property to extend upon is 'P106' (has occupation), isSubject should be True since we want to find who has an occupation as an actor.)
 - name: string
-    name of the extended column (use underscore for all spaces). The property identifier will be automatically appended in the final result. (e.g., If specifying name='population' and property_id='P1082', the column in the dataframe will finally be called 'population_P1082'.)
+
+    name of the extended column (use underscore for all spaces). The property identifier will be automatically appended in the final result. 
+    
+    (e.g., If specifying name='population' and property_id='P1082', the column in the dataframe will finally be called 'population_P1082'.)
 - rowVerbose: bool, default False
+
     indicates whether all the results of the extended column should be displayed. If rowVerbose=False, it only returns the results with preferred rank.
 - colVerbose: bool, default False
+
     indicates whether the qualifiers of the extended column and all the other metadata should be displayed. e.g., If colVerbose=True and property_id='P1082' (population), the time for each population value will be shown as another column, since 'P585' (point in time) is a qualifier associated with 'P1082'.
+    
 - limit: int, default None
+
     the max number of rows displayed
 - time_property: string, default None
+
     the time qualifier constraint used to select the results. Used with parameter 'time'
 - time: int, default None
+
     specifying the year constraint needed. Used with parameter 'time_property'. e.g., If property_id='P1082' (population), time_property='P585' and time=2010, it will only return the population in 2010.
 - search: str or pair, default None
     select the results 
