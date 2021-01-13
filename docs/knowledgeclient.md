@@ -35,12 +35,12 @@ __Dinghao, Tian, Kexin: can we add a simple example here?  Just add basic entity
 
 Construct a relation of US presidents, their spouses, their dates of birth and places of births: 
 
-    r = createRelation('Q11696')
-    r.extend('P39',True, 'President', limit=20, label=True)
+    r = createRelation('Q11696') # Q11696 - 'President of the United States' in wikidata
+    r.extend('P39',True, 'President', limit=20, label=True) # P39 - 'position held'
     r.changeFocus('President_P39')
-    r.extend('P26', False, 'Spouse', label=True)
-    r.extend('P569', False, 'date_of_birth', label=True)
-    r.extend('P19',False, 'Place_of_birth', label=True)
+    r.extend('P26', False, 'Spouse', label=True) # P26 - 'spouse'
+    r.extend('P569', False, 'date_of_birth', label=True) # P569 - 'date of birth'
+    r.extend('P19',False, 'Place_of_birth', label=True) #P19 - 'place of birth'
     r.query()
     r.df
     
@@ -48,6 +48,37 @@ Construct a relation of US presidents, their spouses, their dates of birth and p
 
 ## Tutorial 2: Adding numerical data from the European Union
 __Dinghao, Tian, Kexin: here let's add a bit more complicated stuff.  The European Union and GDP data.  Then let's do inflation-adjustment for the GDP data.__
+
+Here is an example of all countries in the European Union and their population, as well as the population of the whole Europe:
+
+    r = createRelation('Q458') # Q458 - 'European Union' in wikidata
+    r.extend('P150',False,'Countries',label=True) # P150 - 'contains administrative territorial entity'
+    r.extend('P1082',False, 'Total_population') # P1082 - 'Population'
+    r.changeFocus('Countries_P150')
+    r.extend('P1082',False, 'population')
+    r.query()
+    r.df
+
+
+Here is another example of inflation-adjusted US GDP data, with the base year of 2014: 
+
+    import math
+    usgdp = createRelation('Q30') # Q30 - 'United States of America'
+    usgdp.extend('P2131', False, 'GDP', colVerbose=True,rowVerbose=True) 
+    # P2131 - 'nominal GDP'
+    usgdp.query()
+    def adjustedGDP(gdp: WikiDataProperty(['P2131', 'P2132']), timestamp: WikiDataProperty(['P585'])):
+        inflationIndex = pd.read_csv('inflation_data_found_online.csv')
+        base = inflationIndex.iloc[-1]['Index']
+        timestamp = timestamp[:10]
+        inflationIndex.set_index('Date',inplace=True)
+        if timestamp in inflationIndex.index:
+            return math.floor(float(gdp) / inflationIndex.loc[timestamp]['Index'] * base)
+        return math.floor(float(gdp))
+
+    usgdp.extendWithFunction(['GDP_P2131','GDP_point_in_time_P2131_P585'], adjustedGDP, 'adjustedGDP_P2131') # base 2014
+    usgdp.df
+
 
 ## Tutorial 3: Whole-table functions with National Parks data
 __Jenny, let's do the National Parks inception data here, and show how to do whole-table function invocation__.
