@@ -100,6 +100,7 @@ def textual_summary(url):
         if results[i].text != '\n':
             break
     return results[i].text
+
 # return the annual GDP growth rate of a country
 # F9
 def growth_rate(df, name, gdp, time):
@@ -130,4 +131,39 @@ def gdp_growth_perPresidentialTerm(df, name, president, end_time, start_time):
 # F11
 def time_transform(time):
     return time[0:4]
-func_list = [temp0, temp1, temp2, temp3, temp4, temp5, get_entity_id, get_wikipedia_url, textual_summary, growth_rate, gdp_growth_perPresidentialTerm, time_transform]
+
+# a table function that calculates the boxoffice fraction each movie occupies in its director's lifetime total
+# returns a dataframe with the additional column "fraction"
+# F12
+def boxoffice_fraction(df, name, film, director, film_gross):
+    #film_gross = pd.read_csv('boxoffice.csv')
+    film_gross.columns = ['rank', film, 'studio', 'gross', 'year']
+    film_gross[film] = film_gross[film].astype(str)
+    df[film] = df[film].astype(str)
+    new_df = film_gross.merge(df, on=film)  # merge with external data
+    new_df.drop_duplicates(subset=['rank'], inplace=True)
+    sum_df = new_df.groupby([director]).sum()
+    sum_df.columns = ['rk', 'total', 'y']
+    final_df = new_df.merge(sum_df, on=director)
+    final_df[name] = final_df.apply(lambda x: '%.2f%%' % (x['gross'] / x['total'] * 100), axis=1)
+    sel = [str(x) for x in df.columns]
+    sel.append(name)
+    return final_df[sel]
+
+# a function that converts dollars to euro for a specific year
+# F13
+# def dollar2euro(df, name, dollar, time):
+#     r = createRelation('Q4917')
+#     r.extend('P2284', False, 'euro', rowVerbose=True, colVerbose=True)
+#     r.query()
+#     helper_df = r.df
+#     r.df['euro_point_in_time_P2284_P585'] = r.df['euro_point_in_time_P2284_P585'].apply(lambda x: str(x)[:4])
+#     df[time] = df[time].apply(lambda x: str(x)[:4])
+#     r.df.rename(columns={'euro_point_in_time_P2284_P585':time, 'euro_P2284':name}, inplace=True)
+#     df = df.merge(r.df, on=time)
+#     df['euro']=df[[dollar, 'euro']].apply(lambda x:float(x[dollar])*float(x['euro']),axis=1)
+#     return df
+
+func_list = [temp0, temp1, temp2, temp3, temp4, temp5, get_entity_id, get_wikipedia_url,
+             textual_summary, growth_rate, gdp_growth_perPresidentialTerm, time_transform,
+            boxoffice_fraction]
