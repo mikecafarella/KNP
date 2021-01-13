@@ -155,7 +155,7 @@
 <li><code>user</code>
     Username of the owner of the KGPLValue object.</li>
 <li><code>dependency</code>
-    A list consisting of the KGPL objects depended on this KGPLValue</li>
+    A list consisting of the KGPL objects that this KGPLValue depended on.</li>
 <li><code>vid</code>
     The unique identifier assigned by the server.</li>
 <li><code>verbose</code>
@@ -234,26 +234,32 @@ variable concurrently.</p></div>
 <div class="autodoc-docstring"></div>
 <div class="autodoc-members">
 <div class="autodoc-signature"><code><strong>create_value</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">val</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">user='anonymous'</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">dependency=[]</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">verbose=False</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"></div>
-<div class="autodoc-signature"><code><strong>value</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">val</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">user='anonymous'</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">dependency=[]</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">verbose=False</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"></div>
-<div class="autodoc-signature"><code><strong>variable</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">var_id</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">val_id</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">user='anonymous'</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"></div>
-<div class="autodoc-signature"><code><strong>load_val</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">vid</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"></div>
-<div class="autodoc-signature"><code><strong>load_var</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">vid</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"></div>
-<div class="autodoc-signature"><code><strong>set_var</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">kg_var</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">val_id</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">new_comment</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"><p>Update a KGPLVariable and return it.</p>
-<h6 id="parameters">Parameters</h6>
+<div class="autodoc-docstring"><p>Create a KGPLValue based on the inputs and publish to the server.</p>
+<h6 id="parameter">Parameter</h6>
 <ul>
-<li><code>kg_var</code>
-    KGPLVariable to be updated</li>
-<li><code>val_id</code>
-    ID of the KGPLValue the KGPLVariable should now point to</li>
-<li><code>new_comment</code>
-    Descriptive comment for the value</li>
-</ul></div>
+<li>'val'
+    Concrete value to store (We currently support the following types: <code>int</code>, <code>float</code>, <code>bool</code>, <code>list</code>, <code>dict</code>, <code>File</code>, <code>pandas.DataFrame</code>, <code>Relation</code>)</li>
+<li>'comment'
+    A human readable comment (of type <code>str</code>) associated with the value creattion</li>
+<li>'user'
+    User name of the owner of the KGPLValue, the default value is <code>anonymous</code></li>
+<li><code>dependency</code>
+    A list consisting of the KGPL objects that this KGPLValue depended on. Each element in the list can be one of the three types:
+    <code>KGPLValue</code>, <code>KGPLVariable</code> or <code>Label</code>. The default value is empty list.</li>
+<li><code>verbose</code>:
+    If set to true, more information is produced in the terminal. Otherwise, a succint description is printed when the construction succeeds. The default value is <code>False</code>.</li>
+</ul>
+<h6 id="return">Return</h6>
+<p>A KGPLValue object constructed based on inputs</p></div>
+<div class="autodoc-signature"><code><strong>load_val</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">vid</em><span class="autodoc-punctuation">)</span></div>
+<div class="autodoc-docstring"><p>Fetch the KGPLValue of the corresponding <code>vid</code></p>
+<h6 id="parameter">Parameter</h6>
+<ul>
+<li><code>vid</code>
+    The vid of the desired KGPLValue</li>
+</ul>
+<h6 id="return">Return</h6>
+<p>A KGPLValue object</p></div>
 <div class="autodoc-signature"><code><strong>get_history</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">kg_var</em><span class="autodoc-punctuation">)</span></div>
 <div class="autodoc-docstring"></div>
 <div class="autodoc-signature"><code><strong>changeNamespace</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">new_url</em><span class="autodoc-punctuation">)</span></div>
