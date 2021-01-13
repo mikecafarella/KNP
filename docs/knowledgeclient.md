@@ -64,7 +64,7 @@ Here is an example of all countries in the European Union and their population, 
     r.df
 
 Sample Results:
-| Entity ID | Countries_P150 | Countries_P150Label | Total_population_P1082 | population_P1082     | population_P1082 | Basic ID |
+| Entity ID | Countries_P150 | Countries_P150Label | Total_population_P1082 | population_P1082 | Basic ID |
 | :----: | :----: | :----: | :----: | :----: | :----: |
 | http://www.wikidata.org/entity/Q458 | http://www.wikidata.org/entity/Q219 | Bulgaria | 447706209 | 7000039 | Q458 |
 | http://www.wikidata.org/entity/Q458    | http://www.wikidata.org/entity/Q33      | Finland     | 447706209     | 5501043     | Q458     |
