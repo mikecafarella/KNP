@@ -64,8 +64,7 @@ Here is another example of inflation-adjusted US GDP data, with the base year of
 
     import math
     usgdp = createRelation('Q30') # Q30 - 'United States of America'
-    usgdp.extend('P2131', False, 'GDP', colVerbose=True,rowVerbose=True) 
-    # P2131 - 'nominal GDP'
+    usgdp.extend('P2131', False, 'GDP', colVerbose=True,rowVerbose=True) # P2131 - 'nominal GDP'
     usgdp.query()
     def adjustedGDP(gdp: WikiDataProperty(['P2131', 'P2132']), timestamp: WikiDataProperty(['P585'])):
         inflationIndex = pd.read_csv('inflation_data_found_online.csv')
