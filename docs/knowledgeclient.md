@@ -59,6 +59,10 @@ Here is an example of all countries in the European Union and their population, 
     r.query()
     r.df
 
+| Entity ID | President_P39 | President_P39Label |
+| :----: | :----: | :----: |
+| http://www.wikidata.org/entity/Q11696 | http://www.wikidata.org/entity/Q35686 | Rutherford B. Hayes |
+| http://www.wikidata.org/entity/Q11696    | http://www.wikidata.org/entity/Q35171      | Grover Cleveland     |
 
 Here is another example of inflation-adjusted US GDP data, with the base year of 2014: 
 
