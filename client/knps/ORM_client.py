@@ -11,6 +11,28 @@ endpoint_url = "https://query.wikidata.org/sparql"
 item = "item"
 
 
+class FunctionWithSignature:
+    """Specific for function applied to the entire relation,
+        name is the name of the function (str)
+        typeSignature is the required list of types in a relation,
+        func is the function to be applied to the entire relation."""
+    def __init__(self, name, typeSignature, func):
+        self.func = func
+        self.typeSignature = typeSignature
+        self.name = name
+
+#     def invoke(self, paramList):
+#         typedParams = zip(self.typeSignature, paramList)
+#         typeCheckResults = list(map(lambda x: x[1].checkType(x[0]), typedParams))
+#         if false in typeCheckResults:
+#             raise Exception("Input parameters don’t match type signature")
+#         return fn.invoke(paramList)
+    def invoke(self, df):
+        return self.func(df)
+    
+    def showTypeRequest(self):
+        return self.typeSignature
+
 class Relation:
     """
     The class returned when createRelation is called.
@@ -18,21 +40,34 @@ class Relation:
     We call Relation.query when we need to do the query.
     """
 
-    def __init__(self, entity_id: str, property_id: str, linkDirection: str, rowVerbose: bool,
-                 colVerbose: bool, time_property: str, time: str, name: str, label: bool, limit=10000, subclass=False, showid=False):
-        self.entity_id = entity_id
-        self.query_str = ""
-        self.dic = {}
-        self.result_dic = {"Entity ID": []}
-        self.df = pd.DataFrame()
-        self.count = 0
-        self.time_property = time_property
-        self.time = time
-        self.limit = limit
-        self.subclass = subclass
-        self.focus = "Entity ID"
-        if property_id:
-            self.extend(property_id, linkDirection, name, rowVerbose, colVerbose, limit, time_property, time, label, subclass, showid)
+    def __init__(self, entity_id: str, property_id: str, isSubject: bool, rowVerbose: bool,
+                 colVerbose: bool, time_property: str, time: str, name: str, label: bool, limit=10000, subclass=False, showid=False, reconstruct={}):
+        if bool(reconstruct):
+            self.entity_id = reconstruct["entity_id"]
+            self.query_str = reconstruct["query_str"]
+            self.dic = reconstruct["dic"]
+            self.result_dic = reconstruct["result_dic"]
+            self.df = reconstruct["df"]
+            self.count = reconstruct["count"]
+            self.time_property = reconstruct["time_property"]
+            self.time = reconstruct["time"]
+            self.limit = reconstruct["limit"]
+            self.subclass = reconstruct["subclass"]
+            self.focus = reconstruct["focus"]
+        else:
+            self.entity_id = entity_id
+            self.query_str = ""
+            self.dic = {}
+            self.result_dic = {"Entity ID": []}
+            self.df = pd.DataFrame()
+            self.count = 0
+            self.time_property = time_property
+            self.time = time
+            self.limit = limit
+            self.subclass = subclass
+            self.focus = "Entity ID"
+            if property_id:
+                self.extend(property_id, isSubject, name, rowVerbose, colVerbose, limit, time_property, time, label, subclass, showid)
 
     def generate_html(self, name: str):
         html = (self.df).to_html()
@@ -40,7 +75,7 @@ class Relation:
         text_file.write(html)
         text_file.close()
 
-    def query(self):
+    def query(self, require=None):
         if self.query_str == "":
             self.result_dic = {"Entity ID": ['http://www.wikidata.org/entity/' + str(self.entity_id)]}
             return self.result_dic
@@ -89,20 +124,14 @@ class Relation:
 #             print("Warning: Your query leads to too many results. Only 10,000 returned.")
         return self.df
 
-    def extend(self, property_id: str, linkDirection: str, name: str, rowVerbose=False, colVerbose=False, limit=None,
+    def extend(self, property_id: str, isSubject: bool, name: str, rowVerbose=False, colVerbose=False, limit=None,
                time_property=None, time=None, search=None, label=False, subclass=False, showid=False):
         self.count += 1
         self.dic[self.count] = {}
         self.dic[self.count]["name"] = name
         self.dic[self.count]["focus"] = self.focus
         self.dic[self.count]["property_id"] = property_id
-        if linkDirection == 'forward':
-            self.dic[self.count]["isSubject"] = False
-        elif linkDirection == 'backward':
-            self.dic[self.count]["isSubject"] = True
-        else:
-            self.count -= 1
-            raise Exception("Fail to extend! LinkDirection should be either forward or backward.")
+        self.dic[self.count]["isSubject"] = isSubject
         self.dic[self.count]["limit"] = limit
         self.dic[self.count]["rowVerbose"] = rowVerbose
         self.dic[self.count]["colVerbose"] = colVerbose
@@ -125,86 +154,126 @@ class Relation:
 
     def changeFocus(self, name="Entity ID"):
         self.focus = name
-    
-    def extendWithFunctionHelper(self, columns, func, name, param, dim):
-        if dim == 1:
-            if isinstance(columns, list):
-                if param is not None:
-                    if isinstance(param, list):
-                        self.df[name] = self.df[columns].apply(lambda x: func(*x, *param), axis=1)
-                    else:
-                        self.df[name] = self.df[columns].apply(lambda x: func(*x, param), axis=1)
-                else:
-                    self.df[name] = self.df[columns].apply(lambda x: func(*x), axis=1)
-            else:
-                if param is not None:
-                    if isinstance(param, list):
-                        self.df[name] = self.df[columns].apply(lambda x: func(x, *param), axis=1)
-                    else:
-                        self.df[name] = self.df[columns].apply(lambda x: func(x, param), axis=1)
-                else:
-                    self.df[name] = self.df[columns].apply(func, axis=1)
-        elif dim == 0:
-            if not isinstance(columns, list):
-                columns = [columns]
-            if param is not None:
-                if isinstance(param, list):
-                    return self.df[columns].apply(lambda x: func(x, *param), axis=0)
-                else:
-                    return self.df[columns].apply(lambda x: func(x, param), axis=0)
-            else:
-                return self.df[columns].apply(lambda x: func(x), axis=0)
-                    #return func(self.df[columns], axis=0)
-#             else:
-#                 if param is not None:
-#                     if isinstance(param, list):
-                        
-#                         #return func(self.df[columns], axis=0)
+        
+#     def extendWithFunction(self, objcolumn, func, name):
+#         if type(func) == str:
+#             if func.startswith('F'):
+#                 try:
+#                     func_id = int(func[1:])
+#                     if func_id >= func_lib.func_num():
+#                         raise Exception("Not available.")
 #                     else:
-#                         return func(self.df[columns], axis=0)
+#                         func = func_lib.func_list[func_id]
+#                 except:
+#                     raise Exception("Not a valid function id, a valid function id should be 'Fn', n is an integer.")
+#             else:
+#                 raise Exception("Not a valid function id, a valid function id should be 'Fn', n is an integer.")
+#         else:
+#             sig = inspect.signature(func)
+#             params = sig.parameters
+#             num_params = len(params)
+#             num_required = 0
+#             for key, value in params.items():
+#                 if value.default is inspect._empty and key != 'self':
+#                     num_required += 1
+#             if isinstance(objcolumn, list):
+#                 if len(objcolumn) > num_params:
+#                     if num_params == 1 or num_params == 0:
+#                         raise Exception("Too many arguments, the function only takes " + str(num_params) + " argument.")
+#                     else:
+#                         raise Exception("Too many arguments, the function only takes " + str(num_params) + " arguments.")
+#                 if len(objcolumn) < num_required:
+#                     raise Exception("Too little arguments, the function requires at least " + str(num_required) + " arguments.")
+#                 count = 0
+#                 for key, value in params.items():
+#                     if value.default is inspect._empty and key != 'self':
+#                         if (not value.annotation is inspect._empty) and (not isinstance(self.df[objcolumn[count]][0], value.annotation)):
+#                             raise Exception("Please make sure the inputs meet the requirements of the arguments.")
+#                         count+=1
+#                 self.df[name] = self.df[objcolumn].apply(lambda x: func(*x), axis=1)
+#             else:
+#                 if num_required > 1:
+#                     raise Exception("Too little arguments, the function requires at least " + str(num_required) + " arguments.")
+#                 if num_params < 1:
+#                     raise Exception("The function doesn't take any argument.")
+#                 type_required = None
+#                 for key, value in params.items():
+#                     if value.default is inspect._empty and key != 'self':
+#                         type_required = value.annotation
+#                 if isinstance(self.df[objcolumn][0], type_required) or type_required is inspect._empty:
+#                     self.df[name] = self.df[objcolumn].apply(func)
 #                 else:
-#                     return func(self.df[columns], axis=0)
-                
-        else:
-            if isinstance(columns, list):
-                if param is not None:
-                    if isinstance(param, list):
-                        self.df = func(self.df, name, *columns, *param)
-                    else:
-                        self.df = func(self.df, name, *columns, param)
-                else:
-                    self.df = func(self.df, name, *columns)
-            else:
-                if param is not None:
-                    if isinstance(param, list):
-                        self.df = func(self.df, name, columns, *param)
-                    else:
-                        self.df = func(self.df, name, columns, param)
-                else:
-                    self.df = func(self.df, name, columns)
-                    
-        if isinstance(columns, list):
-            columns.append(name)
-        else:
-            columns = [columns, name]
-        return self.df[columns]
-    
-    def extendWithFunction(self, columns, func, name=None, param=None, dim=-1):
+#                     raise Exception("Please make sure the input meets the requirement of the argument.")
+    def extendWithFunction(self, objcolumn, func, name):
         if type(func) == str:
             if func.startswith('F'):
                 try:
                     func_id = int(func[1:])
                     if func_id >= func_lib.func_num():
-                        print("Not available.")
+                        raise Exception("Not available.")
                     else:
-                        return self.extendWithFunctionHelper(columns, func, name, param, dim)
+                        func = func_lib.func_list[func_id]
                 except:
                     raise Exception("Not a valid function id, a valid function id should be 'Fn', n is an integer.")
             else:
                 raise Exception("Not a valid function id, a valid function id should be 'Fn', n is an integer.")
         else:
-            return self.extendWithFunctionHelper(columns, func, name, param, dim)
+            sig = inspect.signature(func)
+            params = sig.parameters
+            num_params = len(params)
+            num_required = 0
+            for key, value in params.items():
+                if value.default is inspect._empty and key != 'self':
+                    num_required += 1
+            if isinstance(objcolumn, list):
+                if len(objcolumn) > num_params:
+                    if num_params == 1 or num_params == 0:
+                        raise Exception("Too many arguments, the function only takes " + str(num_params) + " argument.")
+                    else:
+                        raise Exception("Too many arguments, the function only takes " + str(num_params) + " arguments.")
+                if len(objcolumn) < num_required:
+                    raise Exception("Too little arguments, the function requires at least " + str(num_required) + " arguments.")
+                count = 0
+                for key, value in params.items():
+                    if value.default is inspect._empty and key != 'self':
+                        if (not value.annotation is inspect._empty) and ((isinstance(value.annotation, WikiDataProperty) and not objcolumn[count].split('_')[-1] in value.annotation.type_list) or
+                        (not isinstance(value.annotation, WikiDataProperty) and (not isinstance(self.df[objcolumn[count]][0], value.annotation)))):
+                            raise Exception("Please make sure the inputs meet the requirements of the arguments.")
+                        count+=1
+                self.df[name] = self.df[objcolumn].apply(lambda x: func(*x), axis=1)
+            else:
+                if num_required > 1:
+                    raise Exception("Too little arguments, the function requires at least " + str(num_required) + " arguments.")
+                if num_params < 1:
+                    raise Exception("The function doesn't take any argument.")
+                type_required = None
+                for key, value in params.items():
+                    if value.default is inspect._empty and key != 'self':
+                        type_required = value.annotation
+                if isinstance(self.df[objcolumn][0], type_required) or type_required is inspect._empty:
+                    self.df[name] = self.df[objcolumn].apply(func)
+                elif isinstance(type_required, WikiDataProperty) and objcolumn.split('_')[-1] in type_required.type_list:
+                    self.df[name] = self.df[objcolumn].apply(func)
+                else:
+                    raise Exception("Please make sure the input meets the requirement of the argument.")
 
+    def applyFunction(self, objcolumn, func):
+        # func: FunctionWithSignature
+        num_params = len(func.typeSignature)
+        if len(objcolumn) != num_params:
+            if num_params == 1 or num_params == 0:
+                raise Exception("The function only takes Dataframe with " + str(num_params) + " column.")
+            else:
+                raise Exception("The function only takes Dataframe with " + str(num_params) + " columns.")
+        count = 0
+        # type check
+        for value in func.typeSignature:
+            if (isinstance(value, WikiDataProperty) and not objcolumn[count].split('_')[-1] in value.type_list) or (not isinstance(value, WikiDataProperty) and (not isinstance(self.df[objcolumn[count]][0], value))):
+                raise Exception("Please make sure the input Dataframe meets the requirements of the arguments.")
+            count+=1
+        #        
+        func.invoke(self.df[objcolumn])
+        
     def define_query_relation(self):
         rdf_triple, time_filter, limit_statement = """""", """""", """"""
         if self.count < 1:
@@ -435,7 +504,7 @@ class WikiDataProperty:
         self.type_list = []
         for property_id in self.property_id:
             self.type_list.append(property_id.split('/')[-1])
-
+    
 def createRelation(entity_id: str, property_id=None, isSubject=None, rowVerbose=None, colVerbose=None,
                    time_property=None, time=None, name=None, label=False, limit=None, subclass=False):
     if property_id and not name:
@@ -462,6 +531,7 @@ def get_results(endpoint_url, query):
     sparql.setQuery(query)
     sparql.setReturnFormat(JSON)
     return sparql.query().convert()
+
 
 def get_name(id: str):
     query = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 	
