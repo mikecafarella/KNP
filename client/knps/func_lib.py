@@ -1,5 +1,6 @@
 import datetime
 import requests
+import pandas as pd
 from bs4 import BeautifulSoup
 
 func_list = []
