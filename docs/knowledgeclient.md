@@ -44,11 +44,6 @@ Construct a relation of US presidents, their spouses, their dates of birth and p
     r.query()
     r.df
 
-Sample Results:
-| Entity ID | President_P39 | President_P39Label | Spouse_P26 | Spouse_P26Label | date_of_birth_P569 | date_of_birth_P569Label | Place_of_birth_P19 | Place_of_birth_P19Label | Basic ID |
-| :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: |
-| http://www.wikidata.org/entity/Q11696 | http://www.wikidata.org/entity/Q35686 | Rutherford B. Hayes | http://www.wikidata.org/entity/Q234275 | Lucy Webb Hayes | 1822-10-04T00:00:00Z | 1822-10-04T00:00:00Z | http://www.wikidata.org/entity/Q934308 | Fremont | Q11696 |
-| http://www.wikidata.org/entity/Q11696    | http://www.wikidata.org/entity/Q35171      | Grover Cleveland     | http://www.wikidata.org/entity/Q233644     | Frances Cleveland     | 1837-03-18T00:00:00Z     | 1837-03-18T00:00:00Z     | http://www.wikidata.org/entity/Q717516    | Caldwell    | Q11696 |
 
 ## Tutorial 2: Adding numerical data from the European Union
 __Dinghao, Tian, Kexin: here let's add a bit more complicated stuff.  The European Union and GDP data.  Then let's do inflation-adjustment for the GDP data.__
@@ -62,14 +57,9 @@ Here is an example of all countries in the European Union and their population, 
     r.extend('P1082',False, 'population')
     r.query()
     r.df
-
-Sample Results:
-| Entity ID | Countries_P150 | Countries_P150Label | Total_population_P1082 | population_P1082 | Basic ID |
-| :----: | :----: | :----: | :----: | :----: | :----: |
-| http://www.wikidata.org/entity/Q458 | http://www.wikidata.org/entity/Q219 | Bulgaria | 447706209 | 7000039 | Q458 |
-| http://www.wikidata.org/entity/Q458    | http://www.wikidata.org/entity/Q33      | Finland     | 447706209     | 5501043     | Q458     |
-
-Here is another example of inflation-adjusted US GDP data, with the base year of 2014: 
+    
+    
+Here is another example of inflation-adjusted US GDP data, with the base year of 2014:
 
     import math
     def adjustedGDP(gdp: WikiDataProperty(['P2131', 'P2132']), timestamp: WikiDataProperty(['P585'])):
@@ -87,12 +77,6 @@ Here is another example of inflation-adjusted US GDP data, with the base year of
     usgdp.extendWithFunction(['GDP_P2131','GDP_point_in_time_P2131_P585'], adjustedGDP, 'adjustedGDP_P2131') # base 2014
     usgdp.df
 
-
-Sample Results:
-| Entity ID | GDP_P2131 | GDP_rank_P2131_rank | GDP_point_in_time_P2131_P585 | GDP_ref_P2131_P813 | GDP_ref_P2131_P248 | GDP_ref_P2131_P275 | GDP_ref_P2131_P854 | Basic ID | adjustedGDP_P2131 |
-| :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: |
-| http://www.wikidata.org/entity/Q30 | 16155255000000 | http://wikiba.se/ontology#NormalRank | 2012-01-01T00:00:00Z | 2018-10-18T00:00:00Z | http://www.wikidata.org/entity/Q21540096 | http://www.wikidata.org/entity/Q20007257 | https://data.worldbank.org/indicator/NY.GDP.MK... | Q30 | 16672060655946 |
-| http://www.wikidata.org/entity/Q30    | 1167770000000      | http://wikiba.se/ontology#NormalRank     | 1971-01-01T00:00:00Z    | 2018-10-18T00:00:00Z     | http://www.wikidata.org/entity/Q21540096     | http://www.wikidata.org/entity/Q20007257     | https://data.worldbank.org/indicator/NY.GDP.MK...    | Q30    | 6863318776884 |
 
 ## Tutorial 3: Whole-table functions with National Parks data
 __Jenny, let's do the National Parks inception data here, and show how to do whole-table function invocation__.
