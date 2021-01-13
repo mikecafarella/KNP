@@ -59,11 +59,6 @@ Here is an example of all countries in the European Union and their population, 
     r.query()
     r.df
 
-| left | center | right |
-| :--- | :----: | ----: |
-| aaaa | bbbbbb | ccccc |
-| a    | b      | c     |
-
 | Entity ID | President_P39 | President_P39Label | Spouse_P26 | Spouse_P26Label | date_of_birth_P569 | date_of_birth_P569Label | Place_of_birth_P19 | Place_of_birth_P19Label | Basic ID |
 | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: |
 | http://www.wikidata.org/entity/Q11696 | http://www.wikidata.org/entity/Q35686 | Rutherford B. Hayes | http://www.wikidata.org/entity/Q234275 | Lucy Webb Hayes | 1822-10-04T00:00:00Z | 1822-10-04T00:00:00Z | http://www.wikidata.org/entity/Q934308 | Fremont | Q11696 |
