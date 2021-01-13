@@ -142,15 +142,19 @@
 
 </li>
 <li>
-<p>To run a UKCN server locally, create a <code>personal.yaml</code> file in the repo root directory with the following contents, setting the address and port to your liking:
-        server:
-          SERVER_ADDRESS: 'http://127.0.0.1'
-          SERVER_PORT: '4242'</p>
+<p>To run a UKCN server locally, create a <code>personal.yaml</code> file in the repo root directory with the following contents, setting the address and port to your liking:</p>
+<pre class="codehilite"><code>server:
+  SERVER_ADDRESS: 'http://127.0.0.1'
+  SERVER_PORT: '4242'
+</code></pre>
+
 </li>
 <li>
 <p>Use the following commands to configure the flask app and run the server</p>
-<p>export FLASK_APP=server/server.py
-flask run</p>
+<pre class="codehilite"><code>export FLASK_APP=server/server.py
+flask run
+</code></pre>
+
 </li>
 </ol>
 <h2 id="tutorial">Tutorial</h2>
