@@ -33,6 +33,16 @@ Let's try to show a few examples of using the __Knowledge Client__.
 ## Tutorial 1: Basic dataset construction with the presidents
 __Dinghao, Tian, Kexin: can we add a simple example here?  Just add basic entity data that's already in the knowledge graph.  Presidents, their spouses, and their places and dates of birth. That's it.__
 
+Construct a relation of US presidents, their spouses, their dates of birth and places of births: 
+
+    r = createRelation("Q11696")
+    r.extend('P39',True, 'President', limit=20,label=True)
+    r.changeFocus('President_P39')
+    r.extend("P26", False, "Spouse", label=True)
+    r.extend('P569', False, 'date_of_birth', label=True)
+    r.extend('P19',False, 'Place_of_birth', label=True)
+    r.query()
+    r.df
 
 ## Tutorial 2: Adding numerical data from the European Union
 __Dinghao, Tian, Kexin: here let's add a bit more complicated stuff.  The European Union and GDP data.  Then let's do inflation-adjustment for the GDP data.__
