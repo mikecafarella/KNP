@@ -54,8 +54,9 @@ def hook(dct):
     elif "__kgplvariable__" in dct:
         return load_var(dct["vid"])
     elif "__relation__" in dct:
-        #  entity_id: str, property_id: str, isSubject: bool, limit: int, rowVerbose: bool,
-        #  colVerbose: bool, time_property: str, time: str, name: str, reconstruct={}):
+    # def __init__(self, entity_id: str, property_id: str, isSubject: bool, rowVerbose: bool,
+    #              colVerbose: bool, time_property: str, time: str, name: str, label: bool, 
+    #              limit=10000, subclass=False, showid=False, reconstruct={}):
         dct["df"] = pandas.read_json(dct["df"])
         temp_dict = {}
         # dct["dic"] is a dict with integer keys.
@@ -66,7 +67,8 @@ def hook(dct):
             except Exception:
                 print("Count should be an integer")
         dct["dic"] = temp_dict
-        return ORM.Relation("dummy", "dummy,", False, False, False, "dummy", "dummy", "dummy", False,10000,False, dct)
+        return ORM.Relation("dummy", "dummy,", False, False, False, "dummy", "dummy", "dummy",
+                            False,10000,False, False, dct)
     elif "__image__" in dct:
         return File(dct["filename"])
     return dct
@@ -440,7 +442,7 @@ def viewNamespace():
     print("Current Server: ", server_url)
     return server_url
 
-def get_var_content(label):
+def get_label_content(label):
     vid = server_url+"/var/"+label
     temp_var = load_var(vid)
     return load_val(temp_var.val_id).val

@@ -12,7 +12,6 @@ import json
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-# PREV_VAR_ID = knps.server_url + "/var/0"
 PREV_VAR_ID = "LatestCovidData"
 
 def step1_5(_):
@@ -44,13 +43,7 @@ def step1_5(_):
 
     result = dict(rst)
     knps.publish_update(result,val_comment,PREV_VAR_ID,"Alice")
-    # myval = knps.create_value(dict(rst), val_comment, "Alice")
-    # myval.update_label(PREV_VAR_ID,var_comment)
-    #     # try:
-    #     prev_var = knps.load_var(PREV_VAR_ID)  # Enabled in the later days
-    #     knps.set_var(prev_var, myval.vid, var_comment)
-    # except:
-    #     print('except')
+
 
 
 

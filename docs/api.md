@@ -16,4 +16,4 @@
 
 ::: knps.kgpl
     :docstring:
-    :members: create_value value variable load_val load_var set_var get_history changeNamespace viewNamespace get_var_content 
+    :members: create_value value variable load_val load_var set_var get_history changeNamespace viewNamespace get_label_content 

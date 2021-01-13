@@ -15,30 +15,19 @@ from collections import defaultdict
 
 import knps
 
-SERVER_URL = knps.server_url
-
-# PREV_VAR_ID = SERVER_URL + "/var/1"
-PREV_VAR_ID = "CovidPrediction"
-VAR_ID_GIVEN_BY_USER1 = "LatestCovidData"
-
+PREV_LABEL = "CovidPrediction"
+VAR_ID_GIVEN_BY_ALICE = "LatestCovidData"
 
 def step2_5(_):
     DATE_TO_PREDICT = int(
         (datetime.today() + timedelta(days=1)).strftime('%Y%m%d'))
-
-    # VAR_ID_GIVEN_BY_USER1 = SERVER_URL + "/var/0"
-
     TRAIN_LENGTH = 20
-
     date = datetime.strptime(str(DATE_TO_PREDICT), '%Y%m%d')
     starting_date = date - timedelta(days=TRAIN_LENGTH)
     start = starting_date.strftime('%Y%m%d')
     temp_dict = {}
 
-    # needed_var_id = knps.load_var(VAR_ID_GIVEN_BY_USER1)
-    # val_knps = knps.load_val(needed_var_id.val_id)
-    # data_source = val_knps.val
-    data_source = knps.get_var_content(VAR_ID_GIVEN_BY_USER1)
+    data_source = knps.get_label_content(VAR_ID_GIVEN_BY_ALICE)
 
     for key, val in data_source.items():
         temp_list = []
@@ -48,7 +37,6 @@ def step2_5(_):
                 temp_list.append([i, one_day[1]])
                 i += 1
         temp_dict[key] = temp_list
-
     rst = {}
     for key, val in temp_dict.items():
         X = []
@@ -56,9 +44,7 @@ def step2_5(_):
         for one_day_val in val:
             X.append(one_day_val[0])
             Y.append(one_day_val[1])
-
         X = np.array(X).reshape((-1, 1))
-
         model = LinearRegression()
         model.fit(X, Y)
         X_predict = np.array([0, ]).reshape(
@@ -72,12 +58,8 @@ def step2_5(_):
         cases for all states in the US for " + \
         (datetime.today() + timedelta(days=1)).strftime('%Y%m%d')
 
-    knps.publish_update(rst, val_comment, PREV_VAR_ID,
-                        "Betty", [VAR_ID_GIVEN_BY_USER1, ])
-    # myval = knps.create_value(rst, val_comment, "Betty", [VAR_ID_GIVEN_BY_USER1, ])
-    # myval.update_label(PREV_VAR_ID, var_comment)
-    # prev_var = knps.load_var(PREV_VAR_ID)
-    # knps.set_var(prev_var, myval.vid, var_comment)
+    knps.publish_update(rst, val_comment, PREV_LABEL,
+                        "Betty", [VAR_ID_GIVEN_BY_ALICE, ])
 
 
 if __name__ == "__main__":

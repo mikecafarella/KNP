@@ -18,7 +18,7 @@ if __name__ == "__main__":
     rst = defaultdict(list)
     rst_2 = defaultdict(list)
 
-    today = datetime.today() - timedelta(days=10)
+    today = datetime.today() - timedelta(days=10) # For demostration purpose
     twenty_days = today - timedelta(days=20)
     before_20 = int(twenty_days.strftime('%Y%m%d'))
     today = int(today.strftime('%Y%m%d'))
@@ -39,5 +39,3 @@ if __name__ == "__main__":
 
     result = dict(rst)
     knps.publish_new(result,val_comment,"LatestCovidData","Alice")
-    # myval = knps.create_value(dict(rst), val_comment, "Alice")
-    # myval.create_label("LatestCovidData", var_comment)

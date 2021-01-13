@@ -41,7 +41,8 @@ class Relation:
     """
 
     def __init__(self, entity_id: str, property_id: str, isSubject: bool, rowVerbose: bool,
-                 colVerbose: bool, time_property: str, time: str, name: str, label: bool, limit=10000, subclass=False, showid=False, reconstruct={}):
+                 colVerbose: bool, time_property: str, time: str, name: str, label: bool, 
+                 limit=10000, subclass=False, showid=False, reconstruct={}):
         if bool(reconstruct):
             self.entity_id = reconstruct["entity_id"]
             self.query_str = reconstruct["query_str"]
