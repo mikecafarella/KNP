@@ -144,7 +144,7 @@
 </div>
 <h2 id="kgplvalue">KGPLValue</h2>
 <div class="autodoc">
-<div class="autodoc-signature"><em>class </em><code>knps.kgpl.<strong>KGPLValue</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">val</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">user='anonymous'</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">dependency=[]</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">vid=None</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">verbose=False</em><span class="autodoc-punctuation">)</span></div>
+<div class="autodoc-signature"><em>class </em><code>knps.<strong>KGPLValue</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">val</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">user='anonymous'</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">dependency=[]</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">vid=None</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">verbose=False</em><span class="autodoc-punctuation">)</span></div>
 <div class="autodoc-docstring"><p>Python representation of a KGPLValue. Users should not user the constructor to create a KGPLValue object directly. Instead, use the <code>create_value</code> function described below.</p>
 <h6 id="parameters">Parameters</h6>
 <ul>
@@ -167,30 +167,32 @@
 <div class="autodoc-signature"><code><strong>getConcreteVal</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">self</em><span class="autodoc-punctuation">)</span></div>
 <div class="autodoc-docstring"><p>Return the concrete value</p></div>
 <div class="autodoc-signature"><code><strong>create_label</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">self</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">label</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"><p>Create a label to refer to this KGPLValue.
-TODO</p>
+<div class="autodoc-docstring"><p>Create a label to refer to this KGPLValue.</p>
 <h6 id="parameters">Parameters</h6>
 <ul>
 <li><code>label</code>
     A label (of type <code>str</code>) identifier for the value. Consider use label as a</li>
 <li><code>comment</code>
-    Descriptive comment for the value</li>
-</ul></div>
+    Descriptive comment for the label creation</li>
+</ul>
+<h6 id="return">Return</h6>
+<p>The KGPLVariable object that underlies the label</p></div>
 <div class="autodoc-signature"><code><strong>update_label</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">self</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">label</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">new_comment</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"><p>Update the label for this KGPLValue
-TODO</p>
+<div class="autodoc-docstring"><p>Update the input label with this KGPLValue</p>
 <h6 id="parameters">Parameters</h6>
 <ul>
 <li><code>label</code>
-    A new label identifier for the value</li>
+    The label to be updated</li>
 <li><code>comment</code>
-    A new comment</li>
-</ul></div>
+    Descriptive comment for the label update</li>
+</ul>
+<h6 id="return">Return</h6>
+<p>The KGPLVariable object that underlies the label</p></div>
 </div>
 </div>
 <h2 id="kgplvariable">KGPLVariable</h2>
 <div class="autodoc">
-<div class="autodoc-signature"><em>class </em><code>knps.kgpl.<strong>KGPLVariable</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">val_id</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">vid</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">user='anonymous'</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">timestamp=None</em><span class="autodoc-punctuation">)</span></div>
+<div class="autodoc-signature"><em>class </em><code>knps.<strong>KGPLVariable</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">val_id</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">vid</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">user='anonymous'</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">timestamp=None</em><span class="autodoc-punctuation">)</span></div>
 <div class="autodoc-docstring"><p>Python representation of a KGPLVariable. Users should not user the constructor to create a KGPLVariable object directly. Instead, use the <code>variable</code> function described below.</p>
 <h6 id="parameters">Parameters</h6>
 <ul>
@@ -328,8 +330,6 @@ variable concurrently.</p></div>
 <li><code>vid</code>
     The label name to check</li>
 </ul></div>
-<div class="autodoc-signature"><code><strong>get_default_label</strong></code><span class="autodoc-punctuation">(</span><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"></div>
 <div class="autodoc-signature"><code><strong>changeNamespace</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">new_url</em><span class="autodoc-punctuation">)</span></div>
 <div class="autodoc-docstring"><p>change the namespace of the current program.</p>
 <h6 id="parameter">Parameter</h6>
