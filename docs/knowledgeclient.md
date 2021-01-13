@@ -26,6 +26,31 @@ The system does not try to extract or clean __UKCN__ data at the time of use, ap
 
 The exceptions surround cases when the system believes that facts in the __UKCN__ are correct at the individual level, but will yield a relation that is internally inconsistent.  Unfortunately, this is a well-known problem in knowledge graphs. Consider the example that *Tim Berners-Lee* is an example of *Computer Scientist*, while *Computer Scientist* is an example of *profession*. A __Knowledge Client__ user trying to create a table of professions might inadvertently obtain one that includes *Tim Berners-Lee*.  When appropriate, the __Knowledge Client__ will either silently fix these issues, or will issue a warning to the user.
 
+## Basic Usages
+__Relation.extend(self, property_id: str, isSubject: bool, name: str, rowVerbose=False, colVerbose=False, limit=None,
+               time_property=None, time=None, search=None, label=False, subclass=False, showid=False)__
+This function extends a column upon the current focus with a specified property.
+__Parameters:__
+- property_id: string
+    the Wikidata property identifier (e.g., 'P31')
+- isSubject: bool
+    indicates whether the column to be extended is the subject in the (subject->property->object) triple. (e.g., If the base entity is 'Q33999' (actor) and the property to extend upon is 'P106' (has occupation), isSubject should be True since we want to find who has an occupation as an actor.)
+- name: string
+    name of the extended column (use underscore for all spaces). The property identifier will be automatically appended in the final result. (e.g., If specifying name='population' and property_id='P1082', the column in the dataframe will finally be called 'population_P1082'.)
+- rowVerbose: bool, default False
+    indicates whether all the results of the extended column should be displayed. If rowVerbose=False, it only returns the results with preferred rank.
+- colVerbose: bool, default False
+    indicates whether the qualifiers of the extended column and all the other metadata should be displayed. e.g., If colVerbose=True and property_id='P1082' (population), the time for each population value will be shown as another column, since 'P585' (point in time) is a qualifier associated with 'P1082'.
+- limit: int, default None
+    the max number of rows displayed
+- time_property: string, default None
+    the time qualifier constraint used to select the results. Used with parameter 'time'
+- time: int, default None
+    specifying the year constraint needed. Used with parameter 'time_property'. e.g., If property_id='P1082' (population), time_property='P585' and time=2010, it will only return the population in 2010.
+- search: str or pair, default None
+    select the results 
+
+
 ## Examples
 
 Let's try to show a few examples of using the __Knowledge Client__.
@@ -43,12 +68,8 @@ Construct a relation of US presidents, their spouses, their dates of birth and p
     r.extend('P19',False, 'Place_of_birth', label=True) #P19 - 'place of birth'
     r.query()
     r.df
+    
 
-Sample Results:
-| Entity ID | President_P39 | President_P39Label | Spouse_P26 | Spouse_P26Label | date_of_birth_P569 | date_of_birth_P569Label | Place_of_birth_P19 | Place_of_birth_P19Label | Basic ID |
-| :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: |
-| http://www.wikidata.org/entity/Q11696 | http://www.wikidata.org/entity/Q35686 | Rutherford B. Hayes | http://www.wikidata.org/entity/Q234275 | Lucy Webb Hayes | 1822-10-04T00:00:00Z | 1822-10-04T00:00:00Z | http://www.wikidata.org/entity/Q934308 | Fremont | Q11696 |
-| http://www.wikidata.org/entity/Q11696    | http://www.wikidata.org/entity/Q35171      | Grover Cleveland     | http://www.wikidata.org/entity/Q233644     | Frances Cleveland     | 1837-03-18T00:00:00Z     | 1837-03-18T00:00:00Z     | http://www.wikidata.org/entity/Q717516    | Caldwell    | Q11696 |
 
 ## Tutorial 2: Adding numerical data from the European Union
 __Dinghao, Tian, Kexin: here let's add a bit more complicated stuff.  The European Union and GDP data.  Then let's do inflation-adjustment for the GDP data.__
@@ -63,11 +84,6 @@ Here is an example of all countries in the European Union and their population, 
     r.query()
     r.df
 
-Sample Results:
-| Entity ID | Countries_P150 | Countries_P150Label | Total_population_P1082 | population_P1082 | Basic ID |
-| :----: | :----: | :----: | :----: | :----: | :----: |
-| http://www.wikidata.org/entity/Q458 | http://www.wikidata.org/entity/Q219 | Bulgaria | 447706209 | 7000039 | Q458 |
-| http://www.wikidata.org/entity/Q458    | http://www.wikidata.org/entity/Q33      | Finland     | 447706209     | 5501043     | Q458     |
 
 Here is another example of inflation-adjusted US GDP data, with the base year of 2014: 
 
@@ -87,12 +103,6 @@ Here is another example of inflation-adjusted US GDP data, with the base year of
     usgdp.extendWithFunction(['GDP_P2131','GDP_point_in_time_P2131_P585'], adjustedGDP, 'adjustedGDP_P2131') # base 2014
     usgdp.df
 
-
-Sample Results:
-| Entity ID | GDP_P2131 | GDP_rank_P2131_rank | GDP_point_in_time_P2131_P585 | GDP_ref_P2131_P813 | GDP_ref_P2131_P248 | GDP_ref_P2131_P275 | GDP_ref_P2131_P854 | Basic ID | adjustedGDP_P2131 |
-| :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: |
-| http://www.wikidata.org/entity/Q30 | 16155255000000 | http://wikiba.se/ontology#NormalRank | 2012-01-01T00:00:00Z | 2018-10-18T00:00:00Z | http://www.wikidata.org/entity/Q21540096 | http://www.wikidata.org/entity/Q20007257 | https://data.worldbank.org/indicator/NY.GDP.MK... | Q30 | 16672060655946 |
-| http://www.wikidata.org/entity/Q30    | 1167770000000      | http://wikiba.se/ontology#NormalRank     | 1971-01-01T00:00:00Z    | 2018-10-18T00:00:00Z     | http://www.wikidata.org/entity/Q21540096     | http://www.wikidata.org/entity/Q20007257     | https://data.worldbank.org/indicator/NY.GDP.MK...    | Q30    | 6863318776884 |
 
 ## Tutorial 3: Whole-table functions with National Parks data
 __Jenny, let's do the National Parks inception data here, and show how to do whole-table function invocation__.
