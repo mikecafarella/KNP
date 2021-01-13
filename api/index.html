@@ -128,26 +128,21 @@
 <h2 id="kgplvalue">KGPLValue</h2>
 <div class="autodoc">
 <div class="autodoc-signature"><em>class </em><code>knps.kgpl.<strong>KGPLValue</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">val</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">user='anonymous'</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">dependency=[]</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">vid=None</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">verbose=False</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"><p>KGPLValue object.</p>
-<p>Example:</p>
-<pre class="codehilite"><code>val = KGPLValue('http://example.com')
-val.do_something()
-</code></pre>
-
+<div class="autodoc-docstring"><p>Python representation of a KGPLValue. Users should not user the constructor to create a KGPLValue object directly. Instead, use the <code>create_value</code> function described below.</p>
 <h6 id="parameters">Parameters</h6>
 <ul>
 <li><code>val</code>
-    Number of seconds to wait between searches</li>
+    The concrete value stored in the KGPLValue object.</li>
 <li><code>comment</code>
-    Paths to ignore</li>
+    A comment (of type <code>str</code>) associated with this KGPLValue object.</li>
 <li><code>user</code>
-    User</li>
+    Username of the owner of the KGPLValue object.</li>
 <li><code>dependency</code>
     THe Dependency</li>
 <li><code>vid</code>
-    What's a vid?</li>
+    The unique identifier assigned by the server.</li>
 <li><code>verbose</code>
-    Be verbose about it.</li>
+    If set to true, more information is produced in the terminal. Otherwise, a succint description is printed when the construction succeeds.</li>
 </ul></div>
 <div class="autodoc-members">
 <div class="autodoc-signature"><code><strong>getVid</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">self</em><span class="autodoc-punctuation">)</span></div>
@@ -155,11 +150,11 @@ val.do_something()
 <div class="autodoc-signature"><code><strong>getConcreteVal</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">self</em><span class="autodoc-punctuation">)</span></div>
 <div class="autodoc-docstring"><p>Return the concrete value</p></div>
 <div class="autodoc-signature"><code><strong>create_label</strong></code><span class="autodoc-punctuation">(</span><em class="autodoc-param">self</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">label</em><span class="autodoc-punctuation">, </span><em class="autodoc-param">comment</em><span class="autodoc-punctuation">)</span></div>
-<div class="autodoc-docstring"><p>Create a label for this KGPLValue</p>
+<div class="autodoc-docstring"><p>Create a label to refer to this KGPLValue.</p>
 <h6 id="parameters">Parameters</h6>
 <ul>
 <li><code>label</code>
-    A label identifier for the value</li>
+    A label (of type <code>str</code>) identifier for the value. Consider use label as a</li>
 <li><code>comment</code>
     Descriptive comment for the value</li>
 </ul></div>

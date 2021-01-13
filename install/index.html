@@ -122,7 +122,35 @@
               
                 <h1 id="installation">Installation</h1>
 <p>Here's how you install and run the <a href="../knowledgeclient/"><strong>Knowledge Client</strong></a> and the <a href="../sharingservice/"><strong>Universal Knowledge Collaboration Network</strong></a>.</p>
-<p><strong>INSTALL DETAILS HERE</strong></p>
+<ol>
+<li>Move to the desired directory and clone the github repository using the code below</li>
+</ol>
+<pre class="codehilite"><code>git clone https://github.com/mikecafarella/KNP
+</code></pre>
+
+<ol>
+<li>Use the following command to install the Knowledge Client package. This command will isntall the client package as <code>knps</code> and some required packages. You can use <code>pip3 uninstall knps</code> to remove the package.</li>
+</ol>
+<pre class="codehilite"><code>pip3 install -e client
+</code></pre>
+
+<ol>
+<li>
+<p>Use the following command to set the flask server</p>
+</li>
+<li>
+<p>To run a UKCN server locally, use the following command to set the flask app.</p>
+</li>
+</ol>
+<pre class="codehilite"><code>export FLASK_APP=server/server.py
+</code></pre>
+
+<ol>
+<li>Run the server using the following command</li>
+</ol>
+<pre class="codehilite"><code>flask run
+</code></pre>
+
 <h2 id="tutorial">Tutorial</h2>
 <p>Now that you've installed the system, <a href="../tutorial/">try out the tutorial</a>.</p>
               
