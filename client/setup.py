@@ -27,7 +27,8 @@ setuptools.setup(
             'bs4',
             'pyyaml',
             'flask',
-            'bsddb3'
+            'bsddb3',
+            'dill'
     ],
     python_requires='>=3.6',
 )

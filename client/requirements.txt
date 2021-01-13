@@ -6,3 +6,4 @@ bs4
 pyyaml
 flask
 bsddb3
+dill
