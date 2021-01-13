@@ -11,27 +11,27 @@ endpoint_url = "https://query.wikidata.org/sparql"
 item = "item"
 
 
-class FunctionWithSignature:
-    """Specific for function applied to the entire relation,
-        name is the name of the function (str)
-        typeSignature is the required list of types in a relation,
-        func is the function to be applied to the entire relation."""
-    def __init__(self, name, typeSignature, func):
-        self.func = func
-        self.typeSignature = typeSignature
-        self.name = name
+# class FunctionWithSignature:
+#     """Specific for function applied to the entire relation,
+#         name is the name of the function (str)
+#         typeSignature is the required list of types in a relation,
+#         func is the function to be applied to the entire relation."""
+#     def __init__(self, name, typeSignature, func):
+#         self.func = func
+#         self.typeSignature = typeSignature
+#         self.name = name
 
-#     def invoke(self, paramList):
-#         typedParams = zip(self.typeSignature, paramList)
-#         typeCheckResults = list(map(lambda x: x[1].checkType(x[0]), typedParams))
-#         if false in typeCheckResults:
-#             raise Exception("Input parameters don’t match type signature")
-#         return fn.invoke(paramList)
-    def invoke(self, df):
-        return self.func(df)
+# #     def invoke(self, paramList):
+# #         typedParams = zip(self.typeSignature, paramList)
+# #         typeCheckResults = list(map(lambda x: x[1].checkType(x[0]), typedParams))
+# #         if false in typeCheckResults:
+# #             raise Exception("Input parameters don’t match type signature")
+# #         return fn.invoke(paramList)
+#     def invoke(self, df):
+#         return self.func(df)
     
-    def showTypeRequest(self):
-        return self.typeSignature
+#     def showTypeRequest(self):
+#         return self.typeSignature
 
 class Relation:
     """
@@ -239,6 +239,8 @@ class Relation:
                     if value.default is inspect._empty and key != 'self':
                         if (not value.annotation is inspect._empty) and ((isinstance(value.annotation, WikiDataProperty) and not objcolumn[count].split('_')[-1] in value.annotation.type_list) or
                         (not isinstance(value.annotation, WikiDataProperty) and (not isinstance(self.df[objcolumn[count]][0], value.annotation)))):
+                            print(type(self.df[objcolumn[count]][0]))
+                            print(value.annotation)
                             raise Exception("Please make sure the inputs meet the requirements of the arguments.")
                         count+=1
                 self.df[name] = self.df[objcolumn].apply(lambda x: func(*x), axis=1)

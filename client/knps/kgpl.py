@@ -3,6 +3,7 @@ import os
 import pandas
 
 import requests
+from .func_storage import *
 from . import ORM_client as ORM
 from .settings import SERVER_URL
 
