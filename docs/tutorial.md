@@ -63,6 +63,17 @@ knps.publish_update(rst, val_comment, PREV_LABEL,
                     "Betty", [VAR_ID_GIVEN_BY_ALICE, ])
 ```
 On **Friday, week two**. The third user Charlie updated the knpsvalue of the label "PredictionPic" and "TenStatesWithFewestCovid".
+```
+LABEL_FROM_BETTY = "CovidPrediction"
+PREV_PIC = "CovidPredictionPic"
+PREV_VID = "TenStatesWithFewestCovid"
+total_val = knps.get_label_content(LABEL_FROM_BETTY)
+knps.publish_update(pre1, "Second week prediction image",
+                    PREV_PIC, "Charlie", [LABEL_FROM_BETTY,])
+knps.publish_update(least_list, "Ten states with the \
+                    fewest COVID cases", PREV_VID,
+                    "Charlie", [LABEL_FROM_BETTY, ])
+```
 
 The overall dataflow is from covidtracking.com to Alice, then to Betty, and finally to Charlie. 
 
