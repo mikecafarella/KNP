@@ -75,32 +75,41 @@ def hook(dct):
 
 
 class File:
+    """
+    File wrapper class. This wrapper class should be used when storing a file into a KGPLValue object.
+
+    ###### Parameters
+    - `filename`
+        The absolute or relative path to the file .
+    
+    ###### Example
+
+            import knps
+            file = knps.File("picture.png")
+            kgplvalue = knps.create_values(file, "a picture")
+
+    """
     def __init__(self, filename):
         self.filename = filename
 
 
 class KGPLValue:
     """
-    KGPLValue object.
-
-    Example:
-
-        val = KGPLValue('http://example.com')
-        val.do_something()
+    Python representation of a KGPLValue. Users should not user the constructor to create a KGPLValue object directly. Instead, use the `create_value` function described below.
 
     ###### Parameters
     - `val`
-        Number of seconds to wait between searches
+        The concrete value stored in the KGPLValue object.
     - `comment`
-        Paths to ignore
+        A user-readable comment (of type `str`) associated with this KGPLValue object.
     - `user`
-        User
+        Username of the owner of the KGPLValue object.
     - `dependency`
-        THe Dependency
+        A list consisting of the KGPL objects that this KGPLValue depended on. 
     - `vid`
-        What's a vid?
+        The unique identifier assigned by the server.
     - `verbose`
-        Be verbose about it.
+        If set to true, more information is produced in the terminal. Otherwise, a succint description is printed when the construction succeeds.
 
     """
     def __init__(self, val, comment, user="anonymous", dependency=[], vid=None, verbose=False):
@@ -204,29 +213,44 @@ class KGPLValue:
 
     def create_label(self, label, comment):
         """
-        Create a label for this KGPLValue
+        Create a label to refer to this KGPLValue. 
+
         ###### Parameters
         - `label`
-            A label identifier for the value
+            A label (of type `str`) identifier for the value. Consider use label as a 
         - `comment`
-            Descriptive comment for the value
+            Descriptive comment for the label creation
+
+        ###### Return
+        The KGPLVariable object that underlies the label
         """
         return variable(label, self.vid, comment, user=self.user)
 
     def update_label(self, label, new_comment):
         """
-        Update the label for this KGPLValue
-
+        Update the input label with this KGPLValue
+        
         ###### Parameters
         - `label`
-            A new label identifier for the value
+            The label to be updated
         - `comment`
-            A new comment
+            Descriptive comment for the label update
+
+        ###### Return
+        The KGPLVariable object that underlies the label
         """
+
         temp = load_var(server_url+"/var/"+label)
         return set_var(temp, self.vid, new_comment)
 
 def check_label_occupied(vid):
+    """
+    Check the server to determine if the label is occupied.
+
+    ###### Parameter
+    - `vid`
+        The label name to check
+    """
     r = requests.post(check_var_id_url, json={"var_id": vid})
     if r.status_code != 201:
         if r.status_code == 409:
@@ -243,23 +267,17 @@ def get_default_label():
 
 class KGPLVariable:
     """
-    KGPLVariable object.
-
-    Example::
-
-        # REPLACE THIS WITH REAL STUFF
-        val = KGPLVariable('http://example.com')
-        val.do_something()
+    Python representation of a KGPLVariable. Users should not user the constructor to create a KGPLVariable object directly. Instead, use the `variable` function described below.
 
     ###### Parameters
     - `val_id`
-        Value ID
+        The vid of the KGPLValue to be stored
     - `comment`
-        User-readable comment about the variable
+        A user-readable comment (of type `str`) associated with this KGPLVariable object.
     - `vid`
-        What's a vid?
+       The unique identifier assigned by the server.
     - `user`
-        User
+        Username of the owner of the KGPLVariable object.
     - `timestamp`
         Timestamp of the variable creation
 
@@ -288,12 +306,26 @@ class KGPLVariable:
             self.timestamp = timestamp
 
     def getVid(self):
+        """
+        Get the vid
+        ###### Return
+        - the vid of this KGPLVariable.
+        """
         return self.vid
 
     def getValid(self):
+        """
+        Get the vid of the contained KGPLValue
+        ###### Return
+        - the vid of the KGPLValue this variable refers to.
+        """
         return self.val_id
 
     def refresh(self):
+        """
+        Synchronize with the server to get the newest state of the variable in case of users work on the same 
+        variable concurrently.
+        """
         r = requests.get(update_url, json={"val_id": self.vid})
         if r.status_code != 200:
             raise Exception("fail to get latest information")
@@ -301,6 +333,12 @@ class KGPLVariable:
         self.timestamp = r.json().get("timestamp")
 
     def getConcreteVal(self):
+        """
+        Get the KGPLValue stored in this KGPLVariable object
+
+        ###### Return
+            - The KGPLValue object stored in this variable
+        """
         return load_val(self.val_id)
 
 
@@ -318,6 +356,25 @@ def load(vid, l_url):
 # ---------------------------API-----------------------------------#
 
 def create_value(val, comment, user="anonymous", dependency=[], verbose=False):
+    """
+    Create a KGPLValue based on the inputs and publish to the server.
+
+    ###### Parameter
+    - 'val'
+        Concrete value to store (We currently support the following types: `int`, `float`, `bool`, `list`, `dict`, `File`, `pandas.DataFrame`, `Relation`)
+    - 'comment'
+        A human readable comment (of type `str`) associated with the value creattion
+    - 'user'
+        User name of the owner of the KGPLValue, the default value is `anonymous`
+    - `dependency`
+        A list consisting of the KGPL objects that this KGPLValue depended on. Each element in the list can be one of the three types:
+        `KGPLValue`, `KGPLVariable` or `Label`. The default value is empty list.
+    - `verbose`: 
+        If set to true, more information is produced in the terminal. Otherwise, a succint description is printed when the construction succeeds. The default value is `False`.
+
+    ###### Return
+    A KGPLValue object constructed based on inputs
+    """
     # dependency list can be KGPLValue/KGPLVariable/Label
     refined_dependency = []
     for d in dependency:
@@ -336,6 +393,9 @@ def create_value(val, comment, user="anonymous", dependency=[], verbose=False):
 
 
 def value(val, comment, user="anonymous", dependency=[], verbose=False):
+    """
+    System Internal use only
+    """
     if type(val) not in [int, float, tuple, list, dict, str, KGPLValue,
                          KGPLVariable, pandas.DataFrame, ORM.Relation, File]:
         raise Exception("cannot construct KGPLValue on this type")
@@ -348,9 +408,26 @@ def value(val, comment, user="anonymous", dependency=[], verbose=False):
     return KGPLValue(val, comment, user, dependency, verbose=verbose)
 
 # Create a new variable
-
-
 def variable(var_id, val_id, comment, user="anonymous"):
+    """
+    Create a KGPLVariable based on the inputs and publish to the server.
+
+    ###### Parameter
+    - `val_id`
+        vid of the KGPLValue to be stored.
+    - `comment`
+        A human readable comment (of type `str`) associated with the variable creattion
+    - `user`
+        User name of the owner of the KGPLVariable, the default value is `anonymous`
+    - `dependency`
+        A list consisting of the KGPL objects that this KGPLValue depended on. Each element in the list can be one of the three types:
+        `KGPLValue`, `KGPLVariable` or `Label`
+    - `verbose`: 
+        If set to true, more information is produced in the terminal. Otherwise, a succint description is printed when the construction succeeds.
+
+    ###### Return
+    A KGPLValue object constructed based on inputs
+    """
     if type(val_id) not in [str, KGPLValue]:
         raise Exception("cannot construct KGPLVariable")
     if type(val_id) is KGPLValue:
@@ -361,6 +438,16 @@ def variable(var_id, val_id, comment, user="anonymous"):
 
 
 def load_val(vid):
+    """
+    Fetch the KGPLValue of the corresponding `vid`
+
+    ###### Parameter
+    - `vid`
+        The vid of the desired KGPLValue 
+    
+    ###### Return
+    A KGPLValue object
+    """
     context = load(vid, loadval_url)
     tmp_val = json.loads(context["val"], object_hook=hook)
 
@@ -384,6 +471,16 @@ def load_val(vid):
 
 
 def load_var(vid):
+    """
+    Fetch the KGPLValue of the corresponding `vid`
+
+    ###### Parameter
+    - `vid`
+        The vid of the desired KGPLValue 
+    
+    ###### Return
+    A KGPLValue object
+    """
     context = load(vid, loadvar_url)
     return KGPLVariable(context["val_id"], context["comment"], vid, context["user"],
                         context["timestamp"])
@@ -421,6 +518,15 @@ def set_var(kg_var, val_id, new_comment):
 
 
 def get_history(kg_var):
+    """
+    Fetch the history information of a KGPLVariable object from server
+
+    ###### Parameter
+    - `kg_var`: KGPLVariable object whose history information is of interest
+
+    ###### Return
+    A list of vids this variable has refered to. The first element is the newest state while the last element is the oldest state.
+    """
     r = requests.get(os.path.join(server_url, "gethistory"),
                      json={"vid": kg_var.vid})
     if r.status_code != 200:
@@ -430,6 +536,13 @@ def get_history(kg_var):
 
 
 def changeNamespace(new_url):
+    """ 
+    change the namespace of the current program.
+
+    ###### Parameter
+    `new_url`
+        the new namespace
+    """
     global server_url
     print("Old Server: ", server_url)
     new_url = new_url.rstrip('/')
@@ -439,15 +552,51 @@ def changeNamespace(new_url):
 
 
 def viewNamespace():
+    """ 
+    print the current namespace
+    """
     print("Current Server: ", server_url)
     return server_url
 
 def get_label_content(label):
+    """
+    Get the content underlying a label
+
+    ###### Parameter
+    - `label`
+        The label being fetched
+    
+    ###### Return
+    A KGPLVariable object this label represents
+    """
     vid = server_url+"/var/"+label
     temp_var = load_var(vid)
     return load_val(temp_var.val_id).val
 
 def publish_new(val, comment, label = None, user="anonymous", dependency=[], verbose=False, label_comment = ""):
+    """
+    Create a KGPLValue based on the inputs and publish to the server, then __create__ and return a label for this KGPLValue.
+
+    ###### Parameter
+    - `val`
+        Concrete value to store (We currently support the following types: `int`, `float`, `bool`, `list`, `dict`, `File`, `pandas.DataFrame`, `Relation`)
+    - `comment`
+        A human readable comment (of type `str`) associated with the value creation
+    - `label`
+        A human readable name to refer to the new KGPLValue. The default value is `None`. In that case, a default label is generated by the server.
+    - `user`
+        User name of the owner of this operation, the default value is `anonymous`
+    - `dependency`
+        A list consisting of the KGPL objects that this KGPLValue depended on. Each element in the list can be one of the three types:
+        `KGPLValue`, `KGPLVariable` or `Label`. The default value is empty list.
+    - `verbose`: 
+        If set to true, more information is produced in the terminal. Otherwise, a succint description is printed when the construction succeeds. The default value is `False`.
+    - 'label_comment'
+        A human readable comment (of type `str`) associated with the label creation
+
+    ###### Return
+    A KGPLVariable object constructed based on inputs
+    """
     if label:
         if (label[0:5]=="KNPS_"):
             raise Exception("Customized label name cannot start with KNPS_")
@@ -459,5 +608,28 @@ def publish_new(val, comment, label = None, user="anonymous", dependency=[], ver
     return temp.create_label(label, label_comment)
 
 def publish_update(val, comment, label, user="anonymous", dependency=[], verbose=False, label_comment = ""):
+    """
+    Create a KGPLValue based on the inputs and publish to the server, then __update__ and return the label for this KGPLValue.
+
+    ###### Parameter
+    - `val`
+        Concrete value to store (We currently support the following types: `int`, `float`, `bool`, `list`, `dict`, `File`, `pandas.DataFrame`, `Relation`)
+    - `comment`
+        A human readable comment (of type `str`) associated with the value creation
+    - `label`
+        The label being updated
+    - `user`
+        User name of the owner of this operation, the default value is `anonymous`
+    - `dependency`
+        A list consisting of the KGPL objects that this KGPLValue depended on. Each element in the list can be one of the three types:
+        `KGPLValue`, `KGPLVariable` or `Label`. The default value is empty list.
+    - `verbose`: 
+        If set to true, more information is produced in the terminal. Otherwise, a succint description is printed when the construction succeeds. The default value is `False`.
+    - 'label_comment'
+        A human readable comment (of type `str`) associated with the label update
+
+    ###### Return
+    A KGPLVariable object updated based on inputs
+    """
     temp = create_value(val, comment, user, dependency, verbose)
     return temp.update_label(label, label_comment)
