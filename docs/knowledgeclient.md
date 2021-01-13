@@ -63,18 +63,18 @@ Here is an example of all countries in the European Union and their population, 
 Here is another example of inflation-adjusted US GDP data, with the base year of 2014: 
 
     import math
+    def adjustedGDP(gdp: WikiDataProperty(['P2131', 'P2132']), timestamp: WikiDataProperty(['P585'])):
+          inflationIndex = pd.read_csv('inflation_data_found_online.csv')
+          base = inflationIndex.iloc[-1]['Index']
+          timestamp = timestamp[:10]
+          inflationIndex.set_index('Date',inplace=True)
+          if timestamp in inflationIndex.index:
+              return math.floor(float(gdp) / inflationIndex.loc[timestamp]['Index'] * base)
+          return math.floor(float(gdp))
+          
     usgdp = createRelation('Q30') # Q30 - 'United States of America'
     usgdp.extend('P2131', False, 'GDP', colVerbose=True,rowVerbose=True) # P2131 - 'nominal GDP'
     usgdp.query()
-    def adjustedGDP(gdp: WikiDataProperty(['P2131', 'P2132']), timestamp: WikiDataProperty(['P585'])):
-        inflationIndex = pd.read_csv('inflation_data_found_online.csv')
-        base = inflationIndex.iloc[-1]['Index']
-        timestamp = timestamp[:10]
-        inflationIndex.set_index('Date',inplace=True)
-        if timestamp in inflationIndex.index:
-            return math.floor(float(gdp) / inflationIndex.loc[timestamp]['Index'] * base)
-        return math.floor(float(gdp))
-
     usgdp.extendWithFunction(['GDP_P2131','GDP_point_in_time_P2131_P585'], adjustedGDP, 'adjustedGDP_P2131') # base 2014
     usgdp.df
 
