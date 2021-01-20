@@ -1,6 +1,11 @@
 import json
 import os
 import pandas
+import dill
+import pickle
+import marshal
+import base64
+import types
 
 import requests
 from .func_storage import *
@@ -46,6 +51,24 @@ class MyEncoder(json.JSONEncoder):
             }
         elif isinstance(obj, File):
             return {"filename": obj.filename, "__image__": True}
+        if (isinstance(obj, FunctionWithSignature)):
+            type_list = []
+            for t in obj.typeSignature:
+                encoded_obj = base64.b64encode(dill.dumps(t))
+                type_list.append(encoded_obj.decode('ascii'))
+            encoded_code = base64.b64encode(marshal.dumps(obj.fn.__code__))
+            encoded_defaults = base64.b64encode(
+                pickle.dumps(obj.fn.__defaults__))
+            encoded_closure = base64.b64encode(
+                pickle.dumps(obj.fn.__closure__))
+            return {
+                "types": type_list,
+                "__funcwithsig__": True,
+                "code": encoded_code.decode('ascii'),
+                "defaults": encoded_defaults.decode('ascii'),
+                "closure": encoded_closure.decode('ascii')
+            }
+        
         return json.JSONEncoder.default(self, obj)
 
 
@@ -72,6 +95,24 @@ def hook(dct):
                             False,10000,False, False, dct)
     elif "__image__" in dct:
         return File(dct["filename"])
+    elif "__funcwithsig__" in dct:
+        type_list = []
+        for t in dct["types"]:
+            decode_type = base64.b64decode(t)
+            type_list.append(dill.loads(decode_type))
+
+        decoded_code = base64.b64decode(dct["code"])
+        decoded_defaults = base64.b64decode(dct["defaults"])
+        decoded_closure = base64.b64decode(dct["closure"])
+
+        marshaled_func = marshal.loads(decoded_code)
+        pickled_arguments = pickle.loads(decoded_defaults)
+        pickled_closure = pickle.loads(decoded_closure)
+
+        fn = types.FunctionType(marshaled_func, globals(),
+                                "funcname", pickled_arguments, pickled_closure)
+
+        return FunctionWithSignature(fn, type_list)
     return dct
 
 
@@ -398,7 +439,8 @@ def value(val, comment, user="anonymous", dependency=[], verbose=False):
     System Internal use only
     """
     if type(val) not in [int, float, tuple, list, dict, str, KGPLValue,
-                         KGPLVariable, pandas.DataFrame, ORM.Relation, File]:
+                         KGPLVariable, pandas.DataFrame, ORM.Relation, File,
+                         FunctionWithSignature]:
         raise Exception("cannot construct KGPLValue on this type")
     if type(comment) != str:
         raise Exception("Comment needs to be a string.")
