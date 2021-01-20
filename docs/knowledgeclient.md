@@ -85,6 +85,8 @@ Construct a relation of US presidents, their spouses, their dates of birth and p
     r.query()
     r.df
     
+<img width="969" alt="presidents1" src="https://user-images.githubusercontent.com/44870308/105150679-11503300-5ad3-11eb-8221-3b69af9cc58a.png">
+<img width="732" alt="presidents2" src="https://user-images.githubusercontent.com/44870308/105154486-976e7880-5ad7-11eb-875b-e2f0859b2a7f.png">
 
 
 ## Tutorial 2: Adding numerical data from the European Union
@@ -99,6 +101,8 @@ Here is an example of all countries in the European Union and their population, 
     r.extend('P1082',False, 'population')
     r.query()
     r.df
+
+<img width="913" alt="EuroCountries" src="https://user-images.githubusercontent.com/44870308/105154661-c684ea00-5ad7-11eb-9bcb-6cb6380d72fe.png">
 
 
 Here is another example of inflation-adjusted US GDP data, with the base year of 2014: 
@@ -119,6 +123,8 @@ Here is another example of inflation-adjusted US GDP data, with the base year of
     usgdp.extendWithFunction(['GDP_P2131','GDP_point_in_time_P2131_P585'], adjustedGDP, 'adjustedGDP_P2131') # base 2014
     usgdp.df
 
+<img width="1010" alt="adjustedGDP1" src="https://user-images.githubusercontent.com/44870308/105154682-cab10780-5ad7-11eb-965c-93fad0baa02c.png">
+<img width="1042" alt="adjustedGDP2" src="https://user-images.githubusercontent.com/44870308/105154701-cedd2500-5ad7-11eb-88ac-923423b538ce.png">
 
 ## Tutorial 3: Whole-table functions with National Parks data
 __Jenny, let's do the National Parks inception data here, and show how to do whole-table function invocation__.
