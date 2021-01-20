@@ -1,9 +1,8 @@
-requests
-pandas
-numpy
-SPARQLWrapper
-bs4
-pyyaml
-flask
-bsddb3
-dill
+requests==2.25.1
+beautifulsoup4==4.9.3
+dill==0.3.3
+numpy==1.19.5
+pandas==1.2.0
+PyYAML==5.3.1
+SPARQLWrapper==1.8.5
+bsddb3==6.2.9

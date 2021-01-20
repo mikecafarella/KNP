@@ -11,6 +11,7 @@ endpoint_url = "https://query.wikidata.org/sparql"
 item = "item"
 
 
+
 # class FunctionWithSignature:
 #     """Specific for function applied to the entire relation,
 #         name is the name of the function (str)
@@ -943,3 +944,11 @@ def get_name(id: str):
 #     for res in results["results"]["bindings"]:
 #         result = res['label']['value']
 #     return result
+
+def createRelation(entity_id: str, property_id=None, isSubject=None, rowVerbose=None, colVerbose=None,
+                   time_property=None, time=None, name=None, label=False, limit=None, subclass=False):
+    if property_id and not name:
+        print("Please specify the name of the first column")
+        return None
+    return Relation(entity_id, property_id, isSubject, rowVerbose, colVerbose, time_property, time, name, label, limit, subclass)
+
