@@ -27,6 +27,21 @@ The system does not try to extract or clean __UKCN__ data at the time of use, ap
 The exceptions surround cases when the system believes that facts in the __UKCN__ are correct at the individual level, but will yield a relation that is internally inconsistent.  Unfortunately, this is a well-known problem in knowledge graphs. Consider the example that *Tim Berners-Lee* is an example of *Computer Scientist*, while *Computer Scientist* is an example of *profession*. A __Knowledge Client__ user trying to create a table of professions might inadvertently obtain one that includes *Tim Berners-Lee*.  When appropriate, the __Knowledge Client__ will either silently fix these issues, or will issue a warning to the user.
 
 ## Basic Usages
+__createRelation(entity_id: str, property_id=None, isSubject=None, rowVerbose=None, colVerbose=None,
+                   time_property=None, time=None, name=None, label=False, limit=None, subclass=False)__
+
+This function creates a Relation class object.
+
+__Parameters:__
+
+- entity_id: str
+
+    the base Wikidata entity of the Relation (e.g., 'Q30')
+
+- Others:
+
+    The other parameters are the same as those in Relation.extend()
+
 __Relation.extend(self, property_id: str, isSubject: bool, name: str, rowVerbose=False, colVerbose=False, limit=None,
                time_property=None, time=None, search=None, label=False, subclass=False, showid=False)__
                
@@ -34,22 +49,26 @@ This function extends a column upon the current focus with a specified property.
 
 __Parameters:__
 
-- property_id: string
+- property_id: str
 
     the Wikidata property identifier (e.g., 'P31')
+    
 - isSubject: bool
 
     indicates whether the column to be extended is the subject in the (subject->property->object) triple. 
     
     (e.g., If the base entity is 'Q33999' (actor) and the property to extend upon is 'P106' (has occupation), isSubject should be True since we want to find who has an occupation as an actor.)
-- name: string
+    
+- name: str
 
     name of the extended column (use underscore for all spaces). The property identifier will be automatically appended in the final result. 
     
     (e.g., If specifying name='population' and property_id='P1082', the column in the dataframe will finally be called 'population_P1082'.)
+    
 - rowVerbose: bool, default False
 
     indicates whether all the results of the extended column should be displayed. If rowVerbose=False, it only returns the results with preferred rank.
+    
 - colVerbose: bool, default False
 
     indicates whether the qualifiers of the extended column and all the other metadata should be displayed. e.g., If colVerbose=True and property_id='P1082' (population), the time for each population value will be shown as another column, since 'P585' (point in time) is a qualifier associated with 'P1082'.
@@ -57,15 +76,60 @@ __Parameters:__
 - limit: int, default None
 
     the max number of rows displayed
-- time_property: string, default None
+    
+- time_property: str, default None
 
-    the time qualifier constraint used to select the results. Used with parameter 'time'
+    the time qualifier constraint used to select the results. Used with parameter 'time'.
+    
 - time: int, default None
 
-    specifying the year constraint needed. Used with parameter 'time_property'. e.g., If property_id='P1082' (population), time_property='P585' and time=2010, it will only return the population in 2010.
+    specifies the year constraint applied to the qualifier (not property). Used with parameter 'time_property'. e.g., If property_id='P1082' (population), time_property='P585' and time=2010, it will only return the population in 2010.
+    
 - search: str or pair, default None
-    select the results 
 
+    specifies the constraint applied to the property (not qualifier). There are several methods:
+    
+    - If the search key is search='!NA', it will eliminate the null values in that column.
+    
+    - If the search key is a Wikidata Entity (e.g., search='Q30'), it will select the rows whose results match.
+    
+    - If the search key is a tuple of 2 numerical values (e.g., search=(10, 20)), it will select the rows whose results are in this range (both ends included).
+    
+    - If the search key is a tuple of 2 strings representing years (e.g., search=('2010', '2020')), it will select the rows whose results are in this year range.
+
+- label: bool, default False
+
+    indicates whether an extra column translating Wikidata entity identifiers to semantic labels (e.g., 'Q76' will be translated as Barack Obama).
+
+- subclass: bool, default False
+
+    indicates whether all instances of subclasses are needed. This applies specifically to 'P31'.
+    
+- showid: bool, default False
+
+    indicates whether the Wikidata entity ID should display alone. If showid=True, 'www.wikidata.org/wiki/Q76' will be displayed as 'Q76' only.
+
+__Relation.query(self)__
+
+This funtion executes the query built by Relation.extend() so far and returns a relation-like dataframe.
+
+__Relation.extendWithFunction(self, objcolumn, func, name)__
+
+This function adds a column to the relation, similar to what Relation.extend() does, but the column is filled with function outputs instead of information grabbed directly from knowledge graphs. ExtendWithFunction should be called only after Relation.query() has been called.
+
+__Parameters:__
+
+- objcolumn: list
+
+    A list of the column names in the Relation that serve as the inputs of func.
+
+- func: str or function object:
+
+    The function whose outputs will fill the new column. It can be a string that starts with 'F' followed by a number (e.g, 'F10'), which means calling a function published in the function library.
+
+- name: str
+
+    The name of the newly added column.
 
 ## Examples
 
