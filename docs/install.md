@@ -2,8 +2,29 @@
 
 Here's how you install and run the [__Knowledge Client__](knowledgeclient.md) and the [__Universal Knowledge Collaboration Network__](sharingservice.md).
 
-__INSTALL DETAILS HERE__
+1. Move to the desired directory and clone the github repository using the code below
+    
+        git clone https://github.com/mikecafarella/KNP
+    
+2. Use the following command to install the Knowledge Client package. This command will isntall the client package as `knps` and some required packages. You can use `pip3 uninstall knps` to remove the package.
+    
+        pip3 install -e client
+    
+3. Up to now, the `knps` package is ready to go if you choose to use our server, use the following code in your program or python intepreter to import the package. The package APIs can be found at [here](api.md).
+    
+        import knps
+    
 
+4. To run a UKCN server locally, create a `personal.yaml` file in the repo root directory with the following contents, setting the address and port to your liking:
+
+        server:
+          SERVER_ADDRESS: 'http://127.0.0.1'
+          SERVER_PORT: '4242'
+
+5. Use the following commands to configure the flask app and run the server
+
+        export FLASK_APP=server/server.py
+        flask run
 
 ## Tutorial
 
