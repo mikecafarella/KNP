@@ -153,34 +153,107 @@ The sequence of steps that the <strong>Knowledge Client</strong> performs can be
 <p>The system does not try to extract or clean <strong>UKCN</strong> data at the time of use, apart from a few important exceptions.  At the individual fact level, everything the user sees inside a relation created by the <strong>Knowledge Client</strong> can be found in the <strong>UKCN</strong>.</p>
 <p>The exceptions surround cases when the system believes that facts in the <strong>UKCN</strong> are correct at the individual level, but will yield a relation that is internally inconsistent.  Unfortunately, this is a well-known problem in knowledge graphs. Consider the example that <em>Tim Berners-Lee</em> is an example of <em>Computer Scientist</em>, while <em>Computer Scientist</em> is an example of <em>profession</em>. A <strong>Knowledge Client</strong> user trying to create a table of professions might inadvertently obtain one that includes <em>Tim Berners-Lee</em>.  When appropriate, the <strong>Knowledge Client</strong> will either silently fix these issues, or will issue a warning to the user.</p>
 <h2 id="basic-usages">Basic Usages</h2>
+<p><strong>createRelation(entity_id: str, property_id=None, isSubject=None, rowVerbose=None, colVerbose=None,
+                   time_property=None, time=None, name=None, label=False, limit=None, subclass=False)</strong></p>
+<p>This function creates a Relation class object.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li>
+<p>entity_id: str</p>
+<p>the base Wikidata entity of the Relation (e.g., 'Q30')</p>
+</li>
+<li>
+<p>Others:</p>
+<p>The other parameters are the same as those in Relation.extend()</p>
+</li>
+</ul>
 <p><strong>Relation.extend(self, property_id: str, isSubject: bool, name: str, rowVerbose=False, colVerbose=False, limit=None,
                time_property=None, time=None, search=None, label=False, subclass=False, showid=False)</strong></p>
 <p>This function extends a column upon the current focus with a specified property.</p>
 <p><strong>Parameters:</strong></p>
 <ul>
 <li>
-<p>property_id: string</p>
-<p>the Wikidata property identifier (e.g., 'P31')
-- isSubject: bool</p>
+<p>property_id: str</p>
+<p>the Wikidata property identifier (e.g., 'P31')</p>
+</li>
+<li>
+<p>isSubject: bool</p>
 <p>indicates whether the column to be extended is the subject in the (subject-&gt;property-&gt;object) triple. </p>
-<p>(e.g., If the base entity is 'Q33999' (actor) and the property to extend upon is 'P106' (has occupation), isSubject should be True since we want to find who has an occupation as an actor.)
-- name: string</p>
+<p>(e.g., If the base entity is 'Q33999' (actor) and the property to extend upon is 'P106' (has occupation), isSubject should be True since we want to find who has an occupation as an actor.)</p>
+</li>
+<li>
+<p>name: str</p>
 <p>name of the extended column (use underscore for all spaces). The property identifier will be automatically appended in the final result. </p>
-<p>(e.g., If specifying name='population' and property_id='P1082', the column in the dataframe will finally be called 'population_P1082'.)
-- rowVerbose: bool, default False</p>
-<p>indicates whether all the results of the extended column should be displayed. If rowVerbose=False, it only returns the results with preferred rank.
-- colVerbose: bool, default False</p>
+<p>(e.g., If specifying name='population' and property_id='P1082', the column in the dataframe will finally be called 'population_P1082'.)</p>
+</li>
+<li>
+<p>rowVerbose: bool, default False</p>
+<p>indicates whether all the results of the extended column should be displayed. If rowVerbose=False, it only returns the results with preferred rank.</p>
+</li>
+<li>
+<p>colVerbose: bool, default False</p>
 <p>indicates whether the qualifiers of the extended column and all the other metadata should be displayed. e.g., If colVerbose=True and property_id='P1082' (population), the time for each population value will be shown as another column, since 'P585' (point in time) is a qualifier associated with 'P1082'.</p>
 </li>
 <li>
 <p>limit: int, default None</p>
-<p>the max number of rows displayed
-- time_property: string, default None</p>
-<p>the time qualifier constraint used to select the results. Used with parameter 'time'
-- time: int, default None</p>
-<p>specifying the year constraint needed. Used with parameter 'time_property'. e.g., If property_id='P1082' (population), time_property='P585' and time=2010, it will only return the population in 2010.
-- search: str or pair, default None
-select the results </p>
+<p>the max number of rows displayed</p>
+</li>
+<li>
+<p>time_property: str, default None</p>
+<p>the time qualifier constraint used to select the results. Used with parameter 'time'.</p>
+</li>
+<li>
+<p>time: int, default None</p>
+<p>specifies the year constraint applied to the qualifier (not property). Used with parameter 'time_property'. e.g., If property_id='P1082' (population), time_property='P585' and time=2010, it will only return the population in 2010.</p>
+</li>
+<li>
+<p>search: str or pair, default None</p>
+<p>specifies the constraint applied to the property (not qualifier). There are several methods:</p>
+<ul>
+<li>
+<p>If the search key is search='!NA', it will eliminate the null values in that column.</p>
+</li>
+<li>
+<p>If the search key is a Wikidata Entity (e.g., search='Q30'), it will select the rows whose results match.</p>
+</li>
+<li>
+<p>If the search key is a tuple of 2 numerical values (e.g., search=(10, 20)), it will select the rows whose results are in this range (both ends included).</p>
+</li>
+<li>
+<p>If the search key is a tuple of 2 strings representing years (e.g., search=('2010', '2020')), it will select the rows whose results are in this year range.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>label: bool, default False</p>
+<p>indicates whether an extra column translating Wikidata entity identifiers to semantic labels (e.g., 'Q76' will be translated as Barack Obama).</p>
+</li>
+<li>
+<p>subclass: bool, default False</p>
+<p>indicates whether all instances of subclasses are needed. This applies specifically to 'P31'.</p>
+</li>
+<li>
+<p>showid: bool, default False</p>
+<p>indicates whether the Wikidata entity ID should display alone. If showid=True, 'www.wikidata.org/wiki/Q76' will be displayed as 'Q76' only.</p>
+</li>
+</ul>
+<p><strong>Relation.query(self)</strong></p>
+<p>This funtion executes the query built by Relation.extend() so far and returns a relation-like dataframe.</p>
+<p><strong>Relation.extendWithFunction(self, objcolumn, func, name)</strong></p>
+<p>This function adds a column to the relation, similar to what Relation.extend() does, but the column is filled with function outputs instead of information grabbed directly from knowledge graphs. ExtendWithFunction should be called only after Relation.query() has been called.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li>
+<p>objcolumn: list</p>
+<p>A list of the column names in the Relation that serve as the inputs of func.</p>
+</li>
+<li>
+<p>func: str or function object:</p>
+<p>The function whose outputs will fill the new column. It can be a string that starts with 'F' followed by a number (e.g, 'F10'), which means calling a function published in the function library.</p>
+</li>
+<li>
+<p>name: str</p>
+<p>The name of the newly added column.</p>
 </li>
 </ul>
 <h2 id="examples">Examples</h2>
@@ -198,6 +271,8 @@ select the results </p>
 <span class="err">r.df</span>
 </code></pre></div>
 
+<p><img width="969" alt="presidents1" src="https://user-images.githubusercontent.com/44870308/105150679-11503300-5ad3-11eb-8221-3b69af9cc58a.png">
+<img width="732" alt="presidents2" src="https://user-images.githubusercontent.com/44870308/105154486-976e7880-5ad7-11eb-875b-e2f0859b2a7f.png"></p>
 <h2 id="tutorial-2-adding-numerical-data-from-the-european-union">Tutorial 2: Adding numerical data from the European Union</h2>
 <p><strong>Dinghao, Tian, Kexin: here let's add a bit more complicated stuff.  The European Union and GDP data.  Then let's do inflation-adjustment for the GDP data.</strong></p>
 <p>Here is an example of all countries in the European Union and their population, as well as the population of the whole Europe:</p>
@@ -210,6 +285,7 @@ select the results </p>
 <span class="err">r.df</span>
 </code></pre></div>
 
+<p><img width="913" alt="EuroCountries" src="https://user-images.githubusercontent.com/44870308/105154661-c684ea00-5ad7-11eb-9bcb-6cb6380d72fe.png"></p>
 <p>Here is another example of inflation-adjusted US GDP data, with the base year of 2014: </p>
 <div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">math</span>
 <span class="k">def</span> <span class="nf">adjustedGDP</span><span class="p">(</span><span class="n">gdp</span><span class="p">:</span> <span class="n">WikiDataProperty</span><span class="p">([</span><span class="s1">&#39;P2131&#39;</span><span class="p">,</span> <span class="s1">&#39;P2132&#39;</span><span class="p">]),</span> <span class="n">timestamp</span><span class="p">:</span> <span class="n">WikiDataProperty</span><span class="p">([</span><span class="s1">&#39;P585&#39;</span><span class="p">])):</span>
@@ -228,6 +304,8 @@ select the results </p>
 <span class="n">usgdp</span><span class="o">.</span><span class="n">df</span>
 </code></pre></div>
 
+<p><img width="1010" alt="adjustedGDP1" src="https://user-images.githubusercontent.com/44870308/105154682-cab10780-5ad7-11eb-965c-93fad0baa02c.png">
+<img width="1042" alt="adjustedGDP2" src="https://user-images.githubusercontent.com/44870308/105154701-cedd2500-5ad7-11eb-88ac-923423b538ce.png"></p>
 <h2 id="tutorial-3-whole-table-functions-with-national-parks-data">Tutorial 3: Whole-table functions with National Parks data</h2>
 <p><strong>Jenny, let's do the National Parks inception data here, and show how to do whole-table function invocation</strong>.</p>
 <h2 id="reminder">REMINDER:</h2>
