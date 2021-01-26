@@ -22,14 +22,17 @@ setuptools.setup(
     install_requires=[
             'requests',
             'pandas',
-            'geopandas',
             'numpy',
             'SPARQLWrapper',
             'bs4',
             'pyyaml',
             'flask',
             'bsddb3',
-            'dill'
+            'dill',
+            'jupyter',
+            'geopandas',
+            'matplotlib',
+            'descartes'
     ],
     python_requires='>=3.6',
 )

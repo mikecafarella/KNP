@@ -226,6 +226,9 @@ Inputs:
 - string title of map
 '''
 import geopandas
+import numpy as np
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
 def arrow_map(df, date_col_name, coord_col_name, entity_name, plot_title):
 
     df = df.reset_index(drop=True)
