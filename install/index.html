@@ -123,15 +123,7 @@
                 <h1 id="installation">Installation</h1>
 <p>Here's how you install and run the <a href="../knowledgeclient/"><strong>Knowledge Client</strong></a> and the <a href="../sharingservice/"><strong>Universal Knowledge Collaboration Network</strong></a>.</p>
 <ol>
-<li>
-<p>Move to the desired directory and clone the github repository using the code below</p>
-<div class="codehilite"><pre><span></span><code><span class="err">git clone https://github.com/mikecafarella/KNP</span>
-</code></pre></div>
-
-</li>
-<li>
-<p>Berkeley DB libraries need to be available on the system. On a Mac, these can be installed using Homebrew:</p>
-<div class="codehilite"><pre><span></span><code><span class="err">brew install berkeley-db4</span>
+<li>Berkeley DB libraries need to be available on the system. On a Mac, these can be installed using Homebrew:<div class="codehilite"><pre><span></span><code><span class="err">brew install berkeley-db4</span>
 </code></pre></div>
 
 </li>
@@ -142,7 +134,13 @@
 
 <ol>
 <li>
-<p>Use the following command to install the Knowledge Client package. This command will isntall the client package as <code>knps</code> and some required packages. You can use <code>pip3 uninstall knps</code> to remove the package.</p>
+<p>Move to the desired directory and clone the github repository using the code below</p>
+<div class="codehilite"><pre><span></span><code><span class="err">git clone https://github.com/mikecafarella/KNP</span>
+</code></pre></div>
+
+</li>
+<li>
+<p>From the newly created <code>KNP</code> directory, use the following command to install the Knowledge Client package. This command will install the client package as <code>knps</code> and some required packages. You can use <code>pip3 uninstall knps</code> to remove the package.</p>
 <div class="codehilite"><pre><span></span><code><span class="err">pip3 install -e client</span>
 </code></pre></div>
 
