@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="knps",  # Replace with your own username
-    version="1.0.0",
+    version="0.0.1",
     author="KNP team",
     author_email="KNPS-Group@umich.edu",
     description="KNP client pacakge",
@@ -22,6 +22,7 @@ setuptools.setup(
     install_requires=[
             'requests',
             'pandas',
+            'geopandas',
             'numpy',
             'SPARQLWrapper',
             'bs4',
@@ -32,5 +33,3 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
 )
-
-
