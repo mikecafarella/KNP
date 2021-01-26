@@ -16,14 +16,15 @@ Here's how you install and run the [__Knowledge Client__](knowledgeclient.md) an
 
         git clone https://github.com/mikecafarella/KNP
 
-2. From the newly created `KNP` directory, use the following command to install the Knowledge Client package. This command will install the client package as `knps` and some required packages. You can use `pip3 uninstall knps` to remove the package.
+2. From the newly created `KNP` directory, use the following command to install the Knowledge Client package. (Recommended: install within a  **virtual environment**.)
 
         pip3 install -e client
 
-3. Up to now, the `knps` package is ready to go if you choose to use our server, use the following code in your program or python intepreter to import the package. The package APIs can be found at [here](api.md).
+    This command will install the client package as `knps` and some required packages. You can use `pip3 uninstall knps` to remove the package.
 
-        import knps
+3. You can now use `import knps` in python programs. The package APIs can be found at [here](api.md).
 
+## UKCN server configuration
 
 4. To run a UKCN server locally, create a `personal.yaml` file in the repo root directory with the following contents, setting the address and port to your liking:
 
