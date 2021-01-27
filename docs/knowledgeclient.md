@@ -109,6 +109,16 @@ __Parameters:__
 
     indicates whether the Wikidata entity ID should display alone. If showid=True, 'www.wikidata.org/wiki/Q76' will be displayed as 'Q76' only.
 
+__Relation.changeFocus(self, name="Entity ID")__
+               
+This function extends a column upon the current focus with a specified property.
+
+__Parameters:__
+
+- name: str, default "Entity ID"
+
+    indicates the name of the new focus column we need to extend from. Before we use .extend() function on a different column, we have to first change the focus using changeFocus.
+
 __Relation.query(self)__
 
 This funtion executes the query built by Relation.extend() so far and returns a relation-like dataframe.
