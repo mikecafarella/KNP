@@ -111,13 +111,13 @@ __Parameters:__
 
 __Relation.changeFocus(self, name="Entity ID")__
                
-This function extends a column upon the current focus with a specified property.
+This function change the focus (column) to be extended with the specified column name.
 
 __Parameters:__
 
 - name: str, default "Entity ID"
 
-    indicates the name of the new focus column we need to extend from. Before we use .extend() function on a different column, we have to first change the focus using changeFocus.
+    indicates the name of the new focus column we need to extend from. Change the focus using changeFocus before using .extend() function on a different column.
 
 __Relation.query(self)__
 
