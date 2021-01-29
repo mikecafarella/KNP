@@ -34,8 +34,7 @@ Here's how you install and run the [__Knowledge Client__](knowledgeclient.md) an
 
 5. Use the following commands to configure the flask app and run the server
 
-        export FLASK_APP=server/server.py
-        flask run
+        python server/server.py
 
 ## Tutorial
 
