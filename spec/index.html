@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Specification - Knowledge Graph Programming Language</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
+  <link href="../css/custom.css" rel="stylesheet" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Specification";
+    var mkdocs_page_input_path = "spec.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Knowledge Graph Programming Language</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="..">Welcome</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../install/">Installation</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../tutorial/">Tutorial</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../sharingservice/">Sharing Service</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../knowledgeclient/">Knowledge Client</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../lineage/">Lineage</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../restapi/">REST API</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../api/">API Documentation</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../about/">About</a>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Knowledge Graph Programming Language</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Specification</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="specification">Specification</h1>
+<h2 id="construct-kgplvalue">Construct KGPLValue</h2>
+<p><code>kgpl.value(val, comment)</code><br />
+Construct a new KGPLValue given a concrete value <code>val</code> and the description about this KGPLValue <code>comment</code>, communicate with the server to get the next available id. The return type is KGPLValue class object.</p>
+<h2 id="load-kgplvalue">Load KGPLValue</h2>
+<p><code>kgpl.load_val(vid)</code>
+Load an existing KGPLValue given the id of it <code>vid</code>. The return type is KGPLValue class object.</p>
+<h2 id="construct-kgplvariable">Construct KGPLVariable</h2>
+<p><code>kgpl.variable(val_id, comment)</code>
+Construct a new KGPLValue given the KGPLvalue or the id of it <code>val_id</code> and the description about this KGPLVariable <code>comment</code>, communicate with the server to get the next available id. The return type is KGPLVariable class object.</p>
+<h2 id="load-kgplvariable">Load KGPLVariable</h2>
+<p><code>kgpl.load_var(vid)</code>
+Load an existing KGPLVariable given the id of it <code>vid</code>. The return type is KGPLVariable class object.</p>
+<h2 id="update-kgplvariable">Update KGPLVariable</h2>
+<p><code>kgpl.set_var(kg_var, val_id, new_comment)</code>
+Change the concrete value of an existing KGPLVariable given the KGPLvariable <code>kg_var</code>, the id of the value <code>val_id</code> and a new description <code>new_comment</code> about it, and return the updated kgplVariable. The return type is KGPLVariable class object. Note that if <code>kg_var</code> isn't the latest version of its own, this method will fail to remind the user to catch up.</p>
+<h2 id="get-history-of-kgplvariable">Get history of KGPLVariable</h2>
+<p><code>kgpl.getHistory(kg_var)</code>
+Get the history of KGPLValues the KGPLVariable <code>kg_var</code> once referred to and return it as a list of the urls of KGPLValues. The first url in the list is that of the KGPLValue referred by the latest version of the KGPLVariable. The latter one in the list is the predecessor of the former one. The return type is list.</p>
+<h2 id="change-namespace">Change namespace</h2>
+<p><code>kgpl.changeNamespace(new_url)</code>
+Change the namespace of KGPLVariables and KGPLValues you want to work on.</p>
+<h2 id="view-current-namespace">View current namespace</h2>
+<p><code>kgpl.viewNamespace()</code>
+Return the current namespace.</p>
+<h2 id="member-functions-of-kgplvalue">Member functions of KGPLValue</h2>
+<p><code>kgpl.KGPLValue.getVid()</code>
+Return the url of the KGPLValue.</p>
+<p><code>kgpl.KGPLValue.getConcreteVal()</code>
+Return the concrete value of the KGPLValue.</p>
+<h2 id="member-functions-of-kgplvariable">Member functions of KGPLVariable</h2>
+<p><code>kgpl.KGPLVariable.getVid()</code>
+Return the url of the KGPLVariable</p>
+<p><code>kgpl.KGPLVariable.getValid()</code>
+Return the url of the KGPLValue the KGPLVariable refers to. Note that the KGPLVariable in a user's program may not be the latest version of its own if some other users change the KGPLValue it refers to, so the url this method returns is what the KGPLVariable refers to in this user's probram, which may not be the same as latest version of the KGPLVariable.</p>
+<p><code>kgpl.KGPLVariable.getConcreteVal()</code>
+Return the KGPLValue of the KGPLVariable. Note that the KGPLVariable in a user's program may not be the latest version of its own if some other users change the KGPLValue it refers to, so the KGPLValue this method returns is what the KGPLVariable refers to in this user's probram, which may not be the same as latest version of the KGPLVariable.</p>
+<p><code>kgpl.KGPLVariable.refresh()</code>
+Refresh the version of KGPLVariable so that the KGPLVariable in the user's program has the latest version.</p>
+<h2 id="workflow">Workflow</h2>
+<p><img alt="Alt text" src="workflow.png?raw=true" title="Title" /></p>
+<h2 id="namespace">Namespace</h2>
+<p><code>prefix: "kg"; namespace: "http://lasagna.eecs.umich.edu:80"</code></p>
+<h2 id="format-of-nodes">Format of nodes</h2>
+<ol>
+<li>ID: URIRef <code>kg:&lt;id&gt;</code></li>
+<li>value: Literal(json serialized)</li>
+<li>kgpl type: URIRef <code>kg:kgplValue</code> or <code>kg:kgplVariable</code></li>
+<li>python type: Literal</li>
+<li>timestamp: URIRef <code>kg:&lt;timestamp&gt;</code></li>
+</ol>
+<h2 id="format-of-edges">Format of edges</h2>
+<ol>
+<li>hasValue: URIRef <code>kg:hasValue</code></li>
+<li>kgplType: URIRef <code>kg:kgplType</code></li>
+<li>pyType: URIRef <code>kg:pyType</code></li>
+<li>hasHistory: URIRef <code>kg:hasHistory</code></li>
+<li>hasKGPLValue: URIRef <code>kg:hasKGPLValue</code></li>
+<li>hasComment: URIRef <code>kg:hasComment</code></li>
+</ol>
+<h2 id="database">Database</h2>
+<ol>
+<li><img alt="Alt text" src="outdated/database.png?raw=true" title="Title" /></li>
+</ol>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
