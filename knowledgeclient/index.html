@@ -237,6 +237,15 @@ The sequence of steps that the <strong>Knowledge Client</strong> performs can be
 <p>indicates whether the Wikidata entity ID should display alone. If showid=True, 'www.wikidata.org/wiki/Q76' will be displayed as 'Q76' only.</p>
 </li>
 </ul>
+<p><strong>Relation.changeFocus(self, name="Entity ID")</strong></p>
+<p>This function change the focus (column) to be extended with the specified column name.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li>
+<p>name: str, default "Entity ID"</p>
+<p>indicates the name of the new focus column we need to extend from. Change the focus using changeFocus before using .extend() function on a different column.</p>
+</li>
+</ul>
 <p><strong>Relation.query(self)</strong></p>
 <p>This funtion executes the query built by Relation.extend() so far and returns a relation-like dataframe.</p>
 <p><strong>Relation.extendWithFunction(self, objcolumn, func, name)</strong></p>
