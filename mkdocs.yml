@@ -1,12 +1,12 @@
 site_name: Knowledge Graph Programming Language
 nav:
   - Welcome: index.md
+  - Installation: install.md
   - Tutorial: tutorial.md
   - Sharing Service: sharingservice.md
   - Knowledge Client: knowledgeclient.md
   - Lineage: lineage.md
   - REST API: restapi.md
-  - Installation: install.md
   - API Documentation: api.md
   - About: about.md
 theme: readthedocs
