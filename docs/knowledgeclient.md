@@ -201,7 +201,6 @@ Here is another example of inflation-adjusted US GDP data, with the base year of
 <img width="1042" alt="adjustedGDP2" src="https://user-images.githubusercontent.com/44870308/105154701-cedd2500-5ad7-11eb-88ac-923423b538ce.png">
 
 ## Tutorial 3: Whole-table functions with National Parks data
-__Jenny, let's do the National Parks inception data here, and show how to do whole-table function invocation__.
 
 Here is an example with US National Parks.
 
