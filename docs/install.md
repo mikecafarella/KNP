@@ -26,7 +26,7 @@ Here's how you install and run the [__Knowledge Client__](knowledgeclient.md) an
 
 ## UKCN server configuration
 
-4. To run a UKCN server locally, create a `personal.yaml` file in the repo root directory with the following contents, setting the address and port to your liking:
+4. To run a UKCN server locally, edit the `personal.yaml` file in the repo root directory, setting the address and port to your liking:
 
         server:
           SERVER_ADDRESS: 'http://127.0.0.1'
@@ -34,8 +34,7 @@ Here's how you install and run the [__Knowledge Client__](knowledgeclient.md) an
 
 5. Use the following commands to configure the flask app and run the server
 
-        export FLASK_APP=server/server.py
-        flask run
+        python server/server.py
 
 ## Tutorial
 

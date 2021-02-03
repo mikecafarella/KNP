@@ -170,11 +170,15 @@ def boxoffice_fraction(df, name, film, director, film_gross):
 #     df['euro']=df[[dollar, 'euro']].apply(lambda x:float(x[dollar])*float(x['euro']),axis=1)
 #     return df
 
+
 '''
-Inputs:
+Input:
 - string containing longitude, latitude, and other extraneous characters
+    - currently supports input strings formatted in the way Wikidata longitude latitudes are formatted (e.g. the string `Point(-159.28 67.55)`)
 - OR longitude latitude tuple
-Output: (float longitude, float latitude) tuple
+Output:
+- (float longitude, float latitude) tuple
+- OR string 'NA' if invalid input
 '''
 def parse_lon_lat(lon_lat):
     # if the input value is empty
@@ -205,6 +209,7 @@ Inputs:
 - OR the 10-character yyyy-mm-dd format
 Output:
 - 10-character yyyy-mm-dd format
+- OR string 'NA' if invalid input
 '''
 def parse_date(date):
     # if the input value is empty
@@ -228,7 +233,7 @@ Inputs:
 - string name of column that contains dates
 - string name of column that contains coordinates
 - string name of column that contains entity names
-- string title of map
+- string title for map
 '''
 def arrow_map(df, date_col_name, coord_col_name, entity_name, plot_title):
 

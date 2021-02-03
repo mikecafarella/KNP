@@ -203,6 +203,70 @@ Here is another example of inflation-adjusted US GDP data, with the base year of
 ## Tutorial 3: Whole-table functions with National Parks data
 __Jenny, let's do the National Parks inception data here, and show how to do whole-table function invocation__.
 
+Here is an example with US National Parks.
+
+    entity_subclass = 'national_park'
+    qnum = 'Q34918903' # "National Park of the United States"
+    parks = createRelation(qnum, label=True)
+    parks.extend('P31', True, 'entity_subclass', label=True) # extend via property P31 = is instance of
+    parks.changeFocus('entity_subclass_P31')
+    parks.extend('P17', False, 'Country',label=True, search="Q30") # extend via property P17 = is in country
+    # parks.extend('P131', False, 'State', label=True)
+    parks.extend('P625', False, 'Lon_Lat')
+    parks.extend('P571', False, 'Inception')
+    parks.query()
+    parks.df
+
+![KNPS](files/df_national_parks_1.png)
+![KNPS](files/df_national_parks_2.png)
+
+The `parse_lon_lats()` function can be used to parse values believed to contain longitude and latitude data. 
+
+Input:
+- string containing longitude, latitude, and other extraneous characters
+    - currently supports input strings formatted in the way Wikidata longitude latitudes are formatted (e.g. the string `Point(-159.28 67.55)`)
+- OR longitude latitude tuple
+Output:
+- (float longitude, float latitude) tuple
+- OR string 'NA' if invalid input
+
+    lon_lat_parsed_list = []
+    for ind in parks.df.index:
+        lon_lat_parsed_list.append(func_lib.parse_lon_lat(parks.df.Lon_Lat_P625[ind]))
+    parks.df['lon_lat_parsed'] = lon_lat_parsed_list # add a new column with parsed values
+
+The `parse_dates()` function can be used to parse values believed to contain date data. 
+
+Inputs:
+- 20-character-string wikidata format
+- OR the 10-character yyyy-mm-dd format
+Output:
+- 10-character yyyy-mm-dd format
+- OR string 'NA' if invalid input
+
+    date_parsed_list = []
+    for ind in parks.df.index:
+        date_parsed_list.append(func_lib.parse_date(parks.df.Inception_P571[ind]))
+    parks.df['date_parsed'] = date_parsed_list # add a new column with parsed values
+
+    parks.df
+
+![KNPS](files/df_national_parks_w_lon_lat_dates_1.png)
+![KNPS](files/df_national_parks_w_lon_lat_dates_2.png)
+
+The `arrow_map()` function can be used to produce a visualization using locations and the associated time stamps. A "travel log" is printed below the plot. `parse_lon_lat()` and `parse_dates()` are called by `arrow_map()` and do not need to be called in advance.
+
+Inputs:
+- pandas dataframe from KNP SPARQL relation
+- string name of column that contains dates
+- string name of column that contains coordinates
+- string name of column that contains entity names
+- string title for map
+
+    func_lib.arrow_map(parks.df[20:40], 'Inception_P571', 'Lon_Lat_P625', 'entity_subclass_P31Label', 'Visiting National Parks in the US')
+
+![KNPS](files/arrow_map_plot.png)
+![KNPS](files/arrow_map_log.png)
 
 ## REMINDER: ##
 __WE NEED TO FIGURE OUT THE DATA MODEL DISTINCTION BETWEEN USING WIKIDATA VS USING THE SHARING SERVICE.  RIGHT NOW THE CLIENT ONLY EXPLOITS WIKIDATA, BUT THIS SHOULD CHANGE VERY SOON.__
