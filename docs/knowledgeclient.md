@@ -219,7 +219,7 @@ Here is an example with US National Parks.
 ![KNPS](files/df_national_parks_1.png)
 ![KNPS](files/df_national_parks_2.png)
 
-The `parse_lon_lats()` function can be used to parse values believed to contain longitude and latitude data. 
+The `parse_lon_lats()` function can be used to parse values believed to contain longitude and latitude data.
 
 Input:
 - string containing longitude, latitude, and other extraneous characters

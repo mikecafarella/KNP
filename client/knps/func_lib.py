@@ -191,7 +191,7 @@ def parse_lon_lat(lon_lat):
         lon = float(entities[0])
         lat = float(entities[1])
 
-    # if it's already been formatted as a tuple
+    # if it has already been formatted as a tuple
     if len(lon_lat) == 2 and type(lon_lat) is tuple:
         lon, lat = lon_lat
         # if lon and lat values are valid
@@ -199,7 +199,7 @@ def parse_lon_lat(lon_lat):
             if lon >= -180 and lon <= 180:
                 if lat >= -90 and lat <= 90:
                     return lon_lat
-        return 'NA' # if it's an invalid tuple
+        return 'NA' # if it is an invalid tuple
 
     return(lon, lat)
 
