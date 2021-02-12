@@ -1,0 +1,4 @@
+server:
+  SERVER_ADDRESS: 'http://127.0.0.1'
+  SERVER_PORT: '4242'
+  SERVER_ENVIRONMENT: 'development'
