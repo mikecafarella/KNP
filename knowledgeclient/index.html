@@ -316,7 +316,65 @@ The sequence of steps that the <strong>Knowledge Client</strong> performs can be
 <p><img width="1010" alt="adjustedGDP1" src="https://user-images.githubusercontent.com/44870308/105154682-cab10780-5ad7-11eb-965c-93fad0baa02c.png">
 <img width="1042" alt="adjustedGDP2" src="https://user-images.githubusercontent.com/44870308/105154701-cedd2500-5ad7-11eb-88ac-923423b538ce.png"></p>
 <h2 id="tutorial-3-whole-table-functions-with-national-parks-data">Tutorial 3: Whole-table functions with National Parks data</h2>
-<p><strong>Jenny, let's do the National Parks inception data here, and show how to do whole-table function invocation</strong>.</p>
+<p>Here is an example with US National Parks.</p>
+<div class="codehilite"><pre><span></span><code><span class="err">entity_subclass = &#39;national_park&#39;</span>
+<span class="err">qnum = &#39;Q34918903&#39; # &quot;National Park of the United States&quot;</span>
+<span class="err">parks = createRelation(qnum, label=True)</span>
+<span class="err">parks.extend(&#39;P31&#39;, True, &#39;entity_subclass&#39;, label=True) # extend via property P31 = is instance of</span>
+<span class="err">parks.changeFocus(&#39;entity_subclass_P31&#39;)</span>
+<span class="err">parks.extend(&#39;P17&#39;, False, &#39;Country&#39;,label=True, search=&quot;Q30&quot;) # extend via property P17 = is in country</span>
+<span class="err"># parks.extend(&#39;P131&#39;, False, &#39;State&#39;, label=True)</span>
+<span class="err">parks.extend(&#39;P625&#39;, False, &#39;Lon_Lat&#39;)</span>
+<span class="err">parks.extend(&#39;P571&#39;, False, &#39;Inception&#39;)</span>
+<span class="err">parks.query()</span>
+<span class="err">parks.df</span>
+</code></pre></div>
+
+<p><img alt="KNPS" src="../files/df_national_parks_1.png" />
+<img alt="KNPS" src="../files/df_national_parks_2.png" /></p>
+<p>The <code>parse_lon_lats()</code> function can be used to parse values believed to contain longitude and latitude data.</p>
+<p>Input:
+- string containing longitude, latitude, and other extraneous characters
+    - currently supports input strings formatted in the way Wikidata longitude latitudes are formatted (e.g. the string <code>Point(-159.28 67.55)</code>)
+- OR longitude latitude tuple
+Output:
+- (float longitude, float latitude) tuple
+- OR string 'NA' if invalid input</p>
+<div class="codehilite"><pre><span></span><code><span class="n">lon_lat_parsed_list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">[]</span><span class="w"></span>
+<span class="k">for</span><span class="w"> </span><span class="n">ind</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">parks</span><span class="p">.</span><span class="n">df</span><span class="p">.</span><span class="k">index</span><span class="err">:</span><span class="w"></span>
+<span class="w">    </span><span class="n">lon_lat_parsed_list</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">func_lib</span><span class="p">.</span><span class="n">parse_lon_lat</span><span class="p">(</span><span class="n">parks</span><span class="p">.</span><span class="n">df</span><span class="p">.</span><span class="n">Lon_Lat_P625</span><span class="o">[</span><span class="n">ind</span><span class="o">]</span><span class="p">))</span><span class="w"></span>
+<span class="n">parks</span><span class="p">.</span><span class="n">df</span><span class="o">[</span><span class="n">&#39;lon_lat_parsed&#39;</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lon_lat_parsed_list</span><span class="w"> </span><span class="err">#</span><span class="w"> </span><span class="k">add</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="k">column</span><span class="w"> </span><span class="k">with</span><span class="w"> </span><span class="n">parsed</span><span class="w"> </span><span class="k">values</span><span class="w"></span>
+</code></pre></div>
+
+<p>The <code>parse_dates()</code> function can be used to parse values believed to contain date data. </p>
+<p>Inputs:
+- 20-character-string wikidata format
+- OR the 10-character yyyy-mm-dd format
+Output:
+- 10-character yyyy-mm-dd format
+- OR string 'NA' if invalid input</p>
+<div class="codehilite"><pre><span></span><code><span class="n">date_parsed_list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">[]</span><span class="w"></span>
+<span class="k">for</span><span class="w"> </span><span class="n">ind</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">parks</span><span class="p">.</span><span class="n">df</span><span class="p">.</span><span class="k">index</span><span class="err">:</span><span class="w"></span>
+<span class="w">    </span><span class="n">date_parsed_list</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">func_lib</span><span class="p">.</span><span class="n">parse_date</span><span class="p">(</span><span class="n">parks</span><span class="p">.</span><span class="n">df</span><span class="p">.</span><span class="n">Inception_P571</span><span class="o">[</span><span class="n">ind</span><span class="o">]</span><span class="p">))</span><span class="w"></span>
+<span class="n">parks</span><span class="p">.</span><span class="n">df</span><span class="o">[</span><span class="n">&#39;date_parsed&#39;</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">date_parsed_list</span><span class="w"> </span><span class="err">#</span><span class="w"> </span><span class="k">add</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="k">column</span><span class="w"> </span><span class="k">with</span><span class="w"> </span><span class="n">parsed</span><span class="w"> </span><span class="k">values</span><span class="w"></span>
+
+<span class="n">parks</span><span class="p">.</span><span class="n">df</span><span class="w"></span>
+</code></pre></div>
+
+<p><img alt="KNPS" src="../files/df_national_parks_w_lon_lat_dates_1.png" />
+<img alt="KNPS" src="../files/df_national_parks_w_lon_lat_dates_2.png" /></p>
+<p>The <code>arrow_map()</code> function can be used to produce a visualization using locations and the associated time stamps. A "travel log" is printed below the plot. <code>parse_lon_lat()</code> and <code>parse_dates()</code> are called by <code>arrow_map()</code> and do not need to be called in advance.</p>
+<p>Inputs:
+- pandas dataframe from KNP SPARQL relation
+- string name of column that contains dates
+- string name of column that contains coordinates
+- string name of column that contains entity names
+- string title for map</p>
+<div class="codehilite"><pre><span></span><code><span class="err">func_lib.arrow_map(parks.df[20:40], &#39;Inception_P571&#39;, &#39;Lon_Lat_P625&#39;, &#39;entity_subclass_P31Label&#39;, &#39;Visiting National Parks in the US&#39;)</span>
+</code></pre></div>
+
+<p><img alt="KNPS" src="../files/arrow_map_plot.png" />
+<img alt="KNPS" src="../files/arrow_map_log.png" /></p>
 <h2 id="reminder">REMINDER:</h2>
 <p><strong>WE NEED TO FIGURE OUT THE DATA MODEL DISTINCTION BETWEEN USING WIKIDATA VS USING THE SHARING SERVICE.  RIGHT NOW THE CLIENT ONLY EXPLOITS WIKIDATA, BUT THIS SHOULD CHANGE VERY SOON.</strong></p>
               
