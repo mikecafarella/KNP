@@ -147,6 +147,11 @@ class Relation:
             self.limit = limit
         self.query_str = self.define_query_relation()
 
+    def join(self, df, left: str, right: str, how='inner'):
+        self.df = self.df.merge(df, how, left_on=left, right_on=right)
+        self.df = self.df[self.df[left] != 'NA'].reset_index()
+        return self.df
+    
     def changeFocus(self, name="Entity ID"):
         self.focus = name
         
