@@ -178,12 +178,12 @@ The sequence of steps that the <strong>Knowledge Client</strong> performs can be
 </li>
 <li>
 <p>isSubject: bool</p>
-<p>indicates whether the column to be extended is the subject in the (subject-&gt;property-&gt;object) triple. </p>
+<p>indicates whether the column to be extended is the subject in the (subject-&gt;property-&gt;object) triple.</p>
 <p>(e.g., If the base entity is 'Q33999' (actor) and the property to extend upon is 'P106' (has occupation), isSubject should be True since we want to find who has an occupation as an actor.)</p>
 </li>
 <li>
 <p>name: str</p>
-<p>name of the extended column (use underscore for all spaces). The property identifier will be automatically appended in the final result. </p>
+<p>name of the extended column (use underscore for all spaces). The property identifier will be automatically appended in the final result.</p>
 <p>(e.g., If specifying name='population' and property_id='P1082', the column in the dataframe will finally be called 'population_P1082'.)</p>
 </li>
 <li>
@@ -248,6 +248,27 @@ The sequence of steps that the <strong>Knowledge Client</strong> performs can be
 </ul>
 <p><strong>Relation.query(self)</strong></p>
 <p>This funtion executes the query built by Relation.extend() so far and returns a relation-like dataframe.</p>
+<p><strong>Relation.join(self, df, left: str, right: str, how='inner')</strong></p>
+<p>This funtion joins the relation with an external dateframe.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li>
+<p>df: dataframe</p>
+<p>The dataframe to be joined with the relation.</p>
+</li>
+<li>
+<p>left: str</p>
+<p>The name of the column in the relation to be joined on.</p>
+</li>
+<li>
+<p>right: str</p>
+<p>The name of the column in the external dataframe to be joined on.</p>
+</li>
+<li>
+<p>how: str, one of {'left', 'right', 'outer', 'inner', 'cross'}, default 'inner'</p>
+<p>Type of join to be performed.</p>
+</li>
+</ul>
 <p><strong>Relation.extendWithFunction(self, objcolumn, func, name)</strong></p>
 <p>This function adds a column to the relation, similar to what Relation.extend() does, but the column is filled with function outputs instead of information grabbed directly from knowledge graphs. ExtendWithFunction should be called only after Relation.query() has been called.</p>
 <p><strong>Parameters:</strong></p>
@@ -269,7 +290,7 @@ The sequence of steps that the <strong>Knowledge Client</strong> performs can be
 <p>Let's try to show a few examples of using the <strong>Knowledge Client</strong>.</p>
 <h2 id="tutorial-1-basic-dataset-construction-with-the-presidents">Tutorial 1: Basic dataset construction with the presidents</h2>
 <p><strong>Dinghao, Tian, Kexin: can we add a simple example here?  Just add basic entity data that's already in the knowledge graph.  Presidents, their spouses, and their places and dates of birth. That's it.</strong></p>
-<p>Construct a relation of US presidents, their spouses, their dates of birth and places of births: </p>
+<p>Construct a relation of US presidents, their spouses, their dates of birth and places of births:</p>
 <div class="codehilite"><pre><span></span><code><span class="err">r = createRelation(&#39;Q11696&#39;) # Q11696 - &#39;President of the United States&#39; in wikidata</span>
 <span class="err">r.extend(&#39;P39&#39;,True, &#39;President&#39;, limit=20, label=True) # P39 - &#39;position held&#39;</span>
 <span class="err">r.changeFocus(&#39;President_P39&#39;)</span>
@@ -295,10 +316,10 @@ The sequence of steps that the <strong>Knowledge Client</strong> performs can be
 </code></pre></div>
 
 <p><img width="913" alt="EuroCountries" src="https://user-images.githubusercontent.com/44870308/105154661-c684ea00-5ad7-11eb-9bcb-6cb6380d72fe.png"></p>
-<p>Here is another example of inflation-adjusted US GDP data, with the base year of 2014: </p>
+<p>Here is another example of inflation-adjusted US GDP data, with the base year of 2014 (see data file in examples/test_data directory):</p>
 <div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">math</span>
 <span class="k">def</span> <span class="nf">adjustedGDP</span><span class="p">(</span><span class="n">gdp</span><span class="p">:</span> <span class="n">WikiDataProperty</span><span class="p">([</span><span class="s1">&#39;P2131&#39;</span><span class="p">,</span> <span class="s1">&#39;P2132&#39;</span><span class="p">]),</span> <span class="n">timestamp</span><span class="p">:</span> <span class="n">WikiDataProperty</span><span class="p">([</span><span class="s1">&#39;P585&#39;</span><span class="p">])):</span>
-      <span class="n">inflationIndex</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;inflation_data_found_online.csv&#39;</span><span class="p">)</span>
+      <span class="n">inflationIndex</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;examples/test_data/inflation_index.csv&#39;</span><span class="p">)</span>
       <span class="n">base</span> <span class="o">=</span> <span class="n">inflationIndex</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;Index&#39;</span><span class="p">]</span>
       <span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
       <span class="n">inflationIndex</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;Date&#39;</span><span class="p">,</span><span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
@@ -346,7 +367,7 @@ Output:
 <span class="n">parks</span><span class="p">.</span><span class="n">df</span><span class="o">[</span><span class="n">&#39;lon_lat_parsed&#39;</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lon_lat_parsed_list</span><span class="w"> </span><span class="err">#</span><span class="w"> </span><span class="k">add</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="k">column</span><span class="w"> </span><span class="k">with</span><span class="w"> </span><span class="n">parsed</span><span class="w"> </span><span class="k">values</span><span class="w"></span>
 </code></pre></div>
 
-<p>The <code>parse_dates()</code> function can be used to parse values believed to contain date data. </p>
+<p>The <code>parse_dates()</code> function can be used to parse values believed to contain date data.</p>
 <p>Inputs:
 - 20-character-string wikidata format
 - OR the 10-character yyyy-mm-dd format
