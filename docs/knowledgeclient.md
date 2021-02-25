@@ -123,6 +123,28 @@ __Relation.query(self)__
 
 This funtion executes the query built by Relation.extend() so far and returns a relation-like dataframe.
 
+__Relation.join(self, df, left: str, right: str, how='inner')__
+
+This funtion joins the relation with an external dateframe.
+
+__Parameters:__
+
+- df: dataframe
+    
+    The dataframe to be joined with the relation.
+
+- left: str
+
+    The name of the column in the relation to be joined on.
+
+- right: str
+
+    The name of the column in the external dataframe to be joined on.
+
+- how: str, one of {'left', 'right', 'outer', 'inner', 'cross'}, default 'inner'
+
+    Type of join to be performed.
+
 __Relation.extendWithFunction(self, objcolumn, func, name)__
 
 This function adds a column to the relation, similar to what Relation.extend() does, but the column is filled with function outputs instead of information grabbed directly from knowledge graphs. ExtendWithFunction should be called only after Relation.query() has been called.
