@@ -44,7 +44,7 @@ __Parameters:__
 
 __Relation.extend(self, property_id: str, isSubject: bool, name: str, rowVerbose=False, colVerbose=False, limit=None,
                time_property=None, time=None, search=None, label=False, subclass=False, showid=False)__
-               
+
 This function extends a column upon the current focus with a specified property.
 
 __Parameters:__
@@ -52,49 +52,49 @@ __Parameters:__
 - property_id: str
 
     the Wikidata property identifier (e.g., 'P31')
-    
+
 - isSubject: bool
 
-    indicates whether the column to be extended is the subject in the (subject->property->object) triple. 
-    
+    indicates whether the column to be extended is the subject in the (subject->property->object) triple.
+
     (e.g., If the base entity is 'Q33999' (actor) and the property to extend upon is 'P106' (has occupation), isSubject should be True since we want to find who has an occupation as an actor.)
-    
+
 - name: str
 
-    name of the extended column (use underscore for all spaces). The property identifier will be automatically appended in the final result. 
-    
+    name of the extended column (use underscore for all spaces). The property identifier will be automatically appended in the final result.
+
     (e.g., If specifying name='population' and property_id='P1082', the column in the dataframe will finally be called 'population_P1082'.)
-    
+
 - rowVerbose: bool, default False
 
     indicates whether all the results of the extended column should be displayed. If rowVerbose=False, it only returns the results with preferred rank.
-    
+
 - colVerbose: bool, default False
 
     indicates whether the qualifiers of the extended column and all the other metadata should be displayed. e.g., If colVerbose=True and property_id='P1082' (population), the time for each population value will be shown as another column, since 'P585' (point in time) is a qualifier associated with 'P1082'.
-    
+
 - limit: int, default None
 
     the max number of rows displayed
-    
+
 - time_property: str, default None
 
     the time qualifier constraint used to select the results. Used with parameter 'time'.
-    
+
 - time: int, default None
 
     specifies the year constraint applied to the qualifier (not property). Used with parameter 'time_property'. e.g., If property_id='P1082' (population), time_property='P585' and time=2010, it will only return the population in 2010.
-    
+
 - search: str or pair, default None
 
     specifies the constraint applied to the property (not qualifier). There are several methods:
-    
+
     - If the search key is search='!NA', it will eliminate the null values in that column.
-    
+
     - If the search key is a Wikidata Entity (e.g., search='Q30'), it will select the rows whose results match.
-    
+
     - If the search key is a tuple of 2 numerical values (e.g., search=(10, 20)), it will select the rows whose results are in this range (both ends included).
-    
+
     - If the search key is a tuple of 2 strings representing years (e.g., search=('2010', '2020')), it will select the rows whose results are in this year range.
 
 - label: bool, default False
@@ -104,13 +104,13 @@ __Parameters:__
 - subclass: bool, default False
 
     indicates whether all instances of subclasses are needed. This applies specifically to 'P31'.
-    
+
 - showid: bool, default False
 
     indicates whether the Wikidata entity ID should display alone. If showid=True, 'www.wikidata.org/wiki/Q76' will be displayed as 'Q76' only.
 
 __Relation.changeFocus(self, name="Entity ID")__
-               
+
 This function change the focus (column) to be extended with the specified column name.
 
 __Parameters:__
@@ -148,7 +148,7 @@ Let's try to show a few examples of using the __Knowledge Client__.
 ## Tutorial 1: Basic dataset construction with the presidents
 __Dinghao, Tian, Kexin: can we add a simple example here?  Just add basic entity data that's already in the knowledge graph.  Presidents, their spouses, and their places and dates of birth. That's it.__
 
-Construct a relation of US presidents, their spouses, their dates of birth and places of births: 
+Construct a relation of US presidents, their spouses, their dates of birth and places of births:
 
     r = createRelation('Q11696') # Q11696 - 'President of the United States' in wikidata
     r.extend('P39',True, 'President', limit=20, label=True) # P39 - 'position held'
@@ -158,7 +158,7 @@ Construct a relation of US presidents, their spouses, their dates of birth and p
     r.extend('P19',False, 'Place_of_birth', label=True) #P19 - 'place of birth'
     r.query()
     r.df
-    
+
 <img width="969" alt="presidents1" src="https://user-images.githubusercontent.com/44870308/105150679-11503300-5ad3-11eb-8221-3b69af9cc58a.png">
 <img width="732" alt="presidents2" src="https://user-images.githubusercontent.com/44870308/105154486-976e7880-5ad7-11eb-875b-e2f0859b2a7f.png">
 
@@ -179,18 +179,18 @@ Here is an example of all countries in the European Union and their population, 
 <img width="913" alt="EuroCountries" src="https://user-images.githubusercontent.com/44870308/105154661-c684ea00-5ad7-11eb-9bcb-6cb6380d72fe.png">
 
 
-Here is another example of inflation-adjusted US GDP data, with the base year of 2014: 
+Here is another example of inflation-adjusted US GDP data, with the base year of 2014 (see data file in examples/test_data directory):
 
     import math
     def adjustedGDP(gdp: WikiDataProperty(['P2131', 'P2132']), timestamp: WikiDataProperty(['P585'])):
-          inflationIndex = pd.read_csv('inflation_data_found_online.csv')
+          inflationIndex = pd.read_csv('examples/test_data/inflation_index.csv')
           base = inflationIndex.iloc[-1]['Index']
           timestamp = timestamp[:10]
           inflationIndex.set_index('Date',inplace=True)
           if timestamp in inflationIndex.index:
               return math.floor(float(gdp) / inflationIndex.loc[timestamp]['Index'] * base)
           return math.floor(float(gdp))
-          
+
     usgdp = createRelation('Q30') # Q30 - 'United States of America'
     usgdp.extend('P2131', False, 'GDP', colVerbose=True,rowVerbose=True) # P2131 - 'nominal GDP'
     usgdp.query()
@@ -234,7 +234,7 @@ Output:
         lon_lat_parsed_list.append(func_lib.parse_lon_lat(parks.df.Lon_Lat_P625[ind]))
     parks.df['lon_lat_parsed'] = lon_lat_parsed_list # add a new column with parsed values
 
-The `parse_dates()` function can be used to parse values believed to contain date data. 
+The `parse_dates()` function can be used to parse values believed to contain date data.
 
 Inputs:
 - 20-character-string wikidata format
