@@ -19,10 +19,6 @@ type Props = {
 }
 
 const DataObjects: React.FC<Props> = (props) => {
-  for (let i = 0; i < props.dobjs.length; i++) {
-    console.log(props.dobjs[i].version)
-
-  }
   return (
     <Layout>
         <Heading size={800}>Data Objects</Heading>
