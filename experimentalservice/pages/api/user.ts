@@ -5,10 +5,16 @@ const prisma = new PrismaClient()
 // POST /api/user
 // Required fields in body: name, email
 export default async function handle(req, res) {
-  const result = await prisma.user.create({
-    data: {
-      ...req.body,
-    },
+  const email = req.body.email
+  const name = req.body.name
+  console.log(name, email)
+  const result = await prisma.user.upsert({
+    where: { email: email },
+    update: { name: name },
+    create: {
+      email: email,
+      name: name
+    }
   })
   res.json(result)
 }

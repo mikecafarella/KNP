@@ -13,7 +13,7 @@ export default async function handle(req, res) {
     var realId = Number(req.query.id.substring(1))
     const obj = await prisma.objectName.findMany({
       where: { id: realId },
-      include: {owner: true, 
+      include: {owner: true,
                   version: {
                     include: {
                       dobj: {
@@ -27,6 +27,7 @@ export default async function handle(req, res) {
                           SchemaData: true,
                           PyStrData: true,
                           PyNumData: true,
+                          FunctionData: true,
                         }
                      }
                     }
@@ -34,15 +35,18 @@ export default async function handle(req, res) {
                 }
               })
 
+              console.log(obj)
+
     {/**
       Convert this into the format needed by client
     */}
+
     var outobj = {
       label: {
         id: obj[0].id,
         name: obj[0].name,
         desc: obj[0].desc,
-        owner: obj[0].owner,      
+        owner: obj[0].owner,
         timestamp: obj[0].version.timestamp,
         iscurrent: true,
       },
@@ -58,11 +62,32 @@ export default async function handle(req, res) {
         ImgData: obj[0].version.dobj.ImgData,
         ColumnData: obj[0].version.dobj.ColumnData,
         SchemaData: obj[0].version.dobj.SchemaData,
+        FunctionData: obj[0].version.dobj.FunctionData,
         PyStrData: obj[0].version.dobj.PyStrData,
         PyNumData: obj[0].version.dobj.PyNumData,
       }
     }
-     res.json(outobj);
+    let versions = []
+    for (let i = 0; i < obj.length; i++) {
+      versions.push({
+        id: obj[i].version.dobj.id,
+        timestamp: obj[i].version.dobj.timestamp,
+        datatype: obj[i].version.dobj.datatype,
+        comment: obj[i].version.dobj.comment,
+        owner: obj[i].version.dobj.owner,
+        predecessors: obj[i].version.dobj.predecessors,
+        JsonData: obj[i].version.dobj.JsonData,
+        CsvData: obj[i].version.dobj.CsvData,
+        ImgData: obj[i].version.dobj.ImgData,
+        ColumnData: obj[i].version.dobj.ColumnData,
+        SchemaData: obj[i].version.dobj.SchemaData,
+        FunctionData: obj[i].version.dobj.FunctionData,
+        PyStrData: obj[i].version.dobj.PyStrData,
+        PyNumData: obj[i].version.dobj.PyNumData,
+      })
+    }
+    outobj.versions = versions
+    res.json(outobj);
 
   } else {
     var realId = Number(req.query.id)
@@ -85,6 +110,7 @@ export default async function handle(req, res) {
               ImgData: true,
               ColumnData: true,
               SchemaData: true,
+              FunctionData: true,
               PyStrData: true,
               PyNumData: true,
               }
@@ -99,7 +125,7 @@ export default async function handle(req, res) {
         id: obj[0].NameAssignment[0].ObjectName[0].id,
         name: obj[0].NameAssignment[0].ObjectName[0].name,
         desc: obj[0].NameAssignment[0].ObjectName[0].desc,
-        owner: obj[0].NameAssignment[0].ObjectName[0].owner,      
+        owner: obj[0].NameAssignment[0].ObjectName[0].owner,
         timestamp: obj[0].NameAssignment[0].timestamp,
         iscurrent: labelIsCurrent,
       },
@@ -115,10 +141,11 @@ export default async function handle(req, res) {
         ImgData: obj[0].ImgData,
         ColumnData: obj[0].ColumnData,
         SchemaData: obj[0].SchemaData,
+        FunctionData: obj[0].FunctionData,
         PyStrData: obj[0].PyStrData,
         PyNumData: obj[0].PyNumData,
       }
     }
      res.json(outobj);
-  }        
+  }
 }
