@@ -11,7 +11,7 @@ import json
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from lib import get_user_id
+from lib import get_user_id, create_data_object
 
 USER_NAME = "Mike Anderson"
 USER_EMAIL = "mrander@umich.edu"
@@ -43,21 +43,10 @@ if __name__ == "__main__":
     val_comment = "The COVID-19 cumulative positive cases for all states in the US from " + str(before_20_display) + " to " + str(today_display)
     var_comment = "The COVID-19 cumulative positive cases for all states in the US in the last 20 days"
 
-
-
-    url = "http://localhost:3000/api/createdataobj"
-    jsondata = dict(rst)
-    data = {
-        'metadata': {
-            'name': 'COVID Last 20 Days',
-            'ownerid': user_id,
-            'description': var_comment,
-            'comment': val_comment,
-            'datatype': '/datatypes/json',
-            'jsondata': jsondata
-        }
-    }
-    headers = {'Content-type': 'application/json'}
-    response = requests.post(url, headers=headers, data=json.dumps(data))
-
-    print(response)
+    obj_data = create_data_object(
+        name = 'COVID Last 20 Days',
+        ownerid = user_id,
+        description = var_comment,
+        jsondata = dict(rst),
+        comment = val_comment
+    )

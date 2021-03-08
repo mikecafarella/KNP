@@ -9,7 +9,6 @@ export default async function handle(req, res) {
     const data = await new Promise(function (resolve, reject) {
         const form = new formidable.IncomingForm();
         form.parse(req, function (err, fields, files) {
-            console.log(fields)
             // const metadata = JSON.parse(fields["metadata"])
             const metadata = fields["metadata"]
             const { name, description, ownerid, comment, datatype, pynumber, pystring } = metadata
@@ -311,7 +310,6 @@ export default async function handle(req, res) {
                         }
                         }
                     }
-                console.log(prisma)
                 jobj = await prisma.functionData.create( {
                     data: dataStruct});
                 break;
@@ -326,7 +324,6 @@ export default async function handle(req, res) {
               version: {id: jobj.id}
             }
         })
-        console.log(objname)
 
         const jobj2 = await prisma.timeline.create( {
             data: {

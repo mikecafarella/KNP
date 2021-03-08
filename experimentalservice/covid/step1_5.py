@@ -11,12 +11,12 @@ import json
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from lib import get_user_id
+from lib import get_user_id, update_data_object
 
 USER_NAME = "Mike Anderson"
 USER_EMAIL = "mrander@umich.edu"
 
-DATA_OBJECT_ID = 20
+DATA_OBJECT_ID = 1
 
 if __name__ == "__main__":
     user_id = get_user_id(USER_EMAIL, USER_NAME)
@@ -45,18 +45,9 @@ if __name__ == "__main__":
     val_comment = "The COVID-19 cumulative positive cases for all states in the US from " + str(before_20_display) + " to " + str(today_display)
     var_comment = "The COVID-19 cumulative positive cases for all states in the US in the last 20 days"
 
-
-
-    url = "http://localhost:3000/api/updatedataobj"
-    jsondata = dict(rst)
-    data = {
-        'metadata': {
-            'ownerid': user_id,
-            'dobjid': DATA_OBJECT_ID,
-            'comment': val_comment,
-            'datatype': '/datatypes/json',
-            'jsondata': jsondata
-        }
-    }
-    headers = {'Content-type': 'application/json'}
-    response = requests.post(url, headers=headers, data=json.dumps(data))
+    update_data_object(
+        objectid = DATA_OBJECT_ID,
+        ownerid = user_id,
+        jsondata = dict(rst),
+        comment = val_comment
+    )
