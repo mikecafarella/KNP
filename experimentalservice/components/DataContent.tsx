@@ -22,7 +22,7 @@ export type DataContentProps = {
 const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) => {
     var imgstr = ""
     if (datacontent.datatype == "/datatypes/img") {
-        const imgBytes = JSON.parse(datacontent.ImgData[0].img).contents.data 
+        const imgBytes = JSON.parse(datacontent.ImgData[0].img).contents.data
         console.log(imgBytes)
         imgstr = "data:image/png;base64, " + new Buffer(imgBytes).toString('base64')
     }
@@ -31,7 +31,7 @@ const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) =
         { datacontent.datatype == "/datatypes/json" &&
           <Pane display="flex" >
             <Pre>
-            {String.fromCharCode.apply(null, JSON.parse(datacontent.JsonData[0].jsondata).contents.data)}
+            {JSON.stringify(JSON.parse(datacontent.JsonData[0].jsondata), null, 4)}
             </Pre>
           </Pane>
         }
@@ -50,7 +50,7 @@ const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) =
                                 <Table.TextCell>cell</Table.TextCell>
                             ))}
                         </Table.row>
-                    ))}                    
+                    ))}
                 </Table.Body>
             </Table>
              */}
@@ -144,9 +144,65 @@ const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) =
             </Table>
           </Pane>
         }
+        { datacontent.datatype == "/datatypes/function" &&
+          <Pane>
+            <Table>
+              <Table.Head>
+              <Table.TextHeaderCell>
+                  Parameter
+              </Table.TextHeaderCell>
+              <Table.TextHeaderCell>
+                  Data Type
+              </Table.TextHeaderCell>
+              </Table.Head>
+            <Table.Body>
+                <Table.Row>
+                 <Table.TextCell>
+                     {datacontent.FunctionData[0].paramname1}
+                 </Table.TextCell>
+                 <Table.TextCell>
+                     {datacontent.FunctionData[0].paramdesc1}
+                 </Table.TextCell>
+                </Table.Row>
+                <Table.Row>
+                 <Table.TextCell>
+                     {datacontent.FunctionData[0].paramname2}
+                 </Table.TextCell>
+                 <Table.TextCell>
+                     {datacontent.FunctionData[0].paramdesc2}
+                 </Table.TextCell>
+                </Table.Row>
+                <Table.Row>
+                 <Table.TextCell>
+                     {datacontent.FunctionData[0].paramname3}
+                 </Table.TextCell>
+                 <Table.TextCell>
+                     {datacontent.FunctionData[0].paramdesc3}
+                 </Table.TextCell>
+                </Table.Row>
+                <Table.Row>
+                 <Table.TextCell>
+                     {datacontent.FunctionData[0].paramname4}
+                 </Table.TextCell>
+                 <Table.TextCell>
+                     {datacontent.FunctionData[0].paramdesc4}
+                 </Table.TextCell>
+                </Table.Row>
+                <Table.Row>
+                 <Table.TextCell>
+                     {datacontent.FunctionData[0].paramname5}
+                 </Table.TextCell>
+                 <Table.TextCell>
+                     {datacontent.FunctionData[0].paramdesc5}
+                 </Table.TextCell>
+                </Table.Row>
+            </Table.Body>
+            </Table>
+          </Pane>
+        }
 
-        </Pane>    
+        </Pane>
     )
-}  
+}
 
 export default DataContent

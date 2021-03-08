@@ -18,6 +18,9 @@ const Header: React.FC = () => {
           <Link href="/listdataobjects" marginLeft={12} color={isActive('/listdataobjects') ? "neutral" : "blue"}>
               Data Objects
           </Link>
+          <Link href="/listfunctions" marginLeft={12} color={isActive('/listfunctions') ? "neutral" : "blue"}>
+              Functions
+          </Link>
           <Link href="/listusers" marginLeft={12} color={isActive('/listusers') ? "neutral" : "blue"}>
               Users
           </Link>

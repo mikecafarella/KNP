@@ -25,7 +25,7 @@ model Timeline {
   timestamp DateTime  @default(now())
   ownerid Int
   owner   User        @relation(fields: [ownerid], references: [id])
-  refid   Int        
+  refid   Int
   ref     ObjectName  @relation(fields: [refid], references: [id])
 }
 
@@ -41,35 +41,35 @@ model DataObject {
   timestamp DateTime  @default(now())
   datatype  String
   comment   String    @default("")
-  ownerid   Int  
+  ownerid   Int
   owner     User     @relation(fields: [ownerid], references: [id])
   predecessors  DataObject[]
   isdeleted Int       @default(0)
 }
 
 model ImgData {
-  id           Int    @id @default(autoincrement()) 
+  id           Int    @id @default(autoincrement())
   dobjid       Int
   dobj         DataObject   @relation(fields: [dobjid], references: [id])
   img          String
 }
 
 model CsvData {
-  id           Int    @id @default(autoincrement()) 
+  id           Int    @id @default(autoincrement())
   dobjid       Int
   dobj         DataObject   @relation(fields: [dobjid], references: [id])
   csvdata      String
 }
 
 model JsonData {
-  id           Int    @id @default(autoincrement()) 
+  id           Int    @id @default(autoincrement())
   dobjid       Int
   dobj         DataObject   @relation(fields: [dobjid], references: [id])
   jsondata     String
 }
 
 model ColumnData {
-  id           Int    @id @default(autoincrement()) 
+  id           Int    @id @default(autoincrement())
   dobjid       Int
   dobj         DataObject   @relation(fields: [dobjid], references: [id])
   headerlabel     String
@@ -77,7 +77,7 @@ model ColumnData {
 }
 
 model SchemaData {
-  id           Int    @id @default(autoincrement()) 
+  id           Int    @id @default(autoincrement())
   dobjid       Int
   dobj         DataObject   @relation(fields: [dobjid], references: [id])
   colname1     String
@@ -93,14 +93,14 @@ model SchemaData {
 }
 
 model PyNumData {
-  id           Int    @id @default(autoincrement()) 
+  id           Int    @id @default(autoincrement())
   dobjid       Int
   dobj         DataObject   @relation(fields: [dobjid], references: [id])
   val          Float
 }
 
 model PyStrData {
-  id           Int    @id @default(autoincrement()) 
+  id           Int    @id @default(autoincrement())
   dobjid       Int
   dobj         DataObject   @relation(fields: [dobjid], references: [id])
   val          String
@@ -123,3 +123,21 @@ model User {
   posts Post[]
 }
 
+model FunctionData {
+  id           Int    @id @default(autoincrement())
+  dobjid       Int
+  dobj         DataObject   @relation(fields: [dobjid], references: [id])
+  code         String
+  paramname1     String
+  paramdesc1     Int
+  paramname2     String?
+  paramdesc2     Int?
+  paramname3     String?
+  paramdesc3     Int?
+  paramname4     String?
+  paramdesc4     Int?
+  paramname5     String?
+  paramdesc5     Int?
+  paramname6     String?
+  paramdesc6     Int?
+}

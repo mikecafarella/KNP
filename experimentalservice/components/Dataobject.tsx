@@ -34,11 +34,14 @@ export type DataObjLabelProps = {
 export type DataobjProps = {
   dobj: RawDataObjectProps;
   label: DataObjLabelProps;
+  versions: array;
 }
 
 const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
   const [tabIndex, setTabIndex] = useState(0)
   const [deleteId, setDeleteId] = useState(dobj.dobj.id)
+
+
 
   const ownerid = 1
 
@@ -46,7 +49,7 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
     e.preventDefault()
     try {
       var fd = new FormData()
-      const metadata = {deleteId, 
+      const metadata = {deleteId,
                   ownerid,
                   }
       const s = JSON.stringify(metadata)
@@ -57,7 +60,7 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         body: fd
       })
       const result = await res.json()
-      if (result.resultcode == "success") {  
+      if (result.resultcode == "success") {
           await Router.push('/')
       }
     } catch (error) {
@@ -71,7 +74,7 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
   if (dobj.label.iscurrent) {
     tabLabels = ['Overview', 'Dependencies', 'Versions', 'Related Objects', 'Suggestions', 'Delete']
   } else {
-    tabLabels = ['Overview', 'Dependencies', 'Related Objects', 'Suggestions']    
+    tabLabels = ['Overview', 'Dependencies', 'Related Objects', 'Suggestions']
   }
   const overviewIndex = tabLabels.findIndex( (elt) => elt == 'Overview')
   const dependencyIndex = tabLabels.findIndex( (elt) => elt == 'Dependencies')
@@ -84,9 +87,9 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
       <Pane width="100%">
         <Pane display="flex" padding={majorScale(1)} border>
 
-          <Pane flex={1} > 
-            <Heading size={800}>{dobj.label.iscurrent ? dobj.label.name : "Anonymous object:" + dobj.dobj.id} 
-            
+          <Pane flex={1} >
+            <Heading size={800}>{dobj.label.iscurrent ? dobj.label.name : "Anonymous object:" + dobj.dobj.id}
+
             {dobj.label.iscurrent ? "(X" + dobj.label.id + ")": ""}
             </Heading>
 
@@ -106,6 +109,10 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
               <Paragraph size={500}>
                     {dobj.label.iscurrent ? dobj.label.desc : ""}
               </Paragraph>
+
+              <Paragraph size={500}>
+                    Current Version: {dobj.dobj.timestamp} {dobj.dobj.comment ? " - " + dobj.dobj.comment : ""}
+              </Paragraph>
             </Pane>
           </Pane>
 
@@ -116,7 +123,7 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
           <Tablist>
                    {tabLabels.map(
                       (tab, index) => (
-                        
+
                         <Tab
                           key={tab}
                           isSelected={tabIndex === index}
@@ -137,7 +144,7 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
               alignItems="center"
               justifyContent="center"
             >
-      
+
         <DataContent datacontent={dobj.dobj}></DataContent>
         </Card>
 
@@ -155,9 +162,8 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         alignItems="center"
         justifyContent="center"
       >
-        {/**
-         * 
         <Pane width="100%" overflowY="scroll" background="tint1" padding={majorScale(1)}>
+        This should include all versions, but only one is being returned right now (?)
         <Table>
           <Table.Head>
             <Table.TextHeaderCell>
@@ -170,17 +176,21 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
                  Datatype
             </Table.TextHeaderCell>
             </Table.Head>
-            <Table.Body height={240}>
-               <Table.Row key="0" isSelectable onSelect={() => Router.push("/anonobj/" + dobj.id)}>
-                 <Table.TextCell>{dobj.version.timestamp}</Table.TextCell>
-                 <Table.TextCell>{dobj.version.dobj.comment}</Table.TextCell>
-                 <Table.TextCell>{dobj.version.dobj.datatype}</Table.TextCell>
-               </Table.Row>
+            <Table.Body>
+            {dobj.versions.map(
+               (version) => (
+                 <Table.Row key="0" isSelectable onSelect={() => Router.push("/anonobj/" + dobj.id)}>
+                   <Table.TextCell>{version.timestamp}</Table.TextCell>
+                   <Table.TextCell>{version.comment}</Table.TextCell>
+                   <Table.TextCell>{version.datatype}</Table.TextCell>
+                 </Table.Row>
+               )
+             )}
                </Table.Body>
-            </Table> 
-        </Pane>    
-         */}
-      </Card>}        
+            </Table>
+        </Pane>
+
+      </Card>}
 
       { tabIndex == relatedObjectIndex &&
         <Card
@@ -200,7 +210,8 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         elevation={0}
         display="flex"
         alignItems="center"
-        justifyContent="center"
+        justifyContent="left"
+        padding={8}
       >
         <Text>Suggestions</Text>
 
@@ -230,5 +241,5 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
       </Pane>
      )
   }
-  
+
   export default Dataobject

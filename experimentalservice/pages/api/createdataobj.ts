@@ -3,14 +3,15 @@ const formidable = require('formidable')
 import fs from "fs";
 import { createBrotliDecompress } from 'zlib';
 
-
 const prisma = new PrismaClient()
 
 export default async function handle(req, res) {
     const data = await new Promise(function (resolve, reject) {
         const form = new formidable.IncomingForm();
         form.parse(req, function (err, fields, files) {
-            const metadata = JSON.parse(fields["metadata"])
+            console.log(fields)
+            // const metadata = JSON.parse(fields["metadata"])
+            const metadata = fields["metadata"]
             const { name, description, ownerid, comment, datatype, pynumber, pystring } = metadata
 
             if (err) return reject(err);
@@ -18,17 +19,20 @@ export default async function handle(req, res) {
         });
       });
 
-      
+
     const {fields, files} = data
-    const metadata = JSON.parse(fields["metadata"])
-    const { name, 
-            description, 
-            ownerid, 
-            comment, 
-            datatype, 
-            pynumber, 
-            pystring, 
-            datacolumnheader, 
+    // const metadata = JSON.parse(fields["metadata"])
+    const metadata = fields["metadata"]
+
+    const { name,
+            description,
+            ownerid,
+            comment,
+            datatype,
+            pynumber,
+            pystring,
+            jsondata,
+            datacolumnheader,
             datacolumntype,
             schemaLabel1,
             schemaType1,
@@ -40,27 +44,40 @@ export default async function handle(req, res) {
             schemaType4,
             schemaLabel5,
             schemaType5,
+            paramLabel1,
+            paramType1,
+            paramLabel2,
+            paramType2,
+            paramLabel3,
+            paramType3,
+            paramLabel4,
+            paramType4,
+            paramLabel5,
+            paramType5,
+            code,
+            predecessors
         } = metadata
     let jobj = null
         switch (datatype) {
             case "/datatypes/json": {
-                const datacontents = {"contents": fs.readFileSync(files.jsonpath.path),
-                                 "length": files.jsonpath.size,
-                                 "type": files.jsonpath.type} 
-                fs.unlinkSync(files.jsonpath.path)
+                // const datacontents = {"contents": fs.readFileSync(files.jsonpath.path),
+                //                  "length": files.jsonpath.size,
+                //                  "type": files.jsonpath.type}
+                // fs.unlinkSync(files.jsonpath.path)
 
                 jobj = await prisma.jsonData.create( {
                     data: {
-                        jsondata: JSON.stringify(datacontents),      
-                        dobj: { create: {   owner: {connect: 
-                                                    {id: ownerid}}, 
-                                            comment: comment, 
+                        jsondata: JSON.stringify(jsondata),
+                        dobj: { create: {   owner: {connect:
+                                                    {id: ownerid}},
+                                            comment: comment,
                                             datatype: datatype,
-                                            NameAssignment: { 
+                                            predecessors: predecessors.map(p => { id: p }),
+                                            NameAssignment: {
                                                 create: {
                                                     ObjectName: {
                                                         create: {
-                                                            owner: {connect: 
+                                                            owner: {connect:
                                                             {id: ownerid}},
                                                             desc: description,
                                                             name: name,
@@ -68,29 +85,29 @@ export default async function handle(req, res) {
                                                     }
                                                 }
                                             }
-                                        } 
+                                        }
                                 },
-                        } 
+                        }
                 });
                 break;
             }
             case "/datatypes/csv": {
                 const datacontents = {"contents": fs.readFileSync(files.csvpath.path),
                                  "length": files.csvpath.size,
-                                 "type": files.csvpath.type} 
+                                 "type": files.csvpath.type}
                 fs.unlinkSync(files.csvpath.path)
                 jobj = await prisma.csvData.create( {
                     data: {
-                        csvdata: JSON.stringify(datacontents),      
-                        dobj: { create: {   owner: {connect: 
-                                                    {id: ownerid}}, 
-                                            comment: comment, 
+                        csvdata: JSON.stringify(datacontents),
+                        dobj: { create: {   owner: {connect:
+                                                    {id: ownerid}},
+                                            comment: comment,
                                             datatype: datatype,
-                                            NameAssignment: { 
+                                            NameAssignment: {
                                                 create: {
                                                     ObjectName: {
                                                         create: {
-                                                            owner: {connect: 
+                                                            owner: {connect:
                                                             {id: ownerid}},
                                                             desc: description,
                                                             name: name,
@@ -98,29 +115,29 @@ export default async function handle(req, res) {
                                                     }
                                                 }
                                             }
-                                        } 
+                                        }
                                 },
-                        } 
+                        }
                 });
                 break;
             }
             case "/datatypes/img": {
                 const datacontents = {"contents": fs.readFileSync(files.imgpath.path),
                                  "length": files.imgpath.size,
-                                 "type": files.imgpath.type} 
+                                 "type": files.imgpath.type}
                 fs.unlinkSync(files.imgpath.path)
                 jobj = await prisma.imgData.create( {
                     data: {
-                        img: JSON.stringify(datacontents),      
-                        dobj: { create: {   owner: {connect: 
-                                                    {id: ownerid}}, 
-                                            comment: comment, 
+                        img: JSON.stringify(datacontents),
+                        dobj: { create: {   owner: {connect:
+                                                    {id: ownerid}},
+                                            comment: comment,
                                             datatype: datatype,
-                                            NameAssignment: { 
+                                            NameAssignment: {
                                                 create: {
                                                     ObjectName: {
                                                         create: {
-                                                            owner: {connect: 
+                                                            owner: {connect:
                                                             {id: ownerid}},
                                                             desc: description,
                                                             name: name,
@@ -128,19 +145,19 @@ export default async function handle(req, res) {
                                                     }
                                                 }
                                             }
-                                        } 
+                                        }
                                 },
-                        } 
+                        }
                 });
                 break;
             }
             case "/datatypes/pynum": {
                 jobj = await prisma.pyNumData.create( {
                     data: {
-                        val: Number(pynumber),      
-                        dobj: { create: { owner: {connect: {id: ownerid}}, 
-                                            comment: comment, 
-                                            datatype: datatype, 
+                        val: Number(pynumber),
+                        dobj: { create: { owner: {connect: {id: ownerid}},
+                                            comment: comment,
+                                            datatype: datatype,
                                             NameAssignment: {
                                                 create: {
                                                     ObjectName: {
@@ -153,19 +170,20 @@ export default async function handle(req, res) {
                                                         }
                                                     }
                                                 }
-                                            } 
+                                            }
                                 },
-                        } 
+                        }
                 });
+
                 break;
             }
             case "/datatypes/pystring": {
                 jobj = await prisma.pyStrData.create( {
                     data: {
-                        val: pystring,      
-                        dobj: { create: { owner: {connect: {id: ownerid}}, 
-                                            comment: comment, 
-                                            datatype: datatype, 
+                        val: pystring,
+                        dobj: { create: { owner: {connect: {id: ownerid}},
+                                            comment: comment,
+                                            datatype: datatype,
                                             NameAssignment: {
                                                 create: {
                                                     ObjectName: {
@@ -178,19 +196,19 @@ export default async function handle(req, res) {
                                                         }
                                                     }
                                                 }
-                                            } 
+                                            }
                                 },
-                        } 
+                        }
                 });
                 break;
             }
             case "/datatypes/datacolumn": {
                 jobj = await prisma.columnData.create( {
                     data: {
-                        headerlabel: datacolumnheader,      
-                        typedesc: datacolumntype,      
-                        dobj: { create: { owner: {connect: {id: ownerid}}, 
-                                          comment: comment, 
+                        headerlabel: datacolumnheader,
+                        typedesc: datacolumntype,
+                        dobj: { create: { owner: {connect: {id: ownerid}},
+                                          comment: comment,
                                           datatype: datatype,
                                           NameAssignment: {
                                               create: {
@@ -203,10 +221,10 @@ export default async function handle(req, res) {
                                                       }
                                                   }
                                               }
-                                          }  
-                                    } 
+                                          }
+                                    }
                                 },
-                        } 
+                        }
                 });
                 break;
             }
@@ -232,8 +250,8 @@ export default async function handle(req, res) {
                     dataStruct.colname5 = schemaLabel5
                     dataStruct.coldesc5 = schemaType5
                 }
-                dataStruct.dobj = { create: { owner: {connect: {id: ownerid}}, 
-                    comment: comment, 
+                dataStruct.dobj = { create: { owner: {connect: {id: ownerid}},
+                    comment: comment,
                     datatype: datatype,
                     NameAssignment: {
                         create: {
@@ -246,10 +264,55 @@ export default async function handle(req, res) {
                                     }
                                 }
                             }
-                        }  
-                        } 
+                        }
+                        }
                     }
                 jobj = await prisma.schemaData.create( {
+                    data: dataStruct});
+                break;
+            }
+            case "/datatypes/function": {
+                var dataStruct = {}
+                if (paramLabel1) {
+                    dataStruct.paramname1 = paramLabel1
+                    dataStruct.paramdesc1 = paramType1
+                }
+                if (paramLabel2) {
+                    dataStruct.paramname2 = paramLabel2
+                    dataStruct.paramdesc2 = paramType2
+                }
+                if (paramLabel3) {
+                    dataStruct.paramname3 = paramLabel3
+                    dataStruct.paramdesc3 = paramType3
+                }
+                if (paramLabel4) {
+                    dataStruct.paramname4 = paramLabel4
+                    dataStruct.paramdesc4 = paramType4
+                }
+                if (paramLabel5) {
+                    dataStruct.paramname5 = paramLabel5
+                    dataStruct.paramdesc5 = paramType5
+                }
+                dataStruct.code = code
+                dataStruct.dobj = { create: { owner: {connect: {id: ownerid}},
+                    comment: comment,
+                    datatype: datatype,
+                    NameAssignment: {
+                        create: {
+                            ObjectName: {
+                                create: {
+                                    owner: {connect:
+                                    {id: ownerid}},
+                                    desc: description,
+                                    name: name,
+                                    }
+                                }
+                            }
+                        }
+                        }
+                    }
+                console.log(prisma)
+                jobj = await prisma.functionData.create( {
                     data: dataStruct});
                 break;
             }
@@ -258,11 +321,18 @@ export default async function handle(req, res) {
             }
         }
     if (jobj) {
+        const objname = await prisma.objectName.findMany( {
+            where: {
+              version: {id: jobj.id}
+            }
+        })
+        console.log(objname)
+
         const jobj2 = await prisma.timeline.create( {
             data: {
                 op: "create",
                 ref: {connect: {
-                    id: jobj.dobjid
+                    id: objname[0].id
                 }},
                 owner: {connect: {
                     id: ownerid
@@ -274,6 +344,7 @@ export default async function handle(req, res) {
     } else {
         res.json({"resultcode": "fail"})
     }
+
 }
 
 export const config = {

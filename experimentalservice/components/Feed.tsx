@@ -24,7 +24,7 @@ type Props = {
 const Feed: React.FC<{posts: FeedProps}> = ({ props }) => {
   return (
     <Table>
-    <Table.Body height={240}>
+    <Table.Body>
        {props.feed.map(obj => (
        <Table.Row key={obj.id} isSelectable onSelect={() => Router.push(`/dobj/${obj.ref.id}`)}>
           <Table.TextCell>On {obj.timestamp}, {obj.owner.name} performed the <b>{obj.op}</b> operation on object {obj.ref.name} ({obj.ref.id})</Table.TextCell>
