@@ -7,7 +7,6 @@ const prisma = new PrismaClient()
 export default async function handle(req, res) {
   const email = req.body.email
   const name = req.body.name
-  console.log(name, email)
   const result = await prisma.user.upsert({
     where: { email: email },
     update: { name: name },
