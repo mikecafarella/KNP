@@ -9,7 +9,7 @@ export default async function handle(req, res) {
         {id : 'desc',},
       ],
       where: {isdeleted: 0,},
-      select: {version: {
+      select: {versions: {
                 select: {dobj: true, timestamp: true},
                 },
                 owner: true,

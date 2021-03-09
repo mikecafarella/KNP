@@ -1,0 +1,70 @@
+{
+  "version": "0.3.14-fixed",
+  "steps": [
+    {
+      "tag": "CreateField",
+      "model": "ObjectName",
+      "field": "versions",
+      "type": "NameAssignment",
+      "arity": "List"
+    },
+    {
+      "tag": "DeleteField",
+      "model": "ObjectName",
+      "field": "version"
+    },
+    {
+      "tag": "CreateField",
+      "model": "NameAssignment",
+      "field": "objnameid",
+      "type": "Int",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateField",
+      "model": "NameAssignment",
+      "field": "objname",
+      "type": "ObjectName",
+      "arity": "Required"
+    },
+    {
+      "tag": "CreateDirective",
+      "location": {
+        "path": {
+          "tag": "Field",
+          "model": "NameAssignment",
+          "field": "objname"
+        },
+        "directive": "relation"
+      }
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "NameAssignment",
+          "field": "objname"
+        },
+        "directive": "relation"
+      },
+      "argument": "fields",
+      "value": "[objnameid]"
+    },
+    {
+      "tag": "CreateArgument",
+      "location": {
+        "tag": "Directive",
+        "path": {
+          "tag": "Field",
+          "model": "NameAssignment",
+          "field": "objname"
+        },
+        "directive": "relation"
+      },
+      "argument": "references",
+      "value": "[id]"
+    }
+  ]
+}

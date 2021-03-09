@@ -57,6 +57,7 @@ export default async function handle(req, res) {
             predecessors
         } = metadata
     let jobj = null
+    let objname = null
         switch (datatype) {
             case "/datatypes/json": {
                 // const datacontents = {"contents": fs.readFileSync(files.jsonpath.path),
@@ -67,27 +68,32 @@ export default async function handle(req, res) {
                 jobj = await prisma.jsonData.create( {
                     data: {
                         jsondata: JSON.stringify(jsondata),
-                        dobj: { create: {   owner: {connect:
-                                                    {id: ownerid}},
-                                            comment: comment,
-                                            datatype: datatype,
-                                            predecessors: predecessors.map(p => { id: p }),
-                                            NameAssignment: {
-                                                create: {
-                                                    ObjectName: {
-                                                        create: {
-                                                            owner: {connect:
-                                                            {id: ownerid}},
-                                                            desc: description,
-                                                            name: name,
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                },
+                        dobj: {
+                            create: {
+                                owner: {connect:{id: ownerid}},
+                                comment: comment,
+                                datatype: datatype,
+                                predecessors: predecessors.map(p => { id: p }),
+                            }
+                        },
+                    }
+                });
+
+                objname = await prisma.objectName.create( {
+                    data: {
+                        owner: {connect:{id: ownerid}},
+                        desc: description,
+                        name: name,
                         }
                 });
+
+                let nameassign = await prisma.nameAssignment.create( {
+                  data: {
+                        dobj: {connect: {id: jobj.id}},
+                        objname: {connect: {id: objname.id}}
+                      }
+                })
+
                 break;
             }
             case "/datatypes/csv": {
@@ -319,17 +325,11 @@ export default async function handle(req, res) {
             }
         }
     if (jobj) {
-        const objname = await prisma.objectName.findMany( {
-            where: {
-              version: {id: jobj.id}
-            }
-        })
-
         const jobj2 = await prisma.timeline.create( {
             data: {
                 op: "create",
                 ref: {connect: {
-                    id: objname[0].id
+                    id: objname.id
                 }},
                 owner: {connect: {
                     id: ownerid

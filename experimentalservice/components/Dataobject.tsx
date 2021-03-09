@@ -163,7 +163,6 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         justifyContent="center"
       >
         <Pane width="100%" overflowY="scroll" background="tint1" padding={majorScale(1)}>
-        This should include all versions, but only one is being returned right now (?)
         <Table>
           <Table.Head>
             <Table.TextHeaderCell>
@@ -180,7 +179,7 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
             {dobj.versions.map(
                (version) => (
                  <Table.Row key="0" isSelectable onSelect={() => Router.push("/anonobj/" + dobj.id)}>
-                   <Table.TextCell>{version.timestamp}</Table.TextCell>
+                   <Table.TextCell>{version.readableDate}</Table.TextCell>
                    <Table.TextCell>{version.comment}</Table.TextCell>
                    <Table.TextCell>{version.datatype}</Table.TextCell>
                  </Table.Row>

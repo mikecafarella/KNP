@@ -6,8 +6,8 @@ API_URL = ""
 def get_user_id(email, name):
     url = "http://localhost:3000/api/user"
     data = {
-        'email': 'mrander@umich.edu',
-        'name': 'Mike Anderson'
+        'email': email,
+        'name': name,
     }
     headers = {'Content-type': 'application/json'}
     response = requests.post(url, headers=headers, data=json.dumps(data))

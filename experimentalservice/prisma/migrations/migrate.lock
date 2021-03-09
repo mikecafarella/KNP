@@ -1,0 +1,6 @@
+# Prisma Migrate lockfile v1
+
+20210210155807-add-functions
+20210308014852-mulit-versions
+20210309141913-fix-versions
+20210309151136-clean-up

@@ -26,7 +26,7 @@ const Feed: React.FC<{posts: FeedProps}> = ({ props }) => {
     <Table>
     <Table.Body>
        {props.feed.map(obj => (
-       <Table.Row key={obj.id} isSelectable onSelect={() => Router.push(`/dobj/${obj.ref.id}`)}>
+       <Table.Row key={obj.id} isSelectable onSelect={() => Router.push(`/dobj/X${obj.ref.id}`)}>
           <Table.TextCell>On {obj.timestamp}, {obj.owner.name} performed the <b>{obj.op}</b> operation on object {obj.ref.name} ({obj.ref.id})</Table.TextCell>
        </Table.Row>
       ))}

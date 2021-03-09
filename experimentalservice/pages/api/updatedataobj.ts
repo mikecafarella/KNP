@@ -54,6 +54,7 @@ export default async function handle(req, res) {
             paramLabel5,
             paramType5,
             code,
+            predecessors
         } = metadata
 
     let jobj = null
@@ -71,24 +72,26 @@ export default async function handle(req, res) {
                                                     {id: ownerid}},
                                             comment: comment,
                                             datatype: datatype,
-                                            NameAssignment: {
-                                                create: {}
-                                                }
-                                            }
+                                            predecessors: predecessors.map(p => { id: p })
                                         }
                         }
-                });
+                      }
+                })
 
-                objname = await prisma.objectName.update( {
+                let objnames = await prisma.objectName.findMany( {
                     where: {
                       id: dobjid
-                    },
-                    data: {
-                      version: {connect: {id:  jobj.dobjid}}
                     }
                 })
 
+                objname = objnames[0]
 
+                let nameassign = await prisma.nameAssignment.create( {
+                  data: {
+                        dobj: {connect: {id: jobj.id}},
+                        objname: {connect: {id: objname.id}}
+                      }
+                })
 
                 break;
             }

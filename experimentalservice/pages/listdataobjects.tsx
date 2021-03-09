@@ -52,9 +52,9 @@ const DataObjects: React.FC<Props> = (props) => {
                 <Table.TextCell>X{obj.id}</Table.TextCell>
                 <Table.TextCell>{obj.name}</Table.TextCell>
                 <Table.TextCell>{obj.desc}</Table.TextCell>
-                <Table.TextCell>{obj.version.dobj.datatype}</Table.TextCell>
-                <Table.TextCell>{obj.version.timestamp}</Table.TextCell>
-                <Table.TextCell>{obj.version.dobj.comment}</Table.TextCell>
+                <Table.TextCell>{obj.versions[0].dobj.datatype}</Table.TextCell>
+                <Table.TextCell>{obj.versions[0].timestamp}</Table.TextCell>
+                <Table.TextCell>{obj.versions[0].dobj.comment}</Table.TextCell>
                 <Table.TextCell>{obj.owner.name}</Table.TextCell>
              </Table.Row>
             ))}

@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url = "***"
 }
 
 
@@ -12,18 +12,27 @@ model ObjectName {
   id       Int        @id @default(autoincrement())
   name     String     @default("")
   desc     String     @default("")
-  versions NameAssignment[]
+  versionid Int
+  version  NameAssignment @relation(fields: [versionid], references: [id])
   ownerid  Int
   owner    User      @relation(fields: [ownerid], references: [id])
   isdeleted Int       @default(0)
+}
+
+model Timeline {
+  id      Int         @id @default(autoincrement())
+  op      String
+  timestamp DateTime  @default(now())
+  ownerid Int
+  owner   User        @relation(fields: [ownerid], references: [id])
+  refid   Int
+  ref     ObjectName  @relation(fields: [refid], references: [id])
 }
 
 model NameAssignment {
   id       Int        @id @default(autoincrement())
   dobjid   Int
   dobj     DataObject @relation(fields: [dobjid], references: [id])
-  objnameid Int
-  objname  ObjectName @relation(fields: [objnameid], references: [id])
   timestamp DateTime  @default(now())
 }
 
@@ -36,16 +45,6 @@ model DataObject {
   owner     User     @relation(fields: [ownerid], references: [id])
   predecessors  DataObject[]
   isdeleted Int       @default(0)
-}
-
-model Timeline {
-  id      Int         @id @default(autoincrement())
-  op      String
-  timestamp DateTime  @default(now())
-  ownerid Int
-  owner   User        @relation(fields: [ownerid], references: [id])
-  refid   Int
-  ref     ObjectName  @relation(fields: [refid], references: [id])
 }
 
 model ImgData {

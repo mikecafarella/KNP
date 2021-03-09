@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url = "***"
 }
 
 
@@ -12,6 +12,8 @@ model ObjectName {
   id       Int        @id @default(autoincrement())
   name     String     @default("")
   desc     String     @default("")
+  versionid Int
+  // version  NameAssignment @relation(fields: [versionid], references: [id])
   versions NameAssignment[]
   ownerid  Int
   owner    User      @relation(fields: [ownerid], references: [id])
