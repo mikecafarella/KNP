@@ -315,7 +315,6 @@ export default async function handle(req, res) {
                         }
                         }
                     }
-                console.log(prisma)
                 jobj = await prisma.functionData.create( {
                     data: dataStruct});
                 break;
@@ -341,8 +340,6 @@ export default async function handle(req, res) {
     } else {
         res.json({"resultcode": "fail"})
     }
-
-    console.log(jobj)
 }
 
 export const config = {
