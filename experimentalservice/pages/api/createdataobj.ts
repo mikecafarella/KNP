@@ -64,6 +64,10 @@ export default async function handle(req, res) {
                 //                  "length": files.jsonpath.size,
                 //                  "type": files.jsonpath.type}
                 // fs.unlinkSync(files.jsonpath.path)
+                let preds = []
+                for (let i = 0; i++; i < predecessors.length) {
+                  preds.push({ connect: { id: predecessors[i] }})
+                }
 
                 jobj = await prisma.jsonData.create( {
                     data: {
@@ -73,7 +77,7 @@ export default async function handle(req, res) {
                                 owner: {connect:{id: ownerid}},
                                 comment: comment,
                                 datatype: datatype,
-                                predecessors: predecessors.map(p => { id: p }),
+                                predecessors: preds,
                             }
                         },
                     }
