@@ -54,5 +54,6 @@ if __name__ == "__main__":
     data_obj_id = obj_data['data']['dobjid']
     version_id = obj_data['data']['versionid']
 
+    # Save the data object id for use in the next step
     with open("step_1_obj_id.txt", "wt") as f:
         f.write(str(data_obj_id))

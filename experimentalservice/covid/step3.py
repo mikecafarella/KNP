@@ -8,6 +8,7 @@ from lib import get_user_id, create_data_object, get_data_object
 USER_NAME = 'Jenny Vo-Phamhi'
 USER_EMAIL = 'jennyvo@umich.edu'
 
+# Load the ID for the source we're using from our makeshift local store
 with open("step_2_obj_id.txt", "rt") as f:
     for line in f:
         SOURCE_OBJ_ID = int(line.strip())
@@ -41,20 +42,3 @@ if __name__ == "__main__":
         comment = "Cloropleth map",
         predecessors = PREDECESSORS
     )
-
-    # pre1 = knps.File("predict_1.png")
-    # pic = knps.value(pre1, "Predict 1 image", "Mike", [total_val, ])
-    # knps.variable(pic,"picture from Mike")
-    #
-    # # generate the ten least cases
-    # L = [(k, v) for (k, v) in total_val.getConcreteVal().items()]
-    # L.sort(key=lambda x: x[1])
-    # print(L)
-    #
-    # least_list = []
-    # for i in range(1, 11):
-    #     least_list.append(L[i][0])
-    #
-    # least_val = knps.value(least_list, "Least ten states in the prediction",
-    #                        "Mike", [total_val, ])
-    # least_var = knps.variable(least_val, "variable holding least ten states")

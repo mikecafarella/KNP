@@ -16,6 +16,7 @@ from lib import get_user_id, update_data_object
 USER_NAME = "Mike Anderson"
 USER_EMAIL = "mrander@umich.edu"
 
+# Load the ID for the source we're using from our makeshift local store
 with open("step_1_obj_id.txt", "rt") as f:
     for line in f:
         DATA_OBJECT_ID = int(line.strip())

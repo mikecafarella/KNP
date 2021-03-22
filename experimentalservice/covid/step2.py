@@ -20,6 +20,7 @@ from lib import get_user_id, create_data_object, get_data_object
 USER_NAME = 'Yuze Lou'
 USER_EMAIL = 'yuze@example.com'
 
+# Load the ID for the source we're using from our makeshift local store
 with open("step_1_obj_id.txt", "rt") as f:
     for line in f:
         SOURCE_OBJ_ID = int(line.strip())
@@ -82,6 +83,7 @@ def step2(_):
     data_obj_id = obj_data['data']['dobjid']
     version_id = obj_data['data']['versionid']
 
+    # Save the ID for the data object locally, for use in the next step
     with open("step_2_obj_id.txt", "wt") as f:
         f.write(str(data_obj_id))
 
