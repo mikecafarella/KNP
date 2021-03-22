@@ -1,3 +1,27 @@
+
+You should just be able to clone this repo, go to the experimentalservice directory and run 
+
+```
+npm install
+```
+
+and then to run it:
+
+```
+npm run dev
+```
+
+The website will then be available at `http://localhost:3000`
+
+Example use of the API from python can be found in the `covid` directory here. The scripts step1.py, step1_5.py, step2.py, and step3.py simuate a multi-person workflow downloading third party data, processing it, uploading it to KNPS, downloading it, further processing it, reuploading new versions, etc.
+
+
+# Old stuff down here:
+
+
+---------------
+
+
 # Fullstack Example with Next.js (REST API)
 
 This example shows how to implement a **fullstack app in TypeScript with [Next.js](https://nextjs.org/)** using [React](https://reactjs.org/) (frontend), [Express](https://expressjs.com/) and [Prisma Client](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client) (backend). It uses a SQLite database file with some initial dummy data which you can find at [`./prisma/dev.db`](./prisma/dev.db).
