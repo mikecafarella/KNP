@@ -17,15 +17,17 @@ import knps
 from lib import get_user_id, create_data_object, get_data_object
 
 
-USER_NAME = 'Dr. Wang'
-USER_EMAIL = 'wang@example.com'
+USER_NAME = 'Yuze Lou'
+USER_EMAIL = 'yuze@example.com'
 SOURCE_OBJ_ID = 1
-PREDECESSORS = [SOURCE_OBJ_ID]
 
 # It ends one day earlier.
 def step2(_):
     user_id = get_user_id(USER_EMAIL, USER_NAME)
     data_source = get_data_object(SOURCE_OBJ_ID)
+
+    PREDECESSORS = [data_source['version_id']]
+
 
     DATE_TO_PREDICT = int(
         (datetime.today() - timedelta(days=1)).strftime('%Y%m%d'))
@@ -36,7 +38,7 @@ def step2(_):
     start = starting_date.strftime('%Y%m%d')
     temp_dict = {}
 
-    for key, val in data_source.items():
+    for key, val in data_source['jsondata'].items():
         temp_list = []
         i = 1
         for one_day in val:

@@ -9,34 +9,38 @@ import { majorScale, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph,
 
 
 const DataobjectSummary: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
+  let label = null
   const [tabIndex, setTabIndex] = useState(0)
-  var objLink = ""
+  let objLink = ""
+  let obj = ""
   if (dobj) {
-    objLink = "http://localhost:3000/dobj/" + (dobj.label.iscurrent ? "X" + dobj.label.id : dobj.dobj.id)
+    obj = dobj.dobj ? dobj.dobj : dobj
+    label = dobj.label ? dobj.label : dobj.NameAssignment[0].objname
+    objLink = "http://localhost:3000/dobj/" + "X" + label.id + (label.iscurrent ? "" : "/v" + dobj.id)
   }
-
+  // <Strong size={500}>{label.iscurrent ? label.name : "Anonymous object:" + obj.id}</Strong> <Text size={300}></Text>
   return (
     <Pane width="100%">
-    { dobj &&    
+    { dobj &&
         <Pane border>
         <Paragraph>
-       <Strong size={500}>{dobj.label.iscurrent ? dobj.label.name : "Anonymous object:" + dobj.dobj.id}</Strong> <Text size={300}></Text>
+       <Strong size={500}>{label.name}</Strong> <Text size={300}></Text>
        </Paragraph>
 
         <Pane marginLeft={majorScale(1)}>
-          <Paragraph>  
+          <Paragraph>
             <Link size={300} href={objLink}> {objLink}</Link>
-          </Paragraph>  
-          <Paragraph color="muted">  
-              <Text size={300}>Object {dobj.dobj.id} from {dobj.dobj.owner.name} ({dobj.dobj.owner.email})</Text><br></br>
+          </Paragraph>
+          <Paragraph color="muted">
+              <Text size={300}>Object {obj.id} from {obj.owner.name} ({obj.owner.email})</Text><br></br>
           </Paragraph>
         </Pane>
-        <DataContent datacontent={dobj.dobj}/> 
+        <DataContent datacontent={obj}/>
         </Pane>
     }
     </Pane>
 
     )
   }
-  
+
   export default DataobjectSummary

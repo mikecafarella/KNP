@@ -11,15 +11,55 @@ export default async function handle(req, res) {
   */}
   if (req.query.id.startsWith("X")) {
     var realId = Number(req.query.id.substring(1))
+
     const obj = await prisma.objectName.findMany({
       where: { id: realId },
       include: {owner: true,
                   versions: {
+                    orderBy: {
+                        id: 'desc',
+                      },
                     include: {
                       dobj: {
                         include: {
                           owner: true,
-                          predecessors: true,
+                          predecessors: {
+                            include: {
+                              owner: true,
+                              NameAssignment: {
+                                include: {
+                                  objname: true
+                                }
+                              },
+                              JsonData: true,
+                              CsvData: true,
+                              ImgData: true,
+                              ColumnData: true,
+                              SchemaData: true,
+                              PyStrData: true,
+                              PyNumData: true,
+                              FunctionData: true,
+                              predecessors: {
+                                include: {
+                                  owner: true,
+                                  NameAssignment: {
+                                    include: {
+                                      objname: true
+                                    }
+                                  },
+                                  JsonData: true,
+                                  CsvData: true,
+                                  ImgData: true,
+                                  ColumnData: true,
+                                  SchemaData: true,
+                                  PyStrData: true,
+                                  PyNumData: true,
+                                  FunctionData: true,
+                                  predecessors: true
+                                }
+                              }
+                            }
+                          },
                           JsonData: true,
                           CsvData: true,
                           ImgData: true,
@@ -34,6 +74,15 @@ export default async function handle(req, res) {
                   }
                 }
               })
+        // const successors = await prisma.dataObject.findMany({
+        //   where: {
+        //     predecessors: {
+        //       id: { equals: obj[0].versions[0].dobj.id }
+        //     }
+        //   },
+        // })
+        //
+        // console.log(successors)
 
     {/**
       Convert this into the format needed by client
@@ -64,11 +113,13 @@ export default async function handle(req, res) {
         PyNumData: obj[0].versions[0].dobj.PyNumData,
       }
     }
+
     let versions = []
     for (let i = 0; i < obj[0].versions.length; i++) {
       const readableDate = new Date(obj[0].versions[i].dobj.timestamp).toString()
       versions.push({
         id: obj[0].versions[i].dobj.id,
+        dobjid: obj[0].id,
         timestamp: obj[0].versions[i].dobj.timestamp,
         readableDate: readableDate,
         datatype: obj[0].versions[i].dobj.datatype,

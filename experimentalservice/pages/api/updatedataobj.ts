@@ -10,8 +10,8 @@ export default async function handle(req, res) {
     const data = await new Promise(function (resolve, reject) {
         const form = new formidable.IncomingForm();
         form.parse(req, function (err, fields, files) {
-            // const metadata = JSON.parse(fields["metadata"])
-            const metadata = fields["metadata"]
+            const metadata = JSON.parse(fields["metadata"])
+            // const metadata = fields["metadata"]
             const { dobjid, ownerid, comment, datatype, pynumber, pystring } = metadata
 
             if (err) return reject(err);
@@ -21,8 +21,8 @@ export default async function handle(req, res) {
 
 
     const {fields, files} = data
-    // const metadata = JSON.parse(fields["metadata"])
-    const metadata = fields["metadata"]
+    const metadata = JSON.parse(fields["metadata"])
+    // const metadata = fields["metadata"]
 
     const { dobjid,
             ownerid,
