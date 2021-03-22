@@ -178,7 +178,7 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
             <Table.Body>
             {dobj.versions.map(
                (version) => (
-                 <Table.Row key="0" isSelectable onSelect={() => Router.push("/anonobj/" + dobj.id)}>
+                 <Table.Row key="0" isSelectable onSelect={() => Router.push("/dobj/X" + version.dobjid + "#" + version.id)}>
                    <Table.TextCell>{version.readableDate}</Table.TextCell>
                    <Table.TextCell>{version.comment}</Table.TextCell>
                    <Table.TextCell>{version.datatype}</Table.TextCell>

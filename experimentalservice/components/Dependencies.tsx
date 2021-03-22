@@ -11,12 +11,25 @@ import { callbackify } from 'util';
 
 
 const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
+
     const [mouseIndex, setMouseIndex] = useState(-1)
 
-    const predecessors = dobj.dobj.predecessors.map( async (x) => {
-        const res = await fetch("http://localhost:3000/api/dobj/{x.id}")
-        return await res.json()
-    })
+    console.log(dobj.dobj)
+
+    const predecessors = dobj.dobj.predecessors
+    // const successors = dobj.dobj.successors
+
+    // .map( async (x) => {
+    //     const objnameid = x.NameAssignment[0].objnameid
+    //     const data = fetch("http://localhost:3000/api/dobj/X" + objnameid)
+    //       .then((response) => response.json())
+    //       .then((obj) => {
+    //         return obj;
+    //       });
+    //
+    //       const d = await data
+    //       return d
+    // })
 
     const onClickNodeFn = function(nodeId) {
         setMouseIndex(nodeId)
@@ -27,30 +40,52 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
     const onMouseOutNodeFn = function(nodeId) {
         setMouseIndex(-1)
     };
-        
+
     const labelMap = {}
     const idToNodeMap = {}
-    const links = []
+    let links = []
     const labelFn = function(node) {
         return labelMap[node.id]
     }
     idToNodeMap[dobj.dobj.id] = dobj
-    const nodes = [{ id: dobj.dobj.id, 
-                   color: "red", 
+    let nodes = [{ id: dobj.dobj.id,
+                   color: "red",
                    x: 400,
                    y: 200,
                     labelPosition: "bottom",
                 }]
     labelMap[dobj.dobj.id] = dobj.label.iscurrent ? dobj.label.name : dobj.dobj.id
 
+
+
     for (var p of predecessors) {
-        nodes.append({id: p.dobj.id,
+        let objname = p.NameAssignment[0].objname
+        nodes.push({id: p.id,
                         color: "green",
                     })
-        labelMap[p.dobj.id] = p.label.iscurrent ? p.label.name : p.dobj.id;
-        links.append({source: dobj.dobj.id, target: p.dobj.id})
-        idToNodeMap[p.dobj.id] = p
+        labelMap[p.id] = objname.name
+        links.push({source: p.id , target:dobj.dobj.id})
+        idToNodeMap[p.id] = p
+        for (var q of p.predecessors) {
+          let objname = q.NameAssignment[0].objname
+          nodes.push({id: q.id,
+                          color: "green",
+                      })
+          labelMap[q.id] = objname.name
+          links.push({source: q.id , target:p.id})
+          idToNodeMap[q.id] = q
+        }
     }
+
+    // for (var q of successors) {
+    //   let objname = q.NameAssignment[0].objname
+    //   nodes.push({id: q.id,
+    //                   color: "blue",
+    //               })
+    //   labelMap[q.id] = objname.name
+    //   links.push({source: q.id , target:p.id})
+    //   idToNodeMap[q.id] = q
+    // }
 
 
     const data = {
@@ -74,7 +109,7 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
             highlightColor: "lightblue",
         },
     };
-    
+
 
     return (
         <Card
@@ -96,6 +131,6 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         </Pane>
       </Card>
     )
-}  
+}
 
 export default Dependencies

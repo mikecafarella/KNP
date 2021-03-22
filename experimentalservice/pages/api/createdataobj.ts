@@ -9,8 +9,8 @@ export default async function handle(req, res) {
     const data = await new Promise(function (resolve, reject) {
         const form = new formidable.IncomingForm();
         form.parse(req, function (err, fields, files) {
-            // const metadata = JSON.parse(fields["metadata"])
-            const metadata = fields["metadata"]
+            const metadata = JSON.parse(fields["metadata"])
+            // const metadata = fields["metadata"]
             const { name, description, ownerid, comment, datatype, pynumber, pystring } = metadata
 
             if (err) return reject(err);
@@ -20,9 +20,8 @@ export default async function handle(req, res) {
 
 
     const {fields, files} = data
-    // const metadata = JSON.parse(fields["metadata"])
-    const metadata = fields["metadata"]
-
+    const metadata = JSON.parse(fields["metadata"])
+    // const metadata = fields["metadata"]
     const { name,
             description,
             ownerid,
@@ -56,17 +55,14 @@ export default async function handle(req, res) {
             code,
             predecessors
         } = metadata
-    let jobj = null
-    let objname = null
+        let jobj = null
+        let objname = null
+
         switch (datatype) {
             case "/datatypes/json": {
-                // const datacontents = {"contents": fs.readFileSync(files.jsonpath.path),
-                //                  "length": files.jsonpath.size,
-                //                  "type": files.jsonpath.type}
-                // fs.unlinkSync(files.jsonpath.path)
                 let preds = []
-                for (let i = 0; i++; i < predecessors.length) {
-                  preds.push({ connect: { id: predecessors[i] }})
+                for (let i = 0; i < predecessors.length; i++) {
+                  preds.push({ id: predecessors[i] })
                 }
 
                 jobj = await prisma.jsonData.create( {
@@ -77,7 +73,7 @@ export default async function handle(req, res) {
                                 owner: {connect:{id: ownerid}},
                                 comment: comment,
                                 datatype: datatype,
-                                predecessors: preds,
+                                predecessors: { connect: preds }
                             }
                         },
                     }
@@ -93,7 +89,7 @@ export default async function handle(req, res) {
 
                 let nameassign = await prisma.nameAssignment.create( {
                   data: {
-                        dobj: {connect: {id: jobj.id}},
+                        dobj: {connect: {id: jobj.dobjid}},
                         objname: {connect: {id: objname.id}}
                       }
                 })
@@ -135,29 +131,40 @@ export default async function handle(req, res) {
                                  "length": files.imgpath.size,
                                  "type": files.imgpath.type}
                 fs.unlinkSync(files.imgpath.path)
-                jobj = await prisma.imgData.create( {
+                let preds = []
+                for (let i = 0; i < predecessors.length; i++) {
+                  preds.push({ id: predecessors[i] })
+                }
+                console.log(preds)
+                jobj = await prisma.imgData.create({
+                  data: {
+                    img: JSON.stringify(datacontents),
+                    dobj: {
+                      create: {
+                        owner: { connect: { id: ownerid } },
+                        comment: comment,
+                        datatype: datatype,
+                        predecessors:  { connect:  preds }
+                      }
+                    }
+                  }
+                })
+
+                objname = await prisma.objectName.create( {
                     data: {
-                        img: JSON.stringify(datacontents),
-                        dobj: { create: {   owner: {connect:
-                                                    {id: ownerid}},
-                                            comment: comment,
-                                            datatype: datatype,
-                                            NameAssignment: {
-                                                create: {
-                                                    ObjectName: {
-                                                        create: {
-                                                            owner: {connect:
-                                                            {id: ownerid}},
-                                                            desc: description,
-                                                            name: name,
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                },
+                        owner: {connect:{id: ownerid}},
+                        desc: description,
+                        name: name,
                         }
                 });
+
+                let nameassign = await prisma.nameAssignment.create( {
+                  data: {
+                        dobj: {connect: {id: jobj.dobjid}},
+                        objname: {connect: {id: objname.id}}
+                      }
+                })
+
                 break;
             }
             case "/datatypes/pynum": {
