@@ -19,7 +19,12 @@ from lib import get_user_id, create_data_object, get_data_object
 
 USER_NAME = 'Yuze Lou'
 USER_EMAIL = 'yuze@example.com'
-SOURCE_OBJ_ID = 1
+
+with open("step_1_obj_id.txt", "rt") as f:
+    for line in f:
+        SOURCE_OBJ_ID = int(line.strip())
+
+print("Using Data Object ID: ", SOURCE_OBJ_ID)
 
 # It ends one day earlier.
 def step2(_):
@@ -73,6 +78,12 @@ def step2(_):
         comment = val_comment,
         predecessors = PREDECESSORS
     )
+
+    data_obj_id = obj_data['data']['dobjid']
+    version_id = obj_data['data']['versionid']
+
+    with open("step_2_obj_id.txt", "wt") as f:
+        f.write(str(data_obj_id))
 
 
 if __name__ == "__main__":

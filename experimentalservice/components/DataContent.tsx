@@ -25,6 +25,10 @@ const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) =
         const imgBytes = JSON.parse(datacontent.ImgData[0].img).contents.data
         imgstr = "data:image/png;base64, " + new Buffer(imgBytes).toString('base64')
     }
+    else if (datacontent.datatype == "/datatypes/pdf") {
+        const imgBytes = JSON.parse(datacontent.ImgData[0].img).contents.data
+        imgstr = "data:application/pdf;base64," + new Buffer(imgBytes).toString('base64')
+    }
     return (
         <Pane overflowY="scroll" background="tint1" padding={majorScale(1)}>
         { datacontent.datatype == "/datatypes/json" &&
@@ -61,6 +65,12 @@ const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) =
                 <Pre>
                 <img src={imgstr}/>
                 </Pre>
+            </Pane>
+        }
+
+        { datacontent.datatype == "/datatypes/pdf" &&
+            <Pane display="flex" >
+                <embed src={imgstr} width="1200" height="800"/>
             </Pane>
         }
 

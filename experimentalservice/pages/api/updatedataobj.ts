@@ -88,7 +88,7 @@ export default async function handle(req, res) {
 
                 let nameassign = await prisma.nameAssignment.create( {
                   data: {
-                        dobj: {connect: {id: jobj.id}},
+                        dobj: {connect: {id: jobj.dobjid}},
                         objname: {connect: {id: objname.id}}
                       }
                 })

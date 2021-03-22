@@ -50,3 +50,9 @@ if __name__ == "__main__":
         jsondata = dict(rst),
         comment = val_comment
     )
+
+    data_obj_id = obj_data['data']['dobjid']
+    version_id = obj_data['data']['versionid']
+
+    with open("step_1_obj_id.txt", "wt") as f:
+        f.write(str(data_obj_id))

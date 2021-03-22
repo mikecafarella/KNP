@@ -16,7 +16,11 @@ from lib import get_user_id, update_data_object
 USER_NAME = "Mike Anderson"
 USER_EMAIL = "mrander@umich.edu"
 
-DATA_OBJECT_ID = 1
+with open("step_1_obj_id.txt", "rt") as f:
+    for line in f:
+        DATA_OBJECT_ID = int(line.strip())
+
+print("Using Data Object ID: ", DATA_OBJECT_ID)
 
 if __name__ == "__main__":
     user_id = get_user_id(USER_EMAIL, USER_NAME)

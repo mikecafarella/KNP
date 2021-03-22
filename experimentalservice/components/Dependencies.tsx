@@ -60,6 +60,7 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
 
     for (var p of predecessors) {
         let objname = p.NameAssignment[0].objname
+        console.log('p', p.id)
         nodes.push({id: p.id,
                         color: "green",
                     })
@@ -67,6 +68,7 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         links.push({source: p.id , target:dobj.dobj.id})
         idToNodeMap[p.id] = p
         for (var q of p.predecessors) {
+          console.log('q', q.id)
           let objname = q.NameAssignment[0].objname
           nodes.push({id: q.id,
                           color: "green",
@@ -76,6 +78,8 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
           idToNodeMap[q.id] = q
         }
     }
+
+    console.log(nodes)
 
     // for (var q of successors) {
     //   let objname = q.NameAssignment[0].objname
@@ -97,13 +101,23 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         directed: true,
         nodeHighlightBehavior: true,
         highlightDegree: 0,
-        maxZoom: 1,
+        maxZoom: 2,
         minZoom: 1,
+        width: 1000,
+        height: 600,
+        "d3": {
+          "alphaTarget": 0.05,
+          "gravity": 0,
+          "linkLength": 150,
+          "linkStrength": 1,
+          "disableLinkForce": false
+        },
         node: {
             color: "lightgreen",
             size: 500,
             highlightStrokeColor: "blue",
             labelProperty: labelFn,
+            fontSize: 12
         },
         link: {
             highlightColor: "lightblue",
@@ -122,7 +136,7 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
                 id="graph-id" // id is mandatory, if no id is defined rd3g will throw an error
                 data={data}
                 onClickNode={onClickNodeFn}
-                onMouseOutNode={onMouseOutNodeFn}
+                // onMouseOutNode={onMouseOutNodeFn}
                 onMouseOverNode={onMouseOverNodeFn}
                 config={myConfig}/>
         </Pane>

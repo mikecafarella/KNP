@@ -5,18 +5,20 @@ import plotly
 from lib import get_user_id, create_data_object, get_data_object
 
 
-USER_NAME = 'Pablo Picasso'
-USER_EMAIL = 'pablo@picasso.net'
-SOURCE_OBJ_ID = 2
+USER_NAME = 'Jenny Vo-Phamhi'
+USER_EMAIL = 'jennyvo@umich.edu'
+
+with open("step_2_obj_id.txt", "rt") as f:
+    for line in f:
+        SOURCE_OBJ_ID = int(line.strip())
+
+print("Using Data Object ID: ", SOURCE_OBJ_ID)
 
 if __name__ == "__main__":
     user_id = get_user_id(USER_EMAIL, USER_NAME)
     data_source = get_data_object(SOURCE_OBJ_ID)
 
     PREDECESSORS = [data_source['version_id']]
-
-    import json
-    print(json.dumps(data_source, indent=2))
 
     # process the data for total cases
     loc = []
