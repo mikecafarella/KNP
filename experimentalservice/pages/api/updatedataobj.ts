@@ -61,10 +61,11 @@ export default async function handle(req, res) {
     let objname = null
         switch (datatype) {
             case "/datatypes/json": {
-                // const datacontents = {"contents": fs.readFileSync(files.jsonpath.path),
-                //                  "length": files.jsonpath.size,
-                //                  "type": files.jsonpath.type}
-                // fs.unlinkSync(files.jsonpath.path)
+                let preds = []
+                for (let i = 0; i < predecessors.length; i++) {
+                  preds.push({ id: predecessors[i] })
+                }
+
                 jobj = await prisma.jsonData.create( {
                     data: {
                         jsondata: JSON.stringify(jsondata),
@@ -72,7 +73,7 @@ export default async function handle(req, res) {
                                                     {id: ownerid}},
                                             comment: comment,
                                             datatype: datatype,
-                                            predecessors: predecessors.map(p => { id: p })
+                                            predecessors: { connect: preds }
                                         }
                         }
                       }
@@ -126,34 +127,44 @@ export default async function handle(req, res) {
                 break;
             }
             case "/datatypes/img": {
+              let preds = []
+              for (let i = 0; i < predecessors.length; i++) {
+                preds.push({ id: predecessors[i] })
+              }
+
                 const datacontents = {"contents": fs.readFileSync(files.imgpath.path),
                                  "length": files.imgpath.size,
                                  "type": files.imgpath.type}
                 fs.unlinkSync(files.imgpath.path)
                 jobj = await prisma.imgData.create( {
-                    data: {
-                        img: JSON.stringify(datacontents),
-                        dobj: { create: {   owner: {connect:
-                                                    {id: ownerid}},
-                                            comment: comment,
-                                            datatype: datatype,
-                                            NameAssignment: {
-                                                create: {
-                                                    ObjectName: {
-                                                        create: {
-                                                            owner: {connect:
-                                                            {id: ownerid}},
-                                                            desc: description,
-                                                            name: name,
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                },
-                        }
-                });
-                break;
+                  data: {
+                      img: JSON.stringify(datacontents),
+                      dobj: { create: {   owner: {connect:
+                                                  {id: ownerid}},
+                                          comment: comment,
+                                          datatype: datatype,
+                                          predecessors: { connect: preds }
+                                      }
+                      }
+                    }
+              })
+
+              let objnames = await prisma.objectName.findMany( {
+                  where: {
+                    id: dobjid
+                  }
+              })
+
+              objname = objnames[0]
+
+              let nameassign = await prisma.nameAssignment.create( {
+                data: {
+                      dobj: {connect: {id: jobj.dobjid}},
+                      objname: {connect: {id: objname.id}}
+                    }
+              })
+
+              break;
             }
             case "/datatypes/pynum": {
                 jobj = await prisma.pyNumData.create( {

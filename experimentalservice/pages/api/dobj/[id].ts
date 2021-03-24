@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 
+
 const prisma = new PrismaClient()
 
 export default async function handle(req, res) {
@@ -9,6 +10,7 @@ export default async function handle(req, res) {
     Or it has no prefix, in which case it's a raw data object.
     This returns data in the format of "DataObjProps".
   */}
+  console.log('API', req.query)
   if (req.query.id.startsWith("X")) {
     var realId = Number(req.query.id.substring(1))
 
@@ -87,6 +89,17 @@ export default async function handle(req, res) {
     {/**
       Convert this into the format needed by client
     */}
+
+    // Find the right versions
+    let vid = 0
+    if (req.query.v) {
+      for (let i = 0; i < obj[0].versions.length; i++) {
+        if (obj[0].versions[i].id == req.query.v) vid = i
+      }
+    }
+
+    console.log(vid)
+
     var outobj = {
       label: {
         id: obj[0].id,
@@ -97,20 +110,20 @@ export default async function handle(req, res) {
         iscurrent: true,
       },
       dobj: {
-        id: obj[0].versions[0].dobj.id,
-        timestamp: obj[0].versions[0].dobj.timestamp,
-        datatype: obj[0].versions[0].dobj.datatype,
-        comment: obj[0].versions[0].dobj.comment,
-        owner: obj[0].versions[0].dobj.owner,
-        predecessors: obj[0].versions[0].dobj.predecessors,
-        JsonData: obj[0].versions[0].dobj.JsonData,
-        CsvData: obj[0].versions[0].dobj.CsvData,
-        ImgData: obj[0].versions[0].dobj.ImgData,
-        ColumnData: obj[0].versions[0].dobj.ColumnData,
-        SchemaData: obj[0].versions[0].dobj.SchemaData,
-        FunctionData: obj[0].versions[0].dobj.FunctionData,
-        PyStrData: obj[0].versions[0].dobj.PyStrData,
-        PyNumData: obj[0].versions[0].dobj.PyNumData,
+        id: obj[0].versions[vid].dobj.id,
+        timestamp: obj[0].versions[vid].dobj.timestamp,
+        datatype: obj[0].versions[vid].dobj.datatype,
+        comment: obj[0].versions[vid].dobj.comment,
+        owner: obj[0].versions[vid].dobj.owner,
+        predecessors: obj[0].versions[vid].dobj.predecessors,
+        JsonData: obj[0].versions[vid].dobj.JsonData,
+        CsvData: obj[0].versions[vid].dobj.CsvData,
+        ImgData: obj[0].versions[vid].dobj.ImgData,
+        ColumnData: obj[0].versions[vid].dobj.ColumnData,
+        SchemaData: obj[0].versions[vid].dobj.SchemaData,
+        FunctionData: obj[0].versions[vid].dobj.FunctionData,
+        PyStrData: obj[0].versions[vid].dobj.PyStrData,
+        PyNumData: obj[0].versions[vid].dobj.PyNumData,
       }
     }
 

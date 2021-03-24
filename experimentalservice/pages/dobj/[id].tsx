@@ -5,9 +5,11 @@ import { UserSelect } from "@prisma/client"
 import { Heading, Pane } from 'evergreen-ui'
 import Dataobject, { DataobjProps } from "../../components/Dataobject"
 import { Console } from "console"
+import { useRouter } from 'next/router'
 
 
   const DataObj: React.FC<DataobjProps> = (props) => {
+    console.log(props)
     return (
       <Layout>
         <Pane>
@@ -18,9 +20,11 @@ import { Console } from "console"
   }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-    const res = await fetch(`http://localhost:3000/api/dobj/${context.query.id}`)
+    console.log(context.query)
+    let version = context.query.v ? '?v=' + context.query.v : ''
+    const res = await fetch(`http://localhost:3000/api/dobj/${context.query.id}${version}`)
     const data = await res.json()
-    return {props: {...data}}
+    return {props: {...data, ...context.query}}
   }
 
 export default DataObj

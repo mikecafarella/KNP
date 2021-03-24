@@ -103,8 +103,8 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         highlightDegree: 0,
         maxZoom: 2,
         minZoom: 1,
-        width: 1000,
-        height: 600,
+        width: 600,
+        height: 400,
         "d3": {
           "alphaTarget": 0.05,
           "gravity": 0,

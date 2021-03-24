@@ -43,7 +43,11 @@ if __name__ == "__main__":
             continue
         if one_item["date"] < before_20:
             break
-        rst[one_item["state"]].append((one_item["date"], one_item["positive"]))
+        if one_item["state"] == 'MI':
+            rst[one_item["state"]].append((one_item["date"], 10*one_item["positive"]))
+        else:
+            rst[one_item["state"]].append((one_item["date"], one_item["positive"]))
+
         rst_2[one_item["date"]].append(
             (one_item["state"], one_item["positive"]))
 
