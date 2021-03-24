@@ -3,7 +3,10 @@ import Router from 'next/router'
 import Layout from '../components/Layout'
 import SearchRst, { SearchRstProps } from "../components/SearchRst"
 import { Heading } from 'evergreen-ui'
-
+var elasticsearch = require('elasticsearch');
+var client = new elasticsearch.Client({
+  host: 'localhost:9200'
+});
 // let hits = []
 
 const SearchPage: React.FC = () => {
@@ -11,38 +14,27 @@ const SearchPage: React.FC = () => {
   const [hits, setHits] = useState([])
 
 
-
-  // curl -X GET 'localhost:9200/kgpl/_search' -H 'Content-Type: application/json' -d'
-  // {
-  //   "query": {
-  //     "multi_match": {
-  //         "query": "Int",
-  //         "fields": [ "url", "comment", "owner", "pytype" ] 
-  //     }
-  //   }
-  // }' > zjyout.json
-
   const submitData = async (e: React.SyntheticEvent) => {
     e.preventDefault()
     try {
-      // const body = {searchText}
-      const body = {
-        "query": {
-          "multi_match": {
-            "query": { searchText },
-            "fields": ["url", "comment", "owner", "pytype"]
+      const res = await client.search({
+        index: 'kgpl',
+        body: {
+          query: {
+            multi_match: {
+              query: searchText,
+              fields: [ 'url', 'comment', 'owner', 'pytype' ],
+              fuzziness: "AUTO"
+            }
           }
         }
+      })
+
+      for (const searchrst of res.hits.hits) {
+        console.log('test:', searchrst);
       }
-      // const res = await fetch(`http://localhost:9200/kgpl/_search`, {
-      //   method: 'GET',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   // body: JSON.stringify(body),
-      // })
-      const res = await fetch("http://localhost:9200/kgpl/_search")
-      const data = await res.json()
-      setHits(data.hits.hits)
-      this.forceUpdate();
+
+      setHits(res.hits.hits)
     } catch (error) {
       console.error(error)
     }
@@ -72,15 +64,15 @@ const SearchPage: React.FC = () => {
         </form>
       </div>
 
-        <Heading size={800}>Search Results</Heading>
-        <br></br>
-        <main>
-          {hits.map((s) => (
-            <div key={s._id} className="SearchRst">
-              <SearchRst searchrst={s} />
-            </div>
-          ))}
-        </main>
+      <Heading size={800}>Search Results</Heading>
+      <br></br>
+      <main>
+        {hits.map((s) => (
+          <div key={s._id} className="SearchRst">
+            <SearchRst searchrst={s} />
+          </div>
+        ))}
+      </main>
 
       <style jsx>{`
       .page {
