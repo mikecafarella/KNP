@@ -17,6 +17,7 @@
     "d3-force": "^2.1.1",
     "d3-graphviz": "^3.1.0",
     "d3-shape": "^2.0.0",
+    "elasticsearch": "^16.7.2",
     "evergreen": "^0.3.2",
     "evergreen-ui": "^5.1.2",
     "formidable": "^1.2.2",
