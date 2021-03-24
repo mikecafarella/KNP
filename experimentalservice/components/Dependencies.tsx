@@ -60,7 +60,6 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
 
     for (var p of predecessors) {
         let objname = p.NameAssignment[0].objname
-        console.log('p', p.id)
         nodes.push({id: p.id,
                         color: "green",
                     })
@@ -68,7 +67,6 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         links.push({source: p.id , target:dobj.dobj.id})
         idToNodeMap[p.id] = p
         for (var q of p.predecessors) {
-          console.log('q', q.id)
           let objname = q.NameAssignment[0].objname
           nodes.push({id: q.id,
                           color: "green",
@@ -78,8 +76,6 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
           idToNodeMap[q.id] = q
         }
     }
-
-    console.log(nodes)
 
     // for (var q of successors) {
     //   let objname = q.NameAssignment[0].objname

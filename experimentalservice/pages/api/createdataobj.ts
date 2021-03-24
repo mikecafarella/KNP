@@ -196,6 +196,7 @@ export default async function handle(req, res) {
                         owner: {connect:{id: ownerid}},
                         desc: description,
                         name: name,
+
                         }
                 });
 

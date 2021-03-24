@@ -4,7 +4,6 @@ import plotly
 
 from lib import get_user_id, create_data_object, get_data_object
 
-
 USER_NAME = 'Jenny Vo-Phamhi'
 USER_EMAIL = 'jennyvo@umich.edu'
 
@@ -14,6 +13,7 @@ with open("step_2_obj_id.txt", "rt") as f:
         SOURCE_OBJ_ID = int(line.strip())
 
 print("Using Data Object ID: ", SOURCE_OBJ_ID)
+
 
 if __name__ == "__main__":
     user_id = get_user_id(USER_EMAIL, USER_NAME)
@@ -42,3 +42,4 @@ if __name__ == "__main__":
         comment = "Cloropleth map",
         predecessors = PREDECESSORS
     )
+
