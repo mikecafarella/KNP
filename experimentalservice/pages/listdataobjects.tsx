@@ -7,6 +7,7 @@ import { UserSelect } from "@prisma/client"
 import { Table, Heading } from 'evergreen-ui'
 import Header from "../components/Header"
 
+console.log(Router)
 
 type DataObjectProps = {
     id: number;

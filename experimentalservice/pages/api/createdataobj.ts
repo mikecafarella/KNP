@@ -167,6 +167,48 @@ export default async function handle(req, res) {
 
                 break;
             }
+            case "/datatypes/pdf": {
+                const datacontents = {"contents": fs.readFileSync(files.pdfpath.path),
+                                 "length": files.pdfpath.size,
+                                 "type": files.pdfpath.type}
+                fs.unlinkSync(files.pdfpath.path)
+                let preds = []
+                for (let i = 0; i < predecessors.length; i++) {
+                  preds.push({ id: predecessors[i] })
+                }
+                console.log(preds)
+                jobj = await prisma.imgData.create({
+                  data: {
+                    img: JSON.stringify(datacontents),
+                    dobj: {
+                      create: {
+                        owner: { connect: { id: ownerid } },
+                        comment: comment,
+                        datatype: datatype,
+                        predecessors:  { connect:  preds }
+                      }
+                    }
+                  }
+                })
+
+                objname = await prisma.objectName.create( {
+                    data: {
+                        owner: {connect:{id: ownerid}},
+                        desc: description,
+                        name: name,
+
+                        }
+                });
+
+                let nameassign = await prisma.nameAssignment.create( {
+                  data: {
+                        dobj: {connect: {id: jobj.dobjid}},
+                        objname: {connect: {id: objname.id}}
+                      }
+                })
+
+                break;
+            }
             case "/datatypes/pynum": {
                 jobj = await prisma.pyNumData.create( {
                     data: {
@@ -348,7 +390,7 @@ export default async function handle(req, res) {
             }
         })
 
-        res.json({"resultcode": "success", "data": jobj})
+        res.json({"resultcode": "success", "data": {'dobjid': objname.id, 'versionid': jobj.dobjid}})
     } else {
         res.json({"resultcode": "fail"})
     }

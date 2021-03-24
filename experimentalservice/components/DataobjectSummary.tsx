@@ -16,7 +16,8 @@ const DataobjectSummary: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
   if (dobj) {
     obj = dobj.dobj ? dobj.dobj : dobj
     label = dobj.label ? dobj.label : dobj.NameAssignment[0].objname
-    objLink = "http://localhost:3000/dobj/" + "X" + label.id + (label.iscurrent ? "" : "/v" + dobj.id)
+    objLink = "http://localhost:3000/dobj/" + "X" + label.id + (label.iscurrent ? "" : "?v=" + dobj.id)
+
   }
   // <Strong size={500}>{label.iscurrent ? label.name : "Anonymous object:" + obj.id}</Strong> <Text size={300}></Text>
   return (

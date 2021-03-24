@@ -97,13 +97,23 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         directed: true,
         nodeHighlightBehavior: true,
         highlightDegree: 0,
-        maxZoom: 1,
+        maxZoom: 2,
         minZoom: 1,
+        width: 600,
+        height: 400,
+        "d3": {
+          "alphaTarget": 0.05,
+          "gravity": 0,
+          "linkLength": 150,
+          "linkStrength": 1,
+          "disableLinkForce": false
+        },
         node: {
             color: "lightgreen",
             size: 500,
             highlightStrokeColor: "blue",
             labelProperty: labelFn,
+            fontSize: 12
         },
         link: {
             highlightColor: "lightblue",
@@ -122,7 +132,7 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
                 id="graph-id" // id is mandatory, if no id is defined rd3g will throw an error
                 data={data}
                 onClickNode={onClickNodeFn}
-                onMouseOutNode={onMouseOutNodeFn}
+                // onMouseOutNode={onMouseOutNodeFn}
                 onMouseOverNode={onMouseOverNodeFn}
                 config={myConfig}/>
         </Pane>
