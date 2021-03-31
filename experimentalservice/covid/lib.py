@@ -1,6 +1,7 @@
 import requests
 import json
 from elasticsearch import Elasticsearch
+import datetime
 
 API_URL = ""
 
@@ -45,7 +46,8 @@ def create_data_object(name, ownerid, description, comment, ownername='Alice', j
     re = {'url': 'http://localhost:3000/dobj/X19',
           'owner': ownername,
           'comment': comment,
-          'pytype': '/datatypes/json}'
+          'pytype': '/datatypes/json}',
+          'timestamp': 0
           }
 
     files = {}
@@ -66,6 +68,10 @@ def create_data_object(name, ownerid, description, comment, ownername='Alice', j
     response = requests.post(url, files=files)
     obj_data = response.json()
     data_obj_id = obj_data['data']['dobjid']
+    # print(obj_data["timestamp"])
+    # print(type(obj_data["timestamp"]))
+    date_time_zjy_obj = datetime.datetime.strptime(obj_data["timestamp"], '%Y-%m-%dT%H:%M:%S.%fZ')
+    re['timestamp'] = date_time_zjy_obj.replace(microsecond=0).isoformat()
 
     re['url'] = 'http://localhost:3000/dobj/X'+str(data_obj_id)
     # Elastic

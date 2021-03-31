@@ -120,3 +120,28 @@ curl -X GET 'localhost:9200/kgpl/_search' -H 'Content-Type: application/json' -d
 
 
 curl -XDELETE localhost:9200/index/type/documentID
+curl -X GET 'localhost:9200/kgpl/_search' -H 'Content-Type: application/json' -d'
+{
+  "query": {
+    "multi_match": {
+        "query": "Mike",
+        "fields": [ "url", "comment", "owner", "pytype" ] 
+    }
+  }
+}' > zjyout.json
+curl -XDELETE localhost:9200/kgpl
+
+
+curl -X GET 'localhost:9200/kgpl/_search' -H 'Content-Type: application/json' -d'
+{
+  "query": {
+    "range": {
+      "timestamp": {
+        "gte": "2021-03-31T23:00:01",
+        "lte": "now"
+      }
+    }
+  }
+}' > zjyout.json
+
+curl -X GET 'localhost:9200/kgpl/_search' > zjyout.json

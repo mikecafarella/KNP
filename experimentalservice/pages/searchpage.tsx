@@ -16,31 +16,61 @@ const SearchPage: React.FC = () => {
 
   const submitData = async (e: React.SyntheticEvent) => {
     e.preventDefault()
-    var searchField =  [ 'url', 'comment', 'owner', 'pytype' ]
+    var searchField =  [ 'url', 'comment', 'owner', 'pytype', 'timestamp' ]
     if (fieldText===""){
-      searchField =  [ 'url', 'comment', 'owner', 'pytype' ]
+      searchField =  [ 'url', 'comment', 'owner', 'pytype', 'timestamp']
     }else{
       searchField =  [fieldText]
     }
+    // {
+    //   "query": {
+    //     "range": {
+    //       "timestamp": {
+    //         "gte": "2021-03-31T23:00:01",
+    //         "lte": "now"
+    //       }
+    //     }
+    //   }
+    // }' > zjyout.json
+    //TODO: let user SELECT time.
     try {
-      const res = await client.search({
-        index: 'kgpl',
-        body: {
-          query: {
-            multi_match: {
-              query: searchText,
-              fields: searchField,
-              fuzziness: "AUTO"
+      if (searchField[0]==='timestamp'){
+        const res = await client.search({
+          index: 'kgpl',
+          body: {
+            query: {
+              range: {
+                "timestamp": {
+                  "gte":searchText.split(',')[0],
+                  "lte":searchText.split(',')[1]
+                }
+              }
             }
           }
+        })
+        for (const searchrst of res.hits.hits) {
+          console.log('test:', searchrst);
         }
-      })
-
-      for (const searchrst of res.hits.hits) {
-        console.log('test:', searchrst);
+        setHits(res.hits.hits)
+      }else{
+        const res = await client.search({
+          index: 'kgpl',
+          body: {
+            query: {
+              multi_match: {
+                query: searchText,
+                fields: searchField,
+                fuzziness: "AUTO"
+              }
+            }
+          }
+        })
+        for (const searchrst of res.hits.hits) {
+          console.log('test:', searchrst);
+        }
+        setHits(res.hits.hits)
       }
 
-      setHits(res.hits.hits)
     } catch (error) {
       console.error(error)
     }
