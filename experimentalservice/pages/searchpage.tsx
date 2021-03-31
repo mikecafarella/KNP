@@ -7,15 +7,21 @@ var elasticsearch = require('elasticsearch');
 var client = new elasticsearch.Client({
   host: 'localhost:9200'
 });
-// let hits = []
 
 const SearchPage: React.FC = () => {
   const [searchText, setSearchText] = useState('')
   const [hits, setHits] = useState([])
+  const [fieldText, setFieldText] = useState('')
 
 
   const submitData = async (e: React.SyntheticEvent) => {
     e.preventDefault()
+    var searchField =  [ 'url', 'comment', 'owner', 'pytype' ]
+    if (fieldText===""){
+      searchField =  [ 'url', 'comment', 'owner', 'pytype' ]
+    }else{
+      searchField =  [fieldText]
+    }
     try {
       const res = await client.search({
         index: 'kgpl',
@@ -23,7 +29,7 @@ const SearchPage: React.FC = () => {
           query: {
             multi_match: {
               query: searchText,
-              fields: [ 'url', 'comment', 'owner', 'pytype' ],
+              fields: searchField,
               fuzziness: "AUTO"
             }
           }
@@ -52,6 +58,12 @@ const SearchPage: React.FC = () => {
             placeholder="Search Object"
             type="text"
             value={searchText}
+          />          
+          <input
+          onChange={e => setFieldText(e.target.value)}
+          placeholder="Search Field. Leave empty for all fields"
+          type="text"
+          value={fieldText}
           />
           <input
             disabled={!searchText}
@@ -67,6 +79,8 @@ const SearchPage: React.FC = () => {
       <Heading size={800}>Search Results</Heading>
       <br></br>
       <main>
+        { hits.length===0 && <h1> No Matched Results</h1> }
+        
         {hits.map((s) => (
           <div key={s._id} className="SearchRst">
             <SearchRst searchrst={s} />

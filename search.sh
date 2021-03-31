@@ -112,8 +112,11 @@ curl -X GET 'localhost:9200/kgpl/_search' -H 'Content-Type: application/json' -d
 {
   "query": {
     "multi_match": {
-        "query": "Int",
+        "query": "Jiayun",
         "fields": [ "url", "comment", "owner", "pytype" ] 
     }
   }
 }' > zjyout.json
+
+
+curl -XDELETE localhost:9200/index/type/documentID

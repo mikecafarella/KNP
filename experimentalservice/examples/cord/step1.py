@@ -42,7 +42,8 @@ if __name__ == "__main__":
             ownerid = user_id,
             description = var_comment,
             pdf_file = pdf_name,
-            comment = val_comment
+            comment = val_comment,
+            ownername=USER_NAME
         )
 
         pdf_data_obj_id = pdf_obj_data['data']['dobjid']
@@ -59,7 +60,8 @@ if __name__ == "__main__":
             description = var_comment,
             jsondata = json.load(open(json_name, 'rb')),
             comment = val_comment,
-            predecessors = [pdf_ids[file_id]]
+            predecessors = [pdf_ids[file_id]],
+            ownername=USER_NAME
         )
 
         meta_data_obj_id = meta_obj_data['data']['dobjid']
@@ -76,5 +78,6 @@ if __name__ == "__main__":
             description = var_comment,
             jsondata = json.load(open(json_name, 'rb')),
             comment = val_comment,
-            predecessors = [pdf_ids[file_id], meta_ids[file_id]]
+            predecessors = [pdf_ids[file_id], meta_ids[file_id]],
+            ownername=USER_NAME
         )
