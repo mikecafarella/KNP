@@ -10,7 +10,7 @@ import requests
 import json
 from collections import defaultdict
 from datetime import datetime, timedelta
-
+from time import sleep
 from lib import get_user_id, create_data_object
 
 USER_NAME = "AI2 CORD Bot"
@@ -66,8 +66,12 @@ if __name__ == "__main__":
 
         meta_data_obj_id = meta_obj_data['data']['dobjid']
         meta_ids[file_id] = meta_obj_data['data']['versionid']
-
+    idxtime=0
     for file_id in file_ids:
+        # sleep(30)
+        print('done'+str(idxtime))
+        idxtime+=1
+
         val_comment = "Segmentation data from PDF 44efd15ada8c6e6a9de4017402163286a4b06905"
         var_comment = "Processed on 2021-03-16"
 

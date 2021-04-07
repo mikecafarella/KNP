@@ -12,37 +12,39 @@ const SearchPage: React.FC = () => {
   const [searchText, setSearchText] = useState('')
   const [hits, setHits] = useState([])
   const [fieldText, setFieldText] = useState('')
+  const [searchTime, setSearchTime] = useState(false)
+  const [searchTimeStart, setSearchTimeStart] = useState('')
+  const [searchTimeEnd, setSearchTimeEnd] = useState('')
 
 
   const submitData = async (e: React.SyntheticEvent) => {
     e.preventDefault()
-    var searchField =  [ 'url', 'comment', 'owner', 'pytype', 'timestamp' ]
-    if (fieldText===""){
-      searchField =  [ 'url', 'comment', 'owner', 'pytype', 'timestamp']
-    }else{
-      searchField =  [fieldText]
+    var searchField = ['url', 'comment', 'owner', 'pytype']
+
+
+    if (fieldText === "") {
+      searchField = ['url', 'comment', 'owner', 'pytype']
+    } else {
+      searchField = [fieldText]
     }
-    // {
-    //   "query": {
-    //     "range": {
-    //       "timestamp": {
-    //         "gte": "2021-03-31T23:00:01",
-    //         "lte": "now"
-    //       }
-    //     }
-    //   }
-    // }' > zjyout.json
-    //TODO: let user SELECT time.
+    console.log(searchField)
+
     try {
-      if (searchField[0]==='timestamp'){
+      if (searchField[0] === 'timestamp'||searchTime) {
+        var local_start = searchTimeStart
+        var local_end = searchTimeEnd
+        if (searchTimeStart===""||searchTimeEnd===""){
+          local_start = searchText.split(',')[0]
+          local_end = searchText.split(',')[1]
+        }
         const res = await client.search({
           index: 'kgpl',
           body: {
             query: {
               range: {
                 "timestamp": {
-                  "gte":searchText.split(',')[0],
-                  "lte":searchText.split(',')[1]
+                  "gte":local_start,
+                  "lte": local_end
                 }
               }
             }
@@ -52,7 +54,7 @@ const SearchPage: React.FC = () => {
           console.log('test:', searchrst);
         }
         setHits(res.hits.hits)
-      }else{
+      } else {
         const res = await client.search({
           index: 'kgpl',
           body: {
@@ -88,29 +90,60 @@ const SearchPage: React.FC = () => {
             placeholder="Search Object"
             type="text"
             value={searchText}
-          />          
-          <input
-          onChange={e => setFieldText(e.target.value)}
-          placeholder="Search Field. Leave empty for all fields"
-          type="text"
-          value={fieldText}
           />
           <input
-            disabled={!searchText}
+            onChange={e => setFieldText(e.target.value)}
+            placeholder="Search Field. Leave empty for all fields"
+            type="text"
+            value={fieldText}
+          />
+          
+          {
+              searchTime==true &&
+              <input type="datetime-local" id="meeting-time"
+              name="searching-time-start" step="1"
+              onChange={e => setSearchTimeStart(e.target.value)} />
+          }
+          {
+              searchTime==true &&
+              <input type="datetime-local" id="meeting-time"
+              name="searching-time-start"  step="1"
+              onChange={e =>{
+                setSearchTimeEnd(e.target.value);
+              }}
+              />
+              
+          }
+
+
+          <input
+            // disabled={!searchText}
             type="submit"
             value="Search"
           />
           <a className="back" href="#" onClick={() => Router.push('/')}>
             or Cancel
         </a>
+        <br></br>
+        <br></br>
+        <button onClick={e => {
+        if (searchTime) {
+          setSearchTime(false)
+          setSearchTimeStart('')
+          setSearchTimeEnd('')
+          setFieldText('')
+        } else {
+          setSearchTime(true)
+        }
+      }}>Search Time Expand</button>
         </form>
       </div>
 
       <Heading size={800}>Search Results</Heading>
       <br></br>
       <main>
-        { hits.length===0 && <h1> No Matched Results</h1> }
-        
+        {hits.length === 0 && <h1> No Matched Results</h1>}
+
         {hits.map((s) => (
           <div key={s._id} className="SearchRst">
             <SearchRst searchrst={s} />

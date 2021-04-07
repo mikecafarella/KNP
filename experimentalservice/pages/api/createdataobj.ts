@@ -391,9 +391,6 @@ export default async function handle(req, res) {
                 }}
             }
         })
-        console.log("zjyzjyzjy")
-        console.log(jobj2.timestamp)
-        console.log("zjyzjyzjy")
         res.json({"resultcode": "success", "data": {'dobjid': objname.id, 'versionid': jobj.dobjid},"timestamp":jobj2.timestamp})
     } else {
         res.json({"resultcode": "fail"})

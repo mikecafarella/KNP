@@ -4,8 +4,8 @@ import plotly
 
 from lib import get_user_id, create_data_object, get_data_object
 
-USER_NAME = 'Jenny Vo-Phamhi'
-USER_EMAIL = 'jennyvo@umich.edu'
+USER_NAME = 'Jiayun Zou'
+USER_EMAIL = 'alicezou@umich.edu'
 
 # Load the ID for the source we're using from our makeshift local store
 with open("step_2_obj_id.txt", "rt") as f:

@@ -7,14 +7,14 @@ USER_EMAIL = "alicezou@umich.edu"
 
 user_id = get_user_id(USER_EMAIL, USER_NAME)
 
-var_comment='test search 109'
+var_comment='Honors Convocation is tonight'
 rst = {
-    'answer': 109
+    'Honors Convocation': 2021 
 }
-val_comment = "test search 3"
+val_comment = "Honors Convocation is tonight"
 
 obj_data = create_data_object(
-    name = 'search functionality',
+    name = 'Honors Convocation',
     ownerid = user_id,
     description = var_comment,
     jsondata = dict(rst),
