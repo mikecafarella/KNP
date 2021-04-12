@@ -16,12 +16,38 @@ const SearchPage: React.FC = () => {
   const [searchTimeStart, setSearchTimeStart] = useState('')
   const [searchTimeEnd, setSearchTimeEnd] = useState('')
 
+  const pairSeperator = ':';
+  const validKeyNames = [
+    'url',
+    'owner',
+    'comment',
+    'pytype',
+    'timestamp'
+  ];
 
+  function isValidKeyValuePair(input) {
+    const possiblePair = input.split(pairSeperator);
+    if (possiblePair.length == 2) {
+      return validKeyNames.indexOf(possiblePair[0]) > -1;
+    }
+    return false;
+  }
+  function checkFieldSearch(searchTerms) {
+    const searchTermList = searchTerms.split(' ')
+    if (searchTermList.length == 1) {
+      if (isValidKeyValuePair(searchTerms)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  // this is function which handles your searchTerm
+  function parseSearch(searchTerm) {
+    return searchTerm.split(pairSeperator);
+  }
   const submitData = async (e: React.SyntheticEvent) => {
     e.preventDefault()
     var searchField = ['url', 'comment', 'owner', 'pytype']
-
-
     if (fieldText === "") {
       searchField = ['url', 'comment', 'owner', 'pytype']
     } else {
@@ -30,20 +56,16 @@ const SearchPage: React.FC = () => {
     console.log(searchField)
 
     try {
-      if (searchField[0] === 'timestamp'||searchTime) {
+      if (searchTime) {
         var local_start = searchTimeStart
         var local_end = searchTimeEnd
-        if (searchTimeStart===""||searchTimeEnd===""){
-          local_start = searchText.split(',')[0]
-          local_end = searchText.split(',')[1]
-        }
         const res = await client.search({
           index: 'kgpl',
           body: {
             query: {
               range: {
                 "timestamp": {
-                  "gte":local_start,
+                  "gte": local_start,
                   "lte": local_end
                 }
               }
@@ -55,24 +77,63 @@ const SearchPage: React.FC = () => {
         }
         setHits(res.hits.hits)
       } else {
-        const res = await client.search({
-          index: 'kgpl',
-          body: {
-            query: {
-              multi_match: {
-                query: searchText,
-                fields: searchField,
-                fuzziness: "AUTO"
+        console.log(searchText)
+        var parsed = [];
+        var q;
+        var f;
+        if (checkFieldSearch(searchText)) {
+          parsed = parseSearch(searchText);
+          q = parsed[1];
+          f = parsed[0];
+        } else {
+          q = searchText;
+          f = searchField;
+        }
+        if (f === 'timestamp') {
+          var local_start = searchTimeStart
+          var local_end = searchTimeEnd
+          if (searchTimeStart === "" || searchTimeEnd === "") {
+            local_start = q[1].split(',')[0]
+            local_end = q[1].split(',')[1]
+          }
+          console.log(local_start)
+          console.log(local_end)
+          const res = await client.search({
+            index: 'kgpl',
+            body: {
+              query: {
+                range: {
+                  "timestamp": {
+                    "gte": local_start,
+                    "lte": local_end
+                  }
+                }
               }
             }
+          })
+          for (const searchrst of res.hits.hits) {
+            console.log('test:', searchrst);
           }
-        })
-        for (const searchrst of res.hits.hits) {
-          console.log('test:', searchrst);
+          setHits(res.hits.hits)
+        } else {
+          const res = await client.search({
+            index: 'kgpl',
+            body: {
+              query: {
+                multi_match: {
+                  query: q,
+                  fields: f,
+                  fuzziness: "AUTO"
+                }
+              }
+            }
+          })
+          for (const searchrst of res.hits.hits) {
+            console.log('test:', searchrst);
+          }
+          setHits(res.hits.hits)
         }
-        setHits(res.hits.hits)
       }
-
     } catch (error) {
       console.error(error)
     }
@@ -91,28 +152,27 @@ const SearchPage: React.FC = () => {
             type="text"
             value={searchText}
           />
-          <input
+          {/* <input
             onChange={e => setFieldText(e.target.value)}
             placeholder="Search Field. Leave empty for all fields"
             type="text"
             value={fieldText}
-          />
-          
+          /> */}
+
           {
-              searchTime==true &&
-              <input type="datetime-local" id="meeting-time"
+            searchTime == true &&
+            <input type="datetime-local" id="meeting-time"
               name="searching-time-start" step="1"
               onChange={e => setSearchTimeStart(e.target.value)} />
           }
           {
-              searchTime==true &&
-              <input type="datetime-local" id="meeting-time"
-              name="searching-time-start"  step="1"
-              onChange={e =>{
+            searchTime == true &&
+            <input type="datetime-local" id="meeting-time"
+              name="searching-time-start" step="1"
+              onChange={e => {
                 setSearchTimeEnd(e.target.value);
               }}
-              />
-              
+            />
           }
 
 
@@ -123,20 +183,31 @@ const SearchPage: React.FC = () => {
           />
           <a className="back" href="#" onClick={() => Router.push('/')}>
             or Cancel
-        </a>
-        <br></br>
-        <br></br>
-        <button onClick={e => {
-        if (searchTime) {
-          setSearchTime(false)
-          setSearchTimeStart('')
-          setSearchTimeEnd('')
-          setFieldText('')
-        } else {
-          setSearchTime(true)
-        }
-      }}>Search Time Expand</button>
+          </a>
+          <br></br>
+          <br></br>
+
+          <button onClick={e => {
+            if (searchTime) {
+              setSearchTime(false)
+              setSearchTimeStart('')
+              setSearchTimeEnd('')
+              setFieldText('')
+              setSearchText('')
+              setHits([])
+            } else {
+              setSearchTime(true)
+              setSearchTimeStart('')
+              setSearchTimeEnd('')
+              setFieldText('')
+              setSearchText('')
+              setHits([])
+            }
+          }}>Search Time</button>
+
+
         </form>
+
       </div>
 
       <Heading size={800}>Search Results</Heading>
@@ -166,6 +237,14 @@ const SearchPage: React.FC = () => {
         border-radius: 0.25rem;
         border: 0.125rem solid rgba(0, 0, 0, 0.2);
       }
+
+      
+      button {
+        background: #ececec;
+        border: 0;
+        padding: 1rem 2rem;
+      }
+
 
       input[type='submit'] {
         background: #ececec;
