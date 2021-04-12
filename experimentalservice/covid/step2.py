@@ -77,7 +77,9 @@ def step2(_):
         description = var_comment,
         jsondata = dict(rst),
         comment = val_comment,
-        predecessors = PREDECESSORS
+        predecessors = PREDECESSORS,
+        ownername=USER_NAME
+
     )
 
     data_obj_id = obj_data['data']['dobjid']
