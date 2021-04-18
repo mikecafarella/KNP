@@ -1,0 +1,1433 @@
+{
+    "paper_id": "44efd15ada8c6e6a9de4017402163286a4b06905",
+    "metadata": {
+        "title": "The interaction of the SARS coronavirus non-structural protein 10 with the cellular oxido-reductase system causes an extensive cytopathic effect",
+        "authors": [
+            {
+                "first": "Qihan",
+                "middle": [],
+                "last": "Li",
+                "suffix": "",
+                "affiliation": {
+                    "laboratory": "",
+                    "institution": "Peking Union Medical College",
+                    "location": {
+                        "addrLine": "Jiaoling Road",
+                        "postCode": "379#, 650118",
+                        "settlement": "Kunming",
+                        "country": "PR China"
+                    }
+                },
+                "email": ""
+            },
+            {
+                "first": "Lichun",
+                "middle": [],
+                "last": "Wang",
+                "suffix": "",
+                "affiliation": {
+                    "laboratory": "",
+                    "institution": "Peking Union Medical College",
+                    "location": {
+                        "addrLine": "Jiaoling Road",
+                        "postCode": "379#, 650118",
+                        "settlement": "Kunming",
+                        "country": "PR China"
+                    }
+                },
+                "email": ""
+            },
+            {
+                "first": "Chenghong",
+                "middle": [],
+                "last": "Dong",
+                "suffix": "",
+                "affiliation": {
+                    "laboratory": "",
+                    "institution": "Peking Union Medical College",
+                    "location": {
+                        "addrLine": "Jiaoling Road",
+                        "postCode": "379#, 650118",
+                        "settlement": "Kunming",
+                        "country": "PR China"
+                    }
+                },
+                "email": ""
+            },
+            {
+                "first": "Yanchun",
+                "middle": [],
+                "last": "Che",
+                "suffix": "",
+                "affiliation": {
+                    "laboratory": "",
+                    "institution": "Peking Union Medical College",
+                    "location": {
+                        "addrLine": "Jiaoling Road",
+                        "postCode": "379#, 650118",
+                        "settlement": "Kunming",
+                        "country": "PR China"
+                    }
+                },
+                "email": ""
+            },
+            {
+                "first": "Li",
+                "middle": [],
+                "last": "Jiang",
+                "suffix": "",
+                "affiliation": {
+                    "laboratory": "",
+                    "institution": "Peking Union Medical College",
+                    "location": {
+                        "addrLine": "Jiaoling Road",
+                        "postCode": "379#, 650118",
+                        "settlement": "Kunming",
+                        "country": "PR China"
+                    }
+                },
+                "email": ""
+            },
+            {
+                "first": "Longding",
+                "middle": [],
+                "last": "Liu",
+                "suffix": "",
+                "affiliation": {
+                    "laboratory": "",
+                    "institution": "Peking Union Medical College",
+                    "location": {
+                        "addrLine": "Jiaoling Road",
+                        "postCode": "379#, 650118",
+                        "settlement": "Kunming",
+                        "country": "PR China"
+                    }
+                },
+                "email": ""
+            },
+            {
+                "first": "Hongling",
+                "middle": [],
+                "last": "Zhao",
+                "suffix": "",
+                "affiliation": {
+                    "laboratory": "",
+                    "institution": "Peking Union Medical College",
+                    "location": {
+                        "addrLine": "Jiaoling Road",
+                        "postCode": "379#, 650118",
+                        "settlement": "Kunming",
+                        "country": "PR China"
+                    }
+                },
+                "email": ""
+            },
+            {
+                "first": "Yun",
+                "middle": [],
+                "last": "Liao",
+                "suffix": "",
+                "affiliation": {
+                    "laboratory": "",
+                    "institution": "Peking Union Medical College",
+                    "location": {
+                        "addrLine": "Jiaoling Road",
+                        "postCode": "379#, 650118",
+                        "settlement": "Kunming",
+                        "country": "PR China"
+                    }
+                },
+                "email": ""
+            },
+            {
+                "first": "Yi",
+                "middle": [],
+                "last": "Sheng",
+                "suffix": "",
+                "affiliation": {
+                    "laboratory": "",
+                    "institution": "Peking Union Medical College",
+                    "location": {
+                        "addrLine": "Jiaoling Road",
+                        "postCode": "379#, 650118",
+                        "settlement": "Kunming",
+                        "country": "PR China"
+                    }
+                },
+                "email": ""
+            },
+            {
+                "first": "Shaozhong",
+                "middle": [],
+                "last": "Dong",
+                "suffix": "",
+                "affiliation": {
+                    "laboratory": "",
+                    "institution": "Peking Union Medical College",
+                    "location": {
+                        "addrLine": "Jiaoling Road",
+                        "postCode": "379#, 650118",
+                        "settlement": "Kunming",
+                        "country": "PR China"
+                    }
+                },
+                "email": ""
+            },
+            {
+                "first": "Shaohui",
+                "middle": [],
+                "last": "Ma",
+                "suffix": "",
+                "affiliation": {
+                    "laboratory": "",
+                    "institution": "Peking Union Medical College",
+                    "location": {
+                        "addrLine": "Jiaoling Road",
+                        "postCode": "379#, 650118",
+                        "settlement": "Kunming",
+                        "country": "PR China"
+                    }
+                },
+                "email": ""
+            }
+        ]
+    },
+    "abstract": [
+        {
+            "text": "The pathological mechanism of SARS-CoV infection was investigated. The gene for the SARS-CoV non-structural protein 10, which is located in the open reading frame of pp1a/pp1ab gene, was synthesized and used to screen for the specific cellular gene coding for the protein interacting with this nsp10 protein in a human embryo lung cDNA library using a yeast trap method. The results indicated that apart from the two subunits of cellular RNA polymerase complex, BTF3 and ATF5, this nsp10 protein was also able to interact specifically with the NADH 4L subunit and cytochrome oxidase II. Further study revealed that the activity of the NADH-cytochrome was altered and the inner mitochondrial membrane was depolarized in the transfected human embryo lung fibroblast by the nsp10 protein gene. The cytopathic effect of the Coronavirus 229E strain appeared more extensive in these cells than in the control cells.",
+            "cite_spans": [],
+            "ref_spans": [],
+            "section": "Abstract"
+        }
+    ],
+    "body_text": [
+        {
+            "text": "The newly identified severe acute respiratory syndrome coronavirus (SARS-CoV), caused an epidemic during the period February to June, 2003 , which spread to 32 countries infecting more than 8000 people of which 900 died (Pearson, 2003) . This disease was typically characterized by fever, malaise, rigor, headache and dyspnea, followed by severe respiratory failure, which led to a 15% fatality rate among infected patients (Booth et al., 2003) . The pathological analysis of the lung tissue from the deceased patients revealed severe Abbreviations: SARS-CoV, severe acute respiratory syndrome coronavirus; BTF3, basic transcription factor-3; ATF5, activation transcription factor-5; NADH, nicotinamide adenine dinucleotide dehydrogenase; FBS, fetal bovine serum; DMEM, double minimal essential media; QDO, quartdrop-out; NC, nitrocellulose; HE, hematoxyline and eosin method; GFP, green fluorescence protein; GST, glutathione S-transferase * Corresponding author. lesions of the pulmonary alveolar, flooding of the alveolar lumina with proteinaceous fluid and necrosis of the bronchiolar epithelium (Peiris et al., 2003) . The extent of tissue lesions usually depends on cell damage caused mainly by the virus (Lee et al., 2003) , or, by the immune cytotoxic effect against the viral antigens (Tyler and Fields, 1990) . To date, no data strongly supports the idea that the pathological effect of the SARS coronavirus are due to autoimmune damage against the cells infected by the virus, though clinical treatment indicates that corticosteroids can inhibit the development of this disease. Therefore, it could be hypothesized that the cytopathic effect produced by SARS-CoV in alveolar cells and bronchiolar epithelium is probably the main factor causing the severe pathology. However, there is insufficient data to interpret the replication process of SARS-CoV in cells, and the observation of the cellular morphology change by SARS-CoV in vitro only exhibits the cytopathic effect including rounded, swollen cellular organelle, like Golgi sacs, and numerous smoothmembraned vacuoles in the cytoplasm (Ksiazek et al., 2003) .",
+            "cite_spans": [
+                {
+                    "start": 128,
+                    "end": 138,
+                    "text": "June, 2003",
+                    "ref_id": null
+                },
+                {
+                    "start": 220,
+                    "end": 235,
+                    "text": "(Pearson, 2003)",
+                    "ref_id": "BIBREF14"
+                },
+                {
+                    "start": 424,
+                    "end": 444,
+                    "text": "(Booth et al., 2003)",
+                    "ref_id": "BIBREF2"
+                },
+                {
+                    "start": 1100,
+                    "end": 1121,
+                    "text": "(Peiris et al., 2003)",
+                    "ref_id": "BIBREF15"
+                },
+                {
+                    "start": 1211,
+                    "end": 1229,
+                    "text": "(Lee et al., 2003)",
+                    "ref_id": "BIBREF9"
+                },
+                {
+                    "start": 1294,
+                    "end": 1318,
+                    "text": "(Tyler and Fields, 1990)",
+                    "ref_id": "BIBREF20"
+                },
+                {
+                    "start": 2102,
+                    "end": 2124,
+                    "text": "(Ksiazek et al., 2003)",
+                    "ref_id": "BIBREF8"
+                }
+            ],
+            "ref_spans": [],
+            "section": "Introduction"
+        },
+        {
+            "text": "These observations suggest that the cytopathic effect caused by the replication of SARS-CoV in cells could be involved. In this case, the SARS-CoV or the components of this virus are possibly interacting directly or indirectly on a specific cellular organelle during the virus replication in cells. To investigate the pathological mechanism of SARS-CoV during its replication in cell culture, we investigated several nonstructural proteins of SARS-CoV, which are produced by the 3CL pro cleaving pp1a/pp1ab in the SARS-CoV's infection (Thiel et al., 2003) . The results, interestingly, suggested that the non-structural protein 10 (nsp10) could be involved in the pathological function of SARS-CoV in cells. Using the yeast trap method (Fields and Sternglanz, 1994) , the synthesized gene of SARS-CoV nsp10 was used to screen the specific genes of proteins probably interacting with this protein in a human embryo lung cDNA library. Surprisingly, the results indicated that apart from the two subunits of cellular RNA polymerase B complex, BTF3 and ATF5, this SARS-CoV non-structural protein 10 was able to interact specifically with the NADH 4L subunit and cytochrome oxidase II. This result was also supported by the pull-down detection of nsp10-GST fusion protein and Western blotting with antibody against cytochrome oxidase. To further investigate the contribution of this interaction to the cytopathic effect of SARS-CoV, a detection series of mitochondrial function and the activity of the oxido-reductase system in the human embryo lung fibroblast transfected with the nsp10 gene was performed. The results suggested that the interaction of this protein with NADH and cytochrome oxidase II in cells infected by the Coronavirus 229E interrupted the physiological function of mitochondria and caused severe damage to the cells. The results obtained in this work could provide some data to explain the possible mechanism of the SARS-CoV infection, which causes more severe damage in lung tissue than infection with other coronaviruses.",
+            "cite_spans": [
+                {
+                    "start": 535,
+                    "end": 555,
+                    "text": "(Thiel et al., 2003)",
+                    "ref_id": "BIBREF18"
+                },
+                {
+                    "start": 736,
+                    "end": 765,
+                    "text": "(Fields and Sternglanz, 1994)",
+                    "ref_id": "BIBREF4"
+                }
+            ],
+            "ref_spans": [],
+            "section": "Introduction"
+        },
+        {
+            "text": "Human embryo fibroblast, KMB-17 strain, was originated from human fetal lung tissue and grown in DMEM, 5% (v/v) fetal bovine serum (FBS) to form a monolayer in a culture plate (Guo et al., 1974) . The cells used were in the 18-20th passage. Coronavirus 229E strain was grown in these KMB-17 cells in serum free DMEM and harvested from the supernatant of the culture (Li et al., 2002) . The virus was titrated in KMB-17 cells.",
+            "cite_spans": [
+                {
+                    "start": 176,
+                    "end": 194,
+                    "text": "(Guo et al., 1974)",
+                    "ref_id": "BIBREF6"
+                },
+                {
+                    "start": 366,
+                    "end": 383,
+                    "text": "(Li et al., 2002)",
+                    "ref_id": "BIBREF10"
+                }
+            ],
+            "ref_spans": [],
+            "section": "Cells and viruses"
+        },
+        {
+            "text": "The SARS-CoV nsp10 gene with the length of 423bp encoding 141 amino acids (according to the genome of SARS-CoV, accession no. AY291315. The gene location is from 12955nt to 13371nt, and added ATG and TAA) was synthesized by eight oligonucleotides (Tokara Co.) in a PCR system (Thiel et al., 2003) . The gene fragment cloned in pUC-18 was identified using a restricted enzyme method and sequencing.",
+            "cite_spans": [
+                {
+                    "start": 276,
+                    "end": 296,
+                    "text": "(Thiel et al., 2003)",
+                    "ref_id": "BIBREF18"
+                }
+            ],
+            "ref_spans": [],
+            "section": "Synthesis of SARS-CoV non-structural protein 10 gene"
+        },
+        {
+            "text": "Plasmid pcDNA-nsp10 was constructed by inserting SARS-CoV non-structural protein 10 gene into the EcoRI site of pcDNA-3 and pGFP (Takara Co.) as the eukaryotic expression vectors. Plasmid pGBK-nsp10 expressing Gal4-nsp10 fusion protein was constructed by inserting an nsp10 gene into the EcoRI site of pGBK-T7 (Invitrogen) to express a bait protein in a yeast two-hybrid system. All constructed plasmids were confirmed with restrictive endonuclease digestion and sequencing.",
+            "cite_spans": [],
+            "ref_spans": [],
+            "section": "Plasmid construction"
+        },
+        {
+            "text": "The plasmid pGBK-SL was used to screen a cDNA library of human embryo lung (Clontech). The procedure was conducted according to the manufacturers' protocol. After screening twice, using the QDO plate and the \u2424-galactosidase assay, the cDNA gene fragments from the library encoded the proteins capable of interacting with the nsp10 protein, were isolated and identified by sequencing.",
+            "cite_spans": [],
+            "ref_spans": [],
+            "section": "Yeast two-hybrid screen"
+        },
+        {
+            "text": "GST, GST-nsp10 were expressed in E. coli BL21 and purified according to standard protocols. The GST and the GST-nsp10 fusion proteins were incubated overnight at 4 \u2022 C with a KMB-17 cell extract pre-labeled with [ 35 S] methionine (prepared in lysis buffer (50 mM Tris-HCl, pH 8.0, 150 mM NaCl, 1% Nonidet P-40, 1 mM EDTA, 0.5% Na deoxycholate, and 0.1% SDS) containing phenylmethylsulfonyluoride (PMSF, SIGMA), and conjugated further with glutathione-Sepharose 4B beads in a total volume of 500 l of buffer (20 mM Tris, pH 7.5, 75 mM KCl, 50 mM NaCl, 1 mM EDTA, 0.1% Nonidet P-40, 10% glycerol, 1 mM dithiothreitol, and PMSF). After centrifugation, the beads were washed five times with incubation buffer and resuspended in PBS buffer, boiled for 5 min, and centrifuged. The supernatant was subjected to electrophoresis in a 12% SDSpolyacrylamide gel. After drying, the gels were exposed to X-ray film.",
+            "cite_spans": [],
+            "ref_spans": [],
+            "section": "GST fusion proteins pull-down assay"
+        },
+        {
+            "text": "The monolayer KMB-17 cells grown in DMEM was transfected with the plasmid of pGFP-nsp10 according to the protocol described below. In the 24-36 h after transfection, the cells were observed under a fluorescence microscope.",
+            "cite_spans": [],
+            "ref_spans": [],
+            "section": "Location of nsp10 protein expressed in KMB-17 cells"
+        },
+        {
+            "text": "The recombined plasmid pcDNA-nsp10 containing SARS-CoV non-structural protein 10 gene was linearized by digestion with restriction enzyme HindIII. KMB-17 cells were transfected with linearized pcDNA-nsp10 and Lipotamine TM 2000 as described in the manufacturer's instructions. The control cells were transfected with linearized pcDNA-Vp3 (a structural protein gene of poliovirus) and Lipotamine TM 2000 in the same condition. The transfected cells were maintained in DMEM 5% FBS for 24-48 h. To confirm the expression of the nsp10 protein, a Western blot was performed using a specific antibody against nsp10 protein produced in mice immunized by nsp10 protein expressed in Escherichia coli. The transfected cells, where the expression of the nsp10 protein was detected, could be used for the next experiment.",
+            "cite_spans": [],
+            "ref_spans": [],
+            "section": "Transfection of KMB-17 cells with a nsp10 gene plasmid"
+        },
+        {
+            "text": "Subconfluent, control cells transfected with pcDNA-Vp3 and the cells transfected with pcDNA-nsp10, were collected, rinsed in PBS, resuspended in 5 m rhodamine-123 (Eugene, Co.), and incubated at room temperature for 30 min. The cells were then analyzed with a flow cytometer (Becton Dickinson) as described previously (Li et al., 2002) . The data from the flow cytometer analysis were analyzed by Cellquest software (Becton Dickinson).",
+            "cite_spans": [
+                {
+                    "start": 318,
+                    "end": 335,
+                    "text": "(Li et al., 2002)",
+                    "ref_id": "BIBREF10"
+                }
+            ],
+            "ref_spans": [],
+            "section": "Mitochondrial membrane potential tendency in flow cytometry"
+        },
+        {
+            "text": "The cells transfected with pcDNA-nsp10 or pcDNA-Vp3 were grown in DMEM with 5% FBS and collected by scraping 24, 48 and 72 h after transfection. After rinsing twice with cold PBS, the cells were homogenated with a sonicator at 450 W, 10 s \u00d7 10 and centrifuged at 2500 rpm for 10 min to yield a pellet. Fifty unit liters of the supernatant was used to detect its activity of NADH-cytochrome oxidase with cytochrome 1 ml (1 mg/ml), NADH 100 ul (6 mg/ml), PBS 500 ul and 0.9% NaCl 500 ul at 25 \u2022 C for 20 min. The reactive solution was read in a spectrophotometer (Bio-Rad M-550) at OD 550 . Meanwhile, the protein in this supernatant was quantified by the standard Lowry method (Lowry et al., 1951) . The activity unit of the enzyme was determined according to OD 550 value for each milligram of protein at 25 \u2022 C for 1 min.",
+            "cite_spans": [
+                {
+                    "start": 676,
+                    "end": 696,
+                    "text": "(Lowry et al., 1951)",
+                    "ref_id": "BIBREF11"
+                }
+            ],
+            "ref_spans": [],
+            "section": "Measurement of cytochrome oxidase activity in cells"
+        },
+        {
+            "text": "The transfected KMB-17 cells grown in DMEM for longer than 24 h were scraped off and rinsed in PBS. The washed cells were lysed in RSB buffer (10 mM Tris-HCl, pH 7.5; 1.5 mM, MgCl 2 ), NP-40 1% at 4 \u2022 C for 1 h. Then, the lysed cells were centrifuged at 12,000 rpm for 10 min. The components of the supernatant were separated by SDS-PAGE 12% (v/v) and transferred to a NC membrane. A Western blot of the nsp10 antibody on this membrane was performed as described in the standard protocol (Towbin et al., 1979) . Meantime, the proteins collected in the pull-down test (see above) were separated in SDS-PAGE gel and transferred to a NC membrane for the Western blot with the antibody against cytochrome oxidase.",
+            "cite_spans": [
+                {
+                    "start": 488,
+                    "end": 509,
+                    "text": "(Towbin et al., 1979)",
+                    "ref_id": "BIBREF19"
+                }
+            ],
+            "ref_spans": [],
+            "section": "Western blot of expressed nsp10 protein and cytochrome oxidase"
+        },
+        {
+            "text": "Transfected KMB-17 cells, grown in DMEM for 24 h, was infected by Coronavirus 229E at moi 0.5. The control cells transfected by pcDNA-Vp3 were also infected with the virus using the same procedure. After 24, 48, 72, 96 and 108 h post-infection, the sample and control cells were harvested and treated according to described protocols (Bonavia et al., 1997) . The harvested virus was titrated in KMB-17 cells according to the method described (Racaniello and Baltimore, 1981) .",
+            "cite_spans": [
+                {
+                    "start": 334,
+                    "end": 356,
+                    "text": "(Bonavia et al., 1997)",
+                    "ref_id": "BIBREF1"
+                },
+                {
+                    "start": 442,
+                    "end": 474,
+                    "text": "(Racaniello and Baltimore, 1981)",
+                    "ref_id": "BIBREF16"
+                }
+            ],
+            "ref_spans": [],
+            "section": "Virus infection and titration"
+        },
+        {
+            "text": "The transfected KMB-17 cells were grown on a glass plate and were infected by the virus as described above. Twenty-four hour post-infection, the cells were observed under a light microscope (Hehine, 1981) . For electron microscopy the same cells were grown on a 100-mm plate and treated as above. The cells were scraped off and further fixed in 75% ethanol for observation under an electron microscope according to standard protocol (Slater, 1991) .",
+            "cite_spans": [
+                {
+                    "start": 190,
+                    "end": 204,
+                    "text": "(Hehine, 1981)",
+                    "ref_id": "BIBREF7"
+                },
+                {
+                    "start": 433,
+                    "end": 447,
+                    "text": "(Slater, 1991)",
+                    "ref_id": "BIBREF17"
+                }
+            ],
+            "ref_spans": [],
+            "section": "Morphological observation of transfected cells after viral infection"
+        },
+        {
+            "text": "Using a GAL-nsp10 fusion protein expressed in yeast as bait, a human embryo lung DNA library was screened using the yeast two-hybrid method (more than 2 \u00d7 10 6 clones). After screening twice using SD/-Leu/-Trp/-His/+25 mm 3amino-1,2,4-triazole (3-AT) plates, five clones were identified as corresponding to nsp10. Among them, one gene of unknown function warranted further investigation. The other proteins encoded by the other four genes were NADH 4L subunit, cytochrome oxidase II, RNA polymerase B transcription factor 3 and activation transcription factor 5, through comparison with gene sequences in GenBank. To define the binding specificity of the nsp10 protein to these five proteins, a yeast-mating assay was conducted, which indicated that the nsp10 protein had a higher affinity to the NADH 4L subunit and cytochrome oxidase II (Fig. 1) . As we know, the SARS-CoV non-structural protein 10, formerly known as a growthfactor-like protein, exhibits 55-58% homology with other coronaviruses. However, little is known about its function in the coronavirus replication process (Marra et al., 2003) . Some data suggest that it could be part of the viral replicase polyprotein (Thiel et al., 2003; Anand et al., 2003) . However, the possible interaction between this protein and the NADH subunit 4L and cytochrome oxidase II did provide a clue for further understanding its contribution in the pathogenesis of SARS-CoV.",
+            "cite_spans": [
+                {
+                    "start": 1083,
+                    "end": 1103,
+                    "text": "(Marra et al., 2003)",
+                    "ref_id": "BIBREF12"
+                },
+                {
+                    "start": 1181,
+                    "end": 1201,
+                    "text": "(Thiel et al., 2003;",
+                    "ref_id": "BIBREF18"
+                },
+                {
+                    "start": 1202,
+                    "end": 1221,
+                    "text": "Anand et al., 2003)",
+                    "ref_id": "BIBREF0"
+                }
+            ],
+            "ref_spans": [
+                {
+                    "start": 839,
+                    "end": 847,
+                    "text": "(Fig. 1)",
+                    "ref_id": null
+                }
+            ],
+            "section": "Gene identification of the protein which probably interacted with the SARS-CoV non-structural protein 10 (nsp10)"
+        },
+        {
+            "text": "A pull-down detection of nsp10-GST fusion protein in the extract of labeled KMB-17 cells indicates that the nsp10 protein is able to bind several proteins from KMB-17 cells (Fig. 2a) , one of which is confirmed being the component of cytochrome oxidase complex in the Western blot (Fig. 2b) . The observation of nsp10-GFP fusion protein expressed in KMB-17 cells shows that nsp10 protein is accumulated as a distributed cluster in the cytoplasm (Fig. 2c) . This illustrates that, to some extent, the nsp10 attaches to a specific cellular apparatus in the cytoplasm. These data suggest probably the interaction of nsp10 and the component of cellular mitochondria in vivo. Fig. 1 . Specific binding activities of the proteins identified using a yeast two-hybrid system with the SARS-CoV non-structural protein 10 in mating assays. The identified gene clone in the yeast trap was transfected into Y187 strain together with pGBK-7-nsp10. This transfectant was grown in the selection media of SD/-Leu/-Trp/-His/+25 mM 3-AT followed by growth in a 1.5 ml SD medium. The supernatants were collected after being centrifuged at 10,000 rpm in an Eppendorf tube. The OD 600 of the culture was recorded. One hundred microliters of the supernatant was reacted with O-nitropheng/\u2424-d-galacto-pyranoside (ONPG) in Z-buffer with \u2424-mercaptoethanol. The final OD 420 nm value was recorded after at least 30 min. The negative sample is supernatant of yeast Y187 transfected with pGBKT7 and pGADT7. The positive control is from the yeast Y187 transfected with pGBKT7-53 and pGADT7-T as provided by the manufacturer. The \u2424-galactosidase units were calculated using the formula: units = 1000 \u00d7 OD 420 /(t \u00d7 v \u00d7 OD 600 ); T, elapsed time of incubation; v, 0.1 ml \u00d7 concentration factor. Approximately 4 ug expressed and purified GST-nsp10 fusion protein and GST protein were respectively mixed with the 500 ul labeled extract of KMB-17 cells (5 \u00d7 10 6 cells), which were lysed in lysis buffer at 4 \u2022 C overnight. The GST and GST-nsp10 complex were conjugated with glutathione-Sepharose 4B beads in a total volume of 500 l of buffer in 25 \u2022 C for 4 h. After centrifugation, the beads were washed three times with cold PBS and boiled at 100 \u2022 C with 20 ul sample buffer for 2 min. After centrifugation, the supernatants were loaded in a 12% SDS-PAGE gel for electrophoresis. Lane a-1, GST protein interacting with the extract of KMB-17 cells; Lane a-2, GST-nsp10 fusion protein interacting with the extract of KMB-17 cells. (b) Western blot of antibody against cytochrome oxidase complex to detect the proteins collected from pull-down test. The protein samples collected from pull-down test were separated in SDS-PAGE gel and transferred to NC membrane. This membrane was interacted with the polyclonal antibody against cytochrome oxidase complex and visualized. Lane b-1, proteins from the sample of GST-nesp10 fusion protein interacting with the extract of KMB-17 cells; Lane b-2, proteins from the sample of GST protein interacting with the extract of KMB-17 cells. (c) The distribution of nsp10-GFP fusion protein in KMB-17 cells. The nsp10 gene was inserted into pGFP plasmid and expressed as a fusion protein of nsp10-GFP after the pGFP-nsp10 was transfected into KMB-17 cells. The distribution of nsp10-GFP fusion protein in cells was observed under a fluorescence microscope with the amplification of 400\u00d7. Lane c-1, observation of nsp10-GFP fusion protein in KMB-17 cells; Lane c-2, observation of mitochondria stained with Rhodamine-123 fluorescence in KMB-17 cells.",
+            "cite_spans": [],
+            "ref_spans": [
+                {
+                    "start": 173,
+                    "end": 182,
+                    "text": "(Fig. 2a)",
+                    "ref_id": "FIGREF0"
+                },
+                {
+                    "start": 281,
+                    "end": 290,
+                    "text": "(Fig. 2b)",
+                    "ref_id": "FIGREF0"
+                },
+                {
+                    "start": 445,
+                    "end": 454,
+                    "text": "(Fig. 2c)",
+                    "ref_id": "FIGREF0"
+                },
+                {
+                    "start": 671,
+                    "end": 677,
+                    "text": "Fig. 1",
+                    "ref_id": null
+                }
+            ],
+            "section": "Interaction of nsp10 and cytochrome oxidase complex in vivo"
+        },
+        {
+            "text": "Depending upon the result provided by the yeast two-hybrid test and other experiments, the nsp10 protein is hypothesized to be able to impact the oxido-reductase system in mitochondria as it was expressed in vivo. A detection series was performed to determine the activity of cytochrome oxidase and the physiological function of mitochondria with the KMB-17 cells transfected by the DNA-nsp10 plasmid. The expression of the nsp10 protein was identified by Western blot analysis using a specific antibody, in the KMB-17 cells transfected (data not shown). The activity of cytochrome oxidase was detected at different time points after transfection. The results indicated a decrease of this activity in the cells transfected by the pcDNA-nsp10 plasmid compared with the control cells (Fig. 3a) . Meanwhile, a marked decrease in Rh-123 fluorescence intensity in the rhodamine-123 fluorescence profiles of the cells at the 24th hour and the recovery at the 48th hour after transfection were noticed in the detection of the depolarization of the inner mitochondrial membrane in the KMB-17 cells transfected with the nsp10 gene (Fig. 3b ). This suggests a loss in the cellular inner mitochondrial membrane potential. By combining these two results, we can probably conclude that the nsp10 protein impacts the oxido-reductase system of mitochondria via an unknown mechanism.",
+            "cite_spans": [],
+            "ref_spans": [
+                {
+                    "start": 782,
+                    "end": 791,
+                    "text": "(Fig. 3a)",
+                    "ref_id": "FIGREF1"
+                },
+                {
+                    "start": 1122,
+                    "end": 1130,
+                    "text": "(Fig. 3b",
+                    "ref_id": "FIGREF1"
+                }
+            ],
+            "section": "Effect of the nsp10 protein expressed in vivo to mitochondria"
+        },
+        {
+            "text": "To further investigate the role of the nsp10 protein in the process of viral replication, the KMB-17 cells transfected by pcDNA-nsp10 were infected with the Coronavirus 229E. The infected cells were observed under a light and electron microscope every 24 h from the 24th until the 72nd hour post-infection. Extensive cytopathic effect was observed in the transfected cells infected by the virus at the 24th hour post-infection and remained continuous when compared to the control cells (Fig. 4a) . The cytopathological analysis indicated an obvious cellular edema, severe vacuolar degeneration with the large nuclear, chromosome condensation, the necrosis of some cellular apparatus, and the damage of mitochondria or endoplasm membrane when viewed through the electron microscope (Fig. 4b) . This was also supported by the observation of the stained cells by the HE method (data not shown). Compared with these pathological changes, the control cells transfected with the pcDNA-Vp3 plasmid in the same condition and infected by the same moi of virus showed only a slight change, such as a few cells rounded in their morphology during 24-48 h post-infection. In the latter time of the infection (72-96 h after post-infection of Coronavirus 229E), the classic cytopathic effect appeared in the control cells. These results suggest that the nsp10 protein might have a role in viral replication, which amplifies the cytopathic effect of the virus. ",
+            "cite_spans": [],
+            "ref_spans": [
+                {
+                    "start": 486,
+                    "end": 495,
+                    "text": "(Fig. 4a)",
+                    "ref_id": "FIGREF2"
+                },
+                {
+                    "start": 781,
+                    "end": 790,
+                    "text": "(Fig. 4b)",
+                    "ref_id": "FIGREF2"
+                }
+            ],
+            "section": "Morphological alteration of the KMB-17 cells transfected with the nsp10 gene in viral infection"
+        },
+        {
+            "text": "Generally speaking, the cytopathic effect of the virus indicates that the viral replication in cells uses the cellular apparatus for virus synthesis and causes cellular structure damage. In this case, the cytopathic effect is an indicator of viral proliferation in cells. To analyze the severe cytopathic effect appearing in the cells transfected by the nsp10 gene during the infection of virus, a titration of the virus harvested from the transfected cells was performed at different time points. A lower yield of the virus was demonstrated in the cells transfected by the pcDNA-nsp10 plasmid compared with control cells transfected by the pcDNA-Vp3 (Fig. 5 ). This suggests that the nsp10 protein expressed in the cells inhibits replication of this virus in the unknown way. However, its mechanism remains unclear.",
+            "cite_spans": [],
+            "ref_spans": [
+                {
+                    "start": 651,
+                    "end": 658,
+                    "text": "(Fig. 5",
+                    "ref_id": "FIGREF3"
+                }
+            ],
+            "section": "Blocking of viral replication by nsp10 protein in vivo"
+        },
+        {
+            "text": "As a new species of coronavirus, the SARS-CoV should have a similar method of viral replication as other coronaviruses. In fact, infection with SARS-CoV causes a severe pathological process with its own specific and unknown mechanism, which can bring about a severe respiratory syn-drome in patients (Ng et al., 2004) . This clinical characterization suggests two possibilities in the pathogenesis of SARS. One is immune pathogenesis, in which the damage of alveolar cells and bronchiolar epithelium could be caused by SARS-CoV specific cytotoxic T-cells. However, the data reported to date does not provide strong evidence to support this possibility. The results obtained from the SARS animal model also indicate that no obvious lymphocytes accumulate in the lung tissue of those infected by SARS-CoV (Fouchier et al., 2003) . The other possibility is that the extensive cytopathic effect of SARS-CoV leads to a wider necrosis in lung tissue and impairs the respiratory function. This study seems to support this hypothesis. However, some previous data indicated that the protein component of coronavirus targets the cellular apparatus, like the Golgi complex for releasing virus particles (Emily and Machamer, 2002) . The SARS-CoV nonstructural protein 10, as it is produced from the viral polyprotein pp1a/pp1ab by 3CL pro cleavage during SARS-CoV infection in cells, should theoretically function in the viral replication while interacting with the specific cellular protein. The yeast two-hybrid system analysis of the human embryo lung tissue DNA library identified potential targeting proteins of the nsp10, including the proteins involved in the cellular transcription process and the enzyme components of the oxidoreductase system in mitochondria. This result suggests that the nsp10 protein could affect the activities of NADH and cytochrome oxidase II via a direct interaction while being involved in viral replication. In this investigation, the localization test of the nsp10 protein fusing with the GFP fluorescence protein also showed that the nsp10 protein was accumulated as a cluster in the cytoplasm. This illustrates, to some extent, that the nsp10 protein attaches to a specific cellular apparatus in the cytoplasm compared with the localization results of mitochondria with rhodamine-123 staining. The pull-down test and Western blot with antibody against the cytochrome oxidase complex also suggest the interaction of nsp10 and oxidoreductase system in vivo. The most important evidence is the change of two physiological indicators of human embryo lung fibroblast transfected with the nsp10 gene, which include the decreased tendency of cytochrome oxidase activity of the transfected cells, and a loss in the cellular inner mitochondrial membrane potential exhibited by the decreased rhodamine-123 fluorescence intensity. Therefore, we could infer that the nsp10 protein might contribute to the severe damage of the cells infected by the SARS-CoV with its effect on the enzyme, like NADH or cytochrome oxidase of the mitochondria. Depending upon this hypothesis, we further investigated the possible biological properties of the nsp10 protein in the replication of Coronavirus 229E. This virus is able to replicate and cause cytopathic effect in KMB-17 fibroblasts. Interestingly, these results revealed that the expression of the nsp10 protein in the cells enhanced the cytopathic effect of Coronavirus 229E. The morphological observations indicated that the cells transfected by the pcDNA-nsp10, in which the expression of the nsp10 protein was confirmed by Western blot analysis, appeared to show a severe cytopathic effect, while in contrast, the control cells transfected by the pcDNA-Vp3 did not show any obvious cytopathic effect within 24-72 h after infection with the virus, This suggested that the cytopathic effect was unrelated to the accumulation of the expressed exogenous protein in the cells. Titration of the virus harvested from the cells at different time points demonstrated the obvious difference between the experimental sample and the control cells. There was little increase in titre of virus in cells transfected by the nsp10 gene, while the virus titre in the control cells transfected only with the pcDNA-Vp3 plasmid had increased by about 2-3 log. This result seems to contradict the obvious cytopathic effect of the cells transfected with the nsp10 gene. However, as the extensive cytopathic effect appeared rapidly, we could deduce that the blocking of virus replication in these cells is due to damage to the cellular apparatus probably caused by the nsp10 protein, and the possible interaction of nsp10 protein and BTF3 or ATF5 indicated in yeast trap test.",
+            "cite_spans": [
+                {
+                    "start": 300,
+                    "end": 317,
+                    "text": "(Ng et al., 2004)",
+                    "ref_id": "BIBREF13"
+                },
+                {
+                    "start": 803,
+                    "end": 826,
+                    "text": "(Fouchier et al., 2003)",
+                    "ref_id": "BIBREF5"
+                },
+                {
+                    "start": 1192,
+                    "end": 1218,
+                    "text": "(Emily and Machamer, 2002)",
+                    "ref_id": "BIBREF3"
+                }
+            ],
+            "ref_spans": [],
+            "section": "Discussion"
+        },
+        {
+            "text": "These results suggest that the SARS-CoV non-structural protein nsp10 probably enhances the cytopathic effect of SARS-CoV in the cells by impairing the oxido-reductase system in the mitochondria, which could be one possible reason for the cytopathogenicity of the SARS-CoV in vivo. Nevertheless, further experiments are required to explore the effect of the nsp10 protein in SARS-CoV replication before we can use these results to analyze the pathological changes seen in SARS patients.",
+            "cite_spans": [],
+            "ref_spans": [],
+            "section": "Discussion"
+        }
+    ],
+    "bib_entries": {
+        "BIBREF0": {
+            "ref_id": "b0",
+            "title": "Coronavirus main proteinase (3clpro) structure: basis for design of anti-SARS drugs",
+            "authors": [
+                {
+                    "first": "K",
+                    "middle": [],
+                    "last": "Anand",
+                    "suffix": ""
+                },
+                {
+                    "first": "J",
+                    "middle": [],
+                    "last": "Ziebuhr",
+                    "suffix": ""
+                },
+                {
+                    "first": "P",
+                    "middle": [],
+                    "last": "Wadhwani",
+                    "suffix": ""
+                },
+                {
+                    "first": "J",
+                    "middle": [
+                        "R"
+                    ],
+                    "last": "Mesters",
+                    "suffix": ""
+                },
+                {
+                    "first": "R",
+                    "middle": [],
+                    "last": "Hilgenfeld",
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "Science",
+            "volume": "300",
+            "issn": "",
+            "pages": "1763--1770",
+            "other_ids": {}
+        },
+        "BIBREF1": {
+            "ref_id": "b1",
+            "title": "Infection of primary cultures of human neural cells by Coronavirus 229E and OC43",
+            "authors": [
+                {
+                    "first": "A",
+                    "middle": [],
+                    "last": "Bonavia",
+                    "suffix": ""
+                },
+                {
+                    "first": "N",
+                    "middle": [],
+                    "last": "Arbour",
+                    "suffix": ""
+                },
+                {
+                    "first": "V",
+                    "middle": [
+                        "W"
+                    ],
+                    "last": "Yong",
+                    "suffix": ""
+                },
+                {
+                    "first": "P",
+                    "middle": [
+                        "J"
+                    ],
+                    "last": "Talbot",
+                    "suffix": ""
+                }
+            ],
+            "year": 1997,
+            "venue": "J Virol",
+            "volume": "71",
+            "issn": "",
+            "pages": "800--806",
+            "other_ids": {}
+        },
+        "BIBREF2": {
+            "ref_id": "b2",
+            "title": "Clinical features and short-term outcomes of 144 patients with SARS in the Greater Toronto area",
+            "authors": [
+                {
+                    "first": "C",
+                    "middle": [
+                        "M"
+                    ],
+                    "last": "Booth",
+                    "suffix": ""
+                },
+                {
+                    "first": "L",
+                    "middle": [
+                        "M"
+                    ],
+                    "last": "Matukas",
+                    "suffix": ""
+                },
+                {
+                    "first": "G",
+                    "middle": [
+                        "A"
+                    ],
+                    "last": "Tomlinson",
+                    "suffix": ""
+                },
+                {
+                    "first": "A",
+                    "middle": [
+                        "R"
+                    ],
+                    "last": "Rachlis",
+                    "suffix": ""
+                },
+                {
+                    "first": "D",
+                    "middle": [
+                        "B"
+                    ],
+                    "last": "Rose",
+                    "suffix": ""
+                },
+                {
+                    "first": "H",
+                    "middle": [
+                        "A"
+                    ],
+                    "last": "Dwosh",
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "JAMA",
+            "volume": "289",
+            "issn": "",
+            "pages": "2801--2810",
+            "other_ids": {}
+        },
+        "BIBREF3": {
+            "ref_id": "b3",
+            "title": "The cytoplasmic tail of infectious bronchitis virus E protein directs Gulgi targeting",
+            "authors": [
+                {
+                    "first": "C",
+                    "middle": [],
+                    "last": "Emily",
+                    "suffix": ""
+                },
+                {
+                    "first": "C",
+                    "middle": [
+                        "E"
+                    ],
+                    "last": "Machamer",
+                    "suffix": ""
+                }
+            ],
+            "year": 2002,
+            "venue": "J Virol",
+            "volume": "76",
+            "issn": "",
+            "pages": "1273--84",
+            "other_ids": {}
+        },
+        "BIBREF4": {
+            "ref_id": "b4",
+            "title": "The two-hybrid system: an assay for protein-protein interactions",
+            "authors": [
+                {
+                    "first": "S",
+                    "middle": [],
+                    "last": "Fields",
+                    "suffix": ""
+                },
+                {
+                    "first": "R",
+                    "middle": [],
+                    "last": "Sternglanz",
+                    "suffix": ""
+                }
+            ],
+            "year": 1994,
+            "venue": "Trends Genet",
+            "volume": "10",
+            "issn": "",
+            "pages": "286--92",
+            "other_ids": {}
+        },
+        "BIBREF5": {
+            "ref_id": "b5",
+            "title": "Koch's postulates fulfilled for SARS virus",
+            "authors": [
+                {
+                    "first": "R",
+                    "middle": [
+                        "A"
+                    ],
+                    "last": "Fouchier",
+                    "suffix": ""
+                },
+                {
+                    "first": "T",
+                    "middle": [],
+                    "last": "Kuiken",
+                    "suffix": ""
+                },
+                {
+                    "first": "M",
+                    "middle": [],
+                    "last": "Schutten",
+                    "suffix": ""
+                },
+                {
+                    "first": "G",
+                    "middle": [],
+                    "last": "Van Amerongen",
+                    "suffix": ""
+                },
+                {
+                    "first": "G",
+                    "middle": [
+                        "J"
+                    ],
+                    "last": "Van Doornum",
+                    "suffix": ""
+                },
+                {
+                    "first": "B",
+                    "middle": [
+                        "G"
+                    ],
+                    "last": "Van Den Hoogen",
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "Nature",
+            "volume": "423",
+            "issn": "",
+            "pages": "",
+            "other_ids": {}
+        },
+        "BIBREF6": {
+            "ref_id": "b6",
+            "title": "The biological properties of the human embryo fibroblast (KMB-17 strain)",
+            "authors": [
+                {
+                    "first": "R",
+                    "middle": [],
+                    "last": "Guo",
+                    "suffix": ""
+                },
+                {
+                    "first": "C",
+                    "middle": [],
+                    "last": "Yiyun",
+                    "suffix": ""
+                },
+                {
+                    "first": "Z",
+                    "middle": [],
+                    "last": "Meigui",
+                    "suffix": ""
+                }
+            ],
+            "year": 1974,
+            "venue": "Acta Genet Sinica",
+            "volume": "1",
+            "issn": "",
+            "pages": "147--55",
+            "other_ids": {}
+        },
+        "BIBREF7": {
+            "ref_id": "b7",
+            "title": "Block staining of mammalian tissue with hematoxyline and eosin",
+            "authors": [
+                {
+                    "first": "I",
+                    "middle": [
+                        "F"
+                    ],
+                    "last": "Hehine",
+                    "suffix": ""
+                }
+            ],
+            "year": 1981,
+            "venue": "Stain Technol",
+            "volume": "56",
+            "issn": "",
+            "pages": "119--142",
+            "other_ids": {}
+        },
+        "BIBREF8": {
+            "ref_id": "b8",
+            "title": "SARS Working Group. A novel coronavirus associated with severe acute respiratory syndrome",
+            "authors": [
+                {
+                    "first": "T",
+                    "middle": [
+                        "G"
+                    ],
+                    "last": "Ksiazek",
+                    "suffix": ""
+                },
+                {
+                    "first": "D",
+                    "middle": [],
+                    "last": "Erdman",
+                    "suffix": ""
+                },
+                {
+                    "first": "C",
+                    "middle": [
+                        "S"
+                    ],
+                    "last": "Goldsmith",
+                    "suffix": ""
+                },
+                {
+                    "first": "S",
+                    "middle": [
+                        "R"
+                    ],
+                    "last": "Zaki",
+                    "suffix": ""
+                },
+                {
+                    "first": "T",
+                    "middle": [],
+                    "last": "Peret",
+                    "suffix": ""
+                },
+                {
+                    "first": "S",
+                    "middle": [],
+                    "last": "Emery",
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "N Engl J Med",
+            "volume": "348",
+            "issn": "",
+            "pages": "1953--66",
+            "other_ids": {}
+        },
+        "BIBREF9": {
+            "ref_id": "b9",
+            "title": "A major outbreak of severe acute respiratory syndrome in Hong Kong",
+            "authors": [
+                {
+                    "first": "N",
+                    "middle": [],
+                    "last": "Lee",
+                    "suffix": ""
+                },
+                {
+                    "first": "D",
+                    "middle": [],
+                    "last": "Hui",
+                    "suffix": ""
+                },
+                {
+                    "first": "A",
+                    "middle": [],
+                    "last": "Wu",
+                    "suffix": ""
+                },
+                {
+                    "first": "P",
+                    "middle": [],
+                    "last": "Chan",
+                    "suffix": ""
+                },
+                {
+                    "first": "P",
+                    "middle": [],
+                    "last": "Cameron",
+                    "suffix": ""
+                },
+                {
+                    "first": "G",
+                    "middle": [
+                        "M"
+                    ],
+                    "last": "Joynt",
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "N Engl J Med",
+            "volume": "348",
+            "issn": "",
+            "pages": "1986--94",
+            "other_ids": {}
+        },
+        "BIBREF10": {
+            "ref_id": "b10",
+            "title": "An SR-protein induced by HSV I binding to cells functioning as a splicing inhibitor of viral pre-mRNA",
+            "authors": [
+                {
+                    "first": "Q",
+                    "middle": [],
+                    "last": "Li",
+                    "suffix": ""
+                },
+                {
+                    "first": "H",
+                    "middle": [],
+                    "last": "Zhao",
+                    "suffix": ""
+                },
+                {
+                    "first": "C",
+                    "middle": [],
+                    "last": "Dong",
+                    "suffix": ""
+                },
+                {
+                    "first": "Che",
+                    "middle": [
+                        "Y"
+                    ],
+                    "last": "Li",
+                    "suffix": ""
+                },
+                {
+                    "first": "J",
+                    "middle": [],
+                    "last": "Wang",
+                    "suffix": ""
+                },
+                {
+                    "first": "L",
+                    "middle": [],
+                    "last": "",
+                    "suffix": ""
+                }
+            ],
+            "year": 2002,
+            "venue": "J Mol Biol",
+            "volume": "316",
+            "issn": "",
+            "pages": "887--94",
+            "other_ids": {}
+        },
+        "BIBREF11": {
+            "ref_id": "b11",
+            "title": "Protein measurement with phenol reagent",
+            "authors": [
+                {
+                    "first": "O",
+                    "middle": [
+                        "H"
+                    ],
+                    "last": "Lowry",
+                    "suffix": ""
+                },
+                {
+                    "first": "N",
+                    "middle": [
+                        "J"
+                    ],
+                    "last": "Rosebrough",
+                    "suffix": ""
+                },
+                {
+                    "first": "A",
+                    "middle": [
+                        "L"
+                    ],
+                    "last": "Farr",
+                    "suffix": ""
+                },
+                {
+                    "first": "R",
+                    "middle": [
+                        "J"
+                    ],
+                    "last": "Randall",
+                    "suffix": ""
+                }
+            ],
+            "year": 1951,
+            "venue": "J Biol Chem",
+            "volume": "193",
+            "issn": "",
+            "pages": "265--75",
+            "other_ids": {}
+        },
+        "BIBREF12": {
+            "ref_id": "b12",
+            "title": "The genome sequence of the SARS-associated coronavirus",
+            "authors": [
+                {
+                    "first": "M",
+                    "middle": [
+                        "A"
+                    ],
+                    "last": "Marra",
+                    "suffix": ""
+                },
+                {
+                    "first": "S",
+                    "middle": [
+                        "J"
+                    ],
+                    "last": "Jones",
+                    "suffix": ""
+                },
+                {
+                    "first": "C",
+                    "middle": [
+                        "R"
+                    ],
+                    "last": "Astell",
+                    "suffix": ""
+                },
+                {
+                    "first": "R",
+                    "middle": [
+                        "A"
+                    ],
+                    "last": "Holt",
+                    "suffix": ""
+                },
+                {
+                    "first": "A",
+                    "middle": [],
+                    "last": "Brooks-Wilson",
+                    "suffix": ""
+                },
+                {
+                    "first": "Y",
+                    "middle": [
+                        "S"
+                    ],
+                    "last": "Butterfield",
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "Science",
+            "volume": "300",
+            "issn": "",
+            "pages": "1399--404",
+            "other_ids": {}
+        },
+        "BIBREF13": {
+            "ref_id": "b13",
+            "title": "Inflammatory cytokine profile in children with severe acute respiratory synchorme",
+            "authors": [
+                {
+                    "first": "P",
+                    "middle": [
+                        "C"
+                    ],
+                    "last": "Ng",
+                    "suffix": ""
+                },
+                {
+                    "first": "C",
+                    "middle": [
+                        "W"
+                    ],
+                    "last": "Lam",
+                    "suffix": ""
+                },
+                {
+                    "first": "A",
+                    "middle": [
+                        "M"
+                    ],
+                    "last": "Li",
+                    "suffix": ""
+                },
+                {
+                    "first": "C",
+                    "middle": [
+                        "K"
+                    ],
+                    "last": "Wong",
+                    "suffix": ""
+                },
+                {
+                    "first": "F",
+                    "middle": [
+                        "W"
+                    ],
+                    "last": "Cheng",
+                    "suffix": ""
+                },
+                {
+                    "first": "T",
+                    "middle": [
+                        "F"
+                    ],
+                    "last": "Leung",
+                    "suffix": ""
+                }
+            ],
+            "year": 2004,
+            "venue": "Pediatrics",
+            "volume": "113",
+            "issn": "",
+            "pages": "7--14",
+            "other_ids": {}
+        },
+        "BIBREF14": {
+            "ref_id": "b14",
+            "title": "SARS: what we learned was the fuss overblown",
+            "authors": [
+                {
+                    "first": "H",
+                    "middle": [],
+                    "last": "Pearson",
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "Nature",
+            "volume": "424",
+            "issn": "",
+            "pages": "121--127",
+            "other_ids": {}
+        },
+        "BIBREF15": {
+            "ref_id": "b15",
+            "title": "HKU/UCH SARS Study Group. Clinical progression and viral load of SARS coronavirus pneumonia in a community outbreak",
+            "authors": [
+                {
+                    "first": "J",
+                    "middle": [
+                        "S"
+                    ],
+                    "last": "Peiris",
+                    "suffix": ""
+                },
+                {
+                    "first": "C",
+                    "middle": [
+                        "M"
+                    ],
+                    "last": "Chu",
+                    "suffix": ""
+                },
+                {
+                    "first": "V",
+                    "middle": [
+                        "C"
+                    ],
+                    "last": "Cheng",
+                    "suffix": ""
+                },
+                {
+                    "first": "K",
+                    "middle": [
+                        "S"
+                    ],
+                    "last": "Chan",
+                    "suffix": ""
+                },
+                {
+                    "first": "I",
+                    "middle": [
+                        "F"
+                    ],
+                    "last": "Hung",
+                    "suffix": ""
+                },
+                {
+                    "first": "L",
+                    "middle": [
+                        "L"
+                    ],
+                    "last": "Poon",
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "Lancet",
+            "volume": "361",
+            "issn": "",
+            "pages": "1767--72",
+            "other_ids": {}
+        },
+        "BIBREF16": {
+            "ref_id": "b16",
+            "title": "Molecular cloning of poliovirus cDNA and determination of the complete nucleotide sequence of the viral genome",
+            "authors": [
+                {
+                    "first": "V",
+                    "middle": [
+                        "R"
+                    ],
+                    "last": "Racaniello",
+                    "suffix": ""
+                },
+                {
+                    "first": "D",
+                    "middle": [],
+                    "last": "Baltimore",
+                    "suffix": ""
+                }
+            ],
+            "year": 1981,
+            "venue": "Proc Natl Acad Sci",
+            "volume": "78",
+            "issn": "",
+            "pages": "4887--91",
+            "other_ids": {}
+        },
+        "BIBREF17": {
+            "ref_id": "b17",
+            "title": "A method for the examination of the same cell using light, scanning and transmission electron-microscope",
+            "authors": [
+                {
+                    "first": "M",
+                    "middle": [],
+                    "last": "Slater",
+                    "suffix": ""
+                }
+            ],
+            "year": 1991,
+            "venue": "Biotech Histochem",
+            "volume": "1",
+            "issn": "",
+            "pages": "63--71",
+            "other_ids": {}
+        },
+        "BIBREF18": {
+            "ref_id": "b18",
+            "title": "Mechanisms and enzymes involved in SARS coronavirus genome expression",
+            "authors": [
+                {
+                    "first": "V",
+                    "middle": [],
+                    "last": "Thiel",
+                    "suffix": ""
+                },
+                {
+                    "first": "K",
+                    "middle": [
+                        "A"
+                    ],
+                    "last": "Ivanov",
+                    "suffix": ""
+                },
+                {
+                    "first": "A",
+                    "middle": [],
+                    "last": "Putics",
+                    "suffix": ""
+                },
+                {
+                    "first": "T",
+                    "middle": [],
+                    "last": "Hertzig",
+                    "suffix": ""
+                },
+                {
+                    "first": "B",
+                    "middle": [],
+                    "last": "Schelle",
+                    "suffix": ""
+                },
+                {
+                    "first": "S",
+                    "middle": [],
+                    "last": "Bayer",
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "J Gen Virol",
+            "volume": "84",
+            "issn": "",
+            "pages": "2305--2320",
+            "other_ids": {}
+        },
+        "BIBREF19": {
+            "ref_id": "b19",
+            "title": "Electrophoretic transfer of protein from polyacrylamide gels to nitrocellulose sheets: procedure and some application",
+            "authors": [
+                {
+                    "first": "D",
+                    "middle": [],
+                    "last": "Towbin",
+                    "suffix": ""
+                },
+                {
+                    "first": "T",
+                    "middle": [],
+                    "last": "Stachelin",
+                    "suffix": ""
+                },
+                {
+                    "first": "J",
+                    "middle": [],
+                    "last": "Gordon",
+                    "suffix": ""
+                }
+            ],
+            "year": 1979,
+            "venue": "Proc Natl Acad Sci",
+            "volume": "76",
+            "issn": "",
+            "pages": "4350--4354",
+            "other_ids": {}
+        },
+        "BIBREF20": {
+            "ref_id": "b20",
+            "title": "Pathogenesis of viral infections",
+            "authors": [
+                {
+                    "first": "K",
+                    "middle": [
+                        "L"
+                    ],
+                    "last": "Tyler",
+                    "suffix": ""
+                },
+                {
+                    "first": "B",
+                    "middle": [
+                        "N"
+                    ],
+                    "last": "Fields",
+                    "suffix": ""
+                }
+            ],
+            "year": 1990,
+            "venue": "field's virology",
+            "volume": "",
+            "issn": "",
+            "pages": "",
+            "other_ids": {}
+        }
+    },
+    "ref_entries": {
+        "FIGREF0": {
+            "text": "The interaction of SARS-CoV nsp10 protein and cytochrome oxidase complex. (a) Pull-down test of SARS-CoV nsp10 and the extract of KMB-17 cells labeled with 35 S-methioine.",
+            "latex": null,
+            "type": "figure"
+        },
+        "FIGREF1": {
+            "text": "The functional impact of mitochondria by the nsp10 protein expressed in vivo. (a) Activity of NADH-cytochrome c oxidase in the cells transfected by the pcDNA-nsp10. The human embryo fibroblasts transfected by the pcDNA-nsp10 for 18 h were grown in DMEM-5% FBS for 12, 24 and 36 h and collected by scraping followed by rinsing with 0.9% NaCl buffer. The cells were treated with sonication and centrifugation. The supernatant was used for detecting the activity of cytochrome c oxidase with its substrate. The results of O 2 \u2212 production were read at OD 550 . The cellular protein in supernatant was quantified using the Lowry method.(b) Distribution of the cells transfected by the pcDNA-nsp10 according to their rhodamine-123 fluorescence intensities. The human embryo lung fibroblast transfected by the pcDNA-nsp10 or pcDNA-Vp3 plasmid and the control cells, were stained using rhodamine-123 at 24 and 48 h after transfection, and analyzed using flow cytometry. Lane b-1, rhodamine-123 fluorescence profiles of the cells transfected by the pcDNA-nsp10 or pcDNA-Vp3 at 24 h after transfection and the control cells treated using only Lipotamine TM 2000 under the same conditions; Lane b-2, Rhodamine-123 fluorescence profiles of the cells transfected by the pcDNA-nsp10 or pcDNA-Vp3 at 48 h after transfection and the control cells treated using only Lipotamine TM 2000 under the same conditions (1, transfected cells with pcDNA-nsp10; 2, transfected cells with pcDNA-Vp3).",
+            "latex": null,
+            "type": "figure"
+        },
+        "FIGREF2": {
+            "text": "Cytopathic effect induced by Coronavirus 229E infection in cells transfected with pcDNA-nsp10. (a) Cytopathic effect induced by Coronavirus 229E in cells transfected by the nsp10 gene as observed under a light microscope (200\u00d7). Lane a-1, cells transfected with the pcDNA-nsp10 and then infected with Coronavirus 229E, moi 0.5, 24 h post-infection; Lane a-2, control cells transfected with the pcDNA-Vp3 and then infected with Coronavirus 229E, moi 0.5, 24 h post-infection. (b) The pathological structural change in the cytopathic effects induced by Coronavirus 229E in cells transfected with the nsp10 gene as observed under an electron microscope. Lane b-1, cells transfected with the pcDNA-nsp10 and then infected by Coronavirus 229E, moi 0.5 24 h post-infection (the arrows indicate vacuolar degeneration, karyolysis and lysis of plasma membrane); Lane b-2, control cells transfected with the pcDNA-Vp3 and then infected by Coronavirus 229E, moi 0.5, 24 h post-infection (the arrows indicate the complete membrane and the nucleus).",
+            "latex": null,
+            "type": "figure"
+        },
+        "FIGREF3": {
+            "text": "Analysis of the viral replication in the cells transfected by the pcDNA-nsp10. Titration of the harvested Coronavirus 229E grown in the cells transfected by the pcDNA-nsp10 or pcDNA-Vp3.",
+            "latex": null,
+            "type": "figure"
+        }
+    },
+    "back_matter": [
+        {
+            "text": "We would like to thank San Francisco Edit (www.sfedit.net) for its assistance in editing this manuscript. This work was supported by the Natural Science Fund 30370065 in China and Natural Fund 2003C0002R in Yunnan.",
+            "cite_spans": [],
+            "ref_spans": [],
+            "section": "Acknowledgements"
+        }
+    ]
+}

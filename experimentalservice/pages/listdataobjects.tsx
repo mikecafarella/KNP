@@ -53,9 +53,9 @@ const DataObjects: React.FC<Props> = (props) => {
                 <Table.TextCell>X{obj.id}</Table.TextCell>
                 <Table.TextCell>{obj.name}</Table.TextCell>
                 <Table.TextCell>{obj.desc}</Table.TextCell>
-                <Table.TextCell>{obj.versions[0].dobj.datatype}</Table.TextCell>
-                <Table.TextCell>{obj.versions[0].timestamp}</Table.TextCell>
-                <Table.TextCell>{obj.versions[0].dobj.comment}</Table.TextCell>
+                <Table.TextCell>{obj.versions[0].datatype}</Table.TextCell>
+                <Table.TextCell>{obj.versions[0].created}</Table.TextCell>
+                <Table.TextCell>{obj.versions[0].comment}</Table.TextCell>
                 <Table.TextCell>{obj.owner.name}</Table.TextCell>
              </Table.Row>
             ))}
@@ -66,7 +66,7 @@ const DataObjects: React.FC<Props> = (props) => {
 }
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const res = await fetch("http://localhost:3000/api/listdataobjects")
+  const res = await fetch("http://localhost:5000/dobjs")
   const dobjs = await res.json()
   return {
     props: { dobjs },

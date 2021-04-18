@@ -39,7 +39,7 @@ export type DataobjProps = {
 
 const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
   const [tabIndex, setTabIndex] = useState(0)
-  const [deleteId, setDeleteId] = useState(dobj.dobj.id)
+  const [deleteId, setDeleteId] = useState(dobj.id)
 
 
 
@@ -68,14 +68,8 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
     }
   }
 
-  const objLink = "http://localhost:3000/dobj/" + (dobj.label.iscurrent ? "X" + dobj.label.id : dobj.dobj.id)
+  var tabLabels = ['Overview', 'Dependencies', 'Versions', 'Related Objects', 'Suggestions', 'Delete']
 
-  var tabLabels = []
-  if (dobj.label.iscurrent) {
-    tabLabels = ['Overview', 'Dependencies', 'Versions', 'Related Objects', 'Suggestions', 'Delete']
-  } else {
-    tabLabels = ['Overview', 'Dependencies', 'Related Objects', 'Suggestions']
-  }
   const overviewIndex = tabLabels.findIndex( (elt) => elt == 'Overview')
   const dependencyIndex = tabLabels.findIndex( (elt) => elt == 'Dependencies')
   const versionIndex = tabLabels.findIndex( (elt) => elt == 'Versions')
@@ -83,14 +77,17 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
   const suggestionIndex = tabLabels.findIndex( (elt) => elt == 'Suggestions')
   const deleteIndex = tabLabels.findIndex( (elt) => elt == 'Delete')
 
+  const dobjId = dobj.id[0] == 'X' ? dobj.id : 'X' + dobj.id
+  const objLink = "http://localhost:3000/dobj/" + dobjId
+
   return (
       <Pane width="100%">
         <Pane display="flex" padding={majorScale(1)} border>
 
           <Pane flex={1} >
-            <Heading size={800}>{dobj.label.iscurrent ? dobj.label.name : "Anonymous object:" + dobj.dobj.id}
+            <Heading size={800}>{dobj.name}
 
-            {dobj.label.iscurrent ? "(X" + dobj.label.id + ")": ""}
+            {"(" + dobjId + ")"}
             </Heading>
 
             <Pane marginLeft={majorScale(1)}>
@@ -99,22 +96,22 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
 
             </Paragraph>
             <Paragraph size={300} color="muted">
-                Created by user {dobj.dobj.owner.name} ({dobj.dobj.owner.email}) on {dobj.dobj.timestamp}
+                Created by user {dobj.owner.name} ({dobj.owner.email}) on {dobj.created}
             </Paragraph>
 
             <Paragraph size={300} color="muted">
-                This object has type {dobj.dobj.datatype}
+                This object has type {dobj.displayVersion.datatype}
             </Paragraph>
 
               <Paragraph size={500}>
-                    {dobj.label.iscurrent ? dobj.label.desc : ""}
+                    {dobj.desc}
               </Paragraph>
 
               <Paragraph size={500}>
-                    Current Version (v{dobj.versions[0].id}): {dobj.versions[0].timestamp} {dobj.versions[0].comment ? " - " + dobj.versions[0].comment : ""}
-                    {dobj.versions[0].id != dobj.dobj.id &&
+                    Current Version (v{dobj.displayVersion.id}): {dobj.displayVersion.created} {dobj.displayVersion.comment ? " - " + dobj.displayVersion.comment : ""}
+                    {dobj.displayVersion.id != dobj.versions[0].id &&
                     <div style={{color:'red'}}>
-                      <b>Displayed Version</b> (v{dobj.dobj.id}): {dobj.dobj.timestamp} {dobj.dobj.comment ? " - " + dobj.dobj.comment : ""}
+                      <b>Displayed Version</b> (v{dobj.versions[0].id}): {dobj.displayVersion.created} {dobj.displayVersion.comment ? " - " + dobj.displayVersion.comment : ""}
                     </div>
                    }
               </Paragraph>
@@ -150,7 +147,7 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
               justifyContent="center"
             >
 
-        <DataContent datacontent={dobj.dobj}></DataContent>
+        <DataContent datacontent={dobj.displayVersion}></DataContent>
         </Card>
 
       }
@@ -183,7 +180,7 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
             <Table.Body>
             {dobj.versions.map(
                (version) => (
-                 <Table.Row key="0" isSelectable onSelect={() => Router.push("/dobj/X" + version.dobjid + "/?v=" + version.id)}>
+                 <Table.Row key="0" isSelectable onSelect={() => Router.push("/dobj/" + dobjId + "/?v=" + version.id)}>
                    <Table.TextCell>{version.readableDate}</Table.TextCell>
                    <Table.TextCell>{version.comment}</Table.TextCell>
                    <Table.TextCell>{version.datatype}</Table.TextCell>
