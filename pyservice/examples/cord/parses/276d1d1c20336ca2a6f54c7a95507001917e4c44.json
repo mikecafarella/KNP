@@ -1,0 +1,518 @@
+{
+    "paper_id": "276d1d1c20336ca2a6f54c7a95507001917e4c44",
+    "metadata": {
+        "title": "",
+        "authors": []
+    },
+    "abstract": [],
+    "body_text": [
+        {
+            "text": "To the Editor: Severe acute respiratory syndrome (SARS) has been a global public health issue (1) . We completed a study on the evolutionary path of the SARS-associated coronavirus (SARS-CoV) during the 2002-2003 epidemic (2) . Most human SARS-CoV strains, as exemplified by the Tor2 sequence (GenBank accession no. AY274119) (3) , are characterized by the deletion of a 29-nucleotide (nt) segment upstream of the nucleocapsid (N) gene domain when compared with the viral strains isolated from the earliest human SARS patients (2) or from nonhuman mammalian hosts (4) . Towards the end of the epidemic, a variant of the SARS-CoV with a deletion of 386 nt flanking the 29-nt site was first demonstrated by complete genomic sequencing in 2 patients in Hong Kong (GenBank accession nos. AY394999, AY395000, AY395001, AY395002) (2) . The 386nt deleted segment corresponds to the genomic region spanning residues 27719 to 28104 of the Tor2 sequence (3) . The deletion results in the disruption of a putative open reading frame, orf 9, while eliminating orfs 10 and 11. This deletion variant was first isolated from 2 SARS patients with disease onset in mid-May 2003. Patient A was a 41-year-old female phlebotomist working in North District Hospital, New Territories East Cluster, Hong Kong. Patient B was a 98-year-old woman admitted to ward X of North District Hospital (2) .",
+            "cite_spans": [
+                {
+                    "start": 94,
+                    "end": 97,
+                    "text": "(1)",
+                    "ref_id": null
+                },
+                {
+                    "start": 222,
+                    "end": 225,
+                    "text": "(2)",
+                    "ref_id": null
+                },
+                {
+                    "start": 326,
+                    "end": 329,
+                    "text": "(3)",
+                    "ref_id": null
+                },
+                {
+                    "start": 527,
+                    "end": 530,
+                    "text": "(2)",
+                    "ref_id": null
+                },
+                {
+                    "start": 564,
+                    "end": 567,
+                    "text": "(4)",
+                    "ref_id": null
+                },
+                {
+                    "start": 824,
+                    "end": 827,
+                    "text": "(2)",
+                    "ref_id": null
+                },
+                {
+                    "start": 944,
+                    "end": 947,
+                    "text": "(3)",
+                    "ref_id": null
+                },
+                {
+                    "start": 1367,
+                    "end": 1370,
+                    "text": "(2)",
+                    "ref_id": null
+                }
+            ],
+            "ref_spans": [],
+            "section": "Tracing SARS-Coronavirus Variant with Large Genomic Deletion"
+        },
+        {
+            "text": "With this finding late in the epidemic, we studied the prevalence of this SARS-CoV variant to determine its origin. Twenty-one SARS patients with disease onset dates from mid-April were identified. All cases had been confirmed by positive reverse transcription-polymerase chain reaction (RT-PCR) detection of SARS-CoV RNA in clinical specimens or seroconversion. These patients had been admitted with SARS to 4 different hospitals in Hong Kong, including North District Hospital and hospitals A and B, which were located in the same geographic cluster as North District Hospital, as well as hospital C, which was geographically distant from the other 3 hospitals. Clinical specimens were retrieved, and RT-PCR was performed to specifically amplify a genomic segment of SARS-CoV encompassing the deletion site. Specimens with shortened PCR fragments were sequenced to determine the location and precise extent of the deletion.",
+            "cite_spans": [],
+            "ref_spans": [],
+            "section": "Tracing SARS-Coronavirus Variant with Large Genomic Deletion"
+        },
+        {
+            "text": "RT-PCR products were not observed in 2 specimens. Gel electrophoresis of the RT-PCR products for each of the remaining 19 specimens showed a single genomic fragment; 13 of these fragments were shortened. Direct sequencing of the short amplicons showed a deletion of 386 nt identical to that isolated from patients A and B. The patients' histories were reviewed. Patients A, B, and the 13 patients appeared to be epidemiologically related. The epidemiologic relationships and clinical details of the 15 cases are illustrated in the Figure. Most of the cases were part of a documented outbreak at North District Hospital traceable to an LETTERS 85-year-old woman, L, in whom SARS was not initially suspected but was subsequently confirmed by seroconversion. Patient L had been admitted to ward Y of North District Hospital; subsequently SARS developed in 7 fellow inpatients (patients 3, 4, 5, 6, 8, D, and E) and 2 healthcare workers (patients 7 and A) ( Figure) . Patient A had been working in both wards X and Y, and patient D was transferred from ward Y to X before symptom onset. Soon afterwards, SARS developed in 2 other inpatients (patients B and 11) in ward X ( Figure) . Patient E was transferred from ward Y to Z, where symptoms later developed in another inpatient (patient 2) ( Figure) .",
+            "cite_spans": [],
+            "ref_spans": [
+                {
+                    "start": 531,
+                    "end": 538,
+                    "text": "Figure.",
+                    "ref_id": "FIGREF0"
+                },
+                {
+                    "start": 954,
+                    "end": 961,
+                    "text": "Figure)",
+                    "ref_id": null
+                },
+                {
+                    "start": 1169,
+                    "end": 1176,
+                    "text": "Figure)",
+                    "ref_id": null
+                },
+                {
+                    "start": 1289,
+                    "end": 1296,
+                    "text": "Figure)",
+                    "ref_id": null
+                }
+            ],
+            "section": "Tracing SARS-Coronavirus Variant with Large Genomic Deletion"
+        },
+        {
+            "text": "Patients 1, 9, and 10 had not been admitted to North District Hospital but were admitted directly to hospital A. Patients 9 and 10 were household contacts of patient 8 ( Figure) . Patient 1 had no documented contact with other SARS patients, but coincidentally, patients 1 and L resided in the same estate, T, where a cluster of SARS cases had been documented by the local government (5). The deletion variant was absent in 6 of the studied cases. These case-patients had no identifiable relationship with the cohort of patients illustrated in the Figure and did not reside in the same geographic region as patients L and 1. Three of the patients were admitted to and treated in hospital C. None of the 6 patients had been admitted to North District Hospital. Therefore, we have isolated a SARS-CoV variant with the largest genomic deletion reported to date in a total of 15 SARS patients, 14 females and 1 male, with ages ranging from 26 to 98 years (median 73 years) ( Figure) . Nine (60%) of the 15 patients, 8 of whom were known chronic disease patients, died (Figure) . This mortality rate is consis-tent with previous observations where the death rate in patients >65 years generally exceeded 50% (1). Despite the disruption of several putative orfs, as evident from this study, this SARS-CoV variant remained effective in propagating among persons, particularly in the healthcare setting. The predicted orfs 9, 10, and 11 of the SARS-CoV thus may not be functionally important, although further studies are required. We were able to document 3 generations of transmission and traced the first appearance of this deletion variant to mid-April 2003, possibly at Estate T. Investigation on the origin of this enigmatic variant should be continued by studying its prevalence among the earlier human SARS-CoV isolates and potential mammalian hosts. Blocked arrows indicate the potential epidemiologic relationships between subgroups of patients. Patients who are suspected of being an epidemiologic link between particular subgroups are indicated by their association with the respective blocked arrows. For each patient, \"F\" denotes female, and \"M\" denotes male, and age is specified. The date of admission, followed by admission site in parentheses, and the initial complaint are indicated next. Additional noteworthy clinical information and the subsequent outcome of each case are indicated. *Patients with a history of chronic illness. \u2020The viral genotype was not characterized in patient L due to the lack of clinical specimens positive for SARS-CoV by reverse transcription-polymerase chain reaction. CVA, cerebrovascular accident; HCW, healthcare worker; E. coli, Escherichia coli.",
+            "cite_spans": [],
+            "ref_spans": [
+                {
+                    "start": 170,
+                    "end": 177,
+                    "text": "Figure)",
+                    "ref_id": null
+                },
+                {
+                    "start": 971,
+                    "end": 978,
+                    "text": "Figure)",
+                    "ref_id": null
+                },
+                {
+                    "start": 1064,
+                    "end": 1072,
+                    "text": "(Figure)",
+                    "ref_id": null
+                }
+            ],
+            "section": "Tracing SARS-Coronavirus Variant with Large Genomic Deletion"
+        },
+        {
+            "text": "Salmonella Java None of these cases were related to eating contaminated foods, and the ACSSpSuT antibiogram has not been isolated from strains of this serotype from foods in the United Kingdom. This resistance pattern corresponds to that of the epidemic clone of S. Typhimurium definitive phage type (DT) 104 (DT 104 ACSSpSuT), which caused many infections in humans and food production animals throughout Europe, the United States, and Canada in the 1990s (1). In all isolates of DT104 ACSSpSuT studied, from many different countries, the resistant gene cluster has been chromosomally integrated (1) . Resistances have been contained in a 13-kb cluster composed of 2 integrons coding for resistance to SSp (1.0 kb) and ASu (1.2 kb), with the genes for resistance to chloramphenicol and tetracyclines located between these integrons (2, 3) . To investigate the possibility of the horizontal transfer of the ACSSpSuT gene cluster within S. enterica, we have characterized the resistance genes and associated structures in strains of S. Java of R-type ACSSpSuT and compared them with those in a strain of DT104 ACSSpSuT From 2000 to 2002, a total of 20 isolates of S. Java of R-type ACSSpSuT from patients in England and Wales (18 isolates) and Scotland (2 isolates) were characterized by phage typing, plasmid profile typing, and pulsed-field gel electrophoresis (PFGE). Pulsed-field profiles of 3 additional isolates of S. Java of R-type ACSSpSuT from Scotland were compared with those of isolates from England and Wales by the electronic exchange of tagged image format files (TIFFs) in a Bionumerics database. Resistance genes were identified by polymerase chain reaction (PCR) with primers specific for bla TEM (A) , bla CARB-2 (A), cmlA (chloramphenicol/florfenicol), catI (C), catIII (C), aadA2 (SSp), sul1 (Su), and tetG (T) (4) . The presence of class 1 integrons was tested with the primers L1 and R1 (2) . To identify the complete ACSSpSuT resistance gene cluster, long PCR was used on the basis of amplifying a 10,041-bp fragment of the DT104 isolate H3380 (4). Results were compared with those of standard strain of DT104 ACSSpSuT-P3170700, and DT104 drug-sensitive-P3343110 (4).",
+            "cite_spans": [
+                {
+                    "start": 597,
+                    "end": 600,
+                    "text": "(1)",
+                    "ref_id": null
+                },
+                {
+                    "start": 833,
+                    "end": 836,
+                    "text": "(2,",
+                    "ref_id": null
+                },
+                {
+                    "start": 837,
+                    "end": 839,
+                    "text": "3)",
+                    "ref_id": null
+                },
+                {
+                    "start": 1831,
+                    "end": 1834,
+                    "text": "(4)",
+                    "ref_id": null
+                },
+                {
+                    "start": 1909,
+                    "end": 1912,
+                    "text": "(2)",
+                    "ref_id": null
+                }
+            ],
+            "ref_spans": [],
+            "section": "Multidrug-resistant"
+        },
+        {
+            "text": "Five unrelated phage types, -1 var 3 (6 isolates), 3b var 2 (5), Dundee (2), Worksop (3), and RDNC (4), and 3 closely-related pulsed-field types, differing by only 1 to 3 of 14 bands in the Xba1 PFGE profiles, were identified in the 20 isolates studied; 2 of these pulsed-field types were observed in the electronically transmitted images of the 3 isolates from Scotland. These pulsed-field profile types have been designated SPTJXB001 through SPTJXB003. Of these, SPTJXB002 predominated, being present in 11 of the isolates studied, belonging to 3 phage types. SPTJXB001 was identified in 8 isolates of 3 phage types, and SPTJXB003 in the remaining isolate. PFGE type did not change over time. All isolates were plasmid-free, and resistances were not transferable, either directly or by mobilization after a self-conjugative plasmid was introduced into the strains. By PCR, all isolates possessed bla CARB-2 , cmlA, aadA2, sul1, and tetG but were negative for bla TEM, catI, and catIII. These results corresponded to those of the control DT104 ACSSpSuT strain P3170700. When tested for class 1 integrons, all S. Java isolates of Rtype ACSSpSuT produced characteristic amplicons of 1.0 and 1.2 kb, as did P3170700, but not the drug-",
+            "cite_spans": [],
+            "ref_spans": [],
+            "section": "Multidrug-resistant"
+        }
+    ],
+    "bib_entries": {
+        "BIBREF0": {
+            "ref_id": "b0",
+            "title": "Environmental and occupational health response to SARS",
+            "authors": [
+                {
+                    "first": "E",
+                    "middle": [
+                        "J"
+                    ],
+                    "last": "Esswein",
+                    "suffix": ""
+                },
+                {
+                    "first": "M",
+                    "middle": [],
+                    "last": "Kiefer",
+                    "suffix": ""
+                },
+                {
+                    "first": "K",
+                    "middle": [],
+                    "last": "Wallingford",
+                    "suffix": ""
+                },
+                {
+                    "first": "G",
+                    "middle": [],
+                    "last": "Burr",
+                    "suffix": ""
+                },
+                {
+                    "first": "Ljh",
+                    "middle": [],
+                    "last": "Lee",
+                    "suffix": ""
+                },
+                {
+                    "first": "J",
+                    "middle": [
+                        "D"
+                    ],
+                    "last": "Wang",
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "Emerg Infect Dis",
+            "volume": "10",
+            "issn": "",
+            "pages": "1187--94",
+            "other_ids": {}
+        },
+        "BIBREF1": {
+            "ref_id": "b1",
+            "title": "SARS: health care work can be hazardous to health",
+            "authors": [
+                {
+                    "first": "D",
+                    "middle": [],
+                    "last": "Koh",
+                    "suffix": ""
+                },
+                {
+                    "first": "M",
+                    "middle": [
+                        "K"
+                    ],
+                    "last": "Lim",
+                    "suffix": ""
+                },
+                {
+                    "first": "S",
+                    "middle": [
+                        "E"
+                    ],
+                    "last": "Chia",
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "Occup Med",
+            "volume": "53",
+            "issn": "",
+            "pages": "241--244",
+            "other_ids": {}
+        },
+        "BIBREF2": {
+            "ref_id": "b2",
+            "title": "World Health Organization. Consensus document on the epidemiology of severe acute respiratory syndrome (SARS)",
+            "authors": [],
+            "year": 2003,
+            "venue": "",
+            "volume": "17",
+            "issn": "",
+            "pages": "",
+            "other_ids": {}
+        },
+        "BIBREF3": {
+            "ref_id": "b3",
+            "title": "Transmission of the severe acute respiratory syndrome on aircraft",
+            "authors": [
+                {
+                    "first": "S",
+                    "middle": [
+                        "J"
+                    ],
+                    "last": "Olsen",
+                    "suffix": ""
+                },
+                {
+                    "first": "H",
+                    "middle": [
+                        "L"
+                    ],
+                    "last": "Chang",
+                    "suffix": ""
+                },
+                {
+                    "first": "T",
+                    "middle": [
+                        "Y"
+                    ],
+                    "last": "Cheung",
+                    "suffix": ""
+                },
+                {
+                    "first": "A",
+                    "middle": [
+                        "F"
+                    ],
+                    "last": "Tang",
+                    "suffix": ""
+                },
+                {
+                    "first": "T",
+                    "middle": [
+                        "L"
+                    ],
+                    "last": "Fisk",
+                    "suffix": ""
+                },
+                {
+                    "first": "S",
+                    "middle": [
+                        "P"
+                    ],
+                    "last": "Ooi",
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "N Engl J Med",
+            "volume": "349",
+            "issn": "",
+            "pages": "2416--2438",
+            "other_ids": {}
+        },
+        "BIBREF4": {
+            "ref_id": "b4",
+            "title": "The severe acute respiratory syndrome",
+            "authors": [
+                {
+                    "first": "J",
+                    "middle": [
+                        "S"
+                    ],
+                    "last": "Peiris",
+                    "suffix": ""
+                },
+                {
+                    "first": "K",
+                    "middle": [
+                        "Y"
+                    ],
+                    "last": "Yuen",
+                    "suffix": ""
+                },
+                {
+                    "first": "A",
+                    "middle": [
+                        "D"
+                    ],
+                    "last": "Osterhaus",
+                    "suffix": ""
+                },
+                {
+                    "first": "K",
+                    "middle": [],
+                    "last": "Stohr",
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "N Engl J Med",
+            "volume": "349",
+            "issn": "",
+            "pages": "2431--2472",
+            "other_ids": {}
+        },
+        "BIBREF5": {
+            "ref_id": "b5",
+            "title": "The Chinese SARS Molecular Epidemiology Consortium. Molecular evolution of the SARS coronavirus during the course of the SARS epidemic in China",
+            "authors": [],
+            "year": 2004,
+            "venue": "Science",
+            "volume": "303",
+            "issn": "",
+            "pages": "1666--1675",
+            "other_ids": {}
+        },
+        "BIBREF6": {
+            "ref_id": "b6",
+            "title": "The genome sequence of the SARS-associated coronavirus",
+            "authors": [
+                {
+                    "first": "M",
+                    "middle": [
+                        "A"
+                    ],
+                    "last": "Marra",
+                    "suffix": ""
+                },
+                {
+                    "first": "S",
+                    "middle": [
+                        "J"
+                    ],
+                    "last": "Jones",
+                    "suffix": ""
+                },
+                {
+                    "first": "C",
+                    "middle": [
+                        "R"
+                    ],
+                    "last": "Astell",
+                    "suffix": ""
+                },
+                {
+                    "first": "R",
+                    "middle": [
+                        "A"
+                    ],
+                    "last": "Holt",
+                    "suffix": ""
+                },
+                {
+                    "first": "A",
+                    "middle": [],
+                    "last": "Brooks-Wilson",
+                    "suffix": ""
+                },
+                {
+                    "first": "Y",
+                    "middle": [
+                        "S"
+                    ],
+                    "last": "Butterfield",
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "Science",
+            "volume": "300",
+            "issn": "",
+            "pages": "1399--404",
+            "other_ids": {}
+        },
+        "BIBREF7": {
+            "ref_id": "b7",
+            "title": "Isolation and characterization of viruses related to the SARS coronavirus from animals in southern China",
+            "authors": [
+                {
+                    "first": "Y",
+                    "middle": [],
+                    "last": "Guan",
+                    "suffix": ""
+                },
+                {
+                    "first": "B",
+                    "middle": [
+                        "J"
+                    ],
+                    "last": "Zheng",
+                    "suffix": ""
+                },
+                {
+                    "first": "Y",
+                    "middle": [
+                        "Q"
+                    ],
+                    "last": "He",
+                    "suffix": ""
+                },
+                {
+                    "first": "X",
+                    "middle": [
+                        "L"
+                    ],
+                    "last": "Liu",
+                    "suffix": ""
+                },
+                {
+                    "first": "Z",
+                    "middle": [
+                        "X"
+                    ],
+                    "last": "Zhuang",
+                    "suffix": ""
+                },
+                {
+                    "first": "C",
+                    "middle": [
+                        "L"
+                    ],
+                    "last": "Cheung",
+                    "suffix": ""
+                }
+            ],
+            "year": 2003,
+            "venue": "Science",
+            "volume": "302",
+            "issn": "",
+            "pages": "276--284",
+            "other_ids": {}
+        }
+    },
+    "ref_entries": {
+        "FIGREF0": {
+            "text": "Schematic illustration of the epidemiologic relationships between patients with the severe acute respiratory syndrome-associated coronavirus (SARS-CoV) variant with the 386-nt deletion. Patients are grouped according to the most probable site where SARS infection was acquired.",
+            "latex": null,
+            "type": "figure"
+        },
+        "FIGREF1": {
+            "text": "the Editor: Since 2000, Salmonella enterica serovar Paratyphi B variant Java (S. Java) with resistance to antimicrobial drugs has been isolated with increasing frequency from patients in Scotland, England, Wales, and the Channel Islands. For England, Wales, and the Channel Islands, drug-resistant S. Java was found in humans: 25 in 2000, 36 in 2001, 49 in 2002, and 4 in 2003 (January 1-March 31). These isolates made up 35% of 325 strains of S. Java in human infections over the study period (L.R. Ward, unpub. data). A range of drug-resistant spectrums (R-types) have been observed, e.g., ASSpSuTm, ASSpSuTmCp, ASSpSuTTm, ACSSpSuT (A, ampicillin; C, chloramphenicol; S, streptomycin; Sp, spectinomycin; Su, sulphonamides; T, tetracyclines; Tm, trimethoprim; Cp, ciprofloxacin) (1). In general, isolates of S. Java of Rtypes ASSpSuTm, ASSpSuTmCp, and ASSpSuTTm, appear to be associated with imported poultry. In contrast, infections with isolates of Rtype ACSSpSuT have not been associated with poultry, and organisms with the ACSSpSuT resistant spectrum have not been isolated from poultry in the United Kingdom (R.H. Davies, pers. comm.). In England, Wales, and the Channel Islands, S. Java of R-type ACSSpSuT was isolated from human patients in 64 instances from 2000 to 2003 (5 in 2000, 22 in 2001, 34 in 2002, and 3 in 2003 [to March 31]).",
+            "latex": null,
+            "type": "figure"
+        }
+    },
+    "back_matter": [
+        {
+            "text": "The project team is supported by the Research Fund for the Control of Infectious Diseases from the Health, Welfare and Food Bureau of the Hong Kong SAR Government. ",
+            "cite_spans": [],
+            "ref_spans": [],
+            "section": "acknowledgement"
+        }
+    ]
+}

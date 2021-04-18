@@ -21,9 +21,17 @@ import { useRouter } from 'next/router'
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     console.log(context.query)
-    let version = context.query.v ? '?v=' + context.query.v : ''
-    const res = await fetch(`http://localhost:3000/api/dobj/${context.query.id}${version}`)
+
+    const res = await fetch(`http://localhost:5000/dobjs/${context.query.id}`)
     const data = await res.json()
+
+    let version = context.query.v ? context.query.v : data.versions[0].id
+
+    const versionRes = await fetch(`http://localhost:5000/version/${version}`)
+    const versionData = await versionRes.json()
+
+    data.displayVersion = versionData
+
     return {props: {...data, ...context.query}}
   }
 

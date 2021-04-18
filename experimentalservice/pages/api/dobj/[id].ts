@@ -106,12 +106,12 @@ export default async function handle(req, res) {
         name: obj[0].name,
         desc: obj[0].desc,
         owner: obj[0].owner,
-        timestamp: obj[0].versions[0].timestamp,
+        created: obj[0].versions[0].created,
         iscurrent: true,
       },
       dobj: {
         id: obj[0].versions[vid].dobj.id,
-        timestamp: obj[0].versions[vid].dobj.timestamp,
+        created: obj[0].versions[vid].dobj.created,
         datatype: obj[0].versions[vid].dobj.datatype,
         comment: obj[0].versions[vid].dobj.comment,
         owner: obj[0].versions[vid].dobj.owner,
@@ -129,11 +129,11 @@ export default async function handle(req, res) {
 
     let versions = []
     for (let i = 0; i < obj[0].versions.length; i++) {
-      const readableDate = new Date(obj[0].versions[i].dobj.timestamp).toString()
+      const readableDate = new Date(obj[0].versions[i].dobj.created).toString()
       versions.push({
         id: obj[0].versions[i].dobj.id,
         dobjid: obj[0].id,
-        timestamp: obj[0].versions[i].dobj.timestamp,
+        created: obj[0].versions[i].dobj.created,
         readableDate: readableDate,
         datatype: obj[0].versions[i].dobj.datatype,
         comment: obj[0].versions[i].dobj.comment,
@@ -190,12 +190,12 @@ export default async function handle(req, res) {
         name: obj[0].NameAssignment[0].ObjectName[0].name,
         desc: obj[0].NameAssignment[0].ObjectName[0].desc,
         owner: obj[0].NameAssignment[0].ObjectName[0].owner,
-        timestamp: obj[0].NameAssignment[0].timestamp,
+        created: obj[0].NameAssignment[0].created,
         iscurrent: labelIsCurrent,
       },
       dobj: {
         id: obj[0].id,
-        timestamp: obj[0].timestamp,
+        created: obj[0].created,
         datatype: obj[0].datatype,
         comment: obj[0].comment,
         owner: obj[0].owner,

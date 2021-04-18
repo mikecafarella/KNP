@@ -21,20 +21,15 @@ export type DataContentProps = {
 
 const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) => {
     var imgstr = ""
-    if (datacontent.datatype == "/datatypes/img") {
-        const imgBytes = JSON.parse(datacontent.ImgData[0].img).contents.data
-        imgstr = "data:image/png;base64, " + new Buffer(imgBytes).toString('base64')
-    }
-    else if (datacontent.datatype == "/datatypes/pdf") {
-        const imgBytes = JSON.parse(datacontent.ImgData[0].img).contents.data
-        imgstr = "data:application/pdf;base64," + new Buffer(imgBytes).toString('base64')
+    if (datacontent.datatype == "/datatypes/img" || datacontent.datatype == "/datatypes/pdf") {
+        imgstr = "data:" + datacontent.contents.mimetype + ";base64, " + datacontent.contents.contents
     }
     return (
         <Pane overflowY="scroll" background="tint1" padding={majorScale(1)}>
         { datacontent.datatype == "/datatypes/json" &&
           <Pane display="flex" >
             <Pre>
-            {JSON.stringify(JSON.parse(datacontent.JsonData[0].jsondata), null, 4)}
+            {JSON.stringify(JSON.parse(Buffer.from(datacontent.contents.contents, 'base64').toString()), null, 4)}
             </Pre>
           </Pane>
         }
