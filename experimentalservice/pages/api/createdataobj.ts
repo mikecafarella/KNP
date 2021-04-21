@@ -378,6 +378,8 @@ export default async function handle(req, res) {
             }
         }
     if (jobj) {
+
+
         const jobj2 = await prisma.timeline.create( {
             data: {
                 op: "create",
@@ -389,8 +391,7 @@ export default async function handle(req, res) {
                 }}
             }
         })
-
-        res.json({"resultcode": "success", "data": {'dobjid': objname.id, 'versionid': jobj.dobjid}})
+        res.json({"resultcode": "success", "data": {'dobjid': objname.id, 'versionid': jobj.dobjid},"timestamp":jobj2.timestamp})
     } else {
         res.json({"resultcode": "fail"})
     }

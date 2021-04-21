@@ -48,7 +48,8 @@ if __name__ == "__main__":
         ownerid = user_id,
         description = var_comment,
         jsondata = dict(rst),
-        comment = val_comment
+        comment = val_comment,
+        ownername=USER_NAME
     )
 
     data_obj_id = obj_data['data']['dobjid']

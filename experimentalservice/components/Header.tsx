@@ -24,6 +24,9 @@ const Header: React.FC = () => {
           <Link href="/listusers" marginLeft={12} color={isActive('/listusers') ? "neutral" : "blue"}>
               Users
           </Link>
+          <Link href="/searchpage" marginLeft={12} color={isActive('/searchpage') ? "neutral" : "blue"}>
+              Search Page
+          </Link>
         </Pane>
         <Pane>
           {/* Below you can see the marginRight property on a Button. */}

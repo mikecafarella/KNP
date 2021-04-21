@@ -16,7 +16,7 @@ const SignUp: React.FC = () => {
         body: JSON.stringify(body),
       })
       const data = await res.json()
-      Router.push('/')
+      Router.push('http://localhost:3000/listusers')
     } catch (error) {
       console.error(error)
     }
