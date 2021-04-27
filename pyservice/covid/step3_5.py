@@ -14,6 +14,10 @@ DATA_OBJECT_ID = 21
 with open("step_2_obj_id.txt", "rt") as f:
     for line in f:
         SOURCE_OBJ_ID = int(line.strip())
+with open("step_3_obj_id.txt", "rt") as f:
+    for line in f:
+        DATA_OBJECT_ID = int(line.strip())
+
 
 print("Using Data Object ID: ", SOURCE_OBJ_ID)
 
@@ -40,6 +44,6 @@ if __name__ == "__main__":
         objectid = DATA_OBJECT_ID,
         ownerid = user_id,
         image_file = "predict_2.png",
-        comment = "Cloropleth map",
+        comment = "COVID Cloropleth map",
         predecessors = PREDECESSORS
     )

@@ -1,24 +1,24 @@
-[2021-04-08T00:53:37.454+0000][22578][gc] Using G1
-[2021-04-08T00:53:37.520+0000][22578][gc,init] Version: 15.0.1+9 (release)
-[2021-04-08T00:53:37.520+0000][22578][gc,init] CPUs: 8 total, 8 available
-[2021-04-08T00:53:37.520+0000][22578][gc,init] Memory: 16244M
-[2021-04-08T00:53:37.520+0000][22578][gc,init] Large Page Support: Disabled
-[2021-04-08T00:53:37.520+0000][22578][gc,init] NUMA Support: Disabled
-[2021-04-08T00:53:37.520+0000][22578][gc,init] Compressed Oops: Enabled (Zero based)
-[2021-04-08T00:53:37.520+0000][22578][gc,init] Heap Region Size: 4M
-[2021-04-08T00:53:37.520+0000][22578][gc,init] Heap Min Capacity: 8124M
-[2021-04-08T00:53:37.520+0000][22578][gc,init] Heap Initial Capacity: 8124M
-[2021-04-08T00:53:37.520+0000][22578][gc,init] Heap Max Capacity: 8124M
-[2021-04-08T00:53:37.523+0000][22578][gc,init] Pre-touch: Disabled
-[2021-04-08T00:53:37.523+0000][22578][gc,init] Parallel Workers: 8
-[2021-04-08T00:53:37.523+0000][22578][gc,init] Concurrent Workers: 2
-[2021-04-08T00:53:37.523+0000][22578][gc,init] Concurrent Refinement Workers: 8
-[2021-04-08T00:53:37.523+0000][22578][gc,init] Periodic GC: Disabled
-[2021-04-08T00:53:37.524+0000][22578][gc,metaspace] CDS disabled.
-[2021-04-08T00:53:37.524+0000][22578][gc,metaspace] Compressed class space mapped at: 0x00000007c0000000-0x0000000800000000, size: 1073741824
-[2021-04-08T00:53:37.524+0000][22578][gc,metaspace] Narrow klass base: 0x0000000000000000, Narrow klass shift: 3, Narrow klass range: 0x800000000
-[2021-04-08T00:53:37.635+0000][22578][gc,heap,exit] Heap
-[2021-04-08T00:53:37.635+0000][22578][gc,heap,exit]  garbage-first heap   total 8318976K, used 4096K [0x00000005c4400000, 0x00000007c0000000)
-[2021-04-08T00:53:37.635+0000][22578][gc,heap,exit]   region size 4096K, 2 young (8192K), 0 survivors (0K)
-[2021-04-08T00:53:37.635+0000][22578][gc,heap,exit]  Metaspace       used 3306K, capacity 4480K, committed 4480K, reserved 1056768K
-[2021-04-08T00:53:37.635+0000][22578][gc,heap,exit]   class space    used 266K, capacity 384K, committed 384K, reserved 1048576K
+[2021-04-23T16:56:34.238+0000][1307][gc] Using G1
+[2021-04-23T16:56:34.263+0000][1307][gc,init] Version: 16.0.1+9-24 (release)
+[2021-04-23T16:56:34.263+0000][1307][gc,init] CPUs: 16 total, 16 available
+[2021-04-23T16:56:34.263+0000][1307][gc,init] Memory: 32768M
+[2021-04-23T16:56:34.263+0000][1307][gc,init] Large Page Support: Disabled
+[2021-04-23T16:56:34.263+0000][1307][gc,init] NUMA Support: Disabled
+[2021-04-23T16:56:34.263+0000][1307][gc,init] Compressed Oops: Enabled (Zero based)
+[2021-04-23T16:56:34.263+0000][1307][gc,init] Heap Region Size: 8M
+[2021-04-23T16:56:34.263+0000][1307][gc,init] Heap Min Capacity: 16G
+[2021-04-23T16:56:34.263+0000][1307][gc,init] Heap Initial Capacity: 16G
+[2021-04-23T16:56:34.263+0000][1307][gc,init] Heap Max Capacity: 16G
+[2021-04-23T16:56:34.263+0000][1307][gc,init] Pre-touch: Disabled
+[2021-04-23T16:56:34.263+0000][1307][gc,init] Parallel Workers: 13
+[2021-04-23T16:56:34.263+0000][1307][gc,init] Concurrent Workers: 3
+[2021-04-23T16:56:34.263+0000][1307][gc,init] Concurrent Refinement Workers: 13
+[2021-04-23T16:56:34.263+0000][1307][gc,init] Periodic GC: Disabled
+[2021-04-23T16:56:34.263+0000][1307][gc,metaspace] CDS disabled.
+[2021-04-23T16:56:34.264+0000][1307][gc,metaspace] Compressed class space mapped at: 0x00000007c0000000-0x0000000800000000, reserved size: 1073741824
+[2021-04-23T16:56:34.264+0000][1307][gc,metaspace] Narrow klass base: 0x0000000000000000, Narrow klass shift: 3, Narrow klass range: 0x800000000
+[2021-04-23T16:56:34.353+0000][1307][gc,heap,exit] Heap
+[2021-04-23T16:56:34.353+0000][1307][gc,heap,exit]  garbage-first heap   total 16777216K, used 12290K [0x00000003c0000000, 0x00000007c0000000)
+[2021-04-23T16:56:34.353+0000][1307][gc,heap,exit]   region size 8192K, 2 young (16384K), 0 survivors (0K)
+[2021-04-23T16:56:34.353+0000][1307][gc,heap,exit]  Metaspace       used 3449K, committed 3520K, reserved 1056768K
+[2021-04-23T16:56:34.353+0000][1307][gc,heap,exit]   class space    used 273K, committed 320K, reserved 1048576K

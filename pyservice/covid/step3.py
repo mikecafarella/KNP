@@ -43,3 +43,9 @@ if __name__ == "__main__":
         predecessors = PREDECESSORS
     )
 
+    data_obj_id = obj_data['id']
+    version_id = obj_data['versions'][0]['id']
+
+    # Save the ID for the data object locally, for use in the next step
+    with open("step_3_obj_id.txt", "wt") as f:
+        f.write(str(data_obj_id))

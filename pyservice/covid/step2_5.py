@@ -25,6 +25,10 @@ with open("step_1_obj_id.txt", "rt") as f:
     for line in f:
         SOURCE_OBJ_ID = int(line.strip())
 
+with open("step_2_obj_id.txt", "rt") as f:
+    for line in f:
+        DATA_OBJECT_ID = int(line.strip())
+
 print("Using Data Object ID: ", SOURCE_OBJ_ID)
 
 # It ends one day earlier.
@@ -72,7 +76,7 @@ def step2(_):
     var_comment = "Prediction for COVID-19 cumulative positive cases for all states in the US in the next day"
 
     update_data_object(
-        objectid = SOURCE_OBJ_ID,
+        objectid = DATA_OBJECT_ID,
         ownerid = user_id,
         jsondata = dict(rst),
         comment = val_comment,
