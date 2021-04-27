@@ -60,7 +60,7 @@ const SearchPage: React.FC = () => {
         var local_start = searchTimeStart
         var local_end = searchTimeEnd
         const res = await client.search({
-          index: 'kgpl',
+          index: 'knps',
           body: {
             query: {
               range: {
@@ -99,7 +99,7 @@ const SearchPage: React.FC = () => {
           console.log(local_start)
           console.log(local_end)
           const res = await client.search({
-            index: 'kgpl',
+            index: 'knps',
             body: {
               query: {
                 range: {
@@ -117,7 +117,7 @@ const SearchPage: React.FC = () => {
           setHits(res.hits.hits)
         } else {
           const res = await client.search({
-            index: 'kgpl',
+            index: 'knps',
             body: {
               query: {
                 multi_match: {
@@ -238,7 +238,7 @@ const SearchPage: React.FC = () => {
         border: 0.125rem solid rgba(0, 0, 0, 0.2);
       }
 
-      
+
       button {
         background: #ececec;
         border: 0;

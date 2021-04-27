@@ -59,9 +59,9 @@
 # finds starting at 9200. Set a specific HTTP port here:
 #
 #http.port: 9200
-#
 http.cors.enabled: true
 http.cors.allow-origin: "*"
+#
 # For more information, consult the network module documentation.
 #
 # --------------------------------- Discovery ----------------------------------

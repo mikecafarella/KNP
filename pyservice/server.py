@@ -10,12 +10,24 @@ from database import SessionLocal, engine
 
 import base64
 import json
+import datetime
+
+from elasticsearch import Elasticsearch
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///knps.db'
 db = SessionLocal()
 ma = Marshmallow(app)
 api = Api(app)
+
+def es_store_record(index_name, doc_id, record):
+    _es = None
+    _es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
+    try:
+        outcome = _es.index(index=index_name, id=doc_id, body=record)
+    except Exception as ex:
+        print('Error in indexing data')
+        print(str(ex))
 
 class BlobField(ma.Field):
     def _serialize(self, value, attr, obj, **kwargs):
@@ -193,6 +205,19 @@ class DataObjectsResource(Resource):
 
         db.commit()
 
+        # Send it to Elasticsearch
+        record =  {
+            'url': 'http://localhost:3000/dobj/X{}'.format(new_dobj.id),
+            'owner': new_dobj.owner.name,
+            'description': new_dobj.description,
+            'comment': new_version.comment,
+            'pytype': new_version.datatype,
+            'timestamp': new_version.created.isoformat()
+        }
+
+        doc_id = 'X{}'.format(new_dobj.id)
+        es_store_record('knps', doc_id, record)
+
         return jsonify(dobj_schema.dump(new_dobj))
 
 api.add_resource(DataObjectsResource, '/dobjs')
@@ -213,12 +238,13 @@ class DataVersionsResource(Resource):
     def post(self):
         # todo: validation & integrate signup stuff
         metadata = json.load(request.files['metadata'])
+        dataobject = db.query(DataObject).get(metadata['dobj_id'])
 
         new_version = DataVersion(
             owner_id = metadata['owner_id'],
             comment = metadata['comment'],
             datatype = metadata['datatype'],
-            dataobject = db.query(DataObject).get(metadata['dobj_id']),
+            dataobject = dataobject,
             predecessors = [db.query(DataVersion).get(x) for x in metadata['predecessors']]
         )
         db.add(new_version)
@@ -241,6 +267,19 @@ class DataVersionsResource(Resource):
         db.add(new_contents)
 
         db.commit()
+
+        # Send it to Elasticsearch
+        record =  {
+            'url': 'http://localhost:3000/dobj/X{}'.format(dataobject.id),
+            'owner': dataobject.owner.name,
+            'description': dataobject.description,
+            'comment': new_version.comment,
+            'pytype': new_version.datatype,
+            'timestamp': new_version.created.isoformat()
+        }
+        doc_id = 'X{}'.format(dataobject.id)
+        es_store_record('knps', doc_id, record)
+
         return jsonify(version_full_schema.dump(new_version))
 
 api.add_resource(DataVersionsResource, '/versions')
