@@ -5,6 +5,9 @@ import pandas as pd
 import numpy as np
 import datetime
 import inspect
+import requests
+import knps
+from bs4 import BeautifulSoup
 from . import func_lib
 
 endpoint_url = "https://query.wikidata.org/sparql"
@@ -210,23 +213,51 @@ class Relation:
                 else:
                     raise Exception("Please make sure the input meets the requirement of the argument.")
 
-    def applyFunction(self, objcolumn, func):
-        # func: FunctionWithSignature
-        num_params = len(func.typeSignature)
-        if len(objcolumn) != num_params:
-            if num_params == 1 or num_params == 0:
-                raise Exception("The function only takes Dataframe with " + str(num_params) + " column.")
-            else:
-                raise Exception("The function only takes Dataframe with " + str(num_params) + " columns.")
+    # def applyFunction(self, objcolumn, func):
+    #     # func: FunctionWithSignature
+    #     num_params = len(func.typeSignature)
+    #     if len(objcolumn) != num_params:
+    #         if num_params == 1 or num_params == 0:
+    #             raise Exception("The function only takes Dataframe with " + str(num_params) + " column.")
+    #         else:
+    #             raise Exception("The function only takes Dataframe with " + str(num_params) + " columns.")
+    #     count = 0
+    #     # type check
+    #     for value in func.typeSignature:
+    #         if (isinstance(value, WikiDataProperty) and not objcolumn[count].split('_')[-1] in value.type_list) or (not isinstance(value, WikiDataProperty) and (not isinstance(self.df[objcolumn[count]][0], value))):
+    #             raise Exception("Please make sure the input Dataframe meets the requirements of the arguments.")
+    #         count+=1
+    #     #        
+    #     func.invoke(self.df[objcolumn])
+
+    def applyFunction(self, objcolumn, func):       
+        func(self.df[objcolumn])
+
+    def recommendFunction(self, objcolumn):
         count = 0
-        # type check
-        for value in func.typeSignature:
-            if (isinstance(value, WikiDataProperty) and not objcolumn[count].split('_')[-1] in value.type_list) or (not isinstance(value, WikiDataProperty) and (not isinstance(self.df[objcolumn[count]][0], value))):
-                raise Exception("Please make sure the input Dataframe meets the requirements of the arguments.")
-            count+=1
-        #        
-        func.invoke(self.df[objcolumn])
-        
+        rt_list = []
+        while True:
+            r = requests.get("http://127.0.0.1:4242/val/" + str(count))
+            if r.status_code == 404:
+                break
+            r = r.text
+            soup = BeautifulSoup(r,features="lxml")
+            if len(soup.find_all('td')) > 3 and soup.find_all('td')[3].string == 'FunctionWithSignature':
+                func = knps.load_val("http://127.0.0.1:4242/val/" + str(count)).val
+                count += 1
+                num_params = len(func.typeSignature)
+                if len(objcolumn) != num_params:
+                    continue
+                count2 = 0
+                for value in func.typeSignature:
+                    if (isinstance(value, WikiDataProperty) and not objcolumn[count2].split('_')[-1] in value.type_list) or (not isinstance(value, WikiDataProperty) and (not isinstance(self.df[objcolumn[count2]][0], value))):
+                        continue
+                    count2 += 1
+                rt_list.append(func.fn)
+            else:
+                count += 1
+        return rt_list
+
     def define_query_relation(self):
         rdf_triple, time_filter, limit_statement = """""", """""", """"""
         if self.count < 1:

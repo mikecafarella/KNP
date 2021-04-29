@@ -67,8 +67,8 @@ class FunctionWithSignature:
 		self.typeSignature = typeSignature
 	# Can directly call with invoke
 	def invoke(self, *para):
-		typedParams = zip(para, self.typeSignature)
-		typeCheckResults = list(map(lambda x: checkType(x[0],x[1]), typedParams))
-		if False in typeCheckResults:
-			raise Exception("Input parameters don't match type signature")
+		# typedParams = zip(para, self.typeSignature)
+		# typeCheckResults = list(map(lambda x: checkType(x[0],x[1]), typedParams))
+		# if False in typeCheckResults:
+		# 	raise Exception("Input parameters don't match type signature")
 		return self.fn(*para) # para is a tuple 
