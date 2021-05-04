@@ -13,7 +13,6 @@ from sklearn.linear_model import LinearRegression
 import numpy as np
 from collections import defaultdict
 
-import knps
 from lib import get_user_id, create_data_object, update_data_object, get_data_object
 
 

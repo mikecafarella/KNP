@@ -1,0 +1,13 @@
+flask
+flask_restful
+flask_sqlalchemy
+flask_marshmallow
+marshmallow-sqlalchemy
+elasticsearch
+requests
+
+# Packages used by examples
+pandas
+sklearn
+plotly
+psutil
