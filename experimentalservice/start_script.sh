@@ -1,5 +1,8 @@
 trap "kill 0" EXIT
 
+# this may need to be changed to suit your setup (This is default mac)
+export ES_JAVA_HOME=$(/usr/libexec/java_home) 
+
 npm run dev&
 echo $! > recent_start_script_npm
 if [ $? -eq 0 ];

@@ -9,17 +9,18 @@ type Props = {
   feed: FeedProps[]
 }
 
+// <Card margin={32}>
+//   <Text>Recent activity</Text>
+//     <Card margin={8}>
+//       <Feed props={props}/>
+//     </Card>
+// </Card>
+
 const Blog : React.FC<Props> = props => {
   return (
     <Layout>
       <div className="page">
         <Heading size={800}>Welcome to The Knowledge Network</Heading>
-          <Card margin={32}>
-            <Text>Recent activity</Text>
-              <Card margin={8}>
-                <Feed props={props}/>
-              </Card>
-          </Card>
         <main>
         </main>
       </div>
