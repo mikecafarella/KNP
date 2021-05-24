@@ -27,8 +27,7 @@ def get_dobj(dobj_id):
     return get_dobj_contents(dobj_id)
 
 def execute_function(func_id, inputs):
-    code = get_dobj_contents(func_id)#.decode().replace("\\n", "\n").strip('"')
-
+    code = get_dobj_contents(func_id).decode().replace("\\n", "\n").strip('"')
     g = {}
     l = {}
 

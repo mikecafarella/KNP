@@ -21,6 +21,7 @@ import uuid
 machine_id = uuid.UUID(int=uuid.getnode())
 
 ES_INDEX = 'knps-{}'.format(machine_id)
+ES_HOST = 'ec2-52-201-28-150.compute-1.amazonaws.com'
 
 app = Flask(__name__)
 CORS(app)
@@ -36,12 +37,17 @@ api = Api(app)
 
 def es_store_record(index_name, doc_id, record):
     _es = None
-    _es = Elasticsearch([{'host': 'ec2-52-201-28-150.compute-1.amazonaws.com', 'port': 9200}])
+    _es = Elasticsearch([{'host': ES_HOST, 'port': 9200}])
     try:
         outcome = _es.index(index=index_name, id=doc_id, body=record)
     except Exception as ex:
         print('Error in indexing data')
         print(str(ex))
+
+def es_delete_index():
+    _es = None
+    _es = Elasticsearch([{'host': ES_HOST, 'port': 9200}])
+    _es.indices.delete(index=ES_INDEX, ignore=[400, 404])
 
 class BlobField(ma.Field):
     def _serialize(self, value, attr, obj, **kwargs):

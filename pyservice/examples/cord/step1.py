@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from lib import get_user_id, create_data_object
 
 USER_NAME = "AI2 CORD Bot"
-USER_EMAIL = "cordbot@alleninstitute.org"
+USER_EMAIL = "cordbot@allenai.org"
 
 file_ids = [
     '44efd15ada8c6e6a9de4017402163286a4b06905',

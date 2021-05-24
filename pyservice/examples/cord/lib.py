@@ -19,7 +19,7 @@ def get_user_id(email, name):
     return user_id
 
 
-def create_data_object(name, ownerid, description, comment, jsondata=None, image_file=None, pdf_file=None, predecessors=[]):
+def create_data_object(name, ownerid, description, comment, jsondata=None, image_file=None, pdf_file=None, code=None, predecessors=[]):
     url = "http://localhost:5000/dobjs"
     metadata = {
         'name': name,
@@ -41,6 +41,10 @@ def create_data_object(name, ownerid, description, comment, jsondata=None, image
         metadata['datatype'] = '/datatypes/pdf'
         metadata['mimetype'] = 'application/pdf'
         files = {'pdfpath': (pdf_file, open(pdf_file,'rb'), 'application/pdf')}
+    elif code:
+        metadata['datatype'] = '/datatypes/function'
+        metadata['mimetype'] = 'text/plain'
+        metadata['code'] = code
 
     files['metadata'] = json.dumps(metadata)
 
