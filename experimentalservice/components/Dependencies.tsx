@@ -14,7 +14,9 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
 
     const [mouseIndex, setMouseIndex] = useState(-1)
 
+    console.log("9999")
     console.log(dobj)
+    console.log("9999")
 
     const predecessors = dobj.displayVersion.predecessors
     // const successors = dobj.successors
@@ -35,15 +37,15 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
     const labelFn = function(node) {
         return labelMap[node.id]
     }
-    idToNodeMap[dobj.displayVersion.id] = dobj
-    let nodes = [{ id: dobj.displayVersion.id,
+    idToNodeMap[dobj.displayVersion.dataobject.id] = dobj.displayVersion
+    let nodes = [{ id: dobj.displayVersion.dataobject.id,
                    color: "red",
                    x: 400,
                    y: 200,
                     labelPosition: "bottom",
                 }]
-    labelMap[dobj.displayVersion.id] = dobj.name
-
+    labelMap[dobj.displayVersion.dataobject.id] = dobj.name
+    console.log(dobj.displayVersion.dataobject.id)
 
 
     for (var p of predecessors) {
@@ -51,7 +53,7 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
                         color: "green",
                     })
         labelMap[p.id] = p.dataobject.name
-        links.push({source: p.id , target: dobj.displayVersion.id})
+        links.push({source: p.id , target: dobj.displayVersion.dataobject.id})
         idToNodeMap[p.id] = p
         for (var q of p.predecessors) {
           nodes.push({id: q.id,

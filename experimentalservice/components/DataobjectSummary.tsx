@@ -13,10 +13,10 @@ const DataobjectSummary: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
   const [tabIndex, setTabIndex] = useState(0)
   let objLink = ""
   let obj = ""
-
+  console.log('----',dobj)
   if (dobj) {
     obj = dobj
-    label = dobj
+    label = dobj.dataobject
     objLink = "http://localhost:3000/dobj/" + "X" + label.id //+ (label.iscurrent ? "" : "?v=" + dobj.id)
 
   }
@@ -34,7 +34,7 @@ const DataobjectSummary: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
             <Link size={300} href={objLink}> {objLink}</Link>
           </Paragraph>
           <Paragraph color="muted">
-              <Text size={300}>Object {obj.id} from {obj.owner.name} ({obj.owner.email})</Text><br></br>
+              <Text size={300}>Object X{label.id} from {obj.owner.name} ({obj.owner.email})</Text><br></br>
           </Paragraph>
         </Pane>
         <DataContent datacontent={obj}/>
