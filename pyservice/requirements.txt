@@ -13,3 +13,4 @@ pandas
 sklearn
 plotly
 psutil
+kaleido
