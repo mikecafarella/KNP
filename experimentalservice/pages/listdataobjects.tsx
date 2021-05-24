@@ -52,7 +52,7 @@ const DataObjects: React.FC<Props> = (props) => {
              <Table.Row key={obj.id} isSelectable onSelect={() => Router.push(`/dobj/X${obj.id}`)}>
                 <Table.TextCell>X{obj.id}</Table.TextCell>
                 <Table.TextCell>{obj.name}</Table.TextCell>
-                <Table.TextCell>{obj.desc}</Table.TextCell>
+                <Table.TextCell>{obj.description}</Table.TextCell>
                 <Table.TextCell>{obj.versions[0].datatype}</Table.TextCell>
                 <Table.TextCell>{obj.versions[0].created}</Table.TextCell>
                 <Table.TextCell>{obj.versions[0].comment}</Table.TextCell>

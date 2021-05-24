@@ -68,46 +68,59 @@ const NewObj: React.FC = (props) => {
         }
       }
 
-      const metadata = {name,
-                      description,
-                      comment,
-                      datatype,
-                      pystring,
-                      pynumber,
-                      ownerid,
-                      datacolumnheader,
-                      datacolumntype,
-                      schemaLabel1,
-                      schemaType1,
-                      schemaLabel2,
-                      schemaType2,
-                      schemaLabel3,
-                      schemaType3,
-                      schemaLabel4,
-                      schemaType4,
-                      schemaLabel5,
-                      schemaType5,
-                      paramLabel1,
-                      paramType1,
-                      paramLabel2,
-                      paramType2,
-                      paramLabel3,
-                      paramType3,
-                      paramLabel4,
-                      paramType4,
-                      paramLabel5,
-                      paramType5,
-                      code,
-                  }
-      const s = JSON.stringify(metadata)
-      fd.append("metadata", s)
+      const metadata = {
+        'name': name,
+        'owner_id': ownerid,
+        'description': description,
+        'comment': comment,
+        'datatype': '/datatypes/function',
+        'code': code,
+        'mimetype': 'application/json',
+        'predecessors': []
+      }
+                // name,
+                //       description,
+                //       comment,
+                //       datatype,
+                //       pystring,
+                //       pynumber,
+                //       ownerid,
+                //       datacolumnheader,
+                //       datacolumntype,
+                //       schemaLabel1,
+                //       schemaType1,
+                //       schemaLabel2,
+                //       schemaType2,
+                //       schemaLabel3,
+                //       schemaType3,
+                //       schemaLabel4,
+                //       schemaType4,
+                //       schemaLabel5,
+                //       schemaType5,
+                //       paramLabel1,
+                //       paramType1,
+                //       paramLabel2,
+                //       paramType2,
+                //       paramLabel3,
+                //       paramType3,
+                //       paramLabel4,
+                //       paramType4,
+                //       paramLabel5,
+                //       paramType5,
+                //       code,
+                //   }
+      // const s = JSON.stringify(metadata)
+      // fd.append("metadata", s)
 
-      const res = await fetch(`http://localhost:3000/api/createdataobj`, {
+      const blob = new Blob([JSON.stringify(metadata, null, 2)], {type : 'application/json'});
+      fd.append("metadata", blob, "metadata")
+
+      const res = await fetch(`http://localhost:5000/dobjs`, {
         method: 'POST',
         body: fd
       })
       const result = await res.json()
-      if (result.resultcode == "success") {
+      if (result.id) {
           await Router.push('/')
       }
     } catch (error) {
@@ -310,77 +323,14 @@ const NewObj: React.FC = (props) => {
 
            <Pane background="purpleTint" border flexDirection="column" padding={16} borderRadius={4} display={datatype == "/datatypes/function" ? "flex" : "none"}>
              <Heading flex={1} is="h3"> Function </Heading>
-               <Pane flex={1} alignItems="center" display="flex" padding={8}>
-                  <Pane flex={1}>
-                    <TextInput
-                        name='collabel'
-                        placeholder='e.g., Employee Name'
-                        onChange={e => setParamLabel1(e.target.value)}>
-                        </TextInput>
-                  </Pane>
-                  <Pane flex={2}>
-                    <Combobox openOnFocus
-                              items={schemaElts}
-                              itemToString={item => item ? item.label : ''}
-                              placeholder='Choose a parameter type'
-                              onChange={e => setParamType1(e.id)}/>
-                  </Pane>
-               </Pane>
-               <Pane flex={1} alignItems="center" display="flex" padding={8}>
-                  <Pane flex={1}>
-                    <TextInput
-                        name='collabel'
-                        placeholder='e.g., Annual Salary'
-                        onChange={e => setParamLabel2(e.target.value)}>
-                        </TextInput>
-                  </Pane>
-                  <Pane flex={2}>
-                    <Combobox openOnFocus
-                              items={schemaElts}
-                              itemToString={item => item ? item.label : ''}
-                              placeholder='Choose a parameter type'
-                              onChange={e => setParamType2(e.id)}/>
-                  </Pane>
-               </Pane>
-               <Pane flex={1} alignItems="center" display="flex" padding={8}>
-                  <Pane flex={1}>
-                    <TextInput
-                        name='collabel'
-                        placeholder='e.g., Start date'
-                        onChange={e => setParamLabel3(e.target.value)}>
-                        </TextInput>
-                  </Pane>
-                  <Pane flex={2}>
-                    <Combobox openOnFocus
-                              items={schemaElts}
-                              itemToString={item => item ? item.label : ''}
-                              placeholder='Choose a parameter type'
-                              onChange={e => setParamType3(e.id)}/>
-                  </Pane>
-               </Pane>
-               <Pane flex={1} alignItems="center" display="flex" padding={8}>
-                  <Pane flex={1}>
-                    <TextInput
-                        name='collabel'
-                        placeholder='e.g., End date'
-                        onChange={e => setParamLabel4(e.target.value)}>
-                        </TextInput>
-                  </Pane>
-                  <Pane flex={2}>
-                    <Combobox openOnFocus
-                              items={schemaElts}
-                              itemToString={item => item ? item.label : ''}
-                              placeholder='Choose a parameter type'
-                              onChange={e => setParamType4(e.id)}/>
-                  </Pane>
-               </Pane>
+
                <TextareaField
                   cols={50}
                   onChange={e => setCode(e.target.value)}
-                  label="Function code"
+                  label=""
                   placeholder="Python code"
                   value={code}
-                  rows={6}
+                  rows={12}
                 />
            </Pane>
 
@@ -403,7 +353,7 @@ const NewObj: React.FC = (props) => {
                   (datatype=="/datatypes/pynum" && !pynumber) ||
                   (datatype=="/datatypes/datacolumn" && !datacolumnheader && !datacolumntype) ||
                   (datatype=="/datatypes/pystring" && !pystring) ||
-                  (datatype=="/datatypes/function" && !paramLabel1 && !paramType1) ||
+                  (datatype=="/datatypes/function" && !code) ||
                   (datatype=="/datatypes/schema" && !schemaLabel1 && !schemaType1 && !code)}
                   appearance="primary">Create</Button>
             <Button intent="danger" onClick={() => Router.push('/')}>or Cancel</Button>
@@ -445,14 +395,15 @@ const NewObj: React.FC = (props) => {
 
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const res = await fetch("http://localhost:3000/api/listdataobjects")
-  const dobjs = await res.json()
-  {/**
-    Grab the options for the datatype dropdown
-    */
-  }
-  const dataColumns = dobjs.filter(x => x.version.dobj.datatype == '/datatypes/datacolumn')
-  console.log(dataColumns)
+  // const res = await fetch("http://localhost:3000/api/listdataobjects")
+  // const dobjs = await res.json()
+  // {/**
+  //   Grab the options for the datatype dropdown
+  //   */
+  // }
+  // const dataColumns = dobjs.filter(x => x.version.dobj.datatype == '/datatypes/datacolumn')
+  // console.log(dataColumns)
+  let dataColumns = []
   return {
     props: {dataColumns},
   }

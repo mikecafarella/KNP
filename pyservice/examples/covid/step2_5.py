@@ -39,7 +39,7 @@ def step2(_):
 
 
     DATE_TO_PREDICT = int(
-        (datetime.today() - timedelta(days=44)).strftime('%Y%m%d'))
+        (datetime.today() - timedelta(days=84)).strftime('%Y%m%d'))
     TRAIN_LENGTH = 20
 
     date = datetime.strptime(str(DATE_TO_PREDICT), '%Y%m%d')

@@ -1,4 +1,6 @@
 from flask import Flask, abort, request, jsonify
+from flask_cors import CORS
+
 from flask_restful import Api, Resource
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
@@ -6,6 +8,7 @@ from flask_marshmallow import Marshmallow
 from sqlalchemy import select
 
 from models import *
+from functions import execute_function
 from database import SessionLocal, engine
 
 import base64
@@ -13,8 +16,19 @@ import json
 import datetime
 
 from elasticsearch import Elasticsearch
+import uuid
+# This is just a temporary thing for demos so we can all run off diferent indexes on the elsasticsearch server
+machine_id = uuid.UUID(int=uuid.getnode())
+
+ES_INDEX = 'knps-{}'.format(machine_id)
 
 app = Flask(__name__)
+CORS(app)
+cors = CORS(app, resource={
+    r"/*":{
+        "origins":"*"
+    }
+})
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///knps.db'
 db = SessionLocal()
 ma = Marshmallow(app)
@@ -22,7 +36,7 @@ api = Api(app)
 
 def es_store_record(index_name, doc_id, record):
     _es = None
-    _es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
+    _es = Elasticsearch([{'host': 'ec2-52-201-28-150.compute-1.amazonaws.com', 'port': 9200}])
     try:
         outcome = _es.index(index=index_name, id=doc_id, body=record)
     except Exception as ex:
@@ -170,6 +184,8 @@ class DataObjectsResource(Resource):
         # todo: validation & integrate signup stuff
         metadata = json.load(request.files['metadata'])
 
+
+
         new_dobj = DataObject(
             owner_id = metadata['owner_id'],
             name = metadata['name'],
@@ -193,6 +209,8 @@ class DataObjectsResource(Resource):
             contents = request.files['imgpath'].read()
         elif new_version.datatype == '/datatypes/pdf':
             contents = request.files['pdfpath'].read()
+        elif new_version.datatype == '/datatypes/function':
+            contents = json.dumps(metadata['code']).encode()
         else:
             contents = None
 
@@ -216,7 +234,7 @@ class DataObjectsResource(Resource):
         }
 
         doc_id = 'X{}'.format(new_dobj.id)
-        es_store_record('knps', doc_id, record)
+        es_store_record(ES_INDEX, doc_id, record)
 
         return jsonify(dobj_schema.dump(new_dobj))
 
@@ -278,7 +296,7 @@ class DataVersionsResource(Resource):
             'timestamp': new_version.created.isoformat()
         }
         doc_id = 'X{}'.format(dataobject.id)
-        es_store_record('knps', doc_id, record)
+        es_store_record(ES_INDEX, doc_id, record)
 
         return jsonify(version_full_schema.dump(new_version))
 
@@ -316,6 +334,28 @@ class DataContentsResource(Resource):
 
 # api.add_resource(DataVersionResource, '/version')
 api.add_resource(DataContentsResource, '/contents/<int:v_id>')
+
+class FunctionsResource(Resource):
+    def get(self):
+        dobj = db.query(DataObject).filter(DataObject.versions.any(datatype = '/datatypes/function'))
+
+        return dobjs_schema.dump(dobj)
+
+api.add_resource(FunctionsResource, '/functions')
+
+class FunctionResource(Resource):
+    def get(self, f_id, dobj_id):
+        output = execute_function(f_id, [dobj_id])
+
+        return output
+
+api.add_resource(FunctionResource, '/function/<int:f_id>/<int:dobj_id>')
+
+class SearchIndexResource(Resource):
+    def get(self):
+        return ES_INDEX
+
+api.add_resource(SearchIndexResource, '/searchindex')
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -19,6 +19,34 @@ export type DataContentProps = {
     }
 }
 
+function htmlEntities(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+async function testFunction() {
+  const testId = document.getElementById('testId').value
+  const dataobjId = document.getElementById('dataobjId').value
+  const outputDiv = document.getElementById('testResults')
+
+  outputDiv.innerHTML = "<div><br /><b>Test Results</b></div>"
+  outputDiv.innerHTML += "<div>Running....</div>"
+
+  const res = await fetch('http://localhost:5000/function/'+dataobjId+'/'+testId)
+  const data = await res.json()
+
+  let output = ""
+  if (typeof(data) === 'object') {
+    output = [JSON.stringify(data, null, 2)]
+  }
+  else {
+    output = htmlEntities(data)
+  }
+
+  outputDiv.innerHTML = "<div><br /><b>Test Results</b></div>"
+  outputDiv.innerHTML += "<div>"+output+"</div>"
+
+}
+
 const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) => {
     var imgstr = ""
     if (datacontent.datatype == "/datatypes/img" || datacontent.datatype == "/datatypes/pdf") {
@@ -149,60 +177,22 @@ const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) =
           </Pane>
         }
         { datacontent.datatype == "/datatypes/function" &&
-          <Pane>
-            <Table>
-              <Table.Head>
-              <Table.TextHeaderCell>
-                  Parameter
-              </Table.TextHeaderCell>
-              <Table.TextHeaderCell>
-                  Data Type
-              </Table.TextHeaderCell>
-              </Table.Head>
-            <Table.Body>
-                <Table.Row>
-                 <Table.TextCell>
-                     {datacontent.FunctionData[0].paramname1}
-                 </Table.TextCell>
-                 <Table.TextCell>
-                     {datacontent.FunctionData[0].paramdesc1}
-                 </Table.TextCell>
-                </Table.Row>
-                <Table.Row>
-                 <Table.TextCell>
-                     {datacontent.FunctionData[0].paramname2}
-                 </Table.TextCell>
-                 <Table.TextCell>
-                     {datacontent.FunctionData[0].paramdesc2}
-                 </Table.TextCell>
-                </Table.Row>
-                <Table.Row>
-                 <Table.TextCell>
-                     {datacontent.FunctionData[0].paramname3}
-                 </Table.TextCell>
-                 <Table.TextCell>
-                     {datacontent.FunctionData[0].paramdesc3}
-                 </Table.TextCell>
-                </Table.Row>
-                <Table.Row>
-                 <Table.TextCell>
-                     {datacontent.FunctionData[0].paramname4}
-                 </Table.TextCell>
-                 <Table.TextCell>
-                     {datacontent.FunctionData[0].paramdesc4}
-                 </Table.TextCell>
-                </Table.Row>
-                <Table.Row>
-                 <Table.TextCell>
-                     {datacontent.FunctionData[0].paramname5}
-                 </Table.TextCell>
-                 <Table.TextCell>
-                     {datacontent.FunctionData[0].paramdesc5}
-                 </Table.TextCell>
-                </Table.Row>
-            </Table.Body>
-            </Table>
-          </Pane>
+        <div>
+        <Pane display="flex" >
+          <Pre>
+          {JSON.parse(Buffer.from(datacontent.contents.contents, 'base64').toString())}
+          </Pre>
+        </Pane>
+        <div>
+        <br />
+        Test on data object ID: <input id='testId' />
+        <input type="hidden" id="dataobjId" value={datacontent.dataobject.id} />
+        <input type="button" id="testFunctionButton" value="Run Test" onClick={testFunction}/>
+        </div>
+
+        <Pre id="testResults"></Pre>
+
+        </div>
         }
 
         </Pane>

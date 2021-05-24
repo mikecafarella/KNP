@@ -24,7 +24,7 @@ if __name__ == "__main__":
     rst = defaultdict(list)
     rst_2 = defaultdict(list)
 
-    today = datetime.today() - timedelta(days=45)
+    today = datetime.today() - timedelta(days=85)
     twenty_days = today - timedelta(days=21)
     before_20_display = twenty_days.strftime('%Y-%m-%d')
     before_20 = int(twenty_days.strftime('%Y%m%d'))

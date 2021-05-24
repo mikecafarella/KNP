@@ -40,6 +40,8 @@ class DataVersion(Base):
     dataobject = relationship("DataObject", back_populates="versions")
     contents = relationship("DataContents", uselist=False, back_populates="dataversion")
 
+    generator = Column(Integer, ForeignKey("dataversion.id"), nullable=True)
+
     predecessors = relationship(
         "DataVersion",
         secondary=dataversions_predecessor,

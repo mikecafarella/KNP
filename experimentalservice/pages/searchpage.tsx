@@ -5,7 +5,7 @@ import SearchRst, { SearchRstProps } from "../components/SearchRst"
 import { Heading } from 'evergreen-ui'
 var elasticsearch = require('elasticsearch');
 var client = new elasticsearch.Client({
-  host: 'localhost:9200'
+  host: 'ec2-52-201-28-150.compute-1.amazonaws.com:9200'
 });
 
 const SearchPage: React.FC = () => {
@@ -24,6 +24,12 @@ const SearchPage: React.FC = () => {
     'pytype',
     'timestamp'
   ];
+
+  const getSearchIndex = async () => {
+    const res = await fetch("http://localhost:5000/searchindex")
+    const index = await res.json()
+    return index
+  }
 
   function isValidKeyValuePair(input) {
     const possiblePair = input.split(pairSeperator);
@@ -56,11 +62,14 @@ const SearchPage: React.FC = () => {
     console.log(searchField)
 
     try {
+      const  searchIndex = await getSearchIndex()
+
       if (searchTime) {
         var local_start = searchTimeStart
         var local_end = searchTimeEnd
+
         const res = await client.search({
-          index: 'knps',
+          index: searchIndex,
           body: {
             query: {
               range: {
@@ -99,7 +108,7 @@ const SearchPage: React.FC = () => {
           console.log(local_start)
           console.log(local_end)
           const res = await client.search({
-            index: 'knps',
+            index: searchIndex,
             body: {
               query: {
                 range: {
@@ -116,8 +125,9 @@ const SearchPage: React.FC = () => {
           }
           setHits(res.hits.hits)
         } else {
+          console.log(searchIndex)
           const res = await client.search({
-            index: 'knps',
+            index: searchIndex,
             body: {
               query: {
                 multi_match: {

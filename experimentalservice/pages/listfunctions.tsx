@@ -48,9 +48,9 @@ const Functions: React.FC<Props> = (props) => {
              <Table.Row key={obj.id} isSelectable onSelect={() => Router.push(`/dobj/X${obj.id}`)}>
                 <Table.TextCell>X{obj.id}</Table.TextCell>
                 <Table.TextCell>{obj.name}</Table.TextCell>
-                <Table.TextCell>{obj.desc}</Table.TextCell>
-                <Table.TextCell>{obj.version.timestamp}</Table.TextCell>
-                <Table.TextCell>{obj.version.dobj.comment}</Table.TextCell>
+                <Table.TextCell>{obj.description}</Table.TextCell>
+                <Table.TextCell>{obj.versions[0].created}</Table.TextCell>
+                <Table.TextCell>{obj.versions[0].comment}</Table.TextCell>
                 <Table.TextCell>{obj.owner.name}</Table.TextCell>
              </Table.Row>
             ))}
@@ -61,7 +61,7 @@ const Functions: React.FC<Props> = (props) => {
 }
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const res = await fetch("http://localhost:3000/api/listfunctions")
+  const res = await fetch("http://localhost:5000/functions")
   const dobjs = await res.json()
   return {
     props: { dobjs },

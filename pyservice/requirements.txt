@@ -1,10 +1,12 @@
 flask
+flask_cors
 flask_restful
 flask_sqlalchemy
 flask_marshmallow
 marshmallow-sqlalchemy
 elasticsearch
 requests
+alembic
 
 # Packages used by examples
 pandas

@@ -37,7 +37,7 @@ if __name__ == "__main__":
         name = 'COVID Prediction, Next Day, DataViz',
         ownerid = user_id,
         description = "Visualization of COVID prediction data",
-        image_file = "predict_1.png",
+        image_file = "predict_1.jpg",
         comment = "Cloropleth map",
         predecessors = PREDECESSORS
     )
