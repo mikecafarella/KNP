@@ -7,6 +7,7 @@ Recommended: Run this in a python virtual environment.
   ```
 cd pyservice
 pip install -r requirments.txt
+alembic upgrade head
 python server.py
 ```
 3. Set up and start frontend.
@@ -18,6 +19,14 @@ npm run dev
 
 To install demo data, go to pyservice directory and run `bootstrap_demo.sh`
 
+
+To reset the database, remove the current database and reinitialize; also clear out elasticsearch index. 
+From the pyservice directory:
+```
+rm knps.db
+alembic upgrade head
+python delete_es_index.py
+```
 
 ## Older: 
 
