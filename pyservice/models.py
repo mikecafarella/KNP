@@ -21,7 +21,7 @@ class DataObject(Base):
     created = Column(DateTime, default=datetime.datetime.now)
     modified = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
-    versions = relationship("DataVersion", back_populates="dataobject")
+    versions = relationship("DataVersion", back_populates="dataobject", order_by="desc(DataVersion.created)")
 
     is_deleted = Column(Boolean, default=False)
 
