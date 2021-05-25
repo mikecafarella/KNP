@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import Router from 'next/router'
 import Layout from '../components/Layout'
 import SearchRst, { SearchRstProps } from "../components/SearchRst"
-import { Heading } from 'evergreen-ui'
+import { Heading, Button, Table } from 'evergreen-ui'
 var elasticsearch = require('elasticsearch');
 var client = new elasticsearch.Client({
   host: 'ec2-52-201-28-150.compute-1.amazonaws.com:9200'
@@ -151,10 +151,11 @@ const SearchPage: React.FC = () => {
 
   return (
     <Layout>
+      <Heading size={800}>Search</Heading>
       <div className="page">
         <form
           onSubmit={submitData}>
-          <h1>Search</h1>
+
           <input
             autoFocus
             onChange={e => setSearchText(e.target.value)}
@@ -162,13 +163,6 @@ const SearchPage: React.FC = () => {
             type="text"
             value={searchText}
           />
-          {/* <input
-            onChange={e => setFieldText(e.target.value)}
-            placeholder="Search Field. Leave empty for all fields"
-            type="text"
-            value={fieldText}
-          /> */}
-
           {
             searchTime == true &&
             <input type="datetime-local" id="meeting-time"
@@ -184,20 +178,15 @@ const SearchPage: React.FC = () => {
               }}
             />
           }
-
-
-          <input
+          <Button
             // disabled={!searchText}
             type="submit"
             value="Search"
-          />
-          <a className="back" href="#" onClick={() => Router.push('/')}>
-            or Cancel
-          </a>
+          >Search</Button>
           <br></br>
           <br></br>
 
-          <button onClick={e => {
+          <Button onClick={e => {
             if (searchTime) {
               setSearchTime(false)
               setSearchTimeStart('')
@@ -213,7 +202,7 @@ const SearchPage: React.FC = () => {
               setSearchText('')
               setHits([])
             }
-          }}>Search Time</button>
+          }}>Search Time</Button>
 
 
         </form>
@@ -224,12 +213,21 @@ const SearchPage: React.FC = () => {
       <br></br>
       <main>
         {hits.length === 0 && <h1> No Matched Results</h1>}
-
-        {hits.map((s) => (
-          <div key={s._id} className="SearchRst">
-            <SearchRst searchrst={s} />
-          </div>
-        ))}
+        <Table>
+            <Table.Head>
+              <Table.TextCell>URL</Table.TextCell>
+              <Table.TextCell>Data Object</Table.TextCell>
+              <Table.TextCell>Owner</Table.TextCell>
+              <Table.TextCell>Data Type</Table.TextCell>
+            </Table.Head>
+          <Table.Body>
+            {hits.map((s) => (
+              <div key={s._id} className="SearchRst">
+                <SearchRst searchrst={s} />
+              </div>
+            ))}
+          </Table.Body>
+        </Table>
       </main>
 
       <style jsx>{`

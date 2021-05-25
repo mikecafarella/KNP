@@ -239,6 +239,7 @@ class DataObjectsResource(Resource):
         record =  {
             'url': 'http://localhost:3000/dobj/X{}'.format(new_dobj.id),
             'owner': new_dobj.owner.name,
+            'name': new_dobj.name,
             'description': new_dobj.description,
             'comment': new_version.comment,
             'pytype': new_version.datatype,
@@ -308,6 +309,7 @@ class DataVersionsResource(Resource):
         record =  {
             'url': 'http://localhost:3000/dobj/X{}'.format(dataobject.id),
             'owner': dataobject.owner.name,
+            'name': dataobject.name,
             'description': dataobject.description,
             'comment': new_version.comment,
             'pytype': new_version.datatype,
