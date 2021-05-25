@@ -6,7 +6,7 @@ Recommended: Run this in a python virtual environment.
 2. Set up and start backend server.
   ```
 cd pyservice
-pip install -r requirments.txt
+pip install -r requirements.txt
 alembic upgrade head
 python server.py
 ```
