@@ -179,9 +179,9 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
             </Table.Head>
             <Table.Body>
             {dobj.versions.map(
-               (version) => (
-                 <Table.Row key="0" isSelectable onSelect={() => Router.push("/dobj/" + dobjId + "/?v=" + version.id)}>
-                   <Table.TextCell>{version.readableDate}</Table.TextCell>
+               (version, idx) => (
+                 <Table.Row key={idx} isSelectable onSelect={() => Router.push("/dobj/" + dobjId + "/?v=" + version.id)}>
+                   <Table.TextCell>{version.created}</Table.TextCell>
                    <Table.TextCell>{version.comment}</Table.TextCell>
                    <Table.TextCell>{version.datatype}</Table.TextCell>
                  </Table.Row>

@@ -9,7 +9,7 @@ i.e. a new knpsValue is created.
 import requests
 import json
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from lib import get_user_id, create_data_object
 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     rst = defaultdict(list)
     rst_2 = defaultdict(list)
 
-    today = datetime.today() - timedelta(days=85)
+    today = date.fromisoformat('2020-12-28') #datetime.today() - timedelta(days=185)
     twenty_days = today - timedelta(days=21)
     before_20_display = twenty_days.strftime('%Y-%m-%d')
     before_20 = int(twenty_days.strftime('%Y%m%d'))

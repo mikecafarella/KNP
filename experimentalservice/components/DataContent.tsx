@@ -48,9 +48,18 @@ async function testFunction() {
 }
 
 const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) => {
-    var imgstr = ""
+    let imgstr = ""
+    let csvData = ""
+    let csvTable = [[]]
     if (datacontent.datatype == "/datatypes/img" || datacontent.datatype == "/datatypes/pdf") {
         imgstr = "data:" + datacontent.contents.mimetype + ";base64, " + datacontent.contents.contents
+    }
+    else if (datacontent.datatype == '/datatypes/csv') {
+      csvData = Buffer.from(datacontent.contents.contents, 'base64').toString()
+      const rows = csvData.split('\n')
+      for (const i in rows) {
+        csvTable.push(rows[i].split(','))
+      }
     }
     return (
         <Pane overflowY="scroll" background="tint1" padding={majorScale(1)}>
@@ -64,22 +73,17 @@ const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) =
 
         { datacontent.datatype == "/datatypes/csv" &&
           <Pane display="flex" >
-            <Pre>
-            {String.fromCharCode.apply(null, JSON.parse(datacontent.CsvData[0].csvdata).contents.data)}
-            </Pre>
-            {/**
             <Table>
                 <Table.Body>
-                    {JSON.parse(datacontent.CsvData[0].csvdata).contents.data.map(row => (
-                        <Table.row>
-                            {row.map(cell => (
-                                <Table.TextCell>cell</Table.TextCell>
+                    {csvTable.map((row, idx) => (
+                        <Table.Row key={row + idx}>
+                            {row.map((cell, cellidx) => (
+                                <Table.TextCell key={cell + cellidx}>{cell}</Table.TextCell>
                             ))}
-                        </Table.row>
+                        </Table.Row>
                     ))}
                 </Table.Body>
             </Table>
-             */}
           </Pane>
         }
 

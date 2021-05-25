@@ -208,17 +208,23 @@ class DataObjectsResource(Resource):
         )
         db.add(new_version)
 
-        # todo: get rid of jsondata/imgdata/etc.
-        if new_version.datatype == '/datatypes/json':
-            contents = json.dumps(metadata['jsondata']).encode()
-        elif new_version.datatype == '/datatypes/img':
-            contents = request.files['imgpath'].read()
-        elif new_version.datatype == '/datatypes/pdf':
-            contents = request.files['pdfpath'].read()
-        elif new_version.datatype == '/datatypes/function':
-            contents = json.dumps(metadata['code']).encode()
+        if metadata.get('data', None):
+            contents = json.dumps(metadata['data']).encode()
+        elif request.files.get('datafile', None):
+            contents = request.files['datafile'].read()
         else:
-            contents = None
+            # todo: get rid of jsondata/imgdata/etc.
+            if new_version.datatype == '/datatypes/json':
+                contents = json.dumps(metadata['jsondata']).encode()
+            elif new_version.datatype == '/datatypes/img':
+                contents = request.files['imgpath'].read()
+            elif new_version.datatype == '/datatypes/pdf':
+                contents = request.files['pdfpath'].read()
+            elif new_version.datatype == '/datatypes/function':
+                contents = json.dumps(metadata['code']).encode()
+            else:
+                contents = None
+
 
         new_contents = DataContents(
             mimetype = metadata['mimetype'],
@@ -274,14 +280,20 @@ class DataVersionsResource(Resource):
         db.add(new_version)
 
         # todo: get rid of jsondata/imgdata/etc.
-        if new_version.datatype == '/datatypes/json':
-            contents = json.dumps(metadata['jsondata']).encode()
-        elif new_version.datatype == '/datatypes/img':
-            contents = request.files['imgpath'].read()
-        elif new_version.datatype == '/datatypes/pdf':
-            contents = request.files['pdfpath'].read()
+        if metadata.get('data', None):
+            contents = json.dumps(metadata['data']).encode()
+        elif request.files.get('datafile', None):
+            contents = request.files['datafile'].read()
         else:
-            contents = None
+            # todo: get rid of jsondata/imgdata/etc.
+            if new_version.datatype == '/datatypes/json':
+                contents = json.dumps(metadata['jsondata']).encode()
+            elif new_version.datatype == '/datatypes/img':
+                contents = request.files['imgpath'].read()
+            elif new_version.datatype == '/datatypes/pdf':
+                contents = request.files['pdfpath'].read()
+            else:
+                contents = None
 
         new_contents = DataContents(
             mimetype = metadata['mimetype'],
