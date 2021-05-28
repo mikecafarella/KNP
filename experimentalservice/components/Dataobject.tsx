@@ -108,10 +108,10 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
               </Paragraph>
 
               <Paragraph size={500}>
-                    Current Version (v{dobj.displayVersion.id}): {dobj.displayVersion.created} {dobj.displayVersion.comment ? " - " + dobj.displayVersion.comment : ""}
+                    Current Version (v{dobj.versions[0].id}): {dobj.versions[0].created} {dobj.versions[0].comment ? " - " + dobj.versions[0].comment : ""}
                     {dobj.displayVersion.id != dobj.versions[0].id &&
                     <div style={{color:'red'}}>
-                      <b>Displayed Version</b> (v{dobj.versions[0].id}): {dobj.displayVersion.created} {dobj.displayVersion.comment ? " - " + dobj.displayVersion.comment : ""}
+                      <b>Displayed Version</b> (v{dobj.displayVersion.id}): {dobj.displayVersion.created} {dobj.displayVersion.comment ? " - " + dobj.displayVersion.comment : ""}
                     </div>
                    }
               </Paragraph>
@@ -167,13 +167,16 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         <Pane width="100%" overflowY="scroll" background="tint1" padding={majorScale(1)}>
         <Table>
           <Table.Head>
-            <Table.TextHeaderCell>
+            <Table.TextHeaderCell flexBasis={80} flexShrink={0} flexGrow={0}>
+                 Version
+            </Table.TextHeaderCell>
+            <Table.TextHeaderCell flexBasis={210} flexShrink={0} flexGrow={0}>
                  Timestamp
             </Table.TextHeaderCell>
             <Table.TextHeaderCell>
                  Comment
             </Table.TextHeaderCell>
-            <Table.TextHeaderCell>
+            <Table.TextHeaderCell flexBasis={120} flexShrink={0} flexGrow={0}>
                  Datatype
             </Table.TextHeaderCell>
             </Table.Head>
@@ -181,9 +184,10 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
             {dobj.versions.map(
                (version, idx) => (
                  <Table.Row key={idx} isSelectable onSelect={() => Router.push("/dobj/" + dobjId + "/?v=" + version.id)}>
-                   <Table.TextCell>{version.created}</Table.TextCell>
+                   <Table.TextCell flexBasis={80} flexShrink={0} flexGrow={0}>v{version.id}</Table.TextCell>
+                   <Table.TextCell flexBasis={210} flexShrink={0} flexGrow={0}>{version.created}</Table.TextCell>
                    <Table.TextCell>{version.comment}</Table.TextCell>
-                   <Table.TextCell>{version.datatype}</Table.TextCell>
+                   <Table.TextCell flexBasis={120} flexShrink={0} flexGrow={0}>{version.datatype}</Table.TextCell>
                  </Table.Row>
                )
              )}
