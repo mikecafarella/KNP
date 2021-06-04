@@ -53,9 +53,9 @@ const SearchPage: React.FC = () => {
   }
   const submitData = async (e: React.SyntheticEvent) => {
     e.preventDefault()
-    var searchField = ['url', 'comment', 'owner', 'pytype']
+    var searchField = ['url', 'comment', 'owner', 'pytype', 'name', 'description']
     if (fieldText === "") {
-      searchField = ['url', 'comment', 'owner', 'pytype']
+      searchField = ['url', 'comment', 'owner', 'pytype', 'name', 'description']
     } else {
       searchField = [fieldText]
     }

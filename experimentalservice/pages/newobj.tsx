@@ -121,7 +121,11 @@ const NewObj: React.FC = (props) => {
       })
       const result = await res.json()
       if (result.id) {
-          await Router.push('/')
+          if (metadata['datatype'] === '/datatypes/function') {
+            await Router.push('/listfunctions')
+          } else {
+            await Router.push('/listdataobjects')
+          }
       }
     } catch (error) {
       console.error(error)

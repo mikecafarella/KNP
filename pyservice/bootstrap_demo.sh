@@ -6,3 +6,5 @@ python step1.py
 python step2.py
 cd ../csv
 python step1.py
+cd ../scales
+python step1.py

@@ -43,7 +43,7 @@ const Functions: React.FC<Props> = (props) => {
               Owner
             </Table.TextHeaderCell>
           </Table.Head>
-          <Table.Body height={240}>
+          <Table.Body>
              {props.dobjs.map(obj => (
              <Table.Row key={obj.id} isSelectable onSelect={() => Router.push(`/dobj/X${obj.id}`)}>
                 <Table.TextCell>X{obj.id}</Table.TextCell>

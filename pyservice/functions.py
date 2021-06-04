@@ -20,14 +20,19 @@ def get_dobj_contents(dobj_id):
     else:
         data = base64.b64decode(version_data['contents']['contents'])
 
-
     return data
 
 def get_dobj(dobj_id):
     return get_dobj_contents(dobj_id)
 
-def execute_function(func_id, inputs):
-    code = get_dobj_contents(func_id).decode().replace("\\n", "\n").strip('"')
+def execute_function(func_id, inputs, params=[]):
+    code = get_dobj_contents(func_id)
+
+    if type(code) != str:
+        # TODO: Figure out why the code get mangled like this. Happens when uploading via API
+        code = code.decode().replace("\\n", "\n").strip('"').replace('\\"','"')
+
+
     g = {}
     l = {}
 
@@ -39,4 +44,7 @@ def execute_function(func_id, inputs):
     if len(inputs) == 1:
         inputs = inputs[0]
 
-    return func(inputs)
+    if len(params):
+        return func(inputs, params)
+    else:
+        return func(inputs)
