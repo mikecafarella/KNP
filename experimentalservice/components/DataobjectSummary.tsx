@@ -13,11 +13,14 @@ const DataobjectSummary: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
   const [tabIndex, setTabIndex] = useState(0)
   let objLink = ""
   let obj = ""
-  console.log('----',dobj)
+  let version = ""
+
   if (dobj) {
     obj = dobj
     label = dobj.dataobject
-    objLink = "http://localhost:3000/dobj/" + "X" + label.id //+ (label.iscurrent ? "" : "?v=" + dobj.id)
+    version = "?v=" + obj.id
+
+    objLink = "http://localhost:3000/dobj/" + "X" + label.id + version
 
   }
   // <Strong size={500}>{label.iscurrent ? label.name : "Anonymous object:" + obj.id}</Strong> <Text size={300}></Text>

@@ -82,6 +82,36 @@ def update_data_object(objectid, ownerid, comment, jsondata=None, image_file=Non
     obj_data = response.json()
     return obj_data
 
+        # function_id = full_text_xml,
+        # dataobject_id = dobjid
+        # name = 'XML Full Text for PDF b4e98770894089e276f91c1d00e58c8885708e11',
+        # ownerid = user_id,
+        # description = 'XML-formatted full text parse',
+        # comment = 'PDF: b4e98770894089e276f91c1d00e58c8885708e11'
+
+def apply_function(function_id, dataobject_id, ownerid, name, description, datatype, comment):
+    url = "http://localhost:5000/function/{}/{}".format(function_id, dataobject_id)
+
+    mimetypes = {
+        '/datatypes/json': 'application/json',
+        '/datatypes/xml': 'application/xml',
+    }
+
+    metadata = {
+            'owner_id': ownerid,
+            'dobj_id': dataobject_id,
+            'func_id': comment,
+            'datatype': datatype,
+            'mimetype': mimetypes.get(datatype, 'text/plain'),
+            'name': name,
+            'description': description,
+            'comment': comment
+        }
+    files = {'metadata': json.dumps(metadata)}
+    response = requests.post(url, files=files)
+    obj_data = response.json()
+    return obj_data
+
 def get_data_object(objectid):
     url = "http://localhost:5000/dobjs/{}".format(objectid)
     response = requests.get(url)

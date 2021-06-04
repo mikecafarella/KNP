@@ -8,7 +8,7 @@ import requests
 import os
 import json
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from sklearn.linear_model import LinearRegression
 import numpy as np
 from collections import defaultdict
@@ -37,13 +37,13 @@ def step2(_):
 
     PREDECESSORS = [data_source['version_id']]
 
+    predict_date = date.fromisoformat('2020-12-29')
 
     DATE_TO_PREDICT = int(
-        (datetime.today() - timedelta(days=84)).strftime('%Y%m%d'))
+        predict_date.strftime('%Y%m%d'))
     TRAIN_LENGTH = 20
 
-    date = datetime.strptime(str(DATE_TO_PREDICT), '%Y%m%d')
-    starting_date = date - timedelta(days=TRAIN_LENGTH)
+    starting_date = datetime.strptime(str(DATE_TO_PREDICT), '%Y%m%d') - timedelta(days=TRAIN_LENGTH)
     start = starting_date.strftime('%Y%m%d')
     temp_dict = {}
 

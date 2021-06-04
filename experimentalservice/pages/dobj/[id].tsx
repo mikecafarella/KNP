@@ -20,7 +20,7 @@ import { useRouter } from 'next/router'
   }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-    console.log(context.query)
+    console.log('DOBJ', context.query)
 
     const res = await fetch(`http://localhost:5000/dobjs/${context.query.id}`)
     const data = await res.json()

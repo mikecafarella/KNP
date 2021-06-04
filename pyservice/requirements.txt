@@ -7,9 +7,12 @@ marshmallow-sqlalchemy
 elasticsearch
 requests
 alembic
+fsspec
 
 # Packages used by examples
 pandas
 sklearn
 plotly
 psutil
+kaleido
+boto3

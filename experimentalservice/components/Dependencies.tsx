@@ -14,10 +14,6 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
 
     const [mouseIndex, setMouseIndex] = useState(-1)
 
-    console.log("9999")
-    console.log(dobj)
-    console.log("9999")
-
     const predecessors = dobj.displayVersion.predecessors
     // const successors = dobj.successors
 
@@ -25,6 +21,7 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         setMouseIndex(nodeId)
     }
     const onMouseOverNodeFn = function(nodeId) {
+        console.log(nodeId)
         setMouseIndex(nodeId)
     };
     const onMouseOutNodeFn = function(nodeId) {
@@ -40,29 +37,90 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
     idToNodeMap[dobj.displayVersion.dataobject.id] = dobj.displayVersion
     let nodes = [{ id: dobj.displayVersion.dataobject.id,
                    color: "red",
-                   x: 400,
-                   y: 200,
+                   x: 300,
+                   y: 500,
                     labelPosition: "bottom",
                 }]
     labelMap[dobj.displayVersion.dataobject.id] = dobj.name
     console.log(dobj.displayVersion.dataobject.id)
 
-
+    let px = (600 - ((predecessors.length-1) * 150))/2
+    let py = 350
+    let maxy = 500
+    let miny = 500
     for (var p of predecessors) {
-        nodes.push({id: p.id,
+        if (py > maxy) maxy = py
+        if (py < miny) miny = py
+        nodes.push({id: p.dataobject.id,
                         color: "green",
+                        x: px,
+                        y: py
                     })
-        labelMap[p.id] = p.dataobject.name
-        links.push({source: p.id , target: dobj.displayVersion.dataobject.id})
-        idToNodeMap[p.id] = p
+
+        labelMap[p.dataobject.id] = p.dataobject.name
+        const generator = dobj.displayVersion.generators.length ? dobj.displayVersion.generators[0] : null
+        const linkLabel = generator ? generator.dataobject.name : null
+        const linkColor = linkLabel ? 'blue' : 'lightgray'
+        links.push({source: p.dataobject.id ,
+                    target: dobj.displayVersion.dataobject.id,
+                    label: linkLabel,
+                    color: linkColor
+                  })
+        idToNodeMap[p.dataobject.id] = p
+
+        let qx = (px - 75 * (p.predecessors.length - 1))
+        let qy = 200
         for (var q of p.predecessors) {
-          nodes.push({id: q.id,
+          if (qy > maxy) maxy = qy
+          if (qy < miny) miny = qy
+          const generator = p.generators.length ? p.generators[0] : null
+          const linkLabel = generator ? generator.dataobject.name : null
+          const linkColor = linkLabel ? 'blue' : 'lightgray'
+          nodes.push({id: q.dataobject.id,
                           color: "green",
+                          x: qx,
+                          y: qy
                       })
-          labelMap[q.id] = q.dataobject.name
-          links.push({source: q.id , target: p.id})
-          idToNodeMap[q.id] = q
+
+          labelMap[q.dataobject.id] = q.dataobject.name
+          links.push({source: q.dataobject.id ,
+                      target: p.dataobject.id,
+                      label: linkLabel,
+                      color: linkColor})
+          idToNodeMap[q.dataobject.id] = q
+          let rx = (qx - 75 * (q.predecessors.length - 1))
+          let ry = 50
+          for (var r of q.predecessors) {
+            if (ry > maxy) maxy = ry
+            if (ry < miny) miny = ry
+            const generator = q.generators.length ? q.generators[0] : null
+            const linkLabel = generator ? generator.dataobject.name : null
+            const linkColor = linkLabel ? 'blue' : 'lightgray'
+            nodes.push({id: r.dataobject.id,
+                            color: "green",
+                            x: rx,
+                            y: ry
+                        })
+            labelMap[r.dataobject.id] = r.dataobject.name
+            links.push({source: r.dataobject.id ,
+                        target: q.dataobject.id,
+                        label: linkLabel,
+                        color: linkColor})
+            idToNodeMap[r.dataobject.id] = r
+            rx += 150
+            ry += 30
+          }
+          qx += 150
+          qy += 30
         }
+        px += 150
+        py += 30
+    }
+
+    let adjust = (600 - (maxy-miny))/2 - 80
+
+    for (const n in nodes) {
+      nodes[n].y -= adjust
     }
 
     console.log(idToNodeMap)
@@ -85,18 +143,18 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
 
     const myConfig = {
         directed: true,
-        nodeHighlightBehavior: true,
+        nodeHighlightBehavior: false,
         highlightDegree: 0,
         maxZoom: 2,
         minZoom: 1,
         width: 600,
-        height: 400,
+        height: 600,
         "d3": {
           "alphaTarget": 0.05,
-          "gravity": 0,
-          "linkLength": 150,
-          "linkStrength": 1,
-          "disableLinkForce": false
+          "gravity": -400,
+          "linkLength": 120,
+          "linkStrength": 0,
+          "disableLinkForce": true
         },
         node: {
             color: "lightgreen",
@@ -106,7 +164,9 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
             fontSize: 12
         },
         link: {
-            highlightColor: "lightblue",
+            renderLabel: true,
+            fontSize: 12,
+
         },
     };
 
@@ -124,10 +184,11 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
                 onClickNode={onClickNodeFn}
                 // onMouseOutNode={onMouseOutNodeFn}
                 onMouseOverNode={onMouseOverNodeFn}
+                // onMouseOverLink={onMouseOverNodeFn}
                 config={myConfig}/>
         </Pane>
         <Pane padding={majorScale(1)} flex={2}>
-            <DataobjectSummary dobj={mouseIndex >= 0 ? idToNodeMap[mouseIndex] : null}/>
+          <DataobjectSummary dobj={mouseIndex >= 0 ? idToNodeMap[mouseIndex] : null}/>
         </Pane>
       </Card>
     )

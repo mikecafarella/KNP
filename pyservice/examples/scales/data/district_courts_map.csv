@@ -1,0 +1,95 @@
+id,label,full_label,abbreviation,alt_abbreviation
+1,District of Columbia,United States District Court for the District of Columbia,D.D.C.,DC
+2,District of Maine,United States District Court for the District of Maine,D. Me.,ME
+3,District of Massachusetts,United States District Court for the District of Massachusetts,D. Mass.,MA
+4,District of New Hampshire,United States District Court for the District of New Hampshire,D.N.H.,NH
+5,District of Puerto Rico,United States District Court for the District of Puerto Rico,D.P.R.,PR
+6,District of Rhode Island,United States District Court for the District of Rhode Island,D.R.I.,RI
+7,District of Connecticut,United States District Court for the District of Connecticut,D. Conn.,CT
+8,Eastern District of New York,United States District Court for the Eastern District of New York,E.D.N.Y.,NYE
+9,Northern District of New York,United States District Court for the Northern District of New York,N.D.N.Y.,NYN
+10,Southern District of New York,United States District Court for the Southern District of New York,S.D.N.Y.,NYS
+11,Western District of New York,United States District Court for the Western District of New York,W.D.N.Y.,NYW
+12,District of Vermont,United States District Court for the District of Vermont,D. Vt.,VT
+13,District of Delaware,United States District Court for the District of Delaware,D. Del.,DE
+14,District of New Jersey,United States District Court for the District of New Jersey,D.N.J.,NJ
+15,Eastern District of Pennsylvania,United States District Court for the Eastern District of Pennsylvania,E.D. Pa.,PAE
+16,Middle District of Pennsylvania,United States District Court for the Middle District of Pennsylvania,M.D. Pa.,PAM
+17,Western District of Pennsylvania,United States District Court for the Western District of Pennsylvania,W.D. Pa.,PAW
+18,District of Maryland,United States District Court for the District of Maryland,D. Md.,MD
+19,Eastern District of North Carolina,United States District Court for the Eastern District of North Carolina,E.D.N.C.,NCE
+20,Middle District of North Carolina,United States District Court for the Middle District of North Carolina,M.D.N.C.,NCM
+21,Western District of North Carolina,United States District Court for the Western District of North Carolina,W.D.N.C.,NCW
+22,District of South Carolina,United States District Court for the District of South Carolina,D.S.C.,SC
+23,Eastern District of Virginia,United States District Court for the Eastern District of Virginia,E.D. Va.,VAE
+24,Western District of Virginia,United States District Court for the Western District of Virginia,W.D. Va.,VAW
+25,Northern District of West Virginia,United States District Court for the Northern District of West Virginia,N.D. W. Va.,WVN
+26,Southern District of West Virginia,United States District Court for the Southern District of West Virginia,S.D. W. Va.,WVS
+27,Eastern District of Louisiana,United States District Court for the Eastern District of Louisiana,E.D. La.,LAE
+28,Middle District of Louisiana,United States District Court for the Middle District of Louisiana,M.D. La.,LAM
+29,Western District of Louisiana,United States District Court for the Western District of Louisiana,W.D. La.,LAW
+30,Northern District of Mississippi,United States District Court for the Northern District of Mississippi,N.D. Miss.,MSN
+31,Southern District of Mississippi,United States District Court for the Southern District of Mississippi,S.D. Miss.,MSS
+32,Eastern District of Texas,United States District Court for the Eastern District of Texas,E.D. Tex.,TXE
+33,Northern District of Texas,United States District Court for the Northern District of Texas,N.D. Tex.,TXN
+34,Southern District of Texas,United States District Court for the Southern District of Texas,S.D. Tex.,TXS
+35,Western District of Texas,United States District Court for the Western District of Texas,W.D. Tex.,TXW
+36,Eastern District of Kentucky,United States District Court for the Eastern District of Kentucky,E.D. Ky.,KYE
+37,Western District of Kentucky,United States District Court for the Western District of Kentucky,W.D. Ky.,KYW
+38,Eastern District of Michigan,United States District Court for the Eastern District of Michigan,E.D. Mich.,MIE
+39,Western District of Michigan,United States District Court for the Western District of Michigan,W.D. Mich.,MIW
+40,Northern District of Ohio,United States District Court for the Northern District of Ohio,N.D. Ohio,OHN
+41,Southern District of Ohio,United States District Court for the Southern District of Ohio,S.D. Ohio,OHS
+42,Eastern District of Tennessee,United States District Court for the Eastern District of Tennessee,E.D. Tenn.,TNE
+43,Middle District of Tennessee,United States District Court for the Middle District of Tennessee,M.D. Tenn.,TNM
+44,Western District of Tennessee,United States District Court for the Western District of Tennessee,W.D. Tenn.,TNW
+45,Central District of Illinois,United States District Court for the Central District of Illinois,C.D. Ill.,ILC
+46,Northern District of Illinois,United States District Court for the Northern District of Illinois,N.D. Ill.,ILN
+47,Southern District of Illinois,United States District Court for the Southern District of Illinois,S.D. Ill.,ILS
+48,Northern District of Indiana,United States District Court for the Northern District of Indiana,N.D. Ind.,INN
+49,Southern District of Indiana,United States District Court for the Southern District of Indiana,S.D. Ind.,INS
+50,Eastern District of Wisconsin,United States District Court for the Eastern District of Wisconsin,E.D. Wis.,WIE
+51,Western District of Wisconsin,United States District Court for the Western District of Wisconsin,W.D. Wis.,WIW
+52,Eastern District of Arkansas,United States District Court for the Eastern District of Arkansas,E.D. Ark.,ARE
+53,Western District of Arkansas,United States District Court for the Western District of Arkansas,W.D. Ark.,ARW
+54,Northern District of Iowa,United States District Court for the Northern District of Iowa,N.D. Iowa,IAN
+55,Southern District of Iowa,United States District Court for the Southern District of Iowa,S.D. Iowa,IAS
+56,District of Minnesota,United States District Court for the District of Minnesota,D. Minn.,MN
+57,Eastern District of Missouri,United States District Court for the Eastern District of Missouri,E.D. Mo.,MOE
+58,Western District of Missouri,United States District Court for the Western District of Missouri,W.D. Mo.,MOW
+59,District of Nebraska,United States District Court for the District of Nebraska,D. Neb.,NE
+60,District of North Dakota,United States District Court for the District of North Dakota,D.N.D.,ND
+61,District of South Dakota,United States District Court for the District of South Dakota,D.S.D.,SD
+62,District of Alaska,United States District Court for the District of Alaska,D. Alaska,AK
+63,District of Arizona,United States District Court for the District of Arizona,D. Ariz.,AZ
+64,Central District of California,United States District Court for the Central District of California,C.D. Cal.,CAC
+65,Eastern District of California,United States District Court for the Eastern District of California,E.D. Cal.,CAE
+66,Northern District of California,United States District Court for the Northern District of California,N.D. Cal.,CAN
+67,Southern District of California,United States District Court for the Southern District of California,S.D. Cal.,CAS
+68,District of Hawaii,United States District Court for the District of Hawaii,D. Haw.,HI
+69,District of Idaho,United States District Court for the District of Idaho,D. Idaho,ID
+70,District of Montana,United States District Court for the District of Montana,D. Mont.,MT
+71,District of Nevada,United States District Court for the District of Nevada,D. Nev.,NV
+72,District of Oregon,United States District Court for the District of Oregon,D. Ore.,OR
+73,Eastern District of Washington,United States District Court for the Eastern District of Washington,E.D. Wash.,WAE
+74,Western District of Washington,United States District Court for the Western District of Washington,W.D. Wash.,WAW
+75,District of Colorado,United States District Court for the District of Colorado,D. Colo.,CO
+76,District of Kansas,United States District Court for the District of Kansas,D. Kan.,KS
+77,District of New Mexico,United States District Court for the District of New Mexico,D.N.M.,NM
+78,Eastern District of Oklahoma,United States District Court for the Eastern District of Oklahoma,E.D. Okla.,OKE
+79,Northern District of Oklahoma,United States District Court for the Northern District of Oklahoma,N.D. Okla.,OKN
+80,Western District of Oklahoma,United States District Court for the Western District of Oklahoma,W.D. Okla.,OKW
+81,District of Utah,United States District Court for the District of Utah,D. Utah,UT
+82,District of Wyoming,United States District Court for the District of Wyoming,D. Wyo.,WY
+83,Middle District of Alabama,United States District Court for the Middle District of Alabama,M.D. Ala.,ALM
+84,Northern District of Alabama,United States District Court for the Northern District of Alabama,N.D. Ala.,ALN
+85,Southern District of Alabama,United States District Court for the Southern District of Alabama,S.D. Ala.,ALS
+86,Middle District of Florida,United States District Court for the Middle District of Florida,M.D. Fla.,FLM
+87,Northern District of Florida,United States District Court for the Northern District of Florida,N.D. Fla.,FLN
+88,Southern District of Florida,United States District Court for the Southern District of Florida,S.D. Fla.,FLS
+89,Middle District of Georgia,United States District Court for the Middle District of Georgia,M.D. Ga.,GAM
+90,Northern District of Georgia,United States District Court for the Northern District of Georgia,N.D. Ga.,GAN
+91,Southern District of Georgia,United States District Court for the Southern District of Georgia,S.D. Ga.,GAS
+92,District of Guam,United States District Court for the District of Guam,D. Guam,GUAM
+93,District of the Northern Mariana Islands,United States District Court for the Northern Mariana Islands,D. N. Mar. I.,NMI
+94,District of the Virgin Islands,United States District Court of the Virgin Islands,D. N. Mar. I.,VI

@@ -12,6 +12,13 @@ dataversions_predecessor = Table(
     Column("predecessor_id", Integer, ForeignKey("dataversion.id")),
 )
 
+dataversions_generator = Table(
+    "dataversions_generator",
+    Base.metadata,
+    Column("version_id", Integer, ForeignKey("dataversion.id")),
+    Column("generator_id", Integer, ForeignKey("dataversion.id")),
+)
+
 class DataObject(Base):
     __tablename__ = "dataobject"
     id = Column(Integer, primary_key=True)
@@ -21,7 +28,7 @@ class DataObject(Base):
     created = Column(DateTime, default=datetime.datetime.now)
     modified = Column(DateTime, default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
-    versions = relationship("DataVersion", back_populates="dataobject")
+    versions = relationship("DataVersion", back_populates="dataobject", order_by="desc(DataVersion.created)")
 
     is_deleted = Column(Boolean, default=False)
 
@@ -40,14 +47,20 @@ class DataVersion(Base):
     dataobject = relationship("DataObject", back_populates="versions")
     contents = relationship("DataContents", uselist=False, back_populates="dataversion")
 
-    generator = Column(Integer, ForeignKey("dataversion.id"), nullable=True)
-
     predecessors = relationship(
         "DataVersion",
         secondary=dataversions_predecessor,
         primaryjoin=id == dataversions_predecessor.c.version_id,
         secondaryjoin=id == dataversions_predecessor.c.predecessor_id,
         backref=backref("successors")
+    )
+
+    generators = relationship(
+        "DataVersion",
+        secondary=dataversions_generator,
+        primaryjoin=id == dataversions_generator.c.version_id,
+        secondaryjoin=id == dataversions_generator.c.generator_id,
+        backref=backref("generated")
     )
 
 class DataContents(Base):

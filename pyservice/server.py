@@ -8,19 +8,20 @@ from flask_marshmallow import Marshmallow
 from sqlalchemy import select
 
 from models import *
-from functions import execute_function
+from functions import execute_function, get_dobj_contents
 from database import SessionLocal, engine
 
 import base64
 import json
 import datetime
+import asyncio
 
 from elasticsearch import Elasticsearch
 import uuid
 # This is just a temporary thing for demos so we can all run off diferent indexes on the elsasticsearch server
 machine_id = uuid.UUID(int=uuid.getnode())
 
-ES_INDEX = 'knps-{}'.format(machine_id)
+ES_INDEX = 'knps-00000000-0000-0000-0000-acde48001122' #'knps-{}'.format(machine_id)
 ES_HOST = 'ec2-52-201-28-150.compute-1.amazonaws.com'
 
 app = Flask(__name__)
@@ -30,16 +31,33 @@ cors = CORS(app, resource={
         "origins":"*"
     }
 })
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///knps.db'
 db = SessionLocal()
 ma = Marshmallow(app)
 api = Api(app)
 
+loop = asyncio.get_event_loop()
+
+# Decorator to allow a function to run in the background, fire-and-forget style
+def background(f):
+    from functools import wraps
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        if callable(f):
+            return loop.run_in_executor(None, f, *args, **kwargs)
+        else:
+            raise TypeError('Task must be a callable')
+    return wrapped
+
+@background
 def es_store_record(index_name, doc_id, record):
     _es = None
     _es = Elasticsearch([{'host': ES_HOST, 'port': 9200}])
     try:
+        print("START SEARCH SUBMISSION:", record)
         outcome = _es.index(index=index_name, id=doc_id, body=record)
+        print("ELASTICSEARCH:", outcome)
     except Exception as ex:
         print('Error in indexing data')
         print(str(ex))
@@ -88,11 +106,13 @@ class DataVersionLightSchema(ma.Schema):
                   'datatype',
                   'comment',
                   'predecessors',
+                  'generators',
                   'created')
 
     owner = ma.Nested(UserSchema)
     contents = ma.Nested(DataContentsSchema)
     predecessors = ma.Nested('DataVersionLightSchema', many=True)
+    generators = ma.Nested('DataVersionLightSchema', many=True)
 
 class DataVersionFullSchema(ma.Schema):
     class Meta:
@@ -104,12 +124,15 @@ class DataVersionFullSchema(ma.Schema):
                   'comment',
                   'contents',
                   'predecessors',
+                  'generators',
                   'created')
 
     owner = ma.Nested('UserSchema')
     contents = ma.Nested('DataContentsSchema')
     dataobject = ma.Nested('DataObjectSchema', exclude=['versions'])
     predecessors = ma.Nested('DataVersionFullSchema', many=True)
+    generators = ma.Nested('DataVersionFullSchema', many=True)
+
 
 version_full_schema = DataVersionFullSchema()
 
@@ -122,11 +145,13 @@ class DataVersionSchema(ma.Schema):
                   'comment',
                   'contents',
                   'predecessors',
+                  'generators',
                   'created')
 
     owner = ma.Nested(UserSchema)
     contents = ma.Nested(DataContentsSchema)
     predecessors = ma.Nested('DataVersionLightSchema', many=True)
+    generators = ma.Nested('DataVersionLightSchema', many=True)
 
 version_schema = DataVersionSchema()
 
@@ -190,8 +215,6 @@ class DataObjectsResource(Resource):
         # todo: validation & integrate signup stuff
         metadata = json.load(request.files['metadata'])
 
-
-
         new_dobj = DataObject(
             owner_id = metadata['owner_id'],
             name = metadata['name'],
@@ -208,17 +231,23 @@ class DataObjectsResource(Resource):
         )
         db.add(new_version)
 
-        # todo: get rid of jsondata/imgdata/etc.
-        if new_version.datatype == '/datatypes/json':
-            contents = json.dumps(metadata['jsondata']).encode()
-        elif new_version.datatype == '/datatypes/img':
-            contents = request.files['imgpath'].read()
-        elif new_version.datatype == '/datatypes/pdf':
-            contents = request.files['pdfpath'].read()
-        elif new_version.datatype == '/datatypes/function':
-            contents = json.dumps(metadata['code']).encode()
+        if metadata.get('data', None):
+            contents = json.dumps(metadata['data']).encode()
+        elif request.files.get('datafile', None):
+            contents = request.files['datafile'].read()
         else:
-            contents = None
+            # todo: get rid of jsondata/imgdata/etc.
+            if new_version.datatype == '/datatypes/json':
+                contents = json.dumps(metadata['jsondata']).encode()
+            elif new_version.datatype == '/datatypes/img':
+                contents = request.files['imgpath'].read()
+            elif new_version.datatype == '/datatypes/pdf':
+                contents = request.files['pdfpath'].read()
+            elif new_version.datatype == '/datatypes/function':
+                contents = json.dumps(metadata['code']).encode()
+            else:
+                contents = None
+
 
         new_contents = DataContents(
             mimetype = metadata['mimetype'],
@@ -233,6 +262,7 @@ class DataObjectsResource(Resource):
         record =  {
             'url': 'http://localhost:3000/dobj/X{}'.format(new_dobj.id),
             'owner': new_dobj.owner.name,
+            'name': new_dobj.name,
             'description': new_dobj.description,
             'comment': new_version.comment,
             'pytype': new_version.datatype,
@@ -274,14 +304,20 @@ class DataVersionsResource(Resource):
         db.add(new_version)
 
         # todo: get rid of jsondata/imgdata/etc.
-        if new_version.datatype == '/datatypes/json':
-            contents = json.dumps(metadata['jsondata']).encode()
-        elif new_version.datatype == '/datatypes/img':
-            contents = request.files['imgpath'].read()
-        elif new_version.datatype == '/datatypes/pdf':
-            contents = request.files['pdfpath'].read()
+        if metadata.get('data', None):
+            contents = json.dumps(metadata['data']).encode()
+        elif request.files.get('datafile', None):
+            contents = request.files['datafile'].read()
         else:
-            contents = None
+            # todo: get rid of jsondata/imgdata/etc.
+            if new_version.datatype == '/datatypes/json':
+                contents = json.dumps(metadata['jsondata']).encode()
+            elif new_version.datatype == '/datatypes/img':
+                contents = request.files['imgpath'].read()
+            elif new_version.datatype == '/datatypes/pdf':
+                contents = request.files['pdfpath'].read()
+            else:
+                contents = None
 
         new_contents = DataContents(
             mimetype = metadata['mimetype'],
@@ -296,6 +332,7 @@ class DataVersionsResource(Resource):
         record =  {
             'url': 'http://localhost:3000/dobj/X{}'.format(dataobject.id),
             'owner': dataobject.owner.name,
+            'name': dataobject.name,
             'description': dataobject.description,
             'comment': new_version.comment,
             'pytype': new_version.datatype,
@@ -349,11 +386,110 @@ class FunctionsResource(Resource):
 
 api.add_resource(FunctionsResource, '/functions')
 
+
 class FunctionResource(Resource):
     def get(self, f_id, dobj_id):
-        output = execute_function(f_id, [dobj_id])
+        # params = ['fips_txt', 'Median_Household_Income_2019']
+        params = request.args.get('params', '').strip()
+
+        if params:
+            params = [x.strip() for x in params.split(',')]
+
+        output = execute_function(f_id, [dobj_id], params)
+
+        output['contents'] = base64.b64encode(output['contents']).decode('ascii')
 
         return output
+
+    def post(self, f_id, dobj_id):
+        metadata = json.load(request.files['metadata'])
+
+        params = metadata.get('params', '').strip()
+
+        if params:
+            params = [x.strip() for x in params.split(',')]
+
+        output = execute_function(f_id, [dobj_id], params)
+
+        func = db.query(DataObject).get(f_id)
+
+        # TODO: abstract the data object creation out, since we have it in here multiple times
+        new_dobj = DataObject(
+            owner_id = metadata['owner_id'],
+            name = metadata['name'],
+            description = metadata['description']
+        )
+        db.add(new_dobj)
+
+        datatype = metadata['datatype']
+        mimetype = metadata['mimetype']
+
+        pred_obj = db.query(DataObject).get(dobj_id)
+        predecessors = [pred_obj.versions[0]]
+
+        if type(output) != str:
+            if output.get('datatype', None):
+                datatype = output.get('datatype', None)
+            if output.get('mimetype', None):
+                mimetype = output.get('mimetype', None)
+            if output.get('predecessors', None):
+                p_ids = output.get('predecessors', [])
+                for p in p_ids:
+                    pred_obj = db.query(DataObject).get(p)
+                    predecessors.append(pred_obj.versions[0])
+
+        print(predecessors)
+
+        new_version = DataVersion(
+            owner_id = metadata['owner_id'],
+            comment = metadata['comment'],
+            datatype = datatype,
+            dataobject = new_dobj,
+            predecessors = predecessors,
+            generators = [func.versions[0]]
+        )
+        db.add(new_version)
+
+        # TODO: Clean this up
+        if new_version.datatype == '/datatypes/json':
+            contents = json.dumps(output).encode()
+        elif new_version.datatype == '/datatypes/img':
+            contents = output['contents']
+        elif new_version.datatype == '/datatypes/pdf':
+            contents = output['contents']
+        elif new_version.datatype == '/datatypes/function':
+            contents = output.encode()
+        elif new_version.datatype == '/datatypes/xml':
+            contents = output.encode()
+        else:
+            contents = output['contents']
+
+
+        new_contents = DataContents(
+            mimetype = mimetype,
+            contents = contents,
+            dataversion = new_version
+        )
+        db.add(new_contents)
+
+        db.commit()
+
+        # Send it to Elasticsearch
+        record =  {
+            'url': 'http://localhost:3000/dobj/X{}'.format(new_dobj.id),
+            'owner': new_dobj.owner.name,
+            'name': new_dobj.name,
+            'description': new_dobj.description,
+            'comment': new_version.comment,
+            'pytype': new_version.datatype,
+            'timestamp': new_version.created.isoformat()
+        }
+
+        doc_id = 'X{}'.format(new_dobj.id)
+        es_store_record(ES_INDEX, doc_id, record)
+
+        return jsonify(dobj_schema.dump(new_dobj))
+
 
 api.add_resource(FunctionResource, '/function/<int:f_id>/<int:dobj_id>')
 
