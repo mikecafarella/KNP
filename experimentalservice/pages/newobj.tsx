@@ -4,9 +4,13 @@ import Layout from '../components/Layout'
 import Router from 'next/router'
 import { Button, FilePicker, SelectField, Textarea } from 'evergreen-ui'
 import { TextInput, TextInputField, Combobox, TextareaField, Pane, Heading, majorScale, Text } from 'evergreen-ui'
+import { useSession } from 'next-auth/client'
 
 
 const NewObj: React.FC = (props) => {
+  const [session, loading] = useSession();
+  console.log("Got the session with name " + session.user.name)
+  
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [comment, setComment] = useState('')
@@ -44,6 +48,7 @@ const NewObj: React.FC = (props) => {
   const [func, setFunc] = useState('')
   const [code, setCode] = useState('')
 
+  const owneridfl = session.userid
   const ownerid = 1
 
   const submitData = async (e: React.SyntheticEvent) => {
