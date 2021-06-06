@@ -1,6 +1,7 @@
 KNPS_URL = "http://localhost:5000"
 import requests
 import base64
+import * from helpers
 
 def get_dobj_contents(dobj_id):
     url = "{}/dobjs/{}".format(KNPS_URL, dobj_id)
@@ -36,6 +37,3 @@ def pdf_structure(dobj_id):
    return r.json()
 
 filename = 'pdfs/276d1d1c20336ca2a6f54c7a95507001917e4c44.pdf'
-
-print(pdf_structure(6))
-# print(full_text_process(5))

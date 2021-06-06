@@ -20,10 +20,14 @@ USER_EMAIL = "mrander@umich.edu"
 sample_data_file = "data/Unemployment_data_2019.csv"
 sample_data_file2 = "data/all_court_records.csv"
 sample_data_file3 = "data/judicial_districts.csv"
+sample_data_file4 = "data/fips_counties.csv"
 
 if __name__ == "__main__":
     user_id = get_user_id(USER_EMAIL, USER_NAME)
     user_id2 = get_user_id("andrewpaley2022@u.northwestern.edu", "Andrew Paley")
+    user_id3 = get_user_id("alicezou@umich.edu", "Jiayun Zou")
+    user_id4 = get_user_id("michjc@csail.mit.edu", "Michael Cafarella")
+    user_id5 = get_user_id("ctm310@yahoo.com", "Carol McLaughlin")
 
     with urlopen('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json') as response:
       counties = json.load(response)
@@ -69,7 +73,15 @@ if __name__ == "__main__":
         mimetype = 'text/csv'
     )
 
-    data_obj_id = csv_obj_data['id']
+    csv_obj_data = create_data_object(
+        name = 'FIPS Codes for US Counties',
+        ownerid = user_id4,
+        description = 'FIPS Codes for US Counties',
+        datafile = sample_data_file4,
+        comment = 'Downloaded from bls.gov',
+        datatype = '/datatypes/csv',
+        mimetype = 'text/csv'
+    )
 
     map_func = """def cloropleth_county_map(dobj_id, columns=[]):
     from urllib.request import urlopen
@@ -106,6 +118,59 @@ if __name__ == "__main__":
         comment = 'Inputs: (dobj_id, [fips_col_name, data_col_name])'
     )
 
+
+
+    fips_func = """def add_fips_codes_counties(dobj_id, params=[]):
+    # params = (county column, state column)
+    from io import StringIO
+    import csv
+
+    FIPS_DATA = 29
+    fips_csv = StringIO(get_dobj_contents(FIPS_DATA).decode())
+
+    fips = {}
+    fips_header = {}
+    reader = csv.reader(fips_csv, delimiter=',', quotechar='"')
+    for row in reader:
+        if len(fips_header) == 0:
+            fips_header = {x: i for i, x in enumerate(row)}
+        else:
+            fips[row[fips_header['area_name']]] = row[fips_header['fips_txt']]
+
+
+    input_data = get_dobj_contents(dobj_id)
+    csv_file = StringIO(input_data.decode())
+
+    reader = csv.reader(csv_file, delimiter=',', quotechar='"')
+
+    output = []
+    header = {}
+    out_str = StringIO()
+    writer = csv.writer(out_str, delimiter=',', quotechar='"')
+
+    for row in reader:
+        if len(header) == 0:
+            writer.writerow(row + ['fips_code'])
+            header = {x: i for i, x in enumerate(row)}
+        else:
+            county = row[header[params[0]]]
+            state = row[header[params[1]]]
+            if state in ABBREV_US_STATE:
+                state = ABBREV_US_STATE[state]
+            fips_code = fips["{}, {}".format(county, state)]
+            writer.writerow(row + [fips_code])
+
+    return {'contents': out_str.getvalue().encode(), 'datatype': '/datatypes/csv', 'mimetype': 'text/csv', 'predecessors': [FIPS_DATA]}"""
+
+    code_obj_data = create_data_object(
+        name = 'Add FIPS',
+        ownerid = user_id3,
+        description = 'Adds additional FIPS column to CSV containing US county column',
+        code = fips_func,
+        comment = 'Inputs: (dobj_id, [county_col_name, state_col_name])'
+    )
+
+
     filter_func = """def filter_csv_by_text(dobj_id, params=[]):
     # params = (column to filter, string to match)
     from io import StringIO
@@ -133,7 +198,7 @@ if __name__ == "__main__":
 
     code_obj_data = create_data_object(
         name = 'Filter CSV by text value',
-        ownerid = user_id,
+        ownerid = user_id4,
         description = 'Function to filter CSV by text value in one column',
         code = filter_func,
         comment = 'Inputs: (dobj_id, [col_name, filter_text])'
@@ -237,7 +302,7 @@ if __name__ == "__main__":
 
     code_obj_data = create_data_object(
         name = 'Join CSV',
-        ownerid = user_id,
+        ownerid = user_id5,
         description = 'Function to join CSVs',
         code = filter_func,
         comment = 'Inputs: (dobj_id, [join_table, join_column1, join_column2])'

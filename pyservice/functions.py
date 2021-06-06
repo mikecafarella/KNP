@@ -4,6 +4,7 @@ import base64
 import sys
 import types
 import json
+from helpers import *
 
 def get_dobj_contents(dobj_id):
     url = "{}/dobjs/{}".format(KNPS_URL, dobj_id)
