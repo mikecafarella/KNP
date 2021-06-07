@@ -1,12 +1,25 @@
 import React from 'react'
 import { useRouter } from 'next/router'
 import { Pane, Heading, Button, Link } from 'evergreen-ui'
+import { signIn, signOut, useSession } from 'next-auth/client'
 
 
 const Header: React.FC = () => {
   const router = useRouter()
   const isActive: (pathname: string) => boolean =
     pathname => router.pathname === pathname
+
+  const [session, loading] = useSession();
+
+  var button;
+  var addObjButton;
+
+  if (session) {
+    button = <Button marginRight={16} onClick={() => signOut({callbackUrl: '/'})}>Logout user {session.user.name} (ID {session.userid}) </Button>
+    addObjButton = <Button appearance="primary" onClick={() => router.push('/newobj')}>Create data object</Button>
+  } else {
+    button = <Button marginRight={16} onClick={signIn}>Login</Button>
+  }
 
   return(
     <nav>
@@ -30,12 +43,13 @@ const Header: React.FC = () => {
         </Pane>
         <Pane>
           {/* Below you can see the marginRight property on a Button. */}
-          <Button marginRight={16} onClick={() => router.push('/signup')}>
-            Signup
-          </Button>
-          <Button appearance="primary" onClick={() => router.push('/newobj')}>
-            Create data object
-          </Button>
+          {/*<Button marginRight={16} onClick={() => router.push('/signup')}>*/}
+          {/* Login */}
+          {/*</Button>*/}
+
+          {button}
+          {addObjButton}           
+ 
         </Pane>
       </Pane>
 

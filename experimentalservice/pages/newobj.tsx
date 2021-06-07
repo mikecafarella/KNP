@@ -75,7 +75,7 @@ const NewObj: React.FC = (props) => {
 
       const metadata = {
         'name': name,
-        'owner_id': ownerid,
+        'owner_id': owneridfl,
         'description': description,
         'comment': comment,
         'datatype': '/datatypes/function',
