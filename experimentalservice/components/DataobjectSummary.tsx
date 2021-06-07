@@ -37,7 +37,7 @@ const DataobjectSummary: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
             <Link size={300} href={objLink}> {objLink}</Link>
           </Paragraph>
           <Paragraph color="muted">
-              <Text size={300}>Object X{label.id} from {obj.owner.name} ({obj.owner.email})</Text><br></br>
+              <Text size={300}>Object X{label.id} from {label.owner.name} ({label.owner.email})</Text><br></br>
           </Paragraph>
         </Pane>
         <DataContent datacontent={obj}/>

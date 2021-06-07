@@ -71,7 +71,7 @@ def create_data_object(name, ownerid, description, comment,
 
     return obj_data
 
-def update_data_object(objectid, ownerid, comment, jsondata=None, image_file=None, pdf_file=None, predecessors=[]):
+def update_data_object(objectid, ownerid, comment, jsondata=None, image_file=None, pdf_file=None, code=None, data=None, datafile=None, datatype=None, mimetype=None,predecessors=[]):
     url = "http://localhost:5000/versions"
     metadata = {
             'owner_id': ownerid,
@@ -84,7 +84,14 @@ def update_data_object(objectid, ownerid, comment, jsondata=None, image_file=Non
         }
 
     files = {}
-    if image_file:
+    if datafile:
+        files = {'datafile': open(datafile,'rb')}
+
+    if code:
+        metadata['datatype'] = '/datatypes/function'
+        metadata['mimetype'] = 'text/plain'
+        metadata['code'] = code
+    elif image_file:
         metadata['datatype'] = '/datatypes/img'
         metadata['mimetype'] = 'image/jpg'
         files = {'imgpath': (image_file, open(image_file,'rb'), 'image/jpg')}

@@ -316,6 +316,8 @@ class DataVersionsResource(Resource):
                 contents = request.files['imgpath'].read()
             elif new_version.datatype == '/datatypes/pdf':
                 contents = request.files['pdfpath'].read()
+            elif new_version.datatype == '/datatypes/function':
+                contents = json.dumps(metadata['code']).encode()
             else:
                 contents = None
 

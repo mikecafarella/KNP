@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown'
 import DataobjectSummary from "./DataobjectSummary"
 import DataContentProps from "./DataContent.tsx"
 import DataobjProps from "./Dataobject.tsx"
-import { majorScale, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table } from 'evergreen-ui'
+import { majorScale, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table, Tooltip } from 'evergreen-ui'
 import { callbackify } from 'util';
 
 
@@ -25,6 +25,14 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         setMouseIndex(nodeId)
     };
     const onMouseOutNodeFn = function(nodeId) {
+        setMouseIndex(-1)
+    };
+
+    const onMouseOverLinkFn = function(linkId) {
+        console.log('------',linkId)
+        setMouseIndex(linkId)
+    };
+    const onMouseOutLinkFn = function(linkId) {
         setMouseIndex(-1)
     };
 
@@ -64,10 +72,12 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         links.push({source: p.dataobject.id ,
                     target: dobj.displayVersion.dataobject.id,
                     label: linkLabel,
-                    color: linkColor
+                    color: linkColor,
+                    id: generator ? generator.dataobject.id : null
                   })
         idToNodeMap[p.dataobject.id] = p
-
+        // idToNodeMap[generator.dataobject.id] = generator
+        console.log(links)
         let qx = (px - 75 * (p.predecessors.length - 1))
         let qy = 200
         for (var q of p.predecessors) {
@@ -86,7 +96,8 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
           links.push({source: q.dataobject.id ,
                       target: p.dataobject.id,
                       label: linkLabel,
-                      color: linkColor})
+                      color: linkColor,
+                      id: generator ? generator.dataobject.id : null})
           idToNodeMap[q.dataobject.id] = q
           let rx = (qx - 75 * (q.predecessors.length - 1))
           let ry = 50
@@ -105,8 +116,10 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
             links.push({source: r.dataobject.id ,
                         target: q.dataobject.id,
                         label: linkLabel,
-                        color: linkColor})
+                        color: linkColor,
+                        id: generator ? generator.dataobject.id : null})
             idToNodeMap[r.dataobject.id] = r
+
             rx += 150
             ry += 30
           }
@@ -123,7 +136,7 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
       nodes[n].y -= adjust
     }
 
-    console.log(idToNodeMap)
+    console.log('idToNodeMap', idToNodeMap)
 
     // for (var q of successors) {
     //   let objname = q.NameAssignment[0].objname
@@ -184,7 +197,8 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
                 onClickNode={onClickNodeFn}
                 // onMouseOutNode={onMouseOutNodeFn}
                 onMouseOverNode={onMouseOverNodeFn}
-                // onMouseOverLink={onMouseOverNodeFn}
+                // onMouseOverLink={onMouseOverLinkFn}
+                // onMouseOutLink={onMouseOverLinkFn}
                 config={myConfig}/>
         </Pane>
         <Pane padding={majorScale(1)} flex={2}>
