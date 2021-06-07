@@ -28,7 +28,7 @@ const Users: React.FC<Props> = (props) => {
 }
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const res = await fetch("http://localhost:3000/api/listusers")
+  const res = await fetch("http://localhost:5000/users")
   const users = await res.json()
   return {
     props: { users },

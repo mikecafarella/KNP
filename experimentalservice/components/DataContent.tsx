@@ -130,7 +130,7 @@ const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) =
         imgstr = "data:" + datacontent.contents.mimetype + ";base64, " + datacontent.contents.contents
     }
     else if (datacontent.datatype == '/datatypes/csv') {
-      csvData = Buffer.from(datacontent.contents.contents, 'base64').toString()
+      csvData = Buffer.from(datacontent.contents.contents, 'base64').toString().trim()
       csvTable = readString(csvData, {preview: 100}).data;
     }
     return (
