@@ -155,8 +155,8 @@ if __name__ == "__main__":
         else:
             county = row[header[params[0]]]
             state = row[header[params[1]]]
-            if state in ABBREV_US_STATE:
-                state = ABBREV_US_STATE[state]
+            if state.lower() in ABBREV_US_STATE:
+                state = ABBREV_US_STATE[state.lower()]
             fips_code = fips["{}, {}".format(county, state)]
             writer.writerow(row + [fips_code])
 
