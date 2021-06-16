@@ -17,6 +17,10 @@ npm install
 npm run dev
 ```
 
+The initial database contains data that would be loaded with the following instructions, so don't run them, unless you want to reset.
+
+---
+
 To install demo data, go to pyservice directory and run `bootstrap_demo.sh`
 
 
