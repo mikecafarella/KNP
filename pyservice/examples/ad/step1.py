@@ -308,6 +308,7 @@ if __name__ == "__main__":
     import plotly.express as px
     import plotly
     import csv
+    import math
     from io import BytesIO, StringIO
 
     input_data = get_dobj_contents(dobj_id)
@@ -325,9 +326,9 @@ if __name__ == "__main__":
             loc_idx = header[params[0]]
             data_idx = header[params[1]]
             loc.append(row[loc_idx])
-            data.append(float(row[data_idx]))
+            data.append(math.log(float(row[data_idx])))
 
-    fig = px.choropleth(locations=loc, locationmode="USA-states", color=data, scope="usa")
+    fig = px.choropleth(locations=loc, locationmode="USA-states", color=data, scope="usa", width=1000, height=714)
 
     output_buffer = BytesIO()
     fig.write_image(output_buffer, format='png')
