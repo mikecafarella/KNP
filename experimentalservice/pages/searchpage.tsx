@@ -212,7 +212,8 @@ const SearchPage: React.FC = () => {
       <Heading size={800}>Search Results</Heading>
       <br></br>
       <main>
-        {hits.length === 0 && <h1> No Matched Results</h1>}
+        {hits.length === 0 && <Heading size={600}> No Matched Results</Heading>}
+        {hits.length > 0 &&
         <Table>
             <Table.Head>
               <Table.TextCell>URL</Table.TextCell>
@@ -227,7 +228,7 @@ const SearchPage: React.FC = () => {
               </div>
             ))}
           </Table.Body>
-        </Table>
+        </Table>}
       </main>
 
       <style jsx>{`

@@ -25,6 +25,7 @@ const Header: React.FC = () => {
     <nav>
       <Pane display="flex" width="100%" padding={8} background="redtint" borderRadius={3}>
         <Pane flex={1} alignItems="center" display="flex">
+        <b>KNPS</b>
           <Link href="/" marginLeft={12} color={isActive('/') ? "neutral" : "blue"}>
               Home
           </Link>
@@ -48,8 +49,8 @@ const Header: React.FC = () => {
           {/*</Button>*/}
 
           {button}
-          {addObjButton}           
- 
+          {addObjButton}
+
         </Pane>
       </Pane>
 

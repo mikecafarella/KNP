@@ -4,7 +4,14 @@ import ReactMarkdown from 'react-markdown';
 import { readString } from 'react-papaparse';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import Post, {PostProps} from "./Post"
-import { majorScale, Text, Code, Pre, Pane, Heading, Button, Popover, TextInput, Link, Strong, Paragraph, Tablist, Tab, Card, Table } from 'evergreen-ui'
+import { majorScale, Text, Code, Pre, Pane, Heading, Button, Popover, TextInput, Textarea, Link, Strong, Paragraph, Tablist, Tab, Card, Table } from 'evergreen-ui'
+
+import Prism from "prismjs";
+
+import Editor from 'react-simple-code-editor';
+import { highlight, languages } from 'prismjs/components/prism-core';
+// import 'prismjs/components/prism-clike';
+// import 'prismjs/components/prism-javascript';
 
 export type DataContentProps = {
     dobj: {
@@ -126,6 +133,35 @@ const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) =
     let imgstr = ""
     let csvData = ""
     let csvTable = [[]]
+
+    let editMode = false
+
+    const handleEditButton = () => {
+      const area = document.getElementById('codeEditor')
+      const display = document.getElementById('functionDisplay')
+      const editButton = document.getElementById('editFunction')
+      const saveButton = document.getElementById('saveEditFunction')
+
+      area.style.display = ''
+      display.style.display = 'none'
+      editButton.style.display = 'none'
+      saveButton.style.display = 'inline'
+      editMode = true
+    }
+
+    const handleSaveEditButton = () => {
+      const area = document.getElementById('codeEditor')
+      const display = document.getElementById('functionDisplay')
+      const editButton = document.getElementById('editFunction')
+      const saveButton = document.getElementById('saveEditFunction')
+
+      area.style.display = 'none'
+      display.style.display = ''
+      editButton.style.display = 'inline'
+      saveButton.style.display = 'none'
+      editMode = false
+    }
+
     if (datacontent.datatype == "/datatypes/img" || datacontent.datatype == "/datatypes/pdf") {
         imgstr = "data:" + datacontent.contents.mimetype + ";base64, " + datacontent.contents.contents
     }
@@ -134,7 +170,7 @@ const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) =
       csvTable = readString(csvData, {preview: 100}).data;
     }
     return (
-        <Pane overflowY="scroll" background="tint1" padding={majorScale(1)}>
+        <Pane padding={majorScale(1)}>
         { datacontent.datatype == "/datatypes/json" &&
           <Pane display="flex" >
             <Pre>
@@ -143,20 +179,20 @@ const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) =
           </Pane>
         }
         { datacontent.datatype == "/datatypes/xml" &&
-          <Pane display="flex" >
+          <Pane background="tint1" display="flex" >
             <Pre>
             {Buffer.from(datacontent.contents.contents, 'base64').toString()}
             </Pre>
           </Pane>
         }
         { datacontent.datatype == "/datatypes/csv" &&
-          <Pane display="flex" >
-            <Table>
+          <Pane display="flex">
+            <Table border background="tint1">
                 <Table.Body>
                     {csvTable.map((row, idx) => (
                         <Table.Row key={row + idx}>
                             {row.map((cell, cellidx) => (
-                                <Table.TextCell key={cell + cellidx}>{cell}</Table.TextCell>
+                                <Table.TextCell maxWidth={'400px'} key={cell + cellidx}>{cell}</Table.TextCell>
                             ))}
                         </Table.Row>
                     ))}
@@ -180,7 +216,7 @@ const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) =
         }
 
         { datacontent.datatype == "/datatypes/datacolumn" &&
-          <Pane display="flex" >
+          <Pane background="tint1" display="flex" >
             <Paragraph>
 
               <Text>
@@ -203,7 +239,7 @@ const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) =
 
 
         { datacontent.datatype == "/datatypes/schema" &&
-          <Pane>
+          <Pane background="tint1" >
             <Table>
               <Table.Head>
               <Table.TextHeaderCell>
@@ -260,11 +296,17 @@ const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) =
         }
         { datacontent.datatype == "/datatypes/function" &&
         <div>
-        <Pane display="flex" >
-          <SyntaxHighlighter language="python" >
+          <Button appearance="primary" id="editFunction" style={{float: 'right',  marginRight: '-80px'}} onClick={handleEditButton}>
+            Edit
+          </Button>
+          <Button appearance="primary" id="saveEditFunction" style={{float: 'right',  marginRight: '-80px', display: 'none'}} onClick={handleSaveEditButton}>
+            Save
+          </Button>
+          <Textarea id='codeEditor' value={JSON.parse(Buffer.from(datacontent.contents.contents, 'base64').toString())} style={{height: '800px', width: '1200px', fontFamily: "Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace", display: 'none'}}>
+          </Textarea>
+          <SyntaxHighlighter language="python" id="functionDisplay">
           {JSON.parse(Buffer.from(datacontent.contents.contents, 'base64').toString())}
           </SyntaxHighlighter>
-        </Pane>
         <div>
         <br />
         <table>
@@ -280,7 +322,7 @@ const DataContent: React.FC<{datacontent: DataContentProps}> = ({datacontent}) =
         </td></tr>
         <tr><td colSpan="2">
         <input type="hidden" id="dataobjId" value={datacontent.dataobject.id} />
-        <Button appearance="primary" id="testFunctionButton" onClick={testFunction}>Run Test</Button>
+        <Button appearance="primary" id="testFunctionButton" onClick={testFunction}>Apply Function</Button>
         </td></tr>
         </table>
         </div>
