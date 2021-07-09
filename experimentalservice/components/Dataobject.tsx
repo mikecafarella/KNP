@@ -2,6 +2,7 @@ import React, { useState} from 'react'
 import Router from 'next/router'
 import DataContent from './DataContent'
 import Dependencies from './Dependencies'
+import Suggestions from './Suggestions'
 import ReactMarkdown from 'react-markdown'
 import Post, {PostProps} from "./Post"
 import { majorScale, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table } from 'evergreen-ui'
@@ -83,10 +84,11 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
   return (
       <Pane width="100%">
         <Pane display="flex" padding={majorScale(1)} border>
+
           <Pane flex={1} >
             <Heading size={800}>{dobj.name}
 
-            {" (" + dobjId + ")"}
+            {"(" + dobjId + ")"}
             </Heading>
 
             <Pane marginLeft={majorScale(1)}>
@@ -107,7 +109,7 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
               </Paragraph>
 
               <Paragraph size={500}>
-                    Current Version (v{dobj.versions.length}): {dobj.versions[0].created} {dobj.versions[0].comment ? " - " + dobj.versions[0].comment : ""}
+                    Current Version (v{dobj.versions[0].id}): {dobj.versions[0].created} {dobj.versions[0].comment ? " - " + dobj.versions[0].comment : ""}
                     {dobj.displayVersion.id != dobj.versions[0].id &&
                     <div style={{color:'red'}}>
                       <b>Displayed Version</b> (v{dobj.displayVersion.id}): {dobj.displayVersion.created} {dobj.displayVersion.comment ? " - " + dobj.displayVersion.comment : ""}
@@ -141,9 +143,11 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
               <Card
               backgroundColor="white"
               elevation={0}
+              display="flex"
               alignItems="center"
               justifyContent="center"
             >
+
         <DataContent datacontent={dobj.displayVersion}></DataContent>
         </Card>
 
@@ -181,7 +185,7 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
             {dobj.versions.map(
                (version, idx) => (
                  <Table.Row key={idx} isSelectable onSelect={() => Router.push("/dobj/" + dobjId + "/?v=" + version.id)}>
-                   <Table.TextCell flexBasis={80} flexShrink={0} flexGrow={0}>v{dobj.versions.length - idx}</Table.TextCell>
+                   <Table.TextCell flexBasis={80} flexShrink={0} flexGrow={0}>v{version.id}</Table.TextCell>
                    <Table.TextCell flexBasis={210} flexShrink={0} flexGrow={0}>{version.created}</Table.TextCell>
                    <Table.TextCell>{version.comment}</Table.TextCell>
                    <Table.TextCell flexBasis={120} flexShrink={0} flexGrow={0}>{version.datatype}</Table.TextCell>
@@ -215,7 +219,12 @@ const Dataobject: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         justifyContent="left"
         padding={8}
       >
-        <Text>Suggestions</Text>
+      { dobjId == "X40" &&
+        <Suggestions dobj={dobj}></Suggestions>
+      }
+      { dobjId != "X40" &&
+        <Text>Suggestions...under construction</Text>
+      }
 
       </Card>}
 
