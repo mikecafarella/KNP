@@ -24,6 +24,7 @@ async function testFunction() {
 
   // const dataobjId = document.getElementById('dataobjId').value
   const dataobjId = "X40" // hardcoded
+
   
   const outputDiv = document.getElementById('testResults')
 
@@ -241,7 +242,13 @@ const Suggestions: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         display="flex">
 
         <Button appearance="primary" id="testFunctionButton" onClick={testFunction}>Function 1</Button>
+
       </Card>
+
+      <div>
+        <Pre id="testResults"></Pre>
+      </div>
+
     )
 }
 
