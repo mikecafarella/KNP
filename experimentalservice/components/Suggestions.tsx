@@ -15,7 +15,7 @@ import { callbackify } from 'util';
 async function testFunction() {
 
   // const testId = document.getElementById('testId').value
-  const testID = "X30" // hardcoded
+  const testId = "X30" // hardcoded
 
   // const testParams = document.getElementById('testParams').value
   const testParams = "fips_code, case_duration" // hardcoded
@@ -236,6 +236,7 @@ const Suggestions: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
 
 
     return (
+      <div>
         <Card
         backgroundColor="white"
         elevation={0}
@@ -243,12 +244,10 @@ const Suggestions: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
 
         <Button appearance="primary" id="testFunctionButton" onClick={testFunction}>Function 1</Button>
 
-      </Card>
+        </Card>
 
-      <div>
         <Pre id="testResults"></Pre>
       </div>
-
     )
 }
 
