@@ -1,6 +1,7 @@
 import React, { useState} from 'react'
 import { Graph } from "react-d3-graph";
 import Router from 'next/router'
+import DataContent from './DataContent'
 import ReactMarkdown from 'react-markdown'
 import DataobjectSummary from "./DataobjectSummary"
 import DataContentProps from "./DataContent.tsx"
@@ -12,26 +13,24 @@ import { majorScale, Text, Code, Pre, Pane, Heading, Button, Popover, TextInput,
 import { callbackify } from 'util';
 
 
-async function testFunction() {
+async function function30() {
 
   // const testId = document.getElementById('testId').value
-  const testId = "X30" // hardcoded
+  const testId = "30" // hardcoded
 
   // const testParams = document.getElementById('testParams').value
-  const testParams = "fips_code, case_duration" // hardcoded
-
-  const saveButtonDisplay = document.getElementById('saveButtonDisplay')
+  const testParams = "fips_code,case_duration" // hardcoded
 
   // const dataobjId = document.getElementById('dataobjId').value
-  const dataobjId = "X40" // hardcoded
+  const dataobjId = "40" // hardcoded
 
-  
+  const saveButtonDisplay = document.getElementById('saveButtonDisplay')
   const outputDiv = document.getElementById('testResults')
 
-  outputDiv.innerHTML = "<div><br /><b>Test Results</b></div>"
+  outputDiv.innerHTML = "<div><br /><b>Output</b></div>"
   outputDiv.innerHTML += "<div>Running....</div>"
 
-  const res = await fetch('http://localhost:5000/function/'+dataobjId+'/'+testId+'?params='+encodeURIComponent(testParams))
+  const res = await fetch('http://localhost:5000/function/'+testId+'/'+dataobjId+'?params='+encodeURIComponent(testParams))
   const data = await res.json()
 
   let output = ""
@@ -54,11 +53,147 @@ async function testFunction() {
   else {
     output = htmlEntities(data)
   }
-
   saveButtonDisplay.style.display="block"
-
-  outputDiv.innerHTML = "<div><br /><b>Test Results</b></div>"
+  outputDiv.innerHTML = "<div><br /><b>Output</b></div>"
   outputDiv.innerHTML += "<div>"+output+"</div>"
+}
+
+async function function32() {
+
+  // const testId = document.getElementById('testId').value
+  const testId = "32" // hardcoded
+
+  // const testParams = document.getElementById('testParams').value
+  const testParams = "County,Niagara County" // hardcoded
+
+  // const dataobjId = document.getElementById('dataobjId').value
+  const dataobjId = "40" // hardcoded
+
+  const saveButtonDisplay = document.getElementById('saveButtonDisplay')
+  const outputDiv = document.getElementById('testResults2')
+
+  outputDiv.innerHTML = "<div><br /><b>Output</b></div>"
+  outputDiv.innerHTML += "<div>Running....</div>"
+
+  const res = await fetch('http://localhost:5000/function/'+testId+'/'+dataobjId+'?params='+encodeURIComponent(testParams))
+  const data = await res.json()
+
+  let output = ""
+  if (typeof(data) === 'object') {
+
+    if (data.datatype && data.datatype === '/datatypes/img') {
+      let imgstr = "data:" + data.mimetype + ";base64, " + data.contents
+      output = '<img src="' + imgstr + '"/>'
+    }
+    else if (data.datatype && data.datatype === '/datatypes/csv') {
+      // let csvData = Buffer.from(data.contents, 'base64').toString()
+      // let csvTable = readString(csvData, {preview: 50}).data;
+
+      output = Buffer.from(data.contents, 'base64').toString()
+    }
+    else {
+      output = [JSON.stringify(data, null, 2)]
+    }
+  }
+  else {
+    output = htmlEntities(data)
+  }
+  saveButtonDisplay.style.display="block"
+  outputDiv.innerHTML = "<div><br /><b>Output</b></div>"
+  outputDiv.innerHTML += "<div>"+output+"</div>"
+}
+
+async function function33() {
+
+  // const testId = document.getElementById('testId').value
+  const testId = "33" // hardcoded
+
+  // const testParams = document.getElementById('testParams').value
+  const testParams = "State,case_duration" // hardcoded
+
+  // const dataobjId = document.getElementById('dataobjId').value
+  const dataobjId = "40" // hardcoded
+
+  const saveButtonDisplay = document.getElementById('saveButtonDisplay')
+  const outputDiv = document.getElementById('testResults3')
+
+  outputDiv.innerHTML = "<div><br /><b>Output</b></div>"
+  outputDiv.innerHTML += "<div>Running....</div>"
+
+  const res = await fetch('http://localhost:5000/function/'+testId+'/'+dataobjId+'?params='+encodeURIComponent(testParams))
+  const data = await res.json()
+
+  let output = ""
+  if (typeof(data) === 'object') {
+
+    if (data.datatype && data.datatype === '/datatypes/img') {
+      let imgstr = "data:" + data.mimetype + ";base64, " + data.contents
+      output = '<img src="' + imgstr + '"/>'
+    }
+    else if (data.datatype && data.datatype === '/datatypes/csv') {
+      // let csvData = Buffer.from(data.contents, 'base64').toString()
+      // let csvTable = readString(csvData, {preview: 50}).data;
+
+      output = Buffer.from(data.contents, 'base64').toString()
+    }
+    else {
+      output = [JSON.stringify(data, null, 2)]
+    }
+  }
+  else {
+    output = htmlEntities(data)
+  }
+  saveButtonDisplay.style.display="block"
+  outputDiv.innerHTML = "<div><br /><b>Output</b></div>"
+  outputDiv.innerHTML += "<div>"+output+"</div>"
+}
+
+
+const saveObject = async (e: React.SyntheticEvent) => {
+  e.preventDefault()
+  try {
+    const ownerid = 1
+    const dataobject_id = document.getElementById('testId').value
+    const function_id = document.getElementById('dataobjId').value
+    const params = document.getElementById('testParams').value
+    const description = document.getElementById('saveObjDescription').value
+    const comment = document.getElementById('saveObjComment').value
+    const name = document.getElementById('saveObjName').value
+
+    var fd = new FormData()
+
+    const metadata = {
+      'name': name,
+      'owner_id': ownerid,
+      'dobj_id': dataobject_id,
+      'func_id': function_id,
+      'params': params,
+      'description': description,
+      'comment': comment,
+      'datatype': '/datatypes/json',
+      'mimetype': 'application/json',
+      'predecessors': []
+    }
+
+    const url = `http://localhost:5000/function/${function_id}/${dataobject_id}`
+
+    console.log(url)
+    console.log(metadata)
+
+    const blob = new Blob([JSON.stringify(metadata, null, 2)], {type : 'application/json'});
+    fd.append("metadata", blob, "metadata")
+
+    const res = await fetch(url, {
+      method: 'POST',
+      body: fd
+    })
+    const result = await res.json()
+    if (result.id) {
+        await Router.push(`/dobj/X${result.id}`)
+    }
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 const Suggestions: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
@@ -236,17 +371,96 @@ const Suggestions: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
 
 
     return (
+
       <div>
+
         <Card
         backgroundColor="white"
         elevation={0}
         display="flex">
 
-        <Button appearance="primary" id="testFunctionButton" onClick={testFunction}>Function 1</Button>
+        <Card
+        marginLeft={10}
+        borderStyle={'solid'}
+        borderColor={'#e5e7eb'}
+        backgroundColor={'#f9f9fb'}
+        padding={10}>
+
+          <DataContent datacontent={dobj.displayVersion}></DataContent>
+
+        </Card>
+        
+        <Card>
+
+          <Card
+          marginLeft={10}
+          borderStyle={'solid'}
+          borderColor={'#e5e7eb'}
+          backgroundColor={'#f9f9fb'}
+          padding={10}>
+
+            <Button appearance="primary" id="function30button" onClick={function30}>1. Function X30: Chloropleth Map from FIPS Codes</Button>
+            <Pre id="testResults"></Pre>
+
+          </Card>
+
+          <Card
+          marginTop={10}
+          marginLeft={10}
+          borderStyle={'solid'}
+          borderColor={'#e5e7eb'}
+          backgroundColor={'#f9f9fb'}
+          padding={10}>
+
+            <Button appearance="primary" id="function32button" onClick={function32}>2. Function X32: Filter CSV by Text</Button>
+            <Pre id="testResults2"></Pre>
+
+          </Card>
+
+          <Card
+          marginTop={10}
+          marginLeft={10}
+          borderStyle={'solid'}
+          borderColor={'#e5e7eb'}
+          backgroundColor={'#f9f9fb'}
+          padding={10}>
+          
+            <Button appearance="primary" id="function33button" onClick={function33}>3. Function X33: Aggregate CSV Mean</Button>
+            <Pre id="testResults3"></Pre>
+
+          </Card>
 
         </Card>
 
-        <Pre id="testResults"></Pre>
+        </Card>
+
+        <div style={{marginTop: '10px', paddingTop: '10px', borderTop: "1px solid gray", display: "none"}} id="saveButtonDisplay">
+        <Popover
+            bringFocusInside
+            content={
+            <Pane
+              width={800}
+              height={400}
+              paddingX={40}
+              display="flex"
+              alignItems="left"
+              justifyContent="center"
+              flexDirection="column"
+            >
+
+              Name: <TextInput width="60" id="saveObjName" /> <br />
+              Description: <TextInput width="60" id="saveObjDescription"/> <br />
+              Comment: <TextInput width="60" id="saveObjComment"/> <br />
+
+              <Button appearance="primary" id="saveObjectButton" style={{width: "75px"}} onClick={saveObject}>Submit</Button>
+            </Pane>
+            }
+            >
+            <Button appearance="primary" id="saveObjectButton">Save Data Object</Button>
+            </Popover>
+
+        </div>
+
       </div>
     )
 }
