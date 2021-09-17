@@ -33,7 +33,6 @@ def execute_function(func_id, inputs, params=[]):
         # TODO: Figure out why the code get mangled like this. Happens when uploading via API
         code = code.decode().replace("\\n", "\n").strip('"').replace('\\"','"')
 
-
     g = {}
     l = {}
 

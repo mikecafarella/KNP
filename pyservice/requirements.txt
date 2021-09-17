@@ -16,3 +16,8 @@ plotly
 psutil
 kaleido
 boto3
+
+# Packages used by Functions
+lxml
+BeautifulSoup
+-e git+git://github.com/allenai/s2orc-doc2json.git@main#egg=doc2json

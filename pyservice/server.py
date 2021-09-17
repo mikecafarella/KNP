@@ -454,7 +454,7 @@ class FunctionResource(Resource):
 
         # TODO: Clean this up
         if new_version.datatype == '/datatypes/json':
-            contents = json.dumps(output).encode()
+            contents = output['contents'] #json.dumps(output).encode()
         elif new_version.datatype == '/datatypes/img':
             contents = output['contents']
         elif new_version.datatype == '/datatypes/pdf':
@@ -462,7 +462,7 @@ class FunctionResource(Resource):
         elif new_version.datatype == '/datatypes/function':
             contents = output.encode()
         elif new_version.datatype == '/datatypes/xml':
-            contents = output.encode()
+            contents = output['contents']
         else:
             contents = output['contents']
 

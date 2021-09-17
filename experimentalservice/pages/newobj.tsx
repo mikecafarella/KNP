@@ -10,7 +10,7 @@ import { useSession } from 'next-auth/client'
 const NewObj: React.FC = (props) => {
   const [session, loading] = useSession();
   console.log("Got the session with name " + session.user.name)
-  
+
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [comment, setComment] = useState('')
@@ -75,7 +75,7 @@ const NewObj: React.FC = (props) => {
 
       const metadata = {
         'name': name,
-        'owner_id': owneridfl,
+        'owner_id': ownerid,
         'description': description,
         'comment': comment,
         'datatype': '/datatypes/function',

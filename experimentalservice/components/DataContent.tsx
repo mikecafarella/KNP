@@ -65,6 +65,12 @@ async function testFunction() {
 
       output = Buffer.from(data.contents, 'base64').toString()
     }
+    else if (data.datatype && data.datatype === '/datatypes/xml') {
+      output = htmlEntities(Buffer.from(data.contents, 'base64').toString())
+    }
+    else if (data.contents) {
+      output = Buffer.from(data.contents, 'base64').toString()
+    }
     else {
       output = [JSON.stringify(data, null, 2)]
     }
