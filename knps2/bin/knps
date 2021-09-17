@@ -1,0 +1,2 @@
+python ~/knps2/src/knps/knps.py "$@"
+
