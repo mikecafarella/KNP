@@ -169,44 +169,47 @@ class Watcher:
         send_sync(self.user.username, f, file_hash, line_hashes)
 
 
+#
+# main()
+#
 if __name__ == "__main__":
     # execute only if run as a script
     parser = argparse.ArgumentParser(description='KNPS command line')
 
-    parser.add_argument('command', type=str, help="KNPS command")
+    parser.add_argument("--login", help="Perform login")
+    parser.add_argument("--status", nargs="*", help="Check KNPS status", default=None)
+    parser.add_argument("--watch", help="Add a directory to watch")
+    parser.add_argument("--sync", action="store_true", help="Sync observations with service")
     parser.add_argument('args', type=str, help="KNPS command arguments", nargs='*' )
 
     args = parser.parse_args()
 
-    command = args.command
-    command_args = args.args
-
     u = User()
-
-    if command == 'login':
-        u.login(command_args[0], 'password1') # TODO: BAD!
-    elif command == 'watch':
+    if args.login:
+        u.login(args.login, 'password1') # TODO: BAD!
+    elif args.watch:
         w = Watcher(u)
-        w.watch(command_args[0])
-    elif command == 'status':
+        w.watch(args.watch)
+    elif args.status is not None:
+        print("You are logged in as", u.username)
         dirs = u.get_dirs()
         files = u.get_files()
         print("You have {} top-level directories and {} files watched by knps.".format(len(dirs), len(files)))
 
-        if 'dirs' in command_args:
+        if 'dirs' in args.status:
             print("\nWatched directories:")
             for d in dirs:
                 print("   {}".format(d))
 
-        if 'files' in command_args:
+        if 'files' in args.status:
             print("\nWatched files:")
             for d in files:
                 print("   {}".format(d))
 
-        if len(command_args) > 0:
+        if 'dirs' in args.status or 'files' in args.status:
             print()
 
-    elif command == 'sync':
+    elif args.sync:
         w = Watcher(u)
         files = u.get_files()
         for f in files:
