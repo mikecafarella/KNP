@@ -119,5 +119,41 @@ def sync_file(username):
     # show the user profile for that user
     return json.dumps(username)
 
+
+@app.route('/synclist/<username>', methods=['POST'])
+def sync_filelist(username):
+    data_file = 'data/{}.json'.format(username)
+    p = Path(data_file)
+    if p.exists():
+        with open(data_file, 'rt') as f:
+            data = json.load(f)
+    else:
+        data = {}
+
+    if 'files' not in data:
+        data['files'] = {}
+
+
+    observations = json.load(request.files['observations'])
+    for obs in observations:
+        metadata = obs["metadata"]
+
+        data['files'][metadata['file_hash']] = {
+            'file_name': metadata['file_name'],
+            'file_size': metadata['file_size'],
+            'line_hashes': metadata['line_hashes'],
+            'modified': metadata['modified'],
+            'sync_time': time.time()
+        }
+
+
+    with open(data_file, 'wt') as f:
+        json.dump(data, f, indent=2)
+
+    # show the user profile for that user
+    return json.dumps(username)
+
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=8889)
