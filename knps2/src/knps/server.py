@@ -10,6 +10,9 @@ import time
 import os
 from pathlib import Path
 
+#
+# Flask metastuff
+#
 app = Flask(__name__)
 CORS(app)
 cors = CORS(app, resource={
@@ -39,6 +42,9 @@ def matching_hashes():
 
 
 
+#
+# Show a list of users and their high-level stats
+#
 @app.route("/")
 def hello():
     d = './data'
@@ -67,6 +73,9 @@ def hello():
 
     return f'<h2>KNPS Users</h2></br>{out}'
 
+#
+# Show all the details for a particular user's files
+#
 @app.route('/user/<username>')
 def show_user_profile(username):
     matches = matching_hashes()
@@ -77,49 +86,22 @@ def show_user_profile(username):
         data = json.load(f)
 
     out = "<table border=1 cellpadding=5>"
-    out += "<tr><td>Hash</td><td>Filename</td><td>Size</td><td>Last Modified</td><td>Last Sync</td><td>Other Users</td></tr>"
+    out += "<tr><td>Hash</td><td>Filename</td><td>Size</td><td>Last Modified</td><td>Last Sync</td><td># optional fields</td><td>Other Users</td></tr>"
     for k, v in data['files'].items():
         other_users = list(matches[k])
         other_users.remove(username)
         mod_date = datetime.datetime.fromtimestamp(v['modified']).strftime('%Y-%m-%d %H:%M:%S')
         sync_date = datetime.datetime.fromtimestamp(v['sync_time']).strftime('%Y-%m-%d %H:%M:%S')
-        out += "<tr><td>{}</td><td>{}</td><td>{} B</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(k, v['file_name'], v['file_size'], mod_date, sync_date, ', '.join(other_users))
+        optionalItems = v.get("optionalItems", {})
+        
+        out += "<tr><td>{}</td><td>{}</td><td>{} B</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(k, v['file_name'], v['file_size'], mod_date, sync_date, len(optionalItems), ', '.join(other_users))
     out += "</table>"
 
     return f'User {escape(username)} <br> {out}'
 
-@app.route('/sync/<username>', methods=['POST'])
-def sync_file(username):
-    metadata = json.load(request.files['metadata'])
-
-    data_file = 'data/{}.json'.format(username)
-
-    p = Path(data_file)
-    if p.exists():
-        with open(data_file, 'rt') as f:
-            data = json.load(f)
-    else:
-        data = {}
-
-    if 'files' not in data:
-        data['files'] = {}
-
-    data['files'][metadata['file_hash']] = {
-        'file_name': metadata['file_name'],
-        'file_size': metadata['file_size'],
-        'line_hashes': metadata['line_hashes'],
-        'modified': metadata['modified'],
-        'sync_time': time.time()
-    }
-
-
-    with open(data_file, 'wt') as f:
-        json.dump(data, f, indent=2)
-
-    # show the user profile for that user
-    return json.dumps(username)
-
-
+#
+# Accept an upload of a set of file observations
+#
 @app.route('/synclist/<username>', methods=['POST'])
 def sync_filelist(username):
     data_file = 'data/{}.json'.format(username)
@@ -143,6 +125,7 @@ def sync_filelist(username):
             'file_size': metadata['file_size'],
             'line_hashes': metadata['line_hashes'],
             'modified': metadata['modified'],
+            'optionalItems': metadata['optionalItems'],
             'sync_time': time.time()
         }
 

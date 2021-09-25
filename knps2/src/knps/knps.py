@@ -37,43 +37,21 @@ def hash_file_lines(fname):
 #
 # Transmit observations to the server
 #
-def send_sync(username, file_name, file_hash, line_hashes):
-    url = "http://127.0.0.1:8889/sync/{}".format(username)
-    p = Path(file_name)
-    info = p.stat()
-    metadata = {
-        'username': username,
-        'file_name': file_name,
-        'file_hash': file_hash,
-        'line_hashes': line_hashes,
-        'file_size': info.st_size,
-        'modified': info.st_mtime,
-    }
-    files = {}
-    files['metadata'] = json.dumps(metadata)
-
-    response = requests.post(url, files=files)
-    obj_data = response.json()
-
-    return obj_data
-
-#
-# Transmit observations to the server
-#
 def send_synclist(username, observationList):
     url = "http://127.0.0.1:8889/synclist/{}".format(username)
 
     obsList = []
-    for uname, file_name, file_hash, line_hashes in observationList:
+    for file_name, file_hash, line_hashes, optionalItems in observationList:
         p = Path(file_name)
         info = p.stat()
         metadata = {
-            'username': uname,
+            'username': username,
             'file_name': file_name,
             'file_hash': file_hash,
             'line_hashes': line_hashes,
             'file_size': info.st_size,
             'modified': info.st_mtime,
+            'optionalItems': optionalItems
         }
         obsList.append({'metadata': metadata})
 
@@ -275,10 +253,26 @@ class Watcher:
             todoPair = self.user.getNextTodoList()
 
 
+    #
+    # This is where we collect observation data.
+    #
+    # The input is a file path.
+    #
+    # The output is a tuple with 4 elements:
+    # 1) The username
+    # 2) The file path
+    # 3) The file hash
+    # 4) Line hashes
+    # 5) A dictionary of optional objects. This can vary according to
+    #    the file type or whatever we like. IF YOU ARE ADDING NEW INFO
+    #    DURING THE PROFILE STAGE, ADD IT TO THIS DICTIONARY!
+    #
     def _observeFile_(self, f):
         file_hash = hash_file(f)
         line_hashes = hash_file_lines(f)
-        return (self.user.username, f, file_hash, line_hashes)
+        optionalFields = {}
+        optionalFields["filetype"] = "unknown"
+        return (f, file_hash, line_hashes, optionalFields)
         
 #
 # main()
