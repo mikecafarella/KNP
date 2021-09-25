@@ -73,6 +73,46 @@ def hello():
 
     return f'<h2>KNPS Users</h2></br>{out}'
 
+
+def find_versioned_pairs(username, data):
+    seenPaths = {}
+    versionSets = set()
+
+    # Find path duplicates for this user
+    for k, v in data["files"].items():
+        fname = v['file_name']
+        if fname in seenPaths:
+            versionSets.add(fname)
+            
+        seenPaths.setdefault(fname, []).append(k)
+
+    # Create version pairs for any observed path duplicates
+    allVersionedPairs = []
+    
+    for path in versionSets:
+        rawVersions = seenPaths[path]
+        allVersions = [(x, data["files"].get(x).get("file_size"), data["files"].get(x).get("modified")) for x in rawVersions]
+        allVersions.sort(key = lambda x: x[2])
+
+        for i in range(1, len(allVersions)):
+            v1 = allVersions[i-1]
+            v2 = allVersions[i]
+
+            # We need a 7-tuple:
+            # 1) Path
+            # 2) File 1 hash
+            # 3) File 1 size
+            # 4) File 1 modified date            
+            # 2) File 2 hash
+            # 3) File 2 size
+            # 4) File 2 modified date            
+            pair = (path, v1[0], v1[1], v1[2], v2[0], v2[1], v2[2])
+            allVersionedPairs.append(pair)
+
+    return allVersionedPairs
+    
+
+
 #
 # Show all the details for a particular user's files
 #
@@ -85,7 +125,8 @@ def show_user_profile(username):
     with open(data_file, 'rt') as f:
         data = json.load(f)
 
-    out = "<table border=1 cellpadding=5>"
+    out = "<h2>All files</h2>"
+    out += "<table border=1 cellpadding=5>"
     out += "<tr><td>Hash</td><td>Filename</td><td>Size</td><td>Last Modified</td><td>Last Sync</td><td># optional fields</td><td>Other Users</td></tr>"
     for k, v in data['files'].items():
         other_users = list(matches[k])
@@ -96,6 +137,21 @@ def show_user_profile(username):
         
         out += "<tr><td>{}</td><td>{}</td><td>{} B</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(k, v['file_name'], v['file_size'], mod_date, sync_date, len(optionalItems), ', '.join(other_users))
     out += "</table>"
+
+    out += "<p>"
+    out += "<h2>Likely version events</h2>"
+    out += "<table border=1 cellpadding=5>"
+    out += "<tr><td><b>Filename</b></td><td><b>Hash 1</b></td><td><b>Size 1</b></td><td><b>Last Modified 1</b></td><td><b>Hash 2</b></td><td><b>Size 2</b></td><td><b>Last Modified 2</b></td></tr>"
+    for fname, h1, s1, lm1, h2, s2, lm2 in find_versioned_pairs(username, data):
+        out += "<tr><td>{}</td>".format(fname)
+        out += "<td>{}</td>".format(h1)
+        out += "<td>{}</td>".format(s1)
+        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(lm1).strftime('%Y-%m-%d %H:%M:%S'))
+        out += "<td>{}</td>".format(h2)
+        out += "<td>{}</td>".format(s2)
+        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(lm2).strftime('%Y-%m-%d %H:%M:%S'))
+        out += "</tr>"
+    out += "</table>"        
 
     return f'User {escape(username)} <br> {out}'
 
