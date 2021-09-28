@@ -7,6 +7,7 @@ import json
 import os
 import requests
 import json
+import webbrowser
 
 CFG_DIR = '.knps'
 CFG_FILE = 'knps.cfg'
@@ -82,20 +83,36 @@ class WrongUserError(Error):
 class User:
     def __init__(self):
         self.load_db()
-        self.username, self.userhash = self.get_current_user()
+        self.username, self.access_token = self.get_current_user()
 
 
-    def login(self, username, password):
-        # This is not really a login. TODO: make this good
-        self.username = username
-        salt = username.encode() # BAD!
-        self.userhash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 100000).hex()
+    def login(self):
+        ROOTURL = "http://127.0.0.1:8889"
+        url = ROOTURL + "/cli_login"
 
-        if self.username not in self.db:
-            self.db[self.username] = {}
+        response = requests.get(url)
+        data = response.json()
 
-        self.db['__CURRENT_USER__'] = (self.username, self.userhash)
-        self.save_db()
+        if 'login_url' in data:
+            print("Opening web browser for login...")
+            webbrowser.open(data['login_url'])
+            token_url = ROOTURL + "/get_token"
+            token_response = requests.post(token_url, data={'login_code': data['login_code']})
+            token_data = token_response.json()
+
+            username = token_data['email']
+            # This is not really a login. TODO: make this good
+            self.username = username
+            self.access_token = token_data['access_token']
+
+            if self.username not in self.db:
+                self.db[self.username] = {}
+
+            self.db['__CURRENT_USER__'] = (self.username, self.access_token)
+            self.save_db()
+
+            print("You are now logged in as: {}".format(token_data['email']))
+
 
     def load_db(self):
         p = Path(Path.home(), DB_FILE)
@@ -213,7 +230,7 @@ class Watcher:
         # interrupted.
         #
         if todoPair is None:
-            print("No existing observation list. Formulating new one...")            
+            print("No existing observation list. Formulating new one...")
             k = 50
             longTodoList = [x for x in self.user.get_files()]
             smallTodoLists = [longTodoList[i:i+k] for i in range(0, len(longTodoList), k)]
@@ -244,8 +261,8 @@ class Watcher:
                     skipCount += 1
 
             send_synclist(self.user.username, observationList)
-            print("Observed and uploaded", uploadCount, "items. Skipped", skipCount)            
-            
+            print("Observed and uploaded", uploadCount, "items. Skipped", skipCount)
+
             # Mark the TODO list as done
             self.user.removeTodoList(k)
 
@@ -273,7 +290,7 @@ class Watcher:
         optionalFields = {}
         optionalFields["filetype"] = "unknown"
         return (f, file_hash, line_hashes, optionalFields)
-        
+
 #
 # main()
 #
@@ -281,7 +298,7 @@ if __name__ == "__main__":
     # execute only if run as a script
     parser = argparse.ArgumentParser(description='KNPS command line')
 
-    parser.add_argument("--login", help="Perform login")
+    parser.add_argument("--login", action="store_true", help="Perform login")
     parser.add_argument("--status", nargs="*", help="Check KNPS status", default=None)
     parser.add_argument("--watch", help="Add a directory to watch")
     parser.add_argument("--sync", action="store_true", help="Sync observations to service")
@@ -291,12 +308,12 @@ if __name__ == "__main__":
 
     u = User()
     if args.login:
-        u.login(args.login, 'password1') # TODO: BAD!
-        
+        u.login() # TODO: BAD!
+
     elif args.watch:
         w = Watcher(u)
         w.watch(args.watch)
-        
+
     elif args.status is not None:
         print("You are logged in as", u.username)
         dirs = u.get_dirs()

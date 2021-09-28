@@ -1,6 +1,18 @@
 from flask import Flask, abort, request, jsonify
 from flask_cors import CORS
 
+from flask import Flask, render_template, redirect, request, url_for
+from flask_login import (
+    LoginManager,
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
+
+from okta_helpers import is_access_token_valid, is_id_token_valid, config
+from user import User
+
 from markupsafe import escape
 
 import base64
@@ -9,6 +21,8 @@ import datetime
 import time
 import os
 from pathlib import Path
+import requests
+import uuid
 
 #
 # Flask metastuff
@@ -21,13 +35,20 @@ cors = CORS(app, resource={
     }
 })
 
+app.config.update({'SECRET_KEY': 'SomethingNotEntirelySecret'})
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+APP_STATE = 'ApplicationStateKNPS'
+NONCE = 'SampleNonceKNPS'
 
 def matching_hashes():
     d = './data'
     hashes = {}
     for (r,x,files) in os.walk(d):
         for f in files:
-            if '.json' in f:
+            if '.json' in f and 'login_info' not in f:
                 max_time = 0
                 with open(d + '/' + f, 'rt') as fin:
                     user = f.replace('.json','')
@@ -51,7 +72,7 @@ def hello():
     users = {}
     for (r,x,files) in os.walk(d):
         for f in files:
-            if '.json' in f:
+            if '.json' in f and 'login_info' not in f:
                 max_time = 0
                 with open(d + '/' + f, 'rt') as fin:
                     data = json.load(fin)
@@ -73,6 +94,157 @@ def hello():
 
     return f'<h2>KNPS Users</h2></br>{out}'
 
+@app.route("/logged_in")
+def logged_in():
+    return '<h2>Thank you for logging in.</h2>'
+
+@app.route("/cli_login")
+def cli_login():
+    access_token = request.args.get("access_token", None)
+
+    if access_token and is_access_token_valid(access_token, config["issuer"], config["client_id"]):
+        print ("VALID")
+        pass
+    else:
+        login_state = 'cli_{}'.format(uuid.uuid1())
+
+        # get request params
+        query_params = {'client_id': config["client_id"],
+                        'redirect_uri': config["redirect_uri"],
+                        'scope': "openid email profile",
+                        'state': login_state,
+                        'nonce': NONCE,
+                        'response_type': 'code',
+                        'response_mode': 'query'}
+
+        # build request_uri
+        request_uri = "{base_url}?{query_params}".format(
+            base_url=config["auth_uri"],
+            query_params=requests.compat.urlencode(query_params)
+        )
+        data = {'login_url': request_uri, 'login_code': login_state}
+        return json.dumps(data)
+
+@app.route("/get_token", methods=['POST'])
+def get_token():
+    login_code = request.form.get("login_code", None)
+
+    if not login_code:
+        return "Missing login code", 403
+
+    countdown = 60
+    while countdown > 0:
+        data_file = 'data/login_info.json'
+        p = Path(data_file)
+        if p.exists():
+            with open(data_file, 'rt') as f:
+                data = json.load(f)
+        else:
+            data = {}
+
+        if login_code in data:
+            return json.dumps(data[login_code])
+
+        countdown = countdown - 1
+        time.sleep(1)
+
+    return "Timeout", 403
+
+
+@app.route("/login")
+def login():
+    # get request params
+    query_params = {'client_id': config["client_id"],
+                    'redirect_uri': config["redirect_uri"],
+                    'scope': "openid email profile",
+                    'state': APP_STATE,
+                    'nonce': NONCE,
+                    'response_type': 'code',
+                    'response_mode': 'query'}
+
+    # build request_uri
+    request_uri = "{base_url}?{query_params}".format(
+        base_url=config["auth_uri"],
+        query_params=requests.compat.urlencode(query_params)
+    )
+
+    return redirect(request_uri)
+
+@app.route("/authorization-code/callback")
+def callback():
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    code = request.args.get("code")
+    login_state = request.args.get("state")
+
+    if not code:
+        return "The code was not returned or is not accessible", 403
+
+    query_params = {'grant_type': 'authorization_code',
+                    'code': code,
+                    'redirect_uri': request.base_url
+                    }
+
+    print(code)
+    query_params = requests.compat.urlencode(query_params)
+    exchange = requests.post(
+        config["token_uri"],
+        headers=headers,
+        data=query_params,
+        auth=(config["client_id"], config["client_secret"]),
+    ).json()
+
+    # Get tokens and validate
+    if not exchange.get("token_type"):
+        return "Unsupported token type. Should be 'Bearer'.", 403
+    access_token = exchange["access_token"]
+    id_token = exchange["id_token"]
+
+    print(access_token)
+
+    if not is_access_token_valid(access_token, config["issuer"], config["client_id"]):
+        return "Access token is invalid", 403
+
+    if not is_id_token_valid(id_token, config["issuer"], config["client_id"], NONCE):
+        return "ID token is invalid", 403
+
+    # Authorization flow successful, get userinfo and login user
+    userinfo_response = requests.get(config["userinfo_uri"],
+                                     headers={'Authorization': f'Bearer {access_token}'}).json()
+
+    unique_id = userinfo_response["sub"]
+    user_email = userinfo_response["email"]
+    user_name = "{} {}".format(userinfo_response["given_name"], userinfo_response["family_name"])
+    print(json.dumps(userinfo_response, indent=2))
+
+    user = User(
+        id_=unique_id, name=user_name, email=user_email
+    )
+
+    if not User.get(unique_id):
+        User.create(unique_id, user_name, user_email)
+
+    login_user(user)
+
+    data_file = 'data/login_info.json'
+    p = Path(data_file)
+    if p.exists():
+        with open(data_file, 'rt') as f:
+            data = json.load(f)
+    else:
+        data = {}
+
+    data[login_state] = {
+        'access_token': access_token,
+        'user_id': unique_id,
+        'email': user_email,
+        'name': user_name
+    }
+
+    with open(data_file, 'wt') as f:
+        json.dump(data, f, indent=2)
+
+    return redirect(url_for("logged_in"))
+
 
 def find_versioned_pairs(username, data):
     seenPaths = {}
@@ -83,12 +255,12 @@ def find_versioned_pairs(username, data):
         fname = v['file_name']
         if fname in seenPaths:
             versionSets.add(fname)
-            
+
         seenPaths.setdefault(fname, []).append(k)
 
     # Create version pairs for any observed path duplicates
     allVersionedPairs = []
-    
+
     for path in versionSets:
         rawVersions = seenPaths[path]
         allVersions = [(x, data["files"].get(x).get("file_size"), data["files"].get(x).get("modified")) for x in rawVersions]
@@ -102,15 +274,15 @@ def find_versioned_pairs(username, data):
             # 1) Path
             # 2) File 1 hash
             # 3) File 1 size
-            # 4) File 1 modified date            
+            # 4) File 1 modified date
             # 2) File 2 hash
             # 3) File 2 size
-            # 4) File 2 modified date            
+            # 4) File 2 modified date
             pair = (path, v1[0], v1[1], v1[2], v2[0], v2[1], v2[2])
             allVersionedPairs.append(pair)
 
     return allVersionedPairs
-    
+
 
 
 #
@@ -134,7 +306,7 @@ def show_user_profile(username):
         mod_date = datetime.datetime.fromtimestamp(v['modified']).strftime('%Y-%m-%d %H:%M:%S')
         sync_date = datetime.datetime.fromtimestamp(v['sync_time']).strftime('%Y-%m-%d %H:%M:%S')
         optionalItems = v.get("optionalItems", {})
-        
+
         out += "<tr><td>{}</td><td>{}</td><td>{} B</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(k, v['file_name'], v['file_size'], mod_date, sync_date, len(optionalItems), ', '.join(other_users))
     out += "</table>"
 
@@ -151,7 +323,7 @@ def show_user_profile(username):
         out += "<td>{}</td>".format(s2)
         out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(lm2).strftime('%Y-%m-%d %H:%M:%S'))
         out += "</tr>"
-    out += "</table>"        
+    out += "</table>"
 
     return f'User {escape(username)} <br> {out}'
 
