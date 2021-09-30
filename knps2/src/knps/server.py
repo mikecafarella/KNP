@@ -343,6 +343,29 @@ class GraphDB:
         with self.driver.session() as session:
             result = session.write_transaction(self._create_and_return_observations, observations)
 
+    def addComment(self, username, filename, comment):
+        print("ADDING COMMENT", filename, comment)
+        with self.driver.session() as session:
+            versionPredecessor = session.run("MATCH (a:ObservedFile) "
+                                             "WHERE a.file_name = $file_name "
+                                             "AND a.username = $username "
+                                             "RETURN id(a) "
+                                             "ORDER BY a.modified DESC LIMIT 1 ",
+                                             file_name=filename,
+                                             username=username)
+
+            vpNode = versionPredecessor.single()
+            if vpNode is None:
+                return False
+            else:
+                print("VPNODE", vpNode)
+                commentResult = session.run("MATCH (a:ObservedFile) "
+                                            "WHERE id(a) = $curNodeId "
+                                            "CREATE (c:Comment) SET c.comment = $commentStr "
+                                            "CREATE (a)-[r:HasComment]->(c)",
+                                            curNodeId=vpNode[0],
+                                            commentStr=comment)
+                return True
 
     @staticmethod
     def _create_and_return_observations(tx, observations):
@@ -529,6 +552,31 @@ def sync_filelist(username):
     # show the user profile for that user
     return json.dumps(username)
 
+
+@app.route('/adorn/<username>', methods=['POST'])
+def adorn(username):
+    access_token = request.form.get('access_token')
+    username = request.form.get('username')
+
+    login_file = 'data/login_info.json'.format(username)
+    p = Path(login_file)
+    if p.exists():
+        with open(login_file, 'rt') as f:
+            login_data = json.load(f)
+    else:
+        login_data = {}
+
+    if (not access_token or
+        not username or
+        username not in login_data or
+        access_token != login_data[username].get('access_token', None) or
+        not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
+        return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
+
+    commentStr = json.load(request.files['comment'])
+    filename = json.load(request.files['filename'])
+
+    return json.dumps(str(GDB.addComment(username, filename, commentStr)))
 
 if __name__ == '__main__':
     GDB = GraphDB("bolt://localhost:7687", "neo4j", "password")

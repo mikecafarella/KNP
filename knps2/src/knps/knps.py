@@ -38,7 +38,7 @@ def hash_file_lines(fname):
 #
 # Transmit observations to the server
 #
-def send_synclist(user, observationList):
+def send_synclist(user, observationList, comment=None):
     url = "http://127.0.0.1:8889/synclist/{}".format(user.username)
 
     login = {
@@ -61,7 +61,26 @@ def send_synclist(user, observationList):
         }
         obsList.append({'metadata': metadata})
 
-    response = requests.post(url, files={'observations': json.dumps(obsList)}, data=login)
+    fDict = {'observations': json.dumps(obsList)}
+    response = requests.post(url, files=fDict, data=login)
+    obj_data = response.json()
+
+    return obj_data
+
+
+#
+# Transmit observations to the server
+#
+def send_adornment(user, filename, comment):
+    url = "http://127.0.0.1:8889/adorn/{}".format(user.username)
+
+    login = {
+        'username': user.username,
+        'access_token': user.access_token
+    }
+
+    fDict = {'filename': json.dumps(filename), 'comment': json.dumps(comment)}
+    response = requests.post(url, files=fDict, data=login)
     obj_data = response.json()
 
     return obj_data
@@ -252,6 +271,16 @@ class Watcher:
 
 
     #
+    # Comment on an observed file
+    #
+    def addComment(self, f, comment):
+        # Must clear the observation sync list first
+        self.observeAndSync()
+
+        # Transmit observation and comment
+        send_adornment(self.user, str(Path(f).resolve()), comment)
+
+    #
     # Collect some observations
     #
     def observeAndSync(self):
@@ -344,6 +373,7 @@ if __name__ == "__main__":
     parser.add_argument("--logout", action="store_true", help="Logout current user")
     parser.add_argument("--status", nargs="*", help="Check KNPS status", default=None)
     parser.add_argument("--watch", help="Add a directory to watch")
+    parser.add_argument("--comment", nargs="+", help="Add a comment to a data object")
     parser.add_argument("--sync", action="store_true", help="Sync observations to service")
     parser.add_argument('args', type=str, help="KNPS command arguments", nargs='*' )
 
@@ -360,6 +390,17 @@ if __name__ == "__main__":
         else:
             w = Watcher(u)
             w.watch(args.watch)
+
+    elif args.comment:
+        if not u.username:
+            print("Not logged in.")
+        else:
+            if len(args.comment) < 2:
+                print("Provide the target filename and at least a 1-word comment")
+                sys.exit(0)
+                
+            w = Watcher(u)
+            w.addComment(args.comment[0], " ".join(args.comment[1:]))
 
     elif args.status is not None:
         if not u.username:
