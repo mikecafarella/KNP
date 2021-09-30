@@ -125,6 +125,11 @@ class User:
         data = response.json()
 
         if 'logout_url' in data:
+            del(self.db['__CURRENT_USER__'])
+            self.username = None
+            self.access_token = None
+            self.save_db()
+
             print("Opening web browser for logout...")
             webbrowser.open('https://dev-66403161.okta.com/login/signout')
             # token_url = ROOTURL + "/get_token"
@@ -350,27 +355,36 @@ if __name__ == "__main__":
     elif args.logout:
         u.logout()
     elif args.watch:
-        w = Watcher(u)
-        w.watch(args.watch)
+        if not u.username:
+            print("Not logged in.")
+        else:
+            w = Watcher(u)
+            w.watch(args.watch)
 
     elif args.status is not None:
-        print("You are logged in as", u.username)
-        dirs = u.get_dirs()
-        files = u.get_files()
-        print("You have {} top-level directories and {} files watched by knps.".format(len(dirs), len(files)))
+        if not u.username:
+            print("Not logged in.")
+        else:
+            print("You are logged in as", u.username)
+            dirs = u.get_dirs()
+            files = u.get_files()
+            print("You have {} top-level directories and {} files watched by knps.".format(len(dirs), len(files)))
 
-        if 'dirs' in args.status:
-            print("\nWatched directories:")
-            for d in dirs:
-                print("   {}".format(d))
+            if 'dirs' in args.status:
+                print("\nWatched directories:")
+                for d in dirs:
+                    print("   {}".format(d))
 
-        if 'files' in args.status:
-            print("\nWatched files:")
-            for d in files:
-                print("   {}".format(d))
+            if 'files' in args.status:
+                print("\nWatched files:")
+                for d in files:
+                    print("   {}".format(d))
 
         if 'dirs' in args.status or 'files' in args.status:
             print()
 
     elif args.sync:
-        Watcher(u).observeAndSync()
+        if not u.username:
+            print("Not logged in.")
+        else:
+            Watcher(u).observeAndSync()
