@@ -230,6 +230,7 @@ class Watcher:
         #
         while todoPair is not None:
             k, todoList = todoPair
+            print("Processing a pair", todoList)
 
             # Process what's on the TODO list, upload it a chunk at a time
             observationList = []
@@ -237,12 +238,14 @@ class Watcher:
             skipCount = 0
             uploadCount = 0
             for f in todoChunk:
+                print("Processing", f)
                 try:
                     observationList.append(self._observeFile_(f))
                     uploadCount += 1
                 except:
                     skipCount += 1
 
+            print("Sending the synclist")
             send_synclist(self.user.username, observationList)
             print("Observed and uploaded", uploadCount, "items. Skipped", skipCount)            
             

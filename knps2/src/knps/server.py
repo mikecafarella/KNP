@@ -2,6 +2,7 @@ from flask import Flask, abort, request, jsonify
 from flask_cors import CORS
 
 from markupsafe import escape
+from neo4j import GraphDatabase
 
 import base64
 import json
@@ -9,6 +10,8 @@ import datetime
 import time
 import os
 from pathlib import Path
+
+GDB = None
 
 #
 # Flask metastuff
@@ -22,127 +25,202 @@ cors = CORS(app, resource={
 })
 
 
-def matching_hashes():
-    d = './data'
-    hashes = {}
-    for (r,x,files) in os.walk(d):
-        for f in files:
-            if '.json' in f:
-                max_time = 0
-                with open(d + '/' + f, 'rt') as fin:
-                    user = f.replace('.json','')
-                    data = json.load(fin)
-                    for k, v in data['files'].items():
-                        if k not in hashes:
-                            hashes[k] = []
-
-                        hashes[k].append(user)
-
-    return hashes
-
-
-
 #
 # Show a list of users and their high-level stats
 #
 @app.route("/")
 def hello():
-    d = './data'
-    users = {}
-    for (r,x,files) in os.walk(d):
-        for f in files:
-            if '.json' in f:
-                max_time = 0
-                with open(d + '/' + f, 'rt') as fin:
-                    data = json.load(fin)
-                    for k, v in data['files'].items():
-                        if v['sync_time'] > max_time:
-                            max_time = v['sync_time']
-
-                users[f.replace('.json','')] = {'last_sync': max_time, 'file_count': len(data['files'])}
-
-
-    file_count = '2'
-    sync_date = 'adsf'
     out = "<table border=1 cellpadding=5>"
     out += "<tr><td>Name</td><td># Files</td><td>Last Sync</td></tr>"
-    for u, v in users.items():
-        sync_date = datetime.datetime.fromtimestamp(v['last_sync']).strftime('%Y-%m-%d %H:%M:%S')
-        out += "<tr><td><a href='/user/{}'>{}</a></td><td>{}</td><td>{}</td></tr>".format(u, u, v['file_count'], sync_date)
+    
+    for username, numFiles, syncTime in GDB.getAllUsers():
+        sync_date = datetime.datetime.fromtimestamp(syncTime).strftime('%Y-%m-%d %H:%M:%S')
+        out += "<tr><td><a href='/user/{}'>{}</a></td><td>{}</td><td>{}</td></tr>".format(username, username, numFiles, sync_date)
     out += "</table>"
 
     return f'<h2>KNPS Users</h2></br>{out}'
 
 
-def find_versioned_pairs(username, data):
-    seenPaths = {}
-    versionSets = set()
 
-    # Find path duplicates for this user
-    for k, v in data["files"].items():
-        fname = v['file_name']
-        if fname in seenPaths:
-            versionSets.add(fname)
-            
-        seenPaths.setdefault(fname, []).append(k)
+class GraphDB:
+    def __init__(self, uri, user, password):
+        self.driver = GraphDatabase.driver(uri, auth=(user, password))
 
-    # Create version pairs for any observed path duplicates
-    allVersionedPairs = []
-    
-    for path in versionSets:
-        rawVersions = seenPaths[path]
-        allVersions = [(x, data["files"].get(x).get("file_size"), data["files"].get(x).get("modified")) for x in rawVersions]
-        allVersions.sort(key = lambda x: x[2])
+    def close(self):
+        self.driver.close()
 
-        for i in range(1, len(allVersions)):
-            v1 = allVersions[i-1]
-            v2 = allVersions[i]
+    #
+    # For the whole system, yield a tuple of the (username, numFiles, lastSynctime)
+    #
+    def getAllUsers(self):
+        with self.driver.session() as session:
+            results = session.run("MATCH (n:ObservedFile) "
+                                  "RETURN n.username, count(n), max(n.sync_time)")
 
-            # We need a 7-tuple:
-            # 1) Path
-            # 2) File 1 hash
-            # 3) File 1 size
-            # 4) File 1 modified date            
-            # 2) File 2 hash
-            # 3) File 2 size
-            # 4) File 2 modified date            
-            pair = (path, v1[0], v1[1], v1[2], v2[0], v2[1], v2[2])
-            allVersionedPairs.append(pair)
+            for username, numFiles, lastSync in results:
+                yield (username, numFiles, lastSync)
 
-    return allVersionedPairs
-    
+            session.close()
 
+    #
+    # Return (srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime)
+    #
+    def getIncomingSharingPairs(self, username):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a:ObservedFile), (b:ObservedFile) "
+                                  "WHERE a.file_hash = b.file_hash "
+                                  "AND a.username <> b.username "
+                                  "AND a.sync_time < b.sync_time "
+                                  "AND b.username = $username "
+                                  "RETURN a.file_name, a.username, a.sync_time, b.file_name, b.username, b.sync_time",
+                                  username=username)
+
+            for srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime in results:
+                yield (srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime)
+
+            session.close()
+
+    #
+    #
+    #
+    def getOutgoingSharingPairs(self, username):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a:ObservedFile), (b:ObservedFile) "
+                                  "WHERE a.file_hash = b.file_hash "
+                                  "AND a.username <> b.username "
+                                  "AND a.sync_time < b.sync_time "
+                                  "AND a.username = $username "
+                                  "RETURN a.file_name, a.username, a.sync_time, b.file_name, b.username, b.sync_time",
+                                  username=username)
+
+            for srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime in results:
+                yield (srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime)
+
+            session.close()
+
+    #
+    # For a particular user, yield a tuple of the file hash, name, size, modifiedTime, and syncTime
+    #
+    def getAllFiles(self, username):
+        with self.driver.session() as session:
+            resultPairs = session.run("MATCH (a:ObservedFile) "
+                                      "WHERE a.username = $username "
+                                      "RETURN a.file_hash, a.file_name, a.file_size, a.modified, a.sync_time",
+                                     username = username)
+
+            for h, fn, fs, m, st in resultPairs:
+                yield (h, fn, fs, m, st)
+
+            session.close()
+
+        
+
+    def getVersionedPairs(self, username):
+        with self.driver.session() as session:
+            resultPairs = session.run("MATCH (cur:ObservedFile)-[r:VersionPredecessor]->(prev:ObservedFile) "
+                                     "WHERE cur.username = $username "
+                                     "AND prev.username = $username "
+                                      "RETURN cur.file_name, cur.file_hash, cur.file_size, cur.modified, prev.file_hash, prev.file_size, prev.modified",
+                                     username = username)
+
+            if resultPairs is None:
+                return None
+            else:
+                # Return (fname, hash, size, lastmodified, hash, size, lastmodified)
+                for fname, curH, curFS, curM, prevH, prevFS, prevM in resultPairs:
+                    yield (fname, curH, curFS, curM, prevH, prevFS, prevM)
+
+            session.close()
+        
+
+
+    def addObservations(self, observations):
+        with self.driver.session() as session:
+            result = session.write_transaction(self._create_and_return_observations, observations)
+
+
+    @staticmethod
+    def _create_and_return_observations(tx, observations):
+        for obs in observations:
+
+            #Get version predecessor, if any
+            versionPredecessor = tx.run("MATCH (a:ObservedFile) WHERE a.file_name = $file_name "
+                                        "AND a.username = $username "
+                                        "RETURN id(a), a.file_hash "
+                                        "ORDER BY a.sync_time DESC LIMIT 1 ",
+                                        file_name=obs["file_name"],
+                                        username=obs["username"])
+
+            vpNode = versionPredecessor.single()
+
+            createResult = None
+            if vpNode is None or vpNode[1] != obs["file_hash"]:
+                createResult = tx.run("CREATE (a:ObservedFile) "
+                                      "SET a.file_hash = $file_hash, "
+                                      "a.file_name = $file_name, "
+                                      "a.file_size = $file_size, "
+                                      "a.username = $username, "                            
+                                      "a.modified = $modified, "
+                                      "a.sync_time = $sync_time "
+                                      "RETURN id(a) ",
+                                      file_hash=obs["file_hash"], 
+                                      file_name=obs["file_name"],                           
+                                      file_size=obs["file_size"],
+                                      username=obs["username"],
+                                      modified=obs["modified"],
+                                      sync_time=obs["sync_time"])
+
+            # Get share match, if any
+
+            # Add predecessor edge, if appropriate
+            if vpNode is not None and createResult is not None:
+                prevNodeId = vpNode[0]
+                curNodeId = createResult.single()[0]
+
+                edgeResult = tx.run("MATCH (cur:ObservedFile), (prev:ObservedFile) "
+                                    "WHERE id(cur) = $curNodeId "
+                                    "AND id(prev) = $prevNodeId "
+                                    "CREATE (cur)-[r:VersionPredecessor]->(prev) "
+                                    "RETURN id(r)",
+                                    curNodeId=curNodeId,
+                                    prevNodeId=prevNodeId)
+
+            # Add share edge, if appropriate
 
 #
 # Show all the details for a particular user's files
 #
 @app.route('/user/<username>')
 def show_user_profile(username):
-    matches = matching_hashes()
-
-    # show the user profile for that user
-    data_file = 'data/{}.json'.format(username)
-    with open(data_file, 'rt') as f:
-        data = json.load(f)
-
-    out = "<h2>All files</h2>"
+    out = '<a href="/">Back to user listing</a>'
+    #
+    # Basic file listing
+    #
+    out += "<h2>All files</h2>"
     out += "<table border=1 cellpadding=5>"
     out += "<tr><td>Hash</td><td>Filename</td><td>Size</td><td>Last Modified</td><td>Last Sync</td><td># optional fields</td><td>Other Users</td></tr>"
-    for k, v in data['files'].items():
-        other_users = list(matches[k])
-        other_users.remove(username)
-        mod_date = datetime.datetime.fromtimestamp(v['modified']).strftime('%Y-%m-%d %H:%M:%S')
-        sync_date = datetime.datetime.fromtimestamp(v['sync_time']).strftime('%Y-%m-%d %H:%M:%S')
-        optionalItems = v.get("optionalItems", {})
+    maxItems = 3
+    count = 0
+    for hash, fname, fsize, modified, synctime in GDB.getAllFiles(username):
+        mod_date = datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S')
+        sync_date = datetime.datetime.fromtimestamp(synctime).strftime('%Y-%m-%d %H:%M:%S')
         
-        out += "<tr><td>{}</td><td>{}</td><td>{} B</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(k, v['file_name'], v['file_size'], mod_date, sync_date, len(optionalItems), ', '.join(other_users))
+        out += "<tr><td>{}</td><td>{}</td><td>{} B</td><td>{}</td><td>{}</td><td></td><td></td></tr>".format(hash, fname, fsize, mod_date, sync_date)
+
+        count += 1
+        if count > maxItems:
+            out += "<tr><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td></tr>"
+            break
     out += "</table>"
 
+    #
+    # Identify version events
+    #
     out += "<p>"
     out += "<h2>Likely version events</h2>"
     out += "<table border=1 cellpadding=5>"
     out += "<tr><td><b>Filename</b></td><td><b>Hash 1</b></td><td><b>Size 1</b></td><td><b>Last Modified 1</b></td><td><b>Hash 2</b></td><td><b>Size 2</b></td><td><b>Last Modified 2</b></td></tr>"
-    for fname, h1, s1, lm1, h2, s2, lm2 in find_versioned_pairs(username, data):
+    for fname, h1, s1, lm1, h2, s2, lm2 in GDB.getVersionedPairs(username):
         out += "<tr><td>{}</td>".format(fname)
         out += "<td>{}</td>".format(h1)
         out += "<td>{}</td>".format(s1)
@@ -153,6 +231,41 @@ def show_user_profile(username):
         out += "</tr>"
     out += "</table>"        
 
+    #
+    # Identify outgoing sharing events
+    #
+    out += "<p>"
+    out += "<h2>Likely outgoing sharing events</h2>"
+    out += "<table border=1 cellpadding=5>"
+    out += "<tr><td><b>Source filename</b></td><td><b>Source user</b></td><td><b>Source synctime</b></td><td><b>Dst filename</b></td><td><b>Dst user</b></td><td><b>Dst synctime</b></td></tr>"
+    for srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime in GDB.getOutgoingSharingPairs(username):
+        out += "<tr><td>{}</td>".format(srcFname)
+        out += "<td>{}</td>".format(srcUser)
+        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(srcSynctime).strftime('%Y-%m-%d %H:%M:%S'))
+        out += "<td>{}</td>".format(dstFname)
+        out += "<td>{}</td>".format(dstUser)
+        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(dstSynctime).strftime('%Y-%m-%d %H:%M:%S'))
+        out += "</tr>"
+    out += "</table>"        
+
+    #
+    # Identify incoming sharing events
+    #
+    out += "<p>"
+    out += "<h2>Likely incoming sharing events</h2>"
+    out += "<table border=1 cellpadding=5>"
+    out += "<tr><td><b>Source filename</b></td><td><b>Source user</b></td><td><b>Source synctime</b></td><td><b>Dst filename</b></td><td><b>Dst user</b></td><td><b>Dst synctime</b></td></tr>"
+    for srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime in GDB.getIncomingSharingPairs(username):
+        out += "<tr><td>{}</td>".format(srcFname)
+        out += "<td>{}</td>".format(srcUser)
+        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(srcSynctime).strftime('%Y-%m-%d %H:%M:%S'))
+        out += "<td>{}</td>".format(dstFname)
+        out += "<td>{}</td>".format(dstUser)
+        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(dstSynctime).strftime('%Y-%m-%d %H:%M:%S'))
+        out += "</tr>"
+    out += "</table>"        
+
+
     return f'User {escape(username)} <br> {out}'
 
 #
@@ -160,39 +273,21 @@ def show_user_profile(username):
 #
 @app.route('/synclist/<username>', methods=['POST'])
 def sync_filelist(username):
-    data_file = 'data/{}.json'.format(username)
-    p = Path(data_file)
-    if p.exists():
-        with open(data_file, 'rt') as f:
-            data = json.load(f)
-    else:
-        data = {}
-
-    if 'files' not in data:
-        data['files'] = {}
-
-
+    syncTime = time.time()    
     observations = json.load(request.files['observations'])
+    observations = [x["metadata"] for x in observations]
     for obs in observations:
-        metadata = obs["metadata"]
+        obs["username"] = username
+        obs["sync_time"] = syncTime
 
-        data['files'][metadata['file_hash']] = {
-            'file_name': metadata['file_name'],
-            'file_size': metadata['file_size'],
-            'line_hashes': metadata['line_hashes'],
-            'modified': metadata['modified'],
-            'optionalItems': metadata['optionalItems'],
-            'sync_time': time.time()
-        }
-
-
-    with open(data_file, 'wt') as f:
-        json.dump(data, f, indent=2)
+    GDB.addObservations(observations)
 
     # show the user profile for that user
     return json.dumps(username)
 
 
-
 if __name__ == '__main__':
+    GDB = GraphDB("bolt://localhost:7687", "neo4j", "password")
+    
     app.run(debug=True, port=8889)
+    greeter.close()    
