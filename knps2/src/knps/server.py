@@ -1,6 +1,18 @@
 from flask import Flask, abort, request, jsonify
 from flask_cors import CORS
 
+from flask import Flask, render_template, redirect, request, url_for
+from flask_login import (
+    LoginManager,
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
+
+from okta_helpers import is_access_token_valid, is_id_token_valid, config
+from user import User
+
 from markupsafe import escape
 from neo4j import GraphDatabase
 
@@ -10,6 +22,8 @@ import datetime
 import time
 import os
 from pathlib import Path
+import requests
+import uuid
 
 GDB = None
 
@@ -24,6 +38,13 @@ cors = CORS(app, resource={
     }
 })
 
+app.config.update({'SECRET_KEY': 'SomethingNotEntirelySecret'})
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+APP_STATE = 'ApplicationStateKNPS'
+NONCE = 'SampleNonceKNPS'
 
 #
 # Show a list of users and their high-level stats
@@ -39,6 +60,157 @@ def hello():
     out += "</table>"
 
     return f'<h2>KNPS Users</h2></br>{out}'
+
+@app.route("/logged_in")
+def logged_in():
+    return '<h2>Thank you for logging in.</h2>'
+
+@app.route("/cli_login")
+def cli_login():
+    access_token = request.args.get("access_token", None)
+
+    if access_token and is_access_token_valid(access_token, config["issuer"], config["client_id"]):
+        print ("VALID")
+        pass
+    else:
+        login_state = 'cli_{}'.format(uuid.uuid1())
+
+        # get request params
+        query_params = {'client_id': config["client_id"],
+                        'redirect_uri': config["redirect_uri"],
+                        'scope': "openid email profile",
+                        'state': login_state,
+                        'nonce': NONCE,
+                        'response_type': 'code',
+                        'response_mode': 'query'}
+
+        # build request_uri
+        request_uri = "{base_url}?{query_params}".format(
+            base_url=config["auth_uri"],
+            query_params=requests.compat.urlencode(query_params)
+        )
+        data = {'login_url': request_uri, 'login_code': login_state}
+        return json.dumps(data)
+
+@app.route("/get_token", methods=['POST'])
+def get_token():
+    login_code = request.form.get("login_code", None)
+
+    if not login_code:
+        return "Missing login code", 403
+
+    countdown = 60
+    while countdown > 0:
+        data_file = 'data/login_info.json'
+        p = Path(data_file)
+        if p.exists():
+            with open(data_file, 'rt') as f:
+                data = json.load(f)
+        else:
+            data = {}
+
+        if login_code in data:
+            return json.dumps(data[login_code])
+
+        countdown = countdown - 1
+        time.sleep(1)
+
+    return "Timeout", 403
+
+
+@app.route("/login")
+def login():
+    # get request params
+    query_params = {'client_id': config["client_id"],
+                    'redirect_uri': config["redirect_uri"],
+                    'scope': "openid email profile",
+                    'state': APP_STATE,
+                    'nonce': NONCE,
+                    'response_type': 'code',
+                    'response_mode': 'query'}
+
+    # build request_uri
+    request_uri = "{base_url}?{query_params}".format(
+        base_url=config["auth_uri"],
+        query_params=requests.compat.urlencode(query_params)
+    )
+
+    return redirect(request_uri)
+
+@app.route("/authorization-code/callback")
+def callback():
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    code = request.args.get("code")
+    login_state = request.args.get("state")
+
+    if not code:
+        return "The code was not returned or is not accessible", 403
+
+    query_params = {'grant_type': 'authorization_code',
+                    'code': code,
+                    'redirect_uri': request.base_url
+                    }
+
+    print(code)
+    query_params = requests.compat.urlencode(query_params)
+    exchange = requests.post(
+        config["token_uri"],
+        headers=headers,
+        data=query_params,
+        auth=(config["client_id"], config["client_secret"]),
+    ).json()
+
+    # Get tokens and validate
+    if not exchange.get("token_type"):
+        return "Unsupported token type. Should be 'Bearer'.", 403
+    access_token = exchange["access_token"]
+    id_token = exchange["id_token"]
+
+    print(access_token)
+
+    if not is_access_token_valid(access_token, config["issuer"], config["client_id"]):
+        return "Access token is invalid", 403
+
+    if not is_id_token_valid(id_token, config["issuer"], config["client_id"], NONCE):
+        return "ID token is invalid", 403
+
+    # Authorization flow successful, get userinfo and login user
+    userinfo_response = requests.get(config["userinfo_uri"],
+                                     headers={'Authorization': f'Bearer {access_token}'}).json()
+
+    unique_id = userinfo_response["sub"]
+    user_email = userinfo_response["email"]
+    user_name = "{} {}".format(userinfo_response["given_name"], userinfo_response["family_name"])
+    print(json.dumps(userinfo_response, indent=2))
+
+    user = User(
+        id_=unique_id, name=user_name, email=user_email
+    )
+
+    if not User.get(unique_id):
+        User.create(unique_id, user_name, user_email)
+
+    login_user(user)
+
+    data_file = 'data/login_info.json'
+    p = Path(data_file)
+    if p.exists():
+        with open(data_file, 'rt') as f:
+            data = json.load(f)
+    else:
+        data = {}
+
+    data[login_state] = {
+        'access_token': access_token,
+        'user_id': unique_id,
+        'email': user_email,
+        'name': user_name
+    }
+
+    with open(data_file, 'wt') as f:
+        json.dump(data, f, indent=2)
+
+    return redirect(url_for("logged_in"))
 
 
 
@@ -229,7 +401,7 @@ def show_user_profile(username):
         out += "<td>{}</td>".format(s2)
         out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(lm2).strftime('%Y-%m-%d %H:%M:%S'))
         out += "</tr>"
-    out += "</table>"        
+    out += "</table>"
 
     #
     # Identify outgoing sharing events
