@@ -322,7 +322,7 @@ class GraphDB:
 
     def getVersionedPairs(self, username):
         with self.driver.session() as session:
-            resultPairs = session.run("MATCH (cur:ObservedFile)-[r:VersionPredecessor]->(prev:ObservedFile) "
+            resultPairs = session.run("MATCH (cur:ObservedFile)-[r:VersionUpdate]->(prev:ObservedFile) "
                                      "WHERE cur.username = $username "
                                      "AND prev.username = $username "
                                       "RETURN cur.file_name, cur.file_hash, cur.file_size, cur.modified, prev.file_hash, prev.file_size, prev.modified",
@@ -332,8 +332,8 @@ class GraphDB:
                 return None
             else:
                 # Return (fname, hash, size, lastmodified, hash, size, lastmodified)
-                for fname, curH, curFS, curM, prevH, prevFS, prevM in resultPairs:
-                    yield (fname, curH, curFS, curM, prevH, prevFS, prevM)
+                for fname, prevH, prevFS, prevM, curH, curFS, curM in resultPairs:
+                    yield (fname, prevH, prevFS, prevM, curH, curFS, curM)
 
             session.close()
 
@@ -375,22 +375,42 @@ class GraphDB:
                                       modified=obs["modified"],
                                       sync_time=obs["sync_time"])
 
-            # Get share match, if any
+                if createResult is not None:
+                    curNodeId = createResult.single()[0]
 
-            # Add predecessor edge, if appropriate
-            if vpNode is not None and createResult is not None:
-                prevNodeId = vpNode[0]
-                curNodeId = createResult.single()[0]
+                    # Create outgoing share edges, if appropriate
+                    shareEdgeResult1 = tx.run("MATCH (src:ObservedFile), (dst: ObservedFile) "
+                                              "WHERE id(src) = $srcNodeId "
+                                              "AND src.file_hash = dst.file_hash "
+                                              "AND src.username <> dst.username "
+                                              "AND src.modified < dst.modified "
+                                              "CREATE (src)-[r:ShareTo]->(dst) "
+                                              "RETURN id(r)",
+                                              srcNodeId=curNodeId)
 
-                edgeResult = tx.run("MATCH (cur:ObservedFile), (prev:ObservedFile) "
-                                    "WHERE id(cur) = $curNodeId "
-                                    "AND id(prev) = $prevNodeId "
-                                    "CREATE (cur)-[r:VersionPredecessor]->(prev) "
-                                    "RETURN id(r)",
-                                    curNodeId=curNodeId,
-                                    prevNodeId=prevNodeId)
 
-            # Add share edge, if appropriate
+                    # Create incoming share edges, if appropriate
+                    shareEdgeResult1 = tx.run("MATCH (src:ObservedFile), (dst: ObservedFile) "
+                                              "WHERE id(dst) = $dstNodeId "
+                                              "AND src.file_hash = dst.file_hash "
+                                              "AND src.username <> dst.username "
+                                              "AND src.modified < dst.modified "
+                                              "CREATE (src)-[r:ShareTo]->(dst) "
+                                              "RETURN id(r)",
+                                              dstNodeId=curNodeId)
+
+                    # Add version predecessor edge, if appropriate
+                    if vpNode is not None:
+                        prevNodeId = vpNode[0]
+
+                        edgeResult = tx.run("MATCH (cur:ObservedFile), (prev:ObservedFile) "
+                                            "WHERE id(cur) = $curNodeId "
+                                            "AND id(prev) = $prevNodeId "
+                                            "CREATE (prev)-[r:VersionUpdate]->(cur) "
+                                            "RETURN id(r)",
+                                            curNodeId=curNodeId,
+                                            prevNodeId=prevNodeId)
+
 
 #
 # Show all the details for a particular user's files
