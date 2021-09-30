@@ -3,3 +3,4 @@ flask
 flask_cors
 flask_login
 okta_jwt_verifier
+neo4j

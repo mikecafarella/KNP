@@ -38,15 +38,20 @@ def hash_file_lines(fname):
 #
 # Transmit observations to the server
 #
-def send_synclist(username, observationList):
-    url = "http://127.0.0.1:8889/synclist/{}".format(username)
+def send_synclist(user, observationList):
+    url = "http://127.0.0.1:8889/synclist/{}".format(user.username)
+
+    login = {
+        'username': user.username,
+        'access_token': user.access_token
+    }
 
     obsList = []
     for file_name, file_hash, line_hashes, optionalItems in observationList:
         p = Path(file_name)
         info = p.stat()
         metadata = {
-            'username': username,
+            'username': user.username,
             'file_name': file_name,
             'file_hash': file_hash,
             'line_hashes': line_hashes,
@@ -56,7 +61,7 @@ def send_synclist(username, observationList):
         }
         obsList.append({'metadata': metadata})
 
-    response = requests.post(url, files={'observations': json.dumps(obsList)})
+    response = requests.post(url, files={'observations': json.dumps(obsList)}, data=login)
     obj_data = response.json()
 
     return obj_data
@@ -84,7 +89,6 @@ class User:
     def __init__(self):
         self.load_db()
         self.username, self.access_token = self.get_current_user()
-
 
     def login(self):
         ROOTURL = "http://127.0.0.1:8889"
@@ -261,16 +265,20 @@ class Watcher:
                     uploadCount += 1
                 except:
                     skipCount += 1
-
             print("Sending the synclist")
-            send_synclist(self.user.username, observationList)
-            print("Observed and uploaded", uploadCount, "items. Skipped", skipCount)
+            response = send_synclist(self.user, observationList)
 
-            # Mark the TODO list as done
-            self.user.removeTodoList(k)
+            if 'error' in response:
+                print('ERROR: {}'.format(response['error']))
+                break
+            else:
+                print("Observed and uploaded", uploadCount, "items. Skipped", skipCount)
 
-            # Get the next one if available
-            todoPair = self.user.getNextTodoList()
+                # Mark the TODO list as done
+                self.user.removeTodoList(k)
+
+                # Get the next one if available
+                todoPair = self.user.getNextTodoList()
 
 
     #

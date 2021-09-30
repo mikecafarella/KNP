@@ -53,7 +53,7 @@ NONCE = 'SampleNonceKNPS'
 def hello():
     out = "<table border=1 cellpadding=5>"
     out += "<tr><td>Name</td><td># Files</td><td>Last Sync</td></tr>"
-    
+
     for username, numFiles, syncTime in GDB.getAllUsers():
         sync_date = datetime.datetime.fromtimestamp(syncTime).strftime('%Y-%m-%d %H:%M:%S')
         out += "<tr><td><a href='/user/{}'>{}</a></td><td>{}</td><td>{}</td></tr>".format(username, username, numFiles, sync_date)
@@ -110,7 +110,14 @@ def get_token():
             data = {}
 
         if login_code in data:
-            return json.dumps(data[login_code])
+            user_data = json.dumps(data[login_code])
+
+            # Clear out this login_code, since it's not useful anymore
+            del(data[login_code])
+            with open(data_file, 'wt') as f:
+                json.dump(data, f, indent=2)
+
+            return user_data
 
         countdown = countdown - 1
         time.sleep(1)
@@ -207,6 +214,13 @@ def callback():
         'name': user_name
     }
 
+    data[user_email] = {
+        'access_token': access_token,
+        'user_id': unique_id,
+        'email': user_email,
+        'name': user_name
+    }
+
     with open(data_file, 'wt') as f:
         json.dump(data, f, indent=2)
 
@@ -285,7 +299,7 @@ class GraphDB:
 
             session.close()
 
-        
+
 
     def getVersionedPairs(self, username):
         with self.driver.session() as session:
@@ -303,7 +317,7 @@ class GraphDB:
                     yield (fname, curH, curFS, curM, prevH, prevFS, prevM)
 
             session.close()
-        
+
 
 
     def addObservations(self, observations):
@@ -331,12 +345,12 @@ class GraphDB:
                                       "SET a.file_hash = $file_hash, "
                                       "a.file_name = $file_name, "
                                       "a.file_size = $file_size, "
-                                      "a.username = $username, "                            
+                                      "a.username = $username, "
                                       "a.modified = $modified, "
                                       "a.sync_time = $sync_time "
                                       "RETURN id(a) ",
-                                      file_hash=obs["file_hash"], 
-                                      file_name=obs["file_name"],                           
+                                      file_hash=obs["file_hash"],
+                                      file_name=obs["file_name"],
                                       file_size=obs["file_size"],
                                       username=obs["username"],
                                       modified=obs["modified"],
@@ -376,7 +390,7 @@ def show_user_profile(username):
     for hash, fname, fsize, modified, synctime in GDB.getAllFiles(username):
         mod_date = datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S')
         sync_date = datetime.datetime.fromtimestamp(synctime).strftime('%Y-%m-%d %H:%M:%S')
-        
+
         out += "<tr><td>{}</td><td>{}</td><td>{} B</td><td>{}</td><td>{}</td><td></td><td></td></tr>".format(hash, fname, fsize, mod_date, sync_date)
 
         count += 1
@@ -418,7 +432,7 @@ def show_user_profile(username):
         out += "<td>{}</td>".format(dstUser)
         out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(dstSynctime).strftime('%Y-%m-%d %H:%M:%S'))
         out += "</tr>"
-    out += "</table>"        
+    out += "</table>"
 
     #
     # Identify incoming sharing events
@@ -435,7 +449,7 @@ def show_user_profile(username):
         out += "<td>{}</td>".format(dstUser)
         out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(dstSynctime).strftime('%Y-%m-%d %H:%M:%S'))
         out += "</tr>"
-    out += "</table>"        
+    out += "</table>"
 
 
     return f'User {escape(username)} <br> {out}'
@@ -445,7 +459,26 @@ def show_user_profile(username):
 #
 @app.route('/synclist/<username>', methods=['POST'])
 def sync_filelist(username):
-    syncTime = time.time()    
+    syncTime = time.time()
+
+    access_token = request.form.get('access_token')
+    username = request.form.get('username')
+
+    login_file = 'data/login_info.json'.format(username)
+    p = Path(login_file)
+    if p.exists():
+        with open(login_file, 'rt') as f:
+            login_data = json.load(f)
+    else:
+        login_data = {}
+
+    if (not access_token or
+        not username or
+        username not in login_data or
+        access_token != login_data[username].get('access_token', None) or
+        not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
+        return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
+
     observations = json.load(request.files['observations'])
     observations = [x["metadata"] for x in observations]
     for obs in observations:
@@ -460,6 +493,6 @@ def sync_filelist(username):
 
 if __name__ == '__main__':
     GDB = GraphDB("bolt://localhost:7687", "neo4j", "password")
-    
+
     app.run(debug=True, port=8889)
-    greeter.close()    
+    greeter.close()
