@@ -92,6 +92,25 @@ def cli_login():
         data = {'login_url': request_uri, 'login_code': login_state}
         return json.dumps(data)
 
+@app.route("/cli_logout", methods=['POST'])
+def cli_logout():
+    access_token = request.form.get("access_token", None)
+
+    # if access_token and is_access_token_valid(access_token, config["issuer"], config["client_id"]):
+    login_state = 'cli_{}'.format(uuid.uuid1())
+
+    # get request params
+    query_params = {'id_token_hint': access_token, 'redirect_uri': 'http://localhost'}
+
+    # build request_uri
+    request_uri = "{base_url}?{query_params}".format(
+        base_url=config["auth_uri"],
+        query_params=requests.compat.urlencode(query_params)
+    )
+    data = {'logout_url': request_uri}
+
+    return json.dumps(data)
+
 @app.route("/get_token", methods=['POST'])
 def get_token():
     login_code = request.form.get("login_code", None)

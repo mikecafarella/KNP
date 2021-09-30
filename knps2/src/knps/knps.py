@@ -117,6 +117,32 @@ class User:
 
             print("You are now logged in as: {}".format(token_data['email']))
 
+    def logout(self):
+        ROOTURL = "http://127.0.0.1:8889"
+        url = ROOTURL + "/cli_logout"
+
+        response = requests.post(url, data={'access_token': self.access_token})
+        data = response.json()
+
+        if 'logout_url' in data:
+            print("Opening web browser for logout...")
+            webbrowser.open('https://dev-66403161.okta.com/login/signout')
+            # token_url = ROOTURL + "/get_token"
+            # token_response = requests.post(token_url, data={'login_code': data['login_code']})
+            # token_data = token_response.json()
+            #
+            # username = token_data['email']
+            # # This is not really a login. TODO: make this good
+            # self.username = username
+            # self.access_token = token_data['access_token']
+            #
+            # if self.username not in self.db:
+            #     self.db[self.username] = {}
+            #
+            # self.db['__CURRENT_USER__'] = (self.username, self.access_token)
+            # self.save_db()
+            #
+            # print("You are now logged in as: {}".format(token_data['email']))
 
     def load_db(self):
         p = Path(Path.home(), DB_FILE)
@@ -310,6 +336,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='KNPS command line')
 
     parser.add_argument("--login", action="store_true", help="Perform login")
+    parser.add_argument("--logout", action="store_true", help="Logout current user")
     parser.add_argument("--status", nargs="*", help="Check KNPS status", default=None)
     parser.add_argument("--watch", help="Add a directory to watch")
     parser.add_argument("--sync", action="store_true", help="Sync observations to service")
@@ -319,8 +346,9 @@ if __name__ == "__main__":
 
     u = User()
     if args.login:
-        u.login() # TODO: BAD!
-
+        u.login()
+    elif args.logout:
+        u.logout()
     elif args.watch:
         w = Watcher(u)
         w.watch(args.watch)
