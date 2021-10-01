@@ -344,7 +344,6 @@ class GraphDB:
             result = session.write_transaction(self._create_and_return_observations, observations)
 
     def addComment(self, username, filename, comment):
-        print("ADDING COMMENT", filename, comment)
         with self.driver.session() as session:
             versionPredecessor = session.run("MATCH (a:ObservedFile) "
                                              "WHERE a.file_name = $file_name "
@@ -370,69 +369,66 @@ class GraphDB:
     @staticmethod
     def _create_and_return_observations(tx, observations):
         for obs in observations:
+            #
+            # Create a FileObservation and its ByteSet when there's a predecessor AND the hash is new
+            #
+            print("Trying to create", obs["file_name"], obs["file_hash"])
+            
+            result = tx.run("MATCH (a:ObservedFile {file_name: $filename, username: $username, latest: 1})-[r:Contains]->(b:ByteSet) "
+                            "WHERE b.md5hash <> $newHash "
+                            "MERGE (b2: ByteSet {md5hash: $newHash}) "
+                            "ON CREATE SET b2.created = $sync_time "
+                            "CREATE (a2:ObservedFile {file_name: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
+                            "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size "
+                            "CREATE (a)-[r3:NextVersion]->(a2) "
+                            "RETURN id(a2)",
+                            filename = obs["file_name"],
+                            username = obs["username"],
+                            newHash = obs["file_hash"],
+                            modified = obs["modified"],
+                            file_size = obs["file_size"],
+                            sync_time = obs["sync_time"])
 
-            #Get version predecessor, if any
-            versionPredecessor = tx.run("MATCH (a:ObservedFile) WHERE a.file_name = $file_name "
-                                        "AND a.username = $username "
-                                        "RETURN id(a), a.file_hash "
-                                        "ORDER BY a.sync_time DESC LIMIT 1 ",
-                                        file_name=obs["file_name"],
-                                        username=obs["username"])
-
-            vpNode = versionPredecessor.single()
-
-            createResult = None
-            if vpNode is None or vpNode[1] != obs["file_hash"]:
-                createResult = tx.run("CREATE (a:ObservedFile) "
-                                      "SET a.file_hash = $file_hash, "
-                                      "a.file_name = $file_name, "
-                                      "a.file_size = $file_size, "
-                                      "a.username = $username, "
-                                      "a.modified = $modified, "
-                                      "a.sync_time = $sync_time "
-                                      "RETURN id(a) ",
-                                      file_hash=obs["file_hash"],
-                                      file_name=obs["file_name"],
-                                      file_size=obs["file_size"],
-                                      username=obs["username"],
-                                      modified=obs["modified"],
-                                      sync_time=obs["sync_time"])
-
-                if createResult is not None:
-                    curNodeId = createResult.single()[0]
-
+            result = result.single()
+            if result is None:
+                # This gets run when there's no predecessor OR when the hash isn't new.
+                
+                #
+                # Create a FileObservation and its ByteSet when there is no predecessor
+                #
+                result = tx.run("MERGE (b2: ByteSet {md5hash: $newHash}) "
+                                "ON CREATE SET b2.created = $sync_time "
+                                "MERGE (a2:ObservedFile {file_name: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
+                                "ON CREATE SET a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size "                                
+                                "RETURN id(a2)",
+                                filename = obs["file_name"],
+                                username = obs["username"],
+                                newHash = obs["file_hash"],
+                                modified = obs["modified"],
+                                file_size = obs["file_size"],                                
+                                sync_time = obs["sync_time"])
+            else:
+                pass
                     # Create outgoing share edges, if appropriate
-                    shareEdgeResult1 = tx.run("MATCH (src:ObservedFile), (dst: ObservedFile) "
-                                              "WHERE id(src) = $srcNodeId "
-                                              "AND src.file_hash = dst.file_hash "
-                                              "AND src.username <> dst.username "
-                                              "AND src.modified < dst.modified "
-                                              "CREATE (src)-[r:ShareTo]->(dst) "
-                                              "RETURN id(r)",
-                                              srcNodeId=curNodeId)
+                    #shareEdgeResult1 = tx.run("MATCH (src:ObservedFile), (dst: ObservedFile) "
+                    #                          "WHERE id(src) = $srcNodeId "
+                    #                          "AND src.file_hash = dst.file_hash "
+                    #                          "AND src.username <> dst.username "
+                    #                          "AND src.modified < dst.modified "
+                    #                          "CREATE (src)-[r:ShareTo]->(dst) "
+                    #                          "RETURN id(r)",
+                    #                          srcNodeId=curNodeId)
 
 
                     # Create incoming share edges, if appropriate
-                    shareEdgeResult1 = tx.run("MATCH (src:ObservedFile), (dst: ObservedFile) "
-                                              "WHERE id(dst) = $dstNodeId "
-                                              "AND src.file_hash = dst.file_hash "
-                                              "AND src.username <> dst.username "
-                                              "AND src.modified < dst.modified "
-                                              "CREATE (src)-[r:ShareTo]->(dst) "
-                                              "RETURN id(r)",
-                                              dstNodeId=curNodeId)
-
-                    # Add version predecessor edge, if appropriate
-                    if vpNode is not None:
-                        prevNodeId = vpNode[0]
-
-                        edgeResult = tx.run("MATCH (cur:ObservedFile), (prev:ObservedFile) "
-                                            "WHERE id(cur) = $curNodeId "
-                                            "AND id(prev) = $prevNodeId "
-                                            "CREATE (prev)-[r:VersionUpdate]->(cur) "
-                                            "RETURN id(r)",
-                                            curNodeId=curNodeId,
-                                            prevNodeId=prevNodeId)
+                    #shareEdgeResult1 = tx.run("MATCH (src:ObservedFile), (dst: ObservedFile) "
+                    #                          "WHERE id(dst) = $dstNodeId "
+                    #                          "AND src.file_hash = dst.file_hash "
+                    #                          "AND src.username <> dst.username "
+                    #                          "AND src.modified < dst.modified "
+                    #                          "CREATE (src)-[r:ShareTo]->(dst) "
+                    #                          "RETURN id(r)",
+                    #                          dstNodeId=curNodeId)
 
 
 #
