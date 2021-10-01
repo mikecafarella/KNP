@@ -8,6 +8,7 @@ import os
 import requests
 import json
 import webbrowser
+import yaml
 
 CFG_DIR = '.knps'
 CFG_FILE = 'knps.cfg'
@@ -80,6 +81,24 @@ def send_adornment(user, filename, comment):
     }
 
     fDict = {'filename': json.dumps(filename), 'comment': json.dumps(comment)}
+    response = requests.post(url, files=fDict, data=login)
+    obj_data = response.json()
+
+    return obj_data
+
+
+#
+# Transmit observations to the server
+#
+def send_createdataset(user, id, title, desc, targetHash):
+    url = "http://127.0.0.1:8889/createdataset/{}".format(user.username)
+
+    login = {
+        'username': user.username,
+        'access_token': user.access_token
+    }
+
+    fDict = {'id': json.dumps(id), 'title': json.dumps(title), 'desc': json.dumps(desc), 'targetHash': json.dumps(targetHash)}
     response = requests.post(url, files=fDict, data=login)
     obj_data = response.json()
 
@@ -281,6 +300,17 @@ class Watcher:
         send_adornment(self.user, str(Path(f).resolve()), comment)
 
     #
+    # Create a Dataset for a given file.
+    #
+    def addDataset(self, configYamlFile):
+        self.observeAndSync()
+
+        with open(configYamlFile, "r") as stream:
+            configYaml = yaml.safe_load(stream)
+
+            send_createdataset(self.user, configYaml["id"], configYaml["title"], configYaml["desc"], configYaml["targetHash"])
+
+    #
     # Collect some observations
     #
     def observeAndSync(self):
@@ -374,6 +404,7 @@ if __name__ == "__main__":
     parser.add_argument("--status", nargs="*", help="Check KNPS status", default=None)
     parser.add_argument("--watch", help="Add a directory to watch")
     parser.add_argument("--comment", nargs="+", help="Add a comment to a data object")
+    parser.add_argument("--addDataset", help="Add a Dataset to the graph. Takes a YAML file")    
     parser.add_argument("--sync", action="store_true", help="Sync observations to service")
     parser.add_argument('args', type=str, help="KNPS command arguments", nargs='*' )
 
@@ -401,6 +432,13 @@ if __name__ == "__main__":
                 
             w = Watcher(u)
             w.addComment(args.comment[0], " ".join(args.comment[1:]))
+
+    elif args.addDataset:
+        if not u.username:
+            print("Not logged in")
+        else:
+            w = Watcher(u)
+            w.addDataset(args.addDataset)
 
     elif args.status is not None:
         if not u.username:

@@ -343,6 +343,34 @@ class GraphDB:
         with self.driver.session() as session:
             result = session.write_transaction(self._create_and_return_observations, observations)
 
+    def addDataset(self, id, title, desc, targetHash):
+        with self.driver.session() as session:
+            result = session.run("MATCH (old:Dataset {id:$id, latest:1}) "
+                                 "MERGE (b:ByteSet {md5hash: $targetHash}) "
+                                 "CREATE (new:Dataset {id:$id, title:$title, desc:$desc, latest:1})-[r:Contains]->(b) "
+                                 "SET old.latest=0 "
+                                 "CREATE (old)-[r2:NextVersion]->(new)"
+                                 "RETURN id(new)",
+                                 id=id,
+                                 title=title,
+                                 desc=desc,
+                                 targetHash=targetHash)
+            
+            result = result.single()
+            if result is None:
+                result = session.run("MERGE (b:ByteSet {md5hash: $targetHash}) "
+                                     "CREATE (new:Dataset {id:$id, title:$title, desc:$desc, latest:1})-[r:Contains]->(b) "
+                                     "RETURN id(new)",
+                                     id=id,
+                                     title=title,
+                                     desc=desc,
+                                     targetHash=targetHash)
+
+                return True
+                
+
+            
+
     def addComment(self, username, filename, comment):
         with self.driver.session() as session:
             versionPredecessor = session.run("MATCH (a:ObservedFile) "
@@ -357,7 +385,6 @@ class GraphDB:
             if vpNode is None:
                 return False
             else:
-                print("VPNODE", vpNode)
                 commentResult = session.run("MATCH (a:ObservedFile) "
                                             "WHERE id(a) = $curNodeId "
                                             "CREATE (c:Comment) SET c.comment = $commentStr "
@@ -372,8 +399,6 @@ class GraphDB:
             #
             # Create a FileObservation and its ByteSet when there's a predecessor AND the hash is new
             #
-            print("Trying to create", obs["file_name"], obs["file_hash"])
-            
             result = tx.run("MATCH (a:ObservedFile {file_name: $filename, username: $username, latest: 1})-[r:Contains]->(b:ByteSet) "
                             "WHERE b.md5hash <> $newHash "
                             "MERGE (b2: ByteSet {md5hash: $newHash}) "
@@ -573,6 +598,36 @@ def adorn(username):
     filename = json.load(request.files['filename'])
 
     return json.dumps(str(GDB.addComment(username, filename, commentStr)))
+
+
+@app.route('/createdataset/<username>', methods=['POST'])
+def createDataset(username):
+    access_token = request.form.get('access_token')
+    username = request.form.get('username')
+
+    login_file = 'data/login_info.json'.format(username)
+    p = Path(login_file)
+    if p.exists():
+        with open(login_file, 'rt') as f:
+            login_data = json.load(f)
+    else:
+        login_data = {}
+
+    if (not access_token or
+        not username or
+        username not in login_data or
+        access_token != login_data[username].get('access_token', None) or
+        not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
+        return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
+
+    id = json.load(request.files['id'])
+    title = json.load(request.files['title'])
+    desc = json.load(request.files['desc'])
+    targetHash = json.load(request.files['targetHash'])
+
+    return json.dumps(str(GDB.addDataset(id, title, desc, targetHash)))
+
+
 
 if __name__ == '__main__':
     GDB = GraphDB("bolt://localhost:7687", "neo4j", "password")
