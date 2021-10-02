@@ -61,6 +61,9 @@ def hello():
 
     return f'<h2>KNPS Users</h2></br>{out}'
 
+###########################################
+# Login/logout helper functions
+###########################################
 @app.route("/logged_in")
 def logged_in():
     return '<h2>Thank you for logging in.</h2>'
@@ -142,7 +145,6 @@ def get_token():
         time.sleep(1)
 
     return "Timeout", 403
-
 
 @app.route("/login")
 def login():
@@ -246,7 +248,9 @@ def callback():
     return redirect(url_for("logged_in"))
 
 
-
+##################################################
+# The main data storage part
+##################################################
 class GraphDB:
     def __init__(self, uri, user, password):
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
@@ -268,16 +272,32 @@ class GraphDB:
             session.close()
 
     #
+    # For a particular user, yield a tuple of the file hash, name, size, modifiedTime, and syncTime
+    # REMIND: currently broken --- shouldn't do file_hash
+    #
+    def getUserDetails(self, username):
+        with self.driver.session() as session:
+            resultPairs = session.run("MATCH (a:ObservedFile) "
+                                      "WHERE a.username = $username "
+                                      "RETURN a.id, a.filename, a.file_size, a.modified, a.sync_time",
+                                     username = username)
+
+            for id, fn, fs, m, st in resultPairs:
+                yield (id, fn, fs, m, st)
+
+            session.close()
+
+    #
     # Return (srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime)
     #
-    def getIncomingSharingPairs(self, username):
+    def findIncomingSharingPairsForUser(self, username):
         with self.driver.session() as session:
             results = session.run("MATCH (a:ObservedFile), (b:ObservedFile) "
                                   "WHERE a.file_hash = b.file_hash "
                                   "AND a.username <> b.username "
                                   "AND a.sync_time < b.sync_time "
                                   "AND b.username = $username "
-                                  "RETURN a.file_name, a.username, a.sync_time, b.file_name, b.username, b.sync_time",
+                                  "RETURN a.filename, a.username, a.sync_time, b.filename, b.username, b.sync_time",
                                   username=username)
 
             for srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime in results:
@@ -288,14 +308,14 @@ class GraphDB:
     #
     #
     #
-    def getOutgoingSharingPairs(self, username):
+    def findOutgoingSharingPairsForUser(self, username):
         with self.driver.session() as session:
             results = session.run("MATCH (a:ObservedFile), (b:ObservedFile) "
                                   "WHERE a.file_hash = b.file_hash "
                                   "AND a.username <> b.username "
                                   "AND a.sync_time < b.sync_time "
                                   "AND a.username = $username "
-                                  "RETURN a.file_name, a.username, a.sync_time, b.file_name, b.username, b.sync_time",
+                                  "RETURN a.filename, a.username, a.sync_time, b.filename, b.username, b.sync_time",
                                   username=username)
 
             for srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime in results:
@@ -303,107 +323,75 @@ class GraphDB:
 
             session.close()
 
-    #
-    # For a particular user, yield a tuple of the file hash, name, size, modifiedTime, and syncTime
-    #
-    def getAllFiles(self, username):
+    def getVersionedPairsForUser(self, username):
         with self.driver.session() as session:
-            resultPairs = session.run("MATCH (a:ObservedFile) "
-                                      "WHERE a.username = $username "
-                                      "RETURN a.file_hash, a.file_name, a.file_size, a.modified, a.sync_time",
-                                     username = username)
-
-            for h, fn, fs, m, st in resultPairs:
-                yield (h, fn, fs, m, st)
-
-            session.close()
-
-
-
-    def getVersionedPairs(self, username):
-        with self.driver.session() as session:
-            resultPairs = session.run("MATCH (cur:ObservedFile)-[r:VersionUpdate]->(prev:ObservedFile) "
-                                     "WHERE cur.username = $username "
-                                     "AND prev.username = $username "
-                                      "RETURN cur.file_name, cur.file_hash, cur.file_size, cur.modified, prev.file_hash, prev.file_size, prev.modified",
-                                     username = username)
+            resultPairs = session.run("MATCH (cur:ObservedFile)-[r:NextVersion]->(next:ObservedFile) "
+                                      "WHERE cur.username = $username "
+                                      "AND next.username = $username "
+                                      "RETURN cur.filename, cur.file_size, cur.modified, next.file_size, next.modified "
+                                      "ORDER BY cur.filename, next.modified",
+                                      username = username)
 
             if resultPairs is None:
                 return None
             else:
                 # Return (fname, hash, size, lastmodified, hash, size, lastmodified)
-                for fname, prevH, prevFS, prevM, curH, curFS, curM in resultPairs:
-                    yield (fname, prevH, prevFS, prevM, curH, curFS, curM)
+                for fname, curFS, curM, nextFS, nextM in resultPairs:
+                    yield (fname, curFS, curM, nextFS, nextM)
 
             session.close()
 
+    #
+    # Get details on a particular ObservedFile
+    #
+    def getFileObservationDetails(self, id):
+        with self.driver.session() as session:
+            result = session.run("MATCH (a: ObservedFile {id: $id})-[r:Contains]->(b:ByteSet) "
+                                 "OPTIONAL MATCH (previous:ObservedFile)-[r1:NextVersion]->(a) "
+                                 "OPTIONAL MATCH (next:ObservedFile)<-[r2:NextVersion]-(a) "
+                                 "RETURN a.id, a.username, a.filename, a.modified, a.sync_time, previous.id, next.id, a.latest, b.md5hash",
+                                 id=id)
+            return result.single()
 
+    #
+    # Get details on a ByteSet
+    #
+    def getBytesetDetails(self, md5hash):
+        with self.driver.session() as session:
 
+            # Find the ObservedFiles that contain this ByteSet.
+            files = session.run("MATCH (b: ByteSet {md5hash: $md5hash})<-[r:Contains]-(o:ObservedFile) "
+                                 "RETURN o.id, o.username, o.filename, o.latest",
+                                md5hash=md5hash)
+
+            # Find the Datasets that contain this ByteSet.
+            datasets = session.run("MATCH (b: ByteSet {md5hash: $md5hash})<-[r:Contains]-(d:Dataset {latest:1}) "
+                                   "RETURN d.id, d.title, d.desc",
+                                   md5hash=md5hash)
+
+            return ([p for p in files], [d for d in datasets])
+
+    #
+    # Add new FileObservations to the store
+    #
     def addObservations(self, observations):
         with self.driver.session() as session:
             result = session.write_transaction(self._create_and_return_observations, observations)
 
-    def addDataset(self, id, title, desc, targetHash):
-        with self.driver.session() as session:
-            result = session.run("MATCH (old:Dataset {id:$id, latest:1}) "
-                                 "MERGE (b:ByteSet {md5hash: $targetHash}) "
-                                 "CREATE (new:Dataset {id:$id, title:$title, desc:$desc, latest:1})-[r:Contains]->(b) "
-                                 "SET old.latest=0 "
-                                 "CREATE (old)-[r2:NextVersion]->(new)"
-                                 "RETURN id(new)",
-                                 id=id,
-                                 title=title,
-                                 desc=desc,
-                                 targetHash=targetHash)
-            
-            result = result.single()
-            if result is None:
-                result = session.run("MERGE (b:ByteSet {md5hash: $targetHash}) "
-                                     "CREATE (new:Dataset {id:$id, title:$title, desc:$desc, latest:1})-[r:Contains]->(b) "
-                                     "RETURN id(new)",
-                                     id=id,
-                                     title=title,
-                                     desc=desc,
-                                     targetHash=targetHash)
-
-                return True
-                
-
-            
-
-    def addComment(self, username, filename, comment):
-        with self.driver.session() as session:
-            versionPredecessor = session.run("MATCH (a:ObservedFile) "
-                                             "WHERE a.file_name = $file_name "
-                                             "AND a.username = $username "
-                                             "RETURN id(a) "
-                                             "ORDER BY a.modified DESC LIMIT 1 ",
-                                             file_name=filename,
-                                             username=username)
-
-            vpNode = versionPredecessor.single()
-            if vpNode is None:
-                return False
-            else:
-                commentResult = session.run("MATCH (a:ObservedFile) "
-                                            "WHERE id(a) = $curNodeId "
-                                            "CREATE (c:Comment) SET c.comment = $commentStr "
-                                            "CREATE (a)-[r:HasComment]->(c)",
-                                            curNodeId=vpNode[0],
-                                            commentStr=comment)
-                return True
-
+    #
+    # Static helper method
+    #
     @staticmethod
     def _create_and_return_observations(tx, observations):
         for obs in observations:
             #
             # Create a FileObservation and its ByteSet when there's a predecessor AND the hash is new
             #
-            result = tx.run("MATCH (a:ObservedFile {file_name: $filename, username: $username, latest: 1})-[r:Contains]->(b:ByteSet) "
+            result = tx.run("MATCH (a:ObservedFile {filename: $filename, username: $username, latest: 1})-[r:Contains]->(b:ByteSet) "
                             "WHERE b.md5hash <> $newHash "
                             "MERGE (b2: ByteSet {md5hash: $newHash}) "
                             "ON CREATE SET b2.created = $sync_time "
-                            "CREATE (a2:ObservedFile {file_name: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
+                            "CREATE (a2:ObservedFile {id: apoc.create.uuid(), filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
                             "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size "
                             "CREATE (a)-[r3:NextVersion]->(a2) "
                             "RETURN id(a2)",
@@ -423,8 +411,8 @@ class GraphDB:
                 #
                 result = tx.run("MERGE (b2: ByteSet {md5hash: $newHash}) "
                                 "ON CREATE SET b2.created = $sync_time "
-                                "MERGE (a2:ObservedFile {file_name: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
-                                "ON CREATE SET a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size "                                
+                                "MERGE (a2:ObservedFile {filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
+                                "ON CREATE SET a2.id = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size "                                
                                 "RETURN id(a2)",
                                 filename = obs["file_name"],
                                 username = obs["username"],
@@ -456,6 +444,59 @@ class GraphDB:
                     #                          dstNodeId=curNodeId)
 
 
+    #
+    # Add a new Dataset object to the store
+    #
+    def addDataset(self, datasetId, title, desc, targetHash):
+        with self.driver.session() as session:
+            result = session.run("MATCH (old:Dataset {id:$id, latest:1}) "
+                                 "MERGE (b:ByteSet {md5hash: $targetHash}) "
+                                 "CREATE (new:Dataset {id:$id, title:$title, desc:$desc, latest:1})-[r:Contains]->(b) "
+                                 "SET old.latest=0 "
+                                 "CREATE (old)-[r2:NextVersion]->(new)"
+                                 "RETURN new.id",
+                                 id=datasetId,
+                                 title=title,
+                                 desc=desc,
+                                 targetHash=targetHash)
+            
+            result = result.single()
+            if result is None:
+                result = session.run("MERGE (b:ByteSet {md5hash: $targetHash}) "
+                                     "CREATE (new:Dataset {id:$id, title:$title, desc:$desc, latest:1})-[r:Contains]->(b) "
+                                     "RETURN new.id",
+                                     id=datasetId,
+                                     title=title,
+                                     desc=desc,
+                                     targetHash=targetHash)
+
+                return True
+                
+    #
+    # Add a Comment to a Dataset object (REMIND: currently broken)
+    #
+    def addComment(self, username, filename, comment):
+        with self.driver.session() as session:
+            versionPredecessor = session.run("MATCH (a:ObservedFile) "
+                                             "WHERE a.filename = $file_name "
+                                             "AND a.username = $username "
+                                             "RETURN a.id "
+                                             "ORDER BY a.modified DESC LIMIT 1 ",
+                                             file_name=filename,
+                                             username=username)
+
+            vpNode = versionPredecessor.single()
+            if vpNode is None:
+                return False
+            else:
+                commentResult = session.run("MATCH (a:ObservedFile {id:$curNodeId}) "
+                                            "CREATE (c:Comment) SET c.comment = $commentStr "
+                                            "CREATE (a)-[r:HasComment]->(c)",
+                                            curNodeId=vpNode[0],
+                                            commentStr=comment)
+                return True
+
+
 #
 # Show all the details for a particular user's files
 #
@@ -467,18 +508,18 @@ def show_user_profile(username):
     #
     out += "<h2>All files</h2>"
     out += "<table border=1 cellpadding=5>"
-    out += "<tr><td>Hash</td><td>Filename</td><td>Size</td><td>Last Modified</td><td>Last Sync</td><td># optional fields</td><td>Other Users</td></tr>"
+    out += "<tr><td>Filename</td><td>Size</td><td>Last Modified</td><td>Last Sync</td><td># optional fields</td><td>Other Users</td></tr>"
     maxItems = 3
     count = 0
-    for hash, fname, fsize, modified, synctime in GDB.getAllFiles(username):
+    for fileId, fname, fsize, modified, synctime in GDB.getUserDetails(username):
         mod_date = datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S')
         sync_date = datetime.datetime.fromtimestamp(synctime).strftime('%Y-%m-%d %H:%M:%S')
 
-        out += "<tr><td>{}</td><td>{}</td><td>{} B</td><td>{}</td><td>{}</td><td></td><td></td></tr>".format(hash, fname, fsize, mod_date, sync_date)
+        out += '<tr><td><a href="/file/{}">{}</a></td><td>{} B</td><td>{}</td><td>{}</td><td></td><td></td></tr>'.format(fileId, fname, fsize, mod_date, sync_date)
 
         count += 1
         if count > maxItems:
-            out += "<tr><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td></tr>"
+            out += "<tr><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td></tr>"
             break
     out += "</table>"
 
@@ -488,13 +529,11 @@ def show_user_profile(username):
     out += "<p>"
     out += "<h2>Likely version events</h2>"
     out += "<table border=1 cellpadding=5>"
-    out += "<tr><td><b>Filename</b></td><td><b>Hash 1</b></td><td><b>Size 1</b></td><td><b>Last Modified 1</b></td><td><b>Hash 2</b></td><td><b>Size 2</b></td><td><b>Last Modified 2</b></td></tr>"
-    for fname, h1, s1, lm1, h2, s2, lm2 in GDB.getVersionedPairs(username):
+    out += "<tr><td><b>Filename</b></td><td><b>Size 1</b></td><td><b>Last Modified 1</b></td><td><b>Size 2</b></td><td><b>Last Modified 2</b></td></tr>"
+    for fname, s1, lm1, s2, lm2 in GDB.getVersionedPairsForUser(username):
         out += "<tr><td>{}</td>".format(fname)
-        out += "<td>{}</td>".format(h1)
         out += "<td>{}</td>".format(s1)
         out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(lm1).strftime('%Y-%m-%d %H:%M:%S'))
-        out += "<td>{}</td>".format(h2)
         out += "<td>{}</td>".format(s2)
         out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(lm2).strftime('%Y-%m-%d %H:%M:%S'))
         out += "</tr>"
@@ -507,7 +546,7 @@ def show_user_profile(username):
     out += "<h2>Likely outgoing sharing events</h2>"
     out += "<table border=1 cellpadding=5>"
     out += "<tr><td><b>Source filename</b></td><td><b>Source user</b></td><td><b>Source synctime</b></td><td><b>Dst filename</b></td><td><b>Dst user</b></td><td><b>Dst synctime</b></td></tr>"
-    for srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime in GDB.getOutgoingSharingPairs(username):
+    for srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime in GDB.findOutgoingSharingPairsForUser(username):
         out += "<tr><td>{}</td>".format(srcFname)
         out += "<td>{}</td>".format(srcUser)
         out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(srcSynctime).strftime('%Y-%m-%d %H:%M:%S'))
@@ -524,7 +563,7 @@ def show_user_profile(username):
     out += "<h2>Likely incoming sharing events</h2>"
     out += "<table border=1 cellpadding=5>"
     out += "<tr><td><b>Source filename</b></td><td><b>Source user</b></td><td><b>Source synctime</b></td><td><b>Dst filename</b></td><td><b>Dst user</b></td><td><b>Dst synctime</b></td></tr>"
-    for srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime in GDB.getIncomingSharingPairs(username):
+    for srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime in GDB.findIncomingSharingPairsForUser(username):
         out += "<tr><td>{}</td>".format(srcFname)
         out += "<td>{}</td>".format(srcUser)
         out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(srcSynctime).strftime('%Y-%m-%d %H:%M:%S'))
@@ -536,6 +575,75 @@ def show_user_profile(username):
 
 
     return f'User {escape(username)} <br> {out}'
+
+
+#
+# Show the details of a particular ByteSet
+#
+@app.route('/byteset/<md5>')
+def show_byteset(md5):
+    out = '<a href="/">Back to user listing</a>'
+    out += "<h1>ByteSet {}</h1>".format(md5)
+
+    fileinfo, datasetInfo = GDB.getBytesetDetails(md5)
+    out += "<p>"
+    out += "<h2>Files that currently contain this ByteSet</h2>"
+    out += "<table border=1 cellpadding=5>"
+    out += "<tr><td><b>Filename</b></td><td><b>Owner</b></td></tr>"
+    for fileid, username, filename, isLatest in fileinfo:
+        obsoleteComment = " (Obsolete)"
+        if isLatest:
+            obsoleteComment = ""
+        out += "<tr><td><a href='/file/{}'>{}</a>{}</td><td><a href='/user/{}'>{}</a></td></tr>".format(fileid, filename, obsoleteComment, username, username)
+    out += "</table>"    
+
+    out += "<p>"
+    out += "<h2>Datasets that currently contain these ByteSet</h2>"
+    out += "<table border=1 cellpadding=5>"
+    out += "<tr><td><b>Dataset title</b></td><td><b>Dataset ID</b></td><td><b>Dataset desc</b></td></tr>"    
+    for id, title, desc in datasetInfo:
+        out += "<tr><td>{}</td><td>{}</td><td>{}</td></tr>".format(title, id, desc)
+    out += "</table>"
+
+    return f'<br> {out}'
+
+#
+# Show the details of a particular ObservedFile
+#
+@app.route('/file/<fileid>')
+def show_file(fileid):
+    out = ''
+
+    foundFile = GDB.getFileObservationDetails(fileid)
+    if foundFile is None:
+        out += '<h1>That file cannot be found</h1>'
+        return out
+
+    fileId, username, filename, modified, synctime, prevId, nextId, latest, md5hash = foundFile
+    out += '<a href="/user/{}">Back to user {}</a><p>'.format(username, username)
+
+    modified_str = datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S')
+    synctime_str = datetime.datetime.fromtimestamp(synctime).strftime('%Y-%m-%d %H:%M:%S')
+
+    out += "<h1>{}</h1>".format(filename)
+    out += "<h3>ID {}</h3>".format(fileId)
+    out += '<h3>Last modified on {}. First seen on {}</h3><p>'.format(modified_str, synctime_str)
+    out += '<p>'
+    out += '<h3>Contains ByteSet <a href="/byteset/{}">{}</a></h3>'.format(md5hash, md5hash)
+    out += '<p>'
+    if prevId:
+        out += '<a href="/file/{}">Previous version.</a> '.format(prevId)
+    else:
+        out += 'This is the first version of the file observed. '
+        
+    if nextId:
+        out += '<a href="/file/{}">Next version</a><p>'.format(nextId)
+    else:
+        out += 'This is the most recent version of the file observed<p>'
+
+    return out
+        
+
 
 #
 # Accept an upload of a set of file observations
