@@ -277,7 +277,7 @@ class GraphDB:
     #
     def getUserDetails(self, username):
         with self.driver.session() as session:
-            resultPairs = session.run("MATCH (a:ObservedFile) "
+            resultPairs = session.run("MATCH (a:ObservedFile {latest: 1}) "
                                       "WHERE a.username = $username "
                                       "RETURN a.id, a.filename, a.file_size, a.modified, a.sync_time",
                                      username = username)
@@ -328,16 +328,15 @@ class GraphDB:
             resultPairs = session.run("MATCH (cur:ObservedFile)-[r:NextVersion]->(next:ObservedFile) "
                                       "WHERE cur.username = $username "
                                       "AND next.username = $username "
-                                      "RETURN cur.filename, cur.file_size, cur.modified, next.file_size, next.modified "
+                                      "RETURN cur.filename, cur.file_size, cur.modified, cur.id, next.file_size, next.modified, next.id "
                                       "ORDER BY cur.filename, next.modified",
                                       username = username)
 
             if resultPairs is None:
                 return None
             else:
-                # Return (fname, hash, size, lastmodified, hash, size, lastmodified)
-                for fname, curFS, curM, nextFS, nextM in resultPairs:
-                    yield (fname, curFS, curM, nextFS, nextM)
+                for fname, fs1, m1, id1, fs2, m2, id2 in resultPairs:
+                    yield (fname, fs1, m1, id1, fs2, m2, id2)
 
             session.close()
 
@@ -527,11 +526,11 @@ def show_user_profile(username):
     # Identify version events
     #
     out += "<p>"
-    out += "<h2>Likely version events</h2>"
+    out += "<h2>Recent changes</h2>"
     out += "<table border=1 cellpadding=5>"
     out += "<tr><td><b>Filename</b></td><td><b>Size 1</b></td><td><b>Last Modified 1</b></td><td><b>Size 2</b></td><td><b>Last Modified 2</b></td></tr>"
-    for fname, s1, lm1, s2, lm2 in GDB.getVersionedPairsForUser(username):
-        out += "<tr><td>{}</td>".format(fname)
+    for fname, s1, lm1, oldId, s2, lm2, newId in GDB.getVersionedPairsForUser(username):
+        out += "<tr><td><a href='/file/{}'>{}</a></td>".format(newId, fname)
         out += "<td>{}</td>".format(s1)
         out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(lm1).strftime('%Y-%m-%d %H:%M:%S'))
         out += "<td>{}</td>".format(s2)
