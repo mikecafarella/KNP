@@ -7,8 +7,16 @@ import json
 import os
 import requests
 import json
+import csv
+import pandas as pd
+import PyPDF2
+import re
+import random
+import time
+import numpy as np
 import webbrowser
 import yaml
+
 
 CFG_DIR = '.knps'
 CFG_FILE = 'knps.cfg'
@@ -28,14 +36,35 @@ def hash_file(fname):
 #
 # Hash all the lines of a file. Should only be applied to a text file
 #
-def hash_file_lines(fname):
+def hash_file_lines(fname, file_type = "Unknown"):
     hashes = []
+    text = ""
+    if file_type == "pdf":
+        return hash_pdf_file_lines(fname)
     with open(fname, "rt") as f:
         for line in f:
+            text = text + " " + line
             line = line.strip().encode()
             hashes.append(hashlib.md5(line).hexdigest())
+    if file_type == "txt":
+        getShingles(text)
     return hashes
 
+## This is very slow
+## near-miss detection (hash-shingling)
+def hash_pdf_file_lines(fname):
+    hashes = []
+    pdfFileObj = open(fname, 'rb')
+    pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
+    for pageNumber in range(pdfReader.getNumPages()):
+        pageObj = pdfReader.getPage(pageNumber)
+        # hashes.append(hashlib.md5(pageObj.extractText().strip().encode()).hexdigest())
+        lines = pageObj.extractText().splitlines()
+        for line in lines:
+            line = line.strip().encode()
+            hashes.append(hashlib.md5(line).hexdigest())
+    pdfFileObj.close()
+    return hashes
 #
 # Transmit observations to the server
 #
@@ -104,7 +133,67 @@ def send_createdataset(user, id, title, desc, targetHash):
 
     return obj_data
 
+def hash_CSV_columns(fname):
+    hashes = []
+    df = pd.read_csv(fname)
+    for column_name in df.columns:
+        column = df[column_name].__str__().strip().encode()
+        hashes.append(hashlib.md5(column).hexdigest())
+    return hashes
 
+def hash_image(fname):
+    #Have this take in and hash an image through thing described earlier. 
+    return None
+
+# This fucntion removes punctiation and whitespace. 
+# The returns a list of tokens(words) and should not contain any lists or anything along those lines.
+def createShingleFingerprints(s, shingle_length = 5, fingerprint_bytes = 8):
+    s = re.sub(r'[^\w\s]', '', s)
+    words = s.lower().split()
+    shingles = []
+    if len(words) <= shingle_length:
+        fingerprint = int.from_bytes(hashlib.sha256(words.__str__().encode()).digest()[:fingerprint_bytes], 'little')
+        return {fingerprint}
+    for i in range(len(words)-shingle_length):
+        fingerprint = int.from_bytes(hashlib.sha256(words[i:i+shingle_length].__str__().encode()).digest()[:fingerprint_bytes], 'little')
+        shingles.append(fingerprint)
+    return shingles
+
+## So for each s
+## This function should find shingles.
+def getShingles(s, shingle_length = 5, num_shingles = 10, fingerprint_bytes = 8):
+    random.seed(0)
+    shingles = []
+    all_shingles = createShingleFingerprints(s, shingle_length, fingerprint_bytes)
+    for i in range(num_shingles):
+        factor = int(random.random()*(256**fingerprint_bytes))
+        shift = int(random.random()*(256**fingerprint_bytes))
+        new_shingles = {}
+        for shingle in all_shingles:
+            new_shingles[(factor*shingle+shift)%(256**fingerprint_bytes)] = shingle
+        minimum = min(new_shingles.keys())
+        shingles.append(new_shingles[minimum])
+    return shingles
+
+## distingiush between binary and text for unknown files
+def getFileType(f):
+    if f.lower().endswith(('.csv')):
+        return "csv"
+    if f.lower().endswith(('.doc', '.docx')):
+        return "doc"
+    if f.lower().endswith(('.html', '.htm')):
+        return "html"
+    if f.lower().endswith(('.odt')):
+        return "doc"
+    if f.lower().endswith(('.pdf')):
+        return "pdf"
+    if f.lower().endswith(('.xls', '.xlsx')):
+        return "excel"
+    if f.lower().endswith(('.ppt', '.pptx')):
+        return "ppt"
+    if f.lower().endswith(('.txt')):
+        return "txt"  
+    return "Unknown"
 
 class Error(Exception):
     """Base class for exceptions in this module."""
@@ -384,12 +473,21 @@ class Watcher:
     #    the file type or whatever we like. IF YOU ARE ADDING NEW INFO
     #    DURING THE PROFILE STAGE, ADD IT TO THIS DICTIONARY!
     #
-    def _observeFile_(self, f):
+    ### TODO:
+    ### more ways to do partial hashes (based upon file type)
+
+    def _observeFile_(self, f): 
         file_hash = hash_file(f)
-        line_hashes = hash_file_lines(f)
+        file_type = getFileType(f)
+        line_hashes = hash_file_lines(f, file_type)
         optionalFields = {}
-        optionalFields["filetype"] = "unknown"
-        return (f, file_hash, line_hashes, optionalFields)
+        optionalFields["filetype"] = file_type
+        ##CSV_Column_hashs
+        if file_type == "csv":
+            column_hashes = hash_CSV_columns(f)
+            optionalFields["column_hashes"] = column_hashes
+
+        return (f, file_hash, line_hashes, optionalFields)    
 
 #
 # main()
