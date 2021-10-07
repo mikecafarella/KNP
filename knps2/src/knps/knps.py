@@ -8,16 +8,15 @@ import os
 import requests
 import json
 import csv
-##added libraries
 import pandas as pd
 import PyPDF2
 import re
 import random
 import time
 import numpy as np
-## pip3 install python-magic
-## brew install libmagic
-# import magic
+import webbrowser
+import yaml
+
 
 CFG_DIR = '.knps'
 CFG_FILE = 'knps.cfg'
@@ -69,15 +68,20 @@ def hash_pdf_file_lines(fname):
 #
 # Transmit observations to the server
 #
-def send_synclist(username, observationList):
-    url = "http://127.0.0.1:8889/synclist/{}".format(username)
+def send_synclist(user, observationList, comment=None):
+    url = "http://127.0.0.1:8889/synclist/{}".format(user.username)
+
+    login = {
+        'username': user.username,
+        'access_token': user.access_token
+    }
 
     obsList = []
     for file_name, file_hash, line_hashes, optionalItems in observationList:
         p = Path(file_name)
         info = p.stat()
         metadata = {
-            'username': username,
+            'username': user.username,
             'file_name': file_name,
             'file_hash': file_hash,
             'line_hashes': line_hashes,
@@ -87,7 +91,44 @@ def send_synclist(username, observationList):
         }
         obsList.append({'metadata': metadata})
 
-    response = requests.post(url, files={'observations': json.dumps(obsList)})
+    fDict = {'observations': json.dumps(obsList)}
+    response = requests.post(url, files=fDict, data=login)
+    obj_data = response.json()
+
+    return obj_data
+
+
+#
+# Transmit observations to the server
+#
+def send_adornment(user, filename, comment):
+    url = "http://127.0.0.1:8889/adorn/{}".format(user.username)
+
+    login = {
+        'username': user.username,
+        'access_token': user.access_token
+    }
+
+    fDict = {'filename': json.dumps(filename), 'comment': json.dumps(comment)}
+    response = requests.post(url, files=fDict, data=login)
+    obj_data = response.json()
+
+    return obj_data
+
+
+#
+# Transmit observations to the server
+#
+def send_createdataset(user, id, title, desc, targetHash):
+    url = "http://127.0.0.1:8889/createdataset/{}".format(user.username)
+
+    login = {
+        'username': user.username,
+        'access_token': user.access_token
+    }
+
+    fDict = {'id': json.dumps(id), 'title': json.dumps(title), 'desc': json.dumps(desc), 'targetHash': json.dumps(targetHash)}
+    response = requests.post(url, files=fDict, data=login)
     obj_data = response.json()
 
     return obj_data
@@ -174,20 +215,66 @@ class WrongUserError(Error):
 class User:
     def __init__(self):
         self.load_db()
-        self.username, self.userhash = self.get_current_user()
+        self.username, self.access_token = self.get_current_user()
 
+    def login(self):
+        ROOTURL = "http://127.0.0.1:8889"
+        url = ROOTURL + "/cli_login"
 
-    def login(self, username, password):
-        # This is not really a login. TODO: make this good
-        self.username = username
-        salt = username.encode() # BAD!
-        self.userhash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 100000).hex()
+        response = requests.get(url)
+        data = response.json()
 
-        if self.username not in self.db:
-            self.db[self.username] = {}
+        if 'login_url' in data:
+            print("Opening web browser for login...")
+            webbrowser.open(data['login_url'])
+            token_url = ROOTURL + "/get_token"
+            token_response = requests.post(token_url, data={'login_code': data['login_code']})
+            token_data = token_response.json()
 
-        self.db['__CURRENT_USER__'] = (self.username, self.userhash)
-        self.save_db()
+            username = token_data['email']
+            # This is not really a login. TODO: make this good
+            self.username = username
+            self.access_token = token_data['access_token']
+
+            if self.username not in self.db:
+                self.db[self.username] = {}
+
+            self.db['__CURRENT_USER__'] = (self.username, self.access_token)
+            self.save_db()
+
+            print("You are now logged in as: {}".format(token_data['email']))
+
+    def logout(self):
+        ROOTURL = "http://127.0.0.1:8889"
+        url = ROOTURL + "/cli_logout"
+
+        response = requests.post(url, data={'access_token': self.access_token})
+        data = response.json()
+
+        if 'logout_url' in data:
+            del(self.db['__CURRENT_USER__'])
+            self.username = None
+            self.access_token = None
+            self.save_db()
+
+            print("Opening web browser for logout...")
+            webbrowser.open('https://dev-66403161.okta.com/login/signout')
+            # token_url = ROOTURL + "/get_token"
+            # token_response = requests.post(token_url, data={'login_code': data['login_code']})
+            # token_data = token_response.json()
+            #
+            # username = token_data['email']
+            # # This is not really a login. TODO: make this good
+            # self.username = username
+            # self.access_token = token_data['access_token']
+            #
+            # if self.username not in self.db:
+            #     self.db[self.username] = {}
+            #
+            # self.db['__CURRENT_USER__'] = (self.username, self.access_token)
+            # self.save_db()
+            #
+            # print("You are now logged in as: {}".format(token_data['email']))
 
     def load_db(self):
         p = Path(Path.home(), DB_FILE)
@@ -292,6 +379,27 @@ class Watcher:
 
 
     #
+    # Comment on an observed file
+    #
+    def addComment(self, f, comment):
+        # Must clear the observation sync list first
+        self.observeAndSync()
+
+        # Transmit observation and comment
+        send_adornment(self.user, str(Path(f).resolve()), comment)
+
+    #
+    # Create a Dataset for a given file.
+    #
+    def addDataset(self, configYamlFile):
+        self.observeAndSync()
+
+        with open(configYamlFile, "r") as stream:
+            configYaml = yaml.safe_load(stream)
+
+            send_createdataset(self.user, configYaml["id"], configYaml["title"], configYaml["desc"], configYaml["targetHash"])
+
+    #
     # Collect some observations
     #
     def observeAndSync(self):
@@ -305,7 +413,7 @@ class Watcher:
         # interrupted.
         #
         if todoPair is None:
-            print("No existing observation list. Formulating new one...")            
+            print("No existing observation list. Formulating new one...")
             k = 50
             longTodoList = [x for x in self.user.get_files()]
             smallTodoLists = [longTodoList[i:i+k] for i in range(0, len(longTodoList), k)]
@@ -322,6 +430,7 @@ class Watcher:
         #
         while todoPair is not None:
             k, todoList = todoPair
+            print("Processing a pair", todoList)
 
             # Process what's on the TODO list, upload it a chunk at a time
             observationList = []
@@ -329,20 +438,26 @@ class Watcher:
             skipCount = 0
             uploadCount = 0
             for f in todoChunk:
+                print("Processing", f)
                 try:
                     observationList.append(self._observeFile_(f))
                     uploadCount += 1
                 except:
                     skipCount += 1
+            print("Sending the synclist")
+            response = send_synclist(self.user, observationList)
 
-            send_synclist(self.user.username, observationList)
-            print("Observed and uploaded", uploadCount, "items. Skipped", skipCount)            
-            
-            # Mark the TODO list as done
-            self.user.removeTodoList(k)
+            if 'error' in response:
+                print('ERROR: {}'.format(response['error']))
+                break
+            else:
+                print("Observed and uploaded", uploadCount, "items. Skipped", skipCount)
 
-            # Get the next one if available
-            todoPair = self.user.getNextTodoList()
+                # Mark the TODO list as done
+                self.user.removeTodoList(k)
+
+                # Get the next one if available
+                todoPair = self.user.getNextTodoList()
 
 
     #
@@ -373,8 +488,8 @@ class Watcher:
             column_hashes = hash_CSV_columns(f)
             optionalFields["column_hashes"] = column_hashes
 
-        return (f, file_hash, line_hashes, optionalFields)
-    
+        return (f, file_hash, line_hashes, optionalFields)    
+
 #
 # main()
 #
@@ -382,9 +497,12 @@ if __name__ == "__main__":
     # execute only if run as a script
     parser = argparse.ArgumentParser(description='KNPS command line')
 
-    parser.add_argument("--login", help="Perform login")
+    parser.add_argument("--login", action="store_true", help="Perform login")
+    parser.add_argument("--logout", action="store_true", help="Logout current user")
     parser.add_argument("--status", nargs="*", help="Check KNPS status", default=None)
     parser.add_argument("--watch", help="Add a directory to watch")
+    parser.add_argument("--comment", nargs="+", help="Add a comment to a data object")
+    parser.add_argument("--addDataset", help="Add a Dataset to the graph. Takes a YAML file")    
     parser.add_argument("--sync", action="store_true", help="Sync observations to service")
     parser.add_argument('args', type=str, help="KNPS command arguments", nargs='*' )
 
@@ -392,30 +510,58 @@ if __name__ == "__main__":
 
     u = User()
     if args.login:
-        u.login(args.login, 'password1') # TODO: BAD!
-        
+        u.login()
+    elif args.logout:
+        u.logout()
     elif args.watch:
-        w = Watcher(u)
-        w.watch(args.watch)
-        
+        if not u.username:
+            print("Not logged in.")
+        else:
+            w = Watcher(u)
+            w.watch(args.watch)
+
+    elif args.comment:
+        if not u.username:
+            print("Not logged in.")
+        else:
+            if len(args.comment) < 2:
+                print("Provide the target filename and at least a 1-word comment")
+                sys.exit(0)
+                
+            w = Watcher(u)
+            w.addComment(args.comment[0], " ".join(args.comment[1:]))
+
+    elif args.addDataset:
+        if not u.username:
+            print("Not logged in")
+        else:
+            w = Watcher(u)
+            w.addDataset(args.addDataset)
+
     elif args.status is not None:
-        print("You are logged in as", u.username)
-        dirs = u.get_dirs()
-        files = u.get_files()
-        print("You have {} top-level directories and {} files watched by knps.".format(len(dirs), len(files)))
+        if not u.username:
+            print("Not logged in.")
+        else:
+            print("You are logged in as", u.username)
+            dirs = u.get_dirs()
+            files = u.get_files()
+            print("You have {} top-level directories and {} files watched by knps.".format(len(dirs), len(files)))
 
-        if 'dirs' in args.status:
-            print("\nWatched directories:")
-            for d in dirs:
-                print("   {}".format(d))
+            if 'dirs' in args.status:
+                print("\nWatched directories:")
+                for d in dirs:
+                    print("   {}".format(d))
 
-        if 'files' in args.status:
-            print("\nWatched files:")
-            for d in files:
-                print("   {}".format(d))
+            if 'files' in args.status:
+                print("\nWatched files:")
+                for d in files:
+                    print("   {}".format(d))
 
         if 'dirs' in args.status or 'files' in args.status:
             print()
 
     elif args.sync:
-        Watcher(u).observeAndSync()
+        if not u.username:
+            print("Not logged in.")
+        else:
+            Watcher(u).observeAndSync()
