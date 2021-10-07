@@ -341,7 +341,6 @@ class Watcher:
         #
         while todoPair is not None:
             k, todoList = todoPair
-            print("Processing a pair", todoList)
 
             # Process what's on the TODO list, upload it a chunk at a time
             observationList = []

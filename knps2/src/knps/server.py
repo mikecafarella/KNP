@@ -386,14 +386,19 @@ class GraphDB:
             #
             # Create a FileObservation and its ByteSet when there's a predecessor AND the hash is new
             #
-            result = tx.run("MATCH (a:ObservedFile {filename: $filename, username: $username, latest: 1})-[r:Contains]->(b:ByteSet) "
+            txStr = ("MATCH (a:ObservedFile {filename: $filename, username: $username, latest: 1})-[r:Contains]->(b:ByteSet) "
                             "WHERE b.md5hash <> $newHash "
                             "MERGE (b2: ByteSet {md5hash: $newHash}) "
                             "ON CREATE SET b2.created = $sync_time, b2.line_hashes = $line_hashes "
                             "CREATE (a2:ObservedFile {id: apoc.create.uuid(), filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
-                            "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size "
-                            "CREATE (a)-[r3:NextVersion]->(a2) "
-                            "RETURN id(a2)",
+                            "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size")
+            for k, v in obs.get("optionalItems", {}).items():
+                txStr += ", a2.{}=\"{}\"".format("optional_" + k, v)
+            txStr += " CREATE (a)-[r3:NextVersion]->(a2) "
+            txStr += "RETURN id(a2)"
+
+            
+            result = tx.run(txStr,
                             filename = obs["file_name"],
                             username = obs["username"],
                             newHash = obs["file_hash"],
@@ -405,15 +410,20 @@ class GraphDB:
             result = result.single()
             if result is None:
                 # This gets run when there's no predecessor OR when the hash isn't new.
+                txStr = ("MERGE (b2: ByteSet {md5hash: $newHash}) "
+                        "ON CREATE SET b2.created = $sync_time "
+                        "MERGE (a2:ObservedFile {filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
+                        "ON CREATE SET a2.id = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size")
+
+                for k, v in obs.get("optionalItems", {}).items():
+                    txStr += ", a2.{}=\"{}\"".format("optional_" + k, v)
+                txStr += " RETURN id(a2)"
+                
                 
                 #
                 # Create a FileObservation and its ByteSet when there is no predecessor
                 #
-                result = tx.run("MERGE (b2: ByteSet {md5hash: $newHash}) "
-                                "ON CREATE SET b2.created = $sync_time "
-                                "MERGE (a2:ObservedFile {filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
-                                "ON CREATE SET a2.id = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size "
-                                "RETURN id(a2)",
+                result = tx.run(txStr,
                                 filename = obs["file_name"],
                                 username = obs["username"],
                                 newHash = obs["file_hash"],
@@ -421,28 +431,6 @@ class GraphDB:
                                 file_size = obs["file_size"],                                
                                 sync_time = obs["sync_time"])
 
-            else:
-                pass
-                    # Create outgoing share edges, if appropriate
-                    #shareEdgeResult1 = tx.run("MATCH (src:ObservedFile), (dst: ObservedFile) "
-                    #                          "WHERE id(src) = $srcNodeId "
-                    #                          "AND src.file_hash = dst.file_hash "
-                    #                          "AND src.username <> dst.username "
-                    #                          "AND src.modified < dst.modified "
-                    #                          "CREATE (src)-[r:ShareTo]->(dst) "
-                    #                          "RETURN id(r)",
-                    #                          srcNodeId=curNodeId)
-
-
-                    # Create incoming share edges, if appropriate
-                    #shareEdgeResult1 = tx.run("MATCH (src:ObservedFile), (dst: ObservedFile) "
-                    #                          "WHERE id(dst) = $dstNodeId "
-                    #                          "AND src.file_hash = dst.file_hash "
-                    #                          "AND src.username <> dst.username "
-                    #                          "AND src.modified < dst.modified "
-                    #                          "CREATE (src)-[r:ShareTo]->(dst) "
-                    #                          "RETURN id(r)",
-                    #                          dstNodeId=curNodeId)
 
 
     #
