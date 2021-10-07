@@ -389,7 +389,7 @@ class GraphDB:
             result = tx.run("MATCH (a:ObservedFile {filename: $filename, username: $username, latest: 1})-[r:Contains]->(b:ByteSet) "
                             "WHERE b.md5hash <> $newHash "
                             "MERGE (b2: ByteSet {md5hash: $newHash}) "
-                            "ON CREATE SET b2.created = $sync_time "
+                            "ON CREATE SET b2.created = $sync_time, b2.line_hashes = $line_hashes "
                             "CREATE (a2:ObservedFile {id: apoc.create.uuid(), filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
                             "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size "
                             "CREATE (a)-[r3:NextVersion]->(a2) "
@@ -399,7 +399,8 @@ class GraphDB:
                             newHash = obs["file_hash"],
                             modified = obs["modified"],
                             file_size = obs["file_size"],
-                            sync_time = obs["sync_time"])
+                            sync_time = obs["sync_time"],
+                            line_hashes = obs["line_hashes"])
 
             result = result.single()
             if result is None:
@@ -411,7 +412,7 @@ class GraphDB:
                 result = tx.run("MERGE (b2: ByteSet {md5hash: $newHash}) "
                                 "ON CREATE SET b2.created = $sync_time "
                                 "MERGE (a2:ObservedFile {filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
-                                "ON CREATE SET a2.id = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size "                                
+                                "ON CREATE SET a2.id = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size "
                                 "RETURN id(a2)",
                                 filename = obs["file_name"],
                                 username = obs["username"],
@@ -419,6 +420,7 @@ class GraphDB:
                                 modified = obs["modified"],
                                 file_size = obs["file_size"],                                
                                 sync_time = obs["sync_time"])
+
             else:
                 pass
                     # Create outgoing share edges, if appropriate
