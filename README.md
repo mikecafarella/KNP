@@ -1,5 +1,5 @@
 ## Installation
-Requirements: python3, node (v12 tested), npm 
+Requirements: python3, node (v10, v12 tested), npm 
 Recommended: Run this in a python virtual environment.
 
 To enable search, an ElasticSearch server is needed. The system was tested with an ES server with default settings.
