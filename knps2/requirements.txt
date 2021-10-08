@@ -6,4 +6,4 @@ okta_jwt_verifier
 pandas
 PyPDF2
 neo4j
-yaml
+pyyaml
