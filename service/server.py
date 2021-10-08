@@ -15,6 +15,7 @@ import base64
 import json
 import datetime
 import asyncio
+import os
 
 from elasticsearch import Elasticsearch
 import uuid
