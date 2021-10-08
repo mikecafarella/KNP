@@ -321,6 +321,34 @@ class GraphDB:
 
             session.close()
 
+    #
+    #
+    #
+    def findNearbyBytesetFiles(self, md5):
+        with self.driver.session() as session:
+            results = session.run("MATCH (b1:ByteSet {md5hash: $md5hash})-[r1:JaccardMatch]->(b2:ByteSet)<-[r2:Contains]-(f1:ObservedFile {latest:1}) "
+                                  "WHERE b1.md5hash <> b2.md5hash "
+                                  "RETURN f1.filename, f1.id, f1.username",
+                                  md5hash=md5)
+            for localFname, localId, user in results:
+                yield (localFname, localId, user)
+
+    #
+    #
+    #
+    def createNearMatches(self):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a: ByteSet), (b: ByteSet) "
+                                  "WHERE a.md5hash <> b.md5hash "
+                                  "WITH a, b, size(apoc.coll.intersection(a.line_hashes, b.line_hashes)) / apoc.convert.toFloat(size(apoc.coll.union(a.line_hashes, b.line_hashes))) as jaccard "
+                                  "WHERE jaccard > 0.9 "
+                                  "MERGE (a)-[r:JaccardMatch]->(b) "
+                                  "RETURN id(a), id(b), jaccard")
+            
+
+    #
+    #
+    #
     def getVersionedPairsForUser(self, username):
         with self.driver.session() as session:
             resultPairs = session.run("MATCH (cur:ObservedFile)-[r:NextVersion]->(next:ObservedFile) "
@@ -356,6 +384,11 @@ class GraphDB:
     def getBytesetDetails(self, md5hash):
         with self.driver.session() as session:
 
+            # Find details on this ByteSet
+            bytesetinfo = session.run("MATCH (b: ByteSet {md5hash: $md5hash}) "
+                                 "RETURN b.created, b.filetype",
+                                md5hash=md5hash)
+
             # Find the ObservedFiles that contain this ByteSet.
             files = session.run("MATCH (b: ByteSet {md5hash: $md5hash})<-[r:Contains]-(o:ObservedFile) "
                                  "RETURN o.id, o.username, o.filename, o.latest",
@@ -366,7 +399,7 @@ class GraphDB:
                                    "RETURN d.id, d.title, d.desc",
                                    md5hash=md5hash)
 
-            return ([p for p in files], [d for d in datasets])
+            return (bytesetinfo.single(), [p for p in files], [d for d in datasets])
 
     #
     # Add new FileObservations to the store
@@ -387,7 +420,7 @@ class GraphDB:
             txStr = ("MATCH (a:ObservedFile {filename: $filename, username: $username, latest: 1})-[r:Contains]->(b:ByteSet) "
                             "WHERE b.md5hash <> $newHash "
                             "MERGE (b2: ByteSet {md5hash: $newHash}) "
-                            "ON CREATE SET b2.created = $sync_time, b2.line_hashes = $line_hashes "
+                            "ON CREATE SET b2.created = $sync_time, b.filetype = $filetype, b2.line_hashes = $line_hashes "
                             "CREATE (a2:ObservedFile {id: apoc.create.uuid(), filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
                             "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size")
             for k, v in obs.get("optionalItems", {}).items():
@@ -395,12 +428,12 @@ class GraphDB:
             txStr += " CREATE (a)-[r3:NextVersion]->(a2) "
             txStr += "RETURN id(a2)"
 
-            
             result = tx.run(txStr,
                             filename = obs["file_name"],
                             username = obs["username"],
                             newHash = obs["file_hash"],
                             modified = obs["modified"],
+                            filetype = obs["filetype"],
                             file_size = obs["file_size"],
                             sync_time = obs["sync_time"],
                             line_hashes = obs["line_hashes"])
@@ -409,7 +442,7 @@ class GraphDB:
             if result is None:
                 # This gets run when there's no predecessor OR when the hash isn't new.
                 txStr = ("MERGE (b2: ByteSet {md5hash: $newHash}) "
-                        "ON CREATE SET b2.created = $sync_time "
+                        "ON CREATE SET b2.created = $sync_time, b2.filetype = $filetype, b2.line_hashes = $line_hashes "
                         "MERGE (a2:ObservedFile {filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
                         "ON CREATE SET a2.id = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size")
 
@@ -426,10 +459,10 @@ class GraphDB:
                                 username = obs["username"],
                                 newHash = obs["file_hash"],
                                 modified = obs["modified"],
-                                file_size = obs["file_size"],                                
-                                sync_time = obs["sync_time"])
-
-
+                                file_size = obs["file_size"],
+                                filetype = obs["filetype"],                                
+                                sync_time = obs["sync_time"],
+                                line_hashes = obs["line_hashes"])
 
     #
     # Add a new Dataset object to the store
@@ -558,7 +591,6 @@ def show_user_profile(username):
         out += "</tr>"
     out += "</table>"
 
-
     return f'User {escape(username)} <br> {out}'
 
 
@@ -570,8 +602,14 @@ def show_byteset(md5):
     out = '<a href="/">Back to user listing</a>'
     out += "<h1>ByteSet {}</h1>".format(md5)
 
-    fileinfo, datasetInfo = GDB.getBytesetDetails(md5)
+    bytesetInfo, fileinfo, datasetInfo = GDB.getBytesetDetails(md5)
+    bytesetCreated, bytesetFormat = bytesetInfo
+    
     out += "<p>"
+    out += "<h2>Created on: {}</h2>".format(datetime.datetime.fromtimestamp(bytesetCreated).strftime('%Y-%m-%d %H:%M:%S'))
+    out += "<p>"
+    out += "<h2>Data format: {}</h2>".format(bytesetFormat)
+    out += "<p>"    
     out += "<h2>Files that currently contain this ByteSet</h2>"
     out += "<table border=1 cellpadding=5>"
     out += "<tr><td><b>Filename</b></td><td><b>Owner</b></td></tr>"
@@ -580,7 +618,20 @@ def show_byteset(md5):
         if isLatest:
             obsoleteComment = ""
         out += "<tr><td><a href='/file/{}'>{}</a>{}</td><td><a href='/user/{}'>{}</a></td></tr>".format(fileid, filename, obsoleteComment, username, username)
-    out += "</table>"    
+    out += "</table>"
+
+    #
+    # Identify near-hit ByteSets
+    #
+    out += "<p>"
+    out += "<h2>Files that currently contain near-duplicates of this ByteSet</h2>"
+    out += "<table border=1 cellpadding=5>"
+    out += "<tr><td><b>Filename</b></td><td><b>Owner</b></td></tr>"
+    for localFname, localFileId, owner in GDB.findNearbyBytesetFiles(md5):
+        out += '<tr><td><a href="/file/{}">{}</a></td>'.format(localFileId, localFname)
+        out += '<td><a href="/user/{}">{}</a></td>'.format(owner, owner)
+        out += '</tr>'
+    out += "</table>"        
 
     out += "<p>"
     out += "<h2>Datasets that currently contain these ByteSet</h2>"
@@ -616,6 +667,8 @@ def show_file(fileid):
     out += '<p>'
     out += '<h3>Contains ByteSet <a href="/byteset/{}">{}</a></h3>'.format(md5hash, md5hash)
     out += '<p>'
+    out += '<h3>Owned by <a href="/user/{}">{}</a></h3>'.format(username, username)
+    out += '<p>'
     if prevId:
         out += '<a href="/file/{}">Previous version.</a> '.format(prevId)
     else:
@@ -625,6 +678,17 @@ def show_file(fileid):
         out += '<a href="/file/{}">Next version</a><p>'.format(nextId)
     else:
         out += 'This is the most recent version of the file observed<p>'
+
+    out += "<p>"
+    out += "<h2>Files that are currently near-duplicates of this File</h2>"
+    out += "<table border=1 cellpadding=5>"
+    out += "<tr><td><b>Filename</b></td><td><b>Owner</b></td></tr>"
+    for localFname, localFileId, owner in GDB.findNearbyBytesetFiles(md5hash):
+        out += '<tr><td><a href="/file/{}">{}</a></td>'.format(localFileId, localFname)
+        out += '<td><a href="/user/{}">{}</a></td>'.format(owner, owner)
+        out += '</tr>'
+    out += "</table>"        
+
 
     return out
         
@@ -662,6 +726,12 @@ def sync_filelist(username):
         obs["sync_time"] = syncTime
 
     GDB.addObservations(observations)
+
+    #
+    # This call is currently quite bad, algorithmically.
+    # It will get too slow when the repository is large.
+    # We need to reimplement eventually
+    GDB.createNearMatches()
 
     # show the user profile for that user
     return json.dumps(username)

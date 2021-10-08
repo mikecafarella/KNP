@@ -77,13 +77,14 @@ def send_synclist(user, observationList, comment=None):
     }
 
     obsList = []
-    for file_name, file_hash, line_hashes, optionalItems in observationList:
+    for file_name, file_hash, file_type, line_hashes, optionalItems in observationList:
         p = Path(file_name)
         info = p.stat()
         metadata = {
             'username': user.username,
             'file_name': file_name,
             'file_hash': file_hash,
+            'filetype': file_type,            
             'line_hashes': line_hashes,
             'file_size': info.st_size,
             'modified': info.st_mtime,
@@ -487,7 +488,7 @@ class Watcher:
             column_hashes = hash_CSV_columns(f)
             optionalFields["column_hashes"] = column_hashes
 
-        return (f, file_hash, line_hashes, optionalFields)    
+        return (f, file_hash, file_type, line_hashes, optionalFields)    
 
 #
 # main()
