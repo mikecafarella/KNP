@@ -288,38 +288,36 @@ class GraphDB:
             session.close()
 
     #
-    # Return (srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime)
     #
-    def findIncomingSharingPairsForUser(self, username):
+    #
+    def findOutgoingSharingPairsForUser(self, username):
         with self.driver.session() as session:
-            results = session.run("MATCH (a:ObservedFile), (b:ObservedFile) "
-                                  "WHERE a.file_hash = b.file_hash "
-                                  "AND a.username <> b.username "
-                                  "AND a.sync_time < b.sync_time "
-                                  "AND b.username = $username "
-                                  "RETURN a.filename, a.username, a.sync_time, b.filename, b.username, b.sync_time",
+            results = session.run("MATCH (f1:ObservedFile)-[r1:Contains]->(b1:ByteSet)<-[r2:Contains]-(f2:ObservedFile)  "
+                                  "WHERE f1.username = $username "
+                                  "AND f1.username <> f2.username "
+                                  "AND f1.modified < f2.modified "
+                                  "RETURN f1.filename, f1.id, f1.username, f1.modified, f2.filename, f2.id, f2.username, f2.modified",
                                   username=username)
 
-            for srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime in results:
-                yield (srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime)
+            for srcFname, srcId, srcUser, srcTime, dstFname, dstId, dstUser, dstTime in results:
+                yield (srcFname, srcId, srcUser, srcTime, dstFname, dstId, dstUser, dstTime)
 
             session.close()
 
     #
     #
     #
-    def findOutgoingSharingPairsForUser(self, username):
+    def findIncomingSharingPairsForUser(self, username):
         with self.driver.session() as session:
-            results = session.run("MATCH (a:ObservedFile), (b:ObservedFile) "
-                                  "WHERE a.file_hash = b.file_hash "
-                                  "AND a.username <> b.username "
-                                  "AND a.sync_time < b.sync_time "
-                                  "AND a.username = $username "
-                                  "RETURN a.filename, a.username, a.sync_time, b.filename, b.username, b.sync_time",
+            results = session.run("MATCH (f1:ObservedFile)-[r1:Contains]->(b1:ByteSet)<-[r2:Contains]-(f2:ObservedFile)  "
+                                  "WHERE f1.username = $username "
+                                  "AND f1.username <> f2.username "
+                                  "AND f1.modified > f2.modified "
+                                  "RETURN f1.filename, f1.id, f1.username, f1.modified, f2.filename, f2.id, f2.username, f2.modified",
                                   username=username)
 
-            for srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime in results:
-                yield (srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime)
+            for srcFname, srcId, srcUser, srcTime, dstFname, dstId, dstUser, dstTime in results:
+                yield (srcFname, srcId, srcUser, srcTime, dstFname, dstId, dstUser, dstTime)
 
             session.close()
 
@@ -534,14 +532,13 @@ def show_user_profile(username):
     out += "<p>"
     out += "<h2>Likely outgoing sharing events</h2>"
     out += "<table border=1 cellpadding=5>"
-    out += "<tr><td><b>Source filename</b></td><td><b>Source user</b></td><td><b>Source synctime</b></td><td><b>Dst filename</b></td><td><b>Dst user</b></td><td><b>Dst synctime</b></td></tr>"
-    for srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime in GDB.findOutgoingSharingPairsForUser(username):
-        out += "<tr><td>{}</td>".format(srcFname)
-        out += "<td>{}</td>".format(srcUser)
-        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(srcSynctime).strftime('%Y-%m-%d %H:%M:%S'))
-        out += "<td>{}</td>".format(dstFname)
-        out += "<td>{}</td>".format(dstUser)
-        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(dstSynctime).strftime('%Y-%m-%d %H:%M:%S'))
+    out += "<tr><td><b>Local filename</b></td><td><b>Local modified</b></td><td><b>Partner filename</b></td><td><b>Partner user</b></td><td><b>Partner modified</b></td></tr>"
+    for srcFname, srcFileId, srcUser, srcTime, dstFname, dstFileId, dstUser, dstTime in GDB.findOutgoingSharingPairsForUser(username):
+        out += '<tr><td><a href="/file/{}">{}</a></td>'.format(srcFileId, srcFname)
+        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(srcTime).strftime('%Y-%m-%d %H:%M:%S'))
+        out += '<td><a href="/file/{}">{}</a></td>'.format(dstFileId, dstFname)
+        out += '<td><a href="/user/{}">{}</td>'.format(dstUser, dstUser)
+        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(dstTime).strftime('%Y-%m-%d %H:%M:%S'))
         out += "</tr>"
     out += "</table>"
 
@@ -551,14 +548,13 @@ def show_user_profile(username):
     out += "<p>"
     out += "<h2>Likely incoming sharing events</h2>"
     out += "<table border=1 cellpadding=5>"
-    out += "<tr><td><b>Source filename</b></td><td><b>Source user</b></td><td><b>Source synctime</b></td><td><b>Dst filename</b></td><td><b>Dst user</b></td><td><b>Dst synctime</b></td></tr>"
-    for srcFname, srcUser, srcSynctime, dstFname, dstUser, dstSynctime in GDB.findIncomingSharingPairsForUser(username):
-        out += "<tr><td>{}</td>".format(srcFname)
-        out += "<td>{}</td>".format(srcUser)
-        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(srcSynctime).strftime('%Y-%m-%d %H:%M:%S'))
-        out += "<td>{}</td>".format(dstFname)
-        out += "<td>{}</td>".format(dstUser)
-        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(dstSynctime).strftime('%Y-%m-%d %H:%M:%S'))
+    out += "<tr><td><b>Local filename</b></td><td><b>Local modified</b></td><td><b>Partner filename</b></td><td><b>Partner user</b></td><td><b>Partner modified</b></td></tr>"
+    for localFname, localFileId, localUser, localTime, shareFname, shareFileId, shareUser, shareTime in GDB.findIncomingSharingPairsForUser(username):
+        out += '<tr><td><a href="/file/{}">{}</a></td>'.format(localFileId, localFname)
+        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(localTime).strftime('%Y-%m-%d %H:%M:%S'))
+        out += '<td><a href="/file/{}">{}</a></td>'.format(shareFileId, shareFname)
+        out += '<td><a href="/user/{}">{}</td>'.format(shareUser, shareUser)
+        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(shareTime).strftime('%Y-%m-%d %H:%M:%S'))
         out += "</tr>"
     out += "</table>"
 
