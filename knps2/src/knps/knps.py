@@ -393,7 +393,7 @@ class Watcher:
     # Create a Dataset for a given file.
     #
     def addDataset(self, configYamlFile):
-        self.observeAndSync()
+        #self.observeAndSync()
 
         with open(configYamlFile, "r") as stream:
             configYaml = yaml.safe_load(stream)

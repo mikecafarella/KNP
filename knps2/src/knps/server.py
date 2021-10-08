@@ -290,6 +290,34 @@ class GraphDB:
     #
     #
     #
+    def getDatasetInfoByUser(self, username):
+        with self.driver.session() as session:
+            results = session.run("MATCH (d:Dataset {latest: 1, owner: $username}) "
+                                  "RETURN d.id, d.title, d.modified",
+                                  username = username)
+
+            for id, title, modified in results:
+                yield (id, title, modified)
+
+            session.close()
+
+    #
+    #
+    #
+    def getDatasetInfoById(self, id):
+        with self.driver.session() as session:
+            print("ID", id)
+            results = session.run("MATCH (d:Dataset {latest: 1, id: 1})-[r:Contains]->(b:ByteSet) "
+                                  "RETURN d.id, d.title, d.desc, d.owner, d.modified, b.md5hash",
+                                  id=id)
+
+            #print(results.single())
+            return tuple(results.single())
+            #session.close()
+
+    #
+    #
+    #
     def findOutgoingSharingPairsForUser(self, username):
         with self.driver.session() as session:
             results = session.run("MATCH (f1:ObservedFile)-[r1:Contains]->(b1:ByteSet)<-[r2:Contains]-(f2:ObservedFile)  "
@@ -399,7 +427,7 @@ class GraphDB:
                                    "RETURN d.id, d.title, d.desc",
                                    md5hash=md5hash)
 
-            return (bytesetinfo.single(), [p for p in files], [d for d in datasets])
+            return (tuple(bytesetinfo.single()), [p for p in files], [d for d in datasets])
 
     #
     # Add new FileObservations to the store
@@ -467,27 +495,30 @@ class GraphDB:
     #
     # Add a new Dataset object to the store
     #
-    def addDataset(self, datasetId, title, desc, targetHash):
+    def addDataset(self, datasetId, owner, title, desc, targetHash):
         with self.driver.session() as session:
-            result = session.run("MATCH (old:Dataset {id:$id, latest:1}) "
-                                 "MERGE (b:ByteSet {md5hash: $targetHash}) "
-                                 "CREATE (new:Dataset {id:$id, title:$title, desc:$desc, latest:1})-[r:Contains]->(b) "
+            result = session.run("MATCH (old:Dataset {id:$id, latest:1}), (b:ByteSet {md5hash: $targetHash}) "
+                                 "CREATE (new:Dataset {id:$id, title:$title, owner:$owner, modified: $modified, desc:$desc, latest:1})-[r:Contains]->(b) "
                                  "SET old.latest=0 "
                                  "CREATE (old)-[r2:NextVersion]->(new)"
                                  "RETURN new.id",
                                  id=datasetId,
                                  title=title,
+                                 owner=owner,
                                  desc=desc,
+                                 modified=time.time(),
                                  targetHash=targetHash)
             
             result = result.single()
             if result is None:
-                result = session.run("MERGE (b:ByteSet {md5hash: $targetHash}) "
-                                     "CREATE (new:Dataset {id:$id, title:$title, desc:$desc, latest:1})-[r:Contains]->(b) "
+                result = session.run("MATCH (b:ByteSet {md5hash: $targetHash}) "
+                                     "CREATE (new:Dataset {id:$id, title:$title, owner:$owner, modified:$modified, desc:$desc, latest:1})-[r:Contains]->(b) "
                                      "RETURN new.id",
                                      id=datasetId,
                                      title=title,
+                                     owner=owner,
                                      desc=desc,
+                                     modified=time.time(),                                     
                                      targetHash=targetHash)
 
                 return True
@@ -523,6 +554,7 @@ class GraphDB:
 @app.route('/user/<username>')
 def show_user_profile(username):
     out = '<a href="/">Back to user listing</a>'
+
     #
     # Basic file listing
     #
@@ -544,7 +576,19 @@ def show_user_profile(username):
     out += "</table>"
 
     #
-    # Identify version events
+    # Basic Dataset listing
+    #
+    out += "<p>"
+    out += "<h2>All datasets</h2>"
+    out += "<table border=1 cellpadding=5>"
+    out += "<tr><td>Dataset</td><td>Last Modified</td></tr>"
+    for datasetId, datasetTitle, datasetModified in GDB.getDatasetInfoByUser(username):
+        out += '<tr><td><a href="/dataset/{}">{}</a></td>'.format(datasetId, datasetTitle)
+        out += '<td>{}</td></tr>'.format(datetime.datetime.fromtimestamp(datasetModified).strftime('%Y-%m-%d %H:%M:%S'))
+    out += "</table>"
+    
+    #
+    # Identify recent changes
     #
     out += "<p>"
     out += "<h2>Recent changes</h2>"
@@ -633,15 +677,41 @@ def show_byteset(md5):
         out += '</tr>'
     out += "</table>"        
 
+    #
+    # Identify relevant Datasets
+    #
     out += "<p>"
     out += "<h2>Datasets that currently contain these ByteSet</h2>"
     out += "<table border=1 cellpadding=5>"
-    out += "<tr><td><b>Dataset title</b></td><td><b>Dataset ID</b></td><td><b>Dataset desc</b></td></tr>"    
+    out += "<tr><td><b>Dataset title</b></td><td><b>Dataset desc</b></td></tr>"    
     for id, title, desc in datasetInfo:
-        out += "<tr><td>{}</td><td>{}</td><td>{}</td></tr>".format(title, id, desc)
+        out += '<tr><td><a href="/dataset/{}">{}</a></td><td>{}</td></tr>'.format(id, title, desc)
     out += "</table>"
 
     return f'<br> {out}'
+
+
+#
+# Show all the details for a particular Dataset
+#
+@app.route('/dataset/<id>')
+def show_dataset(id):
+    out = '<a href="/">Back to user listing</a>'
+
+    id, title, desc, owner, modified, bytesetMd5 = GDB.getDatasetInfoById(id)
+    
+    out += "<h1>{} (X{})</h1>".format(title, id)
+    out += "<p>"
+    out += "<h3>{}</h3>".format(desc)
+    out += "<p>"        
+    out += '<h3>Owner: <a href="/user/{}">{}</a></h3>'.format(owner, owner)
+    out += "<p>"        
+    out += "<h3>Modified: {}</h3>".format(datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S'))
+    out += "<p>"            
+    out += '<h3>Contains ByteSet <a href="/byteset/{}">{}</a></h3>'.format(bytesetMd5, bytesetMd5)
+
+    return out
+
 
 #
 # Show the details of a particular ObservedFile
@@ -788,7 +858,7 @@ def createDataset(username):
     desc = json.load(request.files['desc'])
     targetHash = json.load(request.files['targetHash'])
 
-    return json.dumps(str(GDB.addDataset(id, title, desc, targetHash)))
+    return json.dumps(str(GDB.addDataset(id, username, title, desc, targetHash)))
 
 
 
