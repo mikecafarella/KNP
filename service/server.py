@@ -22,7 +22,7 @@ import uuid
 machine_id = uuid.UUID(int=uuid.getnode())
 
 ES_INDEX = 'knps-00000000-0000-0000-0000-acde48001122' #'knps-{}'.format(machine_id)
-ES_HOST = 'ec2-52-201-28-150.compute-1.amazonaws.com'
+ES_HOST = FOO = os.getenv('ES_HOST')
 
 app = Flask(__name__)
 CORS(app)
@@ -52,20 +52,26 @@ def background(f):
 
 @background
 def es_store_record(index_name, doc_id, record):
-    _es = None
-    _es = Elasticsearch([{'host': ES_HOST, 'port': 9200}])
-    try:
-        print("START SEARCH SUBMISSION:", record)
-        outcome = _es.index(index=index_name, id=doc_id, body=record)
-        print("ELASTICSEARCH:", outcome)
-    except Exception as ex:
-        print('Error in indexing data')
-        print(str(ex))
+    if ES_HOST:
+        _es = None
+        _es = Elasticsearch([{'host': ES_HOST, 'port': 9200}])
+        try:
+            print("START SEARCH SUBMISSION:", record)
+            outcome = _es.index(index=index_name, id=doc_id, body=record)
+            print("ELASTICSEARCH:", outcome)
+        except Exception as ex:
+            print('Error in indexing data')
+            print(str(ex))
+    else:
+        print("WARNING: ES_HOST environment variable not defined. Data not saved to ElasticSearch.")
 
 def es_delete_index():
-    _es = None
-    _es = Elasticsearch([{'host': ES_HOST, 'port': 9200}])
-    _es.indices.delete(index=ES_INDEX, ignore=[400, 404])
+    if ES_HOST:
+        _es = None
+        _es = Elasticsearch([{'host': ES_HOST, 'port': 9200}])
+        _es.indices.delete(index=ES_INDEX, ignore=[400, 404])
+    else:
+        print("WARNING: ES_HOST environment variable not defined. Search index not deleted.")
 
 class BlobField(ma.Field):
     def _serialize(self, value, attr, obj, **kwargs):
