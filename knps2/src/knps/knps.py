@@ -23,6 +23,9 @@ CFG_FILE = 'knps.cfg'
 
 DB_FILE = '.knpsdb'
 
+KNPS_SERVER = os.getenv('KNPS_SERVER', '127.0.0.1:8889')
+KNPS_SERVER_URL = 'http://{}'.format(KNPS_SERVER)
+
 ###################################################
 # Some util functions
 ###################################################
@@ -69,7 +72,7 @@ def hash_pdf_file_lines(fname):
 # Transmit observations to the server
 #
 def send_synclist(user, observationList, comment=None):
-    url = "http://127.0.0.1:8889/synclist/{}".format(user.username)
+    url = "{}/synclist/{}".format(KNPS_SERVER_URL, user.username)
 
     login = {
         'username': user.username,
@@ -84,7 +87,7 @@ def send_synclist(user, observationList, comment=None):
             'username': user.username,
             'file_name': file_name,
             'file_hash': file_hash,
-            'filetype': file_type,            
+            'filetype': file_type,
             'line_hashes': line_hashes,
             'file_size': info.st_size,
             'modified': info.st_mtime,
@@ -103,7 +106,7 @@ def send_synclist(user, observationList, comment=None):
 # Transmit observations to the server
 #
 def send_adornment(user, filename, comment):
-    url = "http://127.0.0.1:8889/adorn/{}".format(user.username)
+    url = "{}/adorn/{}".format(KNPS_SERVER_URL, user.username)
 
     login = {
         'username': user.username,
@@ -121,7 +124,7 @@ def send_adornment(user, filename, comment):
 # Transmit observations to the server
 #
 def send_createdataset(user, id, title, desc, targetHash):
-    url = "http://127.0.0.1:8889/createdataset/{}".format(user.username)
+    url = "{}/createdataset/{}".format(KNPS_SERVER_URL, user.username)
 
     login = {
         'username': user.username,
@@ -143,10 +146,10 @@ def hash_CSV_columns(fname):
     return hashes
 
 def hash_image(fname):
-    #Have this take in and hash an image through thing described earlier. 
+    #Have this take in and hash an image through thing described earlier.
     return None
 
-# This fucntion removes punctiation and whitespace. 
+# This fucntion removes punctiation and whitespace.
 # The returns a list of tokens(words) and should not contain any lists or anything along those lines.
 def createShingleFingerprints(s, shingle_length = 5, fingerprint_bytes = 8):
     s = re.sub(r'[^\w\s]', '', s)
@@ -193,7 +196,7 @@ def getFileType(f):
     if f.lower().endswith(('.ppt', '.pptx')):
         return "ppt"
     if f.lower().endswith(('.txt')):
-        return "txt"  
+        return "txt"
     return "Unknown"
 
 class Error(Exception):
@@ -219,7 +222,7 @@ class User:
         self.username, self.access_token = self.get_current_user()
 
     def login(self):
-        ROOTURL = "http://127.0.0.1:8889"
+        ROOTURL = KNPS_SERVER_URL
         url = ROOTURL + "/cli_login"
 
         response = requests.get(url)
@@ -246,7 +249,7 @@ class User:
             print("You are now logged in as: {}".format(token_data['email']))
 
     def logout(self):
-        ROOTURL = "http://127.0.0.1:8889"
+        ROOTURL = KNPS_SERVER_URL
         url = ROOTURL + "/cli_logout"
 
         response = requests.post(url, data={'access_token': self.access_token})
@@ -477,7 +480,7 @@ class Watcher:
     ### TODO:
     ### more ways to do partial hashes (based upon file type)
 
-    def _observeFile_(self, f): 
+    def _observeFile_(self, f):
         file_hash = hash_file(f)
         file_type = getFileType(f)
         line_hashes = hash_file_lines(f, file_type)
@@ -488,7 +491,7 @@ class Watcher:
             column_hashes = hash_CSV_columns(f)
             optionalFields["column_hashes"] = column_hashes
 
-        return (f, file_hash, file_type, line_hashes, optionalFields)    
+        return (f, file_hash, file_type, line_hashes, optionalFields)
 
 #
 # main()
@@ -502,7 +505,7 @@ if __name__ == "__main__":
     parser.add_argument("--status", nargs="*", help="Check KNPS status", default=None)
     parser.add_argument("--watch", help="Add a directory to watch")
     parser.add_argument("--comment", nargs="+", help="Add a comment to a data object")
-    parser.add_argument("--addDataset", help="Add a Dataset to the graph. Takes a YAML file")    
+    parser.add_argument("--addDataset", help="Add a Dataset to the graph. Takes a YAML file")
     parser.add_argument("--sync", action="store_true", help="Sync observations to service")
     parser.add_argument('args', type=str, help="KNPS command arguments", nargs='*' )
 
@@ -527,7 +530,7 @@ if __name__ == "__main__":
             if len(args.comment) < 2:
                 print("Provide the target filename and at least a 1-word comment")
                 sys.exit(0)
-                
+
             w = Watcher(u)
             w.addComment(args.comment[0], " ".join(args.comment[1:]))
 
