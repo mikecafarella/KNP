@@ -23,7 +23,8 @@ import uuid
 machine_id = uuid.UUID(int=uuid.getnode())
 
 ES_INDEX = 'knps-00000000-0000-0000-0000-acde48001122' #'knps-{}'.format(machine_id)
-ES_HOST = FOO = os.getenv('ES_HOST')
+ES_HOST = os.getenv('ES_HOST')
+ES_PORT = int(os.getenv('ES_PORT', '9200'))
 
 app = Flask(__name__)
 CORS(app)
@@ -55,7 +56,7 @@ def background(f):
 def es_store_record(index_name, doc_id, record):
     if ES_HOST:
         _es = None
-        _es = Elasticsearch([{'host': ES_HOST, 'port': 9200}])
+        _es = Elasticsearch([{'host': ES_HOST, 'port': ES_PORT}])
         try:
             print("START SEARCH SUBMISSION:", record)
             outcome = _es.index(index=index_name, id=doc_id, body=record)
@@ -69,7 +70,7 @@ def es_store_record(index_name, doc_id, record):
 def es_delete_index():
     if ES_HOST:
         _es = None
-        _es = Elasticsearch([{'host': ES_HOST, 'port': 9200}])
+        _es = Elasticsearch([{'host': ES_HOST, 'port': ES_PORT}])
         _es.indices.delete(index=ES_INDEX, ignore=[400, 404])
     else:
         print("WARNING: ES_HOST environment variable not defined. Search index not deleted.")
