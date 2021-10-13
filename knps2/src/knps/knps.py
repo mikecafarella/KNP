@@ -23,8 +23,9 @@ CFG_FILE = 'knps.cfg'
 
 DB_FILE = '.knpsdb'
 
-KNPS_SERVER = os.getenv('KNPS_SERVER', '127.0.0.1:8889')
-KNPS_SERVER_URL = 'http://{}'.format(KNPS_SERVER)
+
+KNPS_SERVER_DEV = '127.0.0.1:8889'
+KNPS_SERVER_PROD = '3.224.14.41:8889'
 
 ###################################################
 # Some util functions
@@ -72,7 +73,7 @@ def hash_pdf_file_lines(fname):
 # Transmit observations to the server
 #
 def send_synclist(user, observationList, comment=None):
-    url = "{}/synclist/{}".format(KNPS_SERVER_URL, user.username)
+    url = "{}/synclist/{}".format(user.get_server_url(), user.username)
 
     login = {
         'username': user.username,
@@ -222,7 +223,7 @@ class User:
         self.username, self.access_token = self.get_current_user()
 
     def login(self):
-        ROOTURL = KNPS_SERVER_URL
+        ROOTURL = self.get_server_url()
         url = ROOTURL + "/cli_login"
 
         response = requests.get(url)
@@ -249,7 +250,7 @@ class User:
             print("You are now logged in as: {}".format(token_data['email']))
 
     def logout(self):
-        ROOTURL = KNPS_SERVER_URL
+        ROOTURL = self.get_server_url()
         url = ROOTURL + "/cli_logout"
 
         response = requests.post(url, data={'access_token': self.access_token})
@@ -293,6 +294,24 @@ class User:
     def get_current_user(self):
         (u, h) = self.db.get('__CURRENT_USER__', (None, None))
         return u, h
+
+    def set_server(self, url):
+        # TODO: do some validation here
+        self.db['__SERVER__'] = url
+        self.save_db()
+
+    def get_server_url(self):
+        url = self.db.get('__SERVER__', 'dev')
+
+        if url == 'prod':
+            url = KNPS_SERVER_PROD
+        elif url == 'dev':
+            url = KNPS_SERVER_DEV
+
+        print("Using server {} for user {}".format(url, self.username))
+
+        return 'http://{}'.format(url)
+
 
     def add_dir(self, d):
         if 'dirs' not in self.db[self.username]:
@@ -507,6 +526,7 @@ if __name__ == "__main__":
     parser.add_argument("--comment", nargs="+", help="Add a comment to a data object")
     parser.add_argument("--addDataset", help="Add a Dataset to the graph. Takes a YAML file")
     parser.add_argument("--sync", action="store_true", help="Sync observations to service")
+    parser.add_argument("--server", help="Set KNPS server. Options: dev, prod, or address:port")
     parser.add_argument('args', type=str, help="KNPS command arguments", nargs='*' )
 
     args = parser.parse_args()
@@ -568,3 +588,7 @@ if __name__ == "__main__":
             print("Not logged in.")
         else:
             Watcher(u).observeAndSync()
+
+    elif args.server:
+        print("Setting KNPS server to: {}".format(args.server))
+        u.set_server(args.server)

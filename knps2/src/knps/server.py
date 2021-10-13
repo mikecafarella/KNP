@@ -293,11 +293,12 @@ class GraphDB:
     def getDatasetInfoByUser(self, username):
         with self.driver.session() as session:
             results = session.run("MATCH (d:Dataset {latest: 1, owner: $username}) "
-                                  "RETURN d.id, d.title, d.modified",
+                                  "OPTIONAL MATCH (prev:Dataset)-[r:NextVersion]->(d) "
+                                  "RETURN d.id, d.title, d.desc, d.modified, prev.uuid",
                                   username = username)
 
-            for id, title, modified in results:
-                yield (id, title, modified)
+            for id, title, desc, modified, prevUuid in results:
+                yield (id, title, desc, modified, prevUuid)
 
             session.close()
 
@@ -306,12 +307,22 @@ class GraphDB:
     #
     def getDatasetInfoById(self, id):
         with self.driver.session() as session:
-            print("ID", id)
-            results = session.run("MATCH (d:Dataset {latest: 1, id: 1})-[r:Contains]->(b:ByteSet) "
-                                  "RETURN d.id, d.title, d.desc, d.owner, d.modified, b.md5hash",
-                                  id=id)
+            results = session.run("MATCH (d:Dataset {latest: 1, id: $idnum})-[r:Contains]->(b:ByteSet) "
+                                  "OPTIONAL MATCH (prev:Dataset)-[r2:NextVersion]->(d) "
+                                  "RETURN d.id, d.title, d.desc, d.owner, d.modified, b.md5hash, prev.uuid",
+                                  idnum=int(id))
+            return tuple(results.single())
 
-            #print(results.single())
+    #
+    #
+    #
+    def getDatasetInfoByUuid(self, uuid):
+        with self.driver.session() as session:
+            results = session.run("MATCH (d:Dataset {uuid: $uuid})-[r:Contains]->(b:ByteSet) "
+                                  "OPTIONAL MATCH (d)-[r2:NextVersion]->(next:Dataset) "
+                                  "OPTIONAL MATCH (prev:Dataset)-[r3:NextVersion]->(d) "
+                                  "RETURN d.id, d.title, d.desc, d.owner, d.modified, b.md5hash, prev.uuid, next.uuid",
+                                  uuid=uuid)
             return tuple(results.single())
             #session.close()
 
@@ -423,8 +434,8 @@ class GraphDB:
                                 md5hash=md5hash)
 
             # Find the Datasets that contain this ByteSet.
-            datasets = session.run("MATCH (b: ByteSet {md5hash: $md5hash})<-[r:Contains]-(d:Dataset {latest:1}) "
-                                   "RETURN d.id, d.title, d.desc",
+            datasets = session.run("MATCH (b: ByteSet {md5hash: $md5hash, latest: 1})<-[r:Contains]-(d:Dataset) "
+                                   "RETURN d.id, d.uuid, d.title, d.desc",
                                    md5hash=md5hash)
 
             return (tuple(bytesetinfo.single()), [p for p in files], [d for d in datasets])
@@ -498,7 +509,7 @@ class GraphDB:
     def addDataset(self, datasetId, owner, title, desc, targetHash):
         with self.driver.session() as session:
             result = session.run("MATCH (old:Dataset {id:$id, latest:1}), (b:ByteSet {md5hash: $targetHash}) "
-                                 "CREATE (new:Dataset {id:$id, title:$title, owner:$owner, modified: $modified, desc:$desc, latest:1})-[r:Contains]->(b) "
+                                 "CREATE (new:Dataset {id:$id, uuid: apoc.create.uuid(), title:$title, owner:$owner, modified: $modified, desc:$desc, latest:1})-[r:Contains]->(b) "
                                  "SET old.latest=0 "
                                  "CREATE (old)-[r2:NextVersion]->(new)"
                                  "RETURN new.id",
@@ -512,7 +523,7 @@ class GraphDB:
             result = result.single()
             if result is None:
                 result = session.run("MATCH (b:ByteSet {md5hash: $targetHash}) "
-                                     "CREATE (new:Dataset {id:$id, title:$title, owner:$owner, modified:$modified, desc:$desc, latest:1})-[r:Contains]->(b) "
+                                     "CREATE (new:Dataset {id:$id, uuid: apoc.create.uuid(), title:$title, owner:$owner, modified:$modified, desc:$desc, latest:1})-[r:Contains]->(b) "
                                      "RETURN new.id",
                                      id=datasetId,
                                      title=title,
@@ -582,8 +593,8 @@ def show_user_profile(username):
     out += "<h2>All datasets</h2>"
     out += "<table border=1 cellpadding=5>"
     out += "<tr><td>Dataset</td><td>Last Modified</td></tr>"
-    for datasetId, datasetTitle, datasetModified in GDB.getDatasetInfoByUser(username):
-        out += '<tr><td><a href="/dataset/{}">{}</a></td>'.format(datasetId, datasetTitle)
+    for datasetId, datasetTitle, desc, datasetModified, prevUuid in GDB.getDatasetInfoByUser(username):
+        out += '<tr><td><a href="/datasetbyid/{}">{}</a></td>'.format(datasetId, datasetTitle)
         out += '<td>{}</td></tr>'.format(datetime.datetime.fromtimestamp(datasetModified).strftime('%Y-%m-%d %H:%M:%S'))
     out += "</table>"
     
@@ -684,8 +695,8 @@ def show_byteset(md5):
     out += "<h2>Datasets that currently contain these ByteSet</h2>"
     out += "<table border=1 cellpadding=5>"
     out += "<tr><td><b>Dataset title</b></td><td><b>Dataset desc</b></td></tr>"    
-    for id, title, desc in datasetInfo:
-        out += '<tr><td><a href="/dataset/{}">{}</a></td><td>{}</td></tr>'.format(id, title, desc)
+    for id, uuid, title, desc in datasetInfo:
+        out += '<tr><td><a href="/datasetbyuuid/{}">{}</a></td><td>{}</td></tr>'.format(uuid, title, desc)
     out += "</table>"
 
     return f'<br> {out}'
@@ -694,11 +705,11 @@ def show_byteset(md5):
 #
 # Show all the details for a particular Dataset
 #
-@app.route('/dataset/<id>')
-def show_dataset(id):
+@app.route('/datasetbyid/<id>')
+def show_datasetbyid(id):
     out = '<a href="/">Back to user listing</a>'
 
-    id, title, desc, owner, modified, bytesetMd5 = GDB.getDatasetInfoById(id)
+    id, title, desc, owner, modified, bytesetMd5, prevUuid = GDB.getDatasetInfoById(id)
     
     out += "<h1>{} (X{})</h1>".format(title, id)
     out += "<p>"
@@ -709,6 +720,45 @@ def show_dataset(id):
     out += "<h3>Modified: {}</h3>".format(datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S'))
     out += "<p>"            
     out += '<h3>Contains ByteSet <a href="/byteset/{}">{}</a></h3>'.format(bytesetMd5, bytesetMd5)
+
+    if prevUuid:
+        out += '<a href="/datasetbyuuid/{}">Previous version.</a><p>'.format(prevUuid)
+    else:
+        out += 'This is the first version of the Dataset.<p>'
+
+    out += 'This is the most recent version of the Dataset.<p>'
+
+
+    return out
+
+#
+# Show all the details for a particular Dataset
+#
+@app.route('/datasetbyuuid/<uuid>')
+def show_datasetbyuuid(uuid):
+    out = '<a href="/">Back to user listing</a>'
+
+    id, title, desc, owner, modified, bytesetMd5, prevUuid, nextUuid = GDB.getDatasetInfoByUuid(uuid)
+    
+    out += "<h1>{} (X{})</h1>".format(title, id)
+    out += "<p>"
+    out += "<h3>{}</h3>".format(desc)
+    out += "<p>"        
+    out += '<h3>Owner: <a href="/user/{}">{}</a></h3>'.format(owner, owner)
+    out += "<p>"        
+    out += "<h3>Modified: {}</h3>".format(datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S'))
+    out += "<p>"            
+    out += '<h3>Contains ByteSet <a href="/byteset/{}">{}</a></h3>'.format(bytesetMd5, bytesetMd5)
+
+    if prevUuid:
+        out += '<a href="/datasetbyuuid/{}">Previous version.</a><p>'.format(prevUuid)
+    else:
+        out += 'This is the first version of the Dataset.<p>'
+
+    if nextUuid:
+        out += '<a href="/datasetbyuuid/{}">Next version.</a><p>'.format(nextUuid)
+    else:
+        out += 'This is the most recent version of the Dataset.<p>'
 
     return out
 
