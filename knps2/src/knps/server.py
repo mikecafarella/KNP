@@ -863,7 +863,9 @@ def createDataset(username):
 
 
 if __name__ == '__main__':
-    GDB = GraphDB("bolt://localhost:7687", "neo4j", "password")
+    NEO4J_HOST = os.getenv('NEO4J_HOST', 'localhost')
+    KNPS_SERVER = os.getenv('KNPS_SERVER', 'localhost')
+    print(NEO4J_HOST, KNPS_SERVER)
+    GDB = GraphDB("bolt://{}:7687".format(NEO4J_HOST), "neo4j", "password")
 
-    app.run(debug=True, port=8889)
-    greeter.close()
+    app.run(debug=True, host=KNPS_SERVER, port=8889)
