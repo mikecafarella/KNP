@@ -46,6 +46,12 @@ login_manager.init_app(app)
 APP_STATE = 'ApplicationStateKNPS'
 NONCE = 'SampleNonceKNPS'
 
+
+NEO4J_HOST = os.getenv('NEO4J_HOST', 'localhost')
+NEO4J_PORT = int(os.getenv('NEO4J_PORT', '7687'))
+KNPS_SERVER_HOST = os.getenv('KNPS_SERVER_HOST', 'localhost')
+KNPS_SERVER_PORT = int(os.getenv('KNPS_SERVER_PORT', '8228'))
+
 #
 # Show a list of users and their high-level stats
 #
@@ -80,7 +86,7 @@ def cli_login():
 
         # get request params
         query_params = {'client_id': config["client_id"],
-                        'redirect_uri': config["redirect_uri"],
+                        'redirect_uri': "http://{}:{}/authorization-code/callback".format(KNPS_SERVER_HOST, KNPS_SERVER_PORT),
                         'scope': "openid email profile",
                         'state': login_state,
                         'nonce': NONCE,
@@ -913,11 +919,6 @@ def createDataset(username):
 
 
 if __name__ == '__main__':
-    NEO4J_HOST = os.getenv('NEO4J_HOST', 'localhost')
-    NEO4J_PORT = int(os.getenv('NEO4J_PORT', '7687'))
-    KNPS_SERVER_HOST = os.getenv('KNPS_SERVER_HOST', 'localhost')
-    KNPS_SERVER_PORT = int(os.getenv('KNPS_SERVER_PORT', '8228'))
-    print(NEO4J_HOST, KNPS_SERVER_HOST)
     GDB = GraphDB("bolt://{}:{}".format(NEO4J_HOST, NEO4J_PORT), "neo4j", "password")
 
     app.run(debug=True, host=KNPS_SERVER_HOST, port=KNPS_SERVER_PORT)
