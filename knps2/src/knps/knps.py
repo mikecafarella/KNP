@@ -16,6 +16,9 @@ import time
 import numpy as np
 import webbrowser
 import yaml
+import subprocess
+import uuid
+import socket
 
 
 CFG_DIR = '.knps'
@@ -30,6 +33,13 @@ KNPS_SERVER_PROD = 'ec2-3-224-14-41.compute-1.amazonaws.com:8228'
 ###################################################
 # Some util functions
 ###################################################
+def get_version():
+    cwdir = os.path.dirname(os.path.realpath(__file__))
+    proj_ver = subprocess.run(["git", "describe", "--tags", "--long"], stdout=subprocess.PIPE, text=True, cwd=cwdir).stdout.strip()
+    rev_count = subprocess.run(["git", "log", "--oneline"], stdout=subprocess.PIPE, text=True, cwd=cwdir).stdout.strip()
+    rev_count = len(rev_count.split("\n"))
+    return f'{proj_ver}-{rev_count}'
+
 def hash_file(fname):
     hash_md5 = hashlib.md5()
     with open(fname, "rb") as f:
@@ -73,6 +83,11 @@ def hash_pdf_file_lines(fname):
 # Transmit observations to the server
 #
 def send_synclist(user, observationList, comment=None):
+    knps_version = get_version()
+    install_id = user.get_install_id()
+    hostname = socket.gethostname()
+    print("KNPS Version: ", knps_version)
+
     url = "{}/synclist/{}".format(user.get_server_url(), user.username)
 
     login = {
@@ -84,6 +99,7 @@ def send_synclist(user, observationList, comment=None):
     for file_name, file_hash, file_type, line_hashes, optionalItems in observationList:
         p = Path(file_name)
         info = p.stat()
+
         metadata = {
             'username': user.username,
             'file_name': file_name,
@@ -92,6 +108,9 @@ def send_synclist(user, observationList, comment=None):
             'line_hashes': line_hashes,
             'file_size': info.st_size,
             'modified': info.st_mtime,
+            'knps_version': knps_version,
+            'install_id': install_id,
+            'hostname': hostname,
             'optionalItems': optionalItems
         }
         obsList.append({'metadata': metadata})
@@ -101,7 +120,6 @@ def send_synclist(user, observationList, comment=None):
     obj_data = response.json()
 
     return obj_data
-
 
 #
 # Transmit observations to the server
@@ -312,6 +330,15 @@ class User:
 
         return 'http://{}'.format(url)
 
+    def get_install_id(self):
+        if not self.db:
+            self.load_db()
+
+        if '__INSTALL_ID__' not in self.db:
+            self.db['__INSTALL_ID__'] = str(uuid.uuid1())
+            self.save_db()
+
+        return self.db['__INSTALL_ID__']
 
     def add_dir(self, d):
         if 'dirs' not in self.db[self.username]:
@@ -527,6 +554,7 @@ if __name__ == "__main__":
     parser.add_argument("--addDataset", help="Add a Dataset to the graph. Takes a YAML file")
     parser.add_argument("--sync", action="store_true", help="Sync observations to service")
     parser.add_argument("--server", help="Set KNPS server. Options: dev, prod, or address:port")
+    parser.add_argument("--version", action="store_true", help="Display version information")
     parser.add_argument('args', type=str, help="KNPS command arguments", nargs='*' )
 
     args = parser.parse_args()
@@ -592,3 +620,6 @@ if __name__ == "__main__":
     elif args.server:
         print("Setting KNPS server to: {}".format(args.server))
         u.set_server(args.server)
+
+    elif args.version:
+        print(f'KNPS Version: {get_version()}')
