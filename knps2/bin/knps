@@ -1,2 +1,3 @@
-python ~/knps2/src/knps/knps.py "$@"
-
+#! /bin/sh
+DIRNAME=$(dirname ${BASH_SOURCE[0]})
+python "${DIRNAME}/../src/knps/knps.py" "$@"

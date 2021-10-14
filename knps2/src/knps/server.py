@@ -86,7 +86,7 @@ def cli_login():
 
         # get request params
         query_params = {'client_id': config["client_id"],
-                        'redirect_uri': "http://{}:{}/authorization-code/callback".format(KNPS_SERVER_HOST, KNPS_SERVER_PORT),
+                        'redirect_uri': f'http://{KNPS_SERVER_HOST}:{KNPS_SERVER_PORT}/authorization-code/callback',
                         'scope': "openid email profile",
                         'state': login_state,
                         'nonce': NONCE,
