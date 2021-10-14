@@ -383,7 +383,7 @@ class GraphDB:
                                   "WHERE jaccard > 0.9 "
                                   "MERGE (a)-[r:JaccardMatch]->(b) "
                                   "RETURN id(a), id(b), jaccard")
-            
+
 
     #
     #
@@ -488,8 +488,8 @@ class GraphDB:
                 for k, v in obs.get("optionalItems", {}).items():
                     txStr += ", a2.{}=\"{}\"".format("optional_" + k, v)
                 txStr += " RETURN id(a2)"
-                
-                
+
+
                 #
                 # Create a FileObservation and its ByteSet when there is no predecessor
                 #
@@ -499,7 +499,7 @@ class GraphDB:
                                 newHash = obs["file_hash"],
                                 modified = obs["modified"],
                                 file_size = obs["file_size"],
-                                filetype = obs["filetype"],                                
+                                filetype = obs["filetype"],
                                 sync_time = obs["sync_time"],
                                 line_hashes = obs["line_hashes"])
 
@@ -519,7 +519,7 @@ class GraphDB:
                                  desc=desc,
                                  modified=time.time(),
                                  targetHash=targetHash)
-            
+
             result = result.single()
             if result is None:
                 result = session.run("MATCH (b:ByteSet {md5hash: $targetHash}) "
@@ -529,11 +529,11 @@ class GraphDB:
                                      title=title,
                                      owner=owner,
                                      desc=desc,
-                                     modified=time.time(),                                     
+                                     modified=time.time(),
                                      targetHash=targetHash)
 
                 return True
-                
+
     #
     # Add a Comment to a Dataset object (REMIND: currently broken)
     #
@@ -597,7 +597,7 @@ def show_user_profile(username):
         out += '<tr><td><a href="/datasetbyid/{}">{}</a></td>'.format(datasetId, datasetTitle)
         out += '<td>{}</td></tr>'.format(datetime.datetime.fromtimestamp(datasetModified).strftime('%Y-%m-%d %H:%M:%S'))
     out += "</table>"
-    
+
     #
     # Identify recent changes
     #
@@ -659,12 +659,12 @@ def show_byteset(md5):
 
     bytesetInfo, fileinfo, datasetInfo = GDB.getBytesetDetails(md5)
     bytesetCreated, bytesetFormat = bytesetInfo
-    
+
     out += "<p>"
     out += "<h2>Created on: {}</h2>".format(datetime.datetime.fromtimestamp(bytesetCreated).strftime('%Y-%m-%d %H:%M:%S'))
     out += "<p>"
     out += "<h2>Data format: {}</h2>".format(bytesetFormat)
-    out += "<p>"    
+    out += "<p>"
     out += "<h2>Files that currently contain this ByteSet</h2>"
     out += "<table border=1 cellpadding=5>"
     out += "<tr><td><b>Filename</b></td><td><b>Owner</b></td></tr>"
@@ -686,7 +686,7 @@ def show_byteset(md5):
         out += '<tr><td><a href="/file/{}">{}</a></td>'.format(localFileId, localFname)
         out += '<td><a href="/user/{}">{}</a></td>'.format(owner, owner)
         out += '</tr>'
-    out += "</table>"        
+    out += "</table>"
 
     #
     # Identify relevant Datasets
@@ -694,7 +694,7 @@ def show_byteset(md5):
     out += "<p>"
     out += "<h2>Datasets that currently contain these ByteSet</h2>"
     out += "<table border=1 cellpadding=5>"
-    out += "<tr><td><b>Dataset title</b></td><td><b>Dataset desc</b></td></tr>"    
+    out += "<tr><td><b>Dataset title</b></td><td><b>Dataset desc</b></td></tr>"
     for id, uuid, title, desc in datasetInfo:
         out += '<tr><td><a href="/datasetbyuuid/{}">{}</a></td><td>{}</td></tr>'.format(uuid, title, desc)
     out += "</table>"
@@ -710,15 +710,15 @@ def show_datasetbyid(id):
     out = '<a href="/">Back to user listing</a>'
 
     id, title, desc, owner, modified, bytesetMd5, prevUuid = GDB.getDatasetInfoById(id)
-    
+
     out += "<h1>{} (X{})</h1>".format(title, id)
     out += "<p>"
     out += "<h3>{}</h3>".format(desc)
-    out += "<p>"        
+    out += "<p>"
     out += '<h3>Owner: <a href="/user/{}">{}</a></h3>'.format(owner, owner)
-    out += "<p>"        
+    out += "<p>"
     out += "<h3>Modified: {}</h3>".format(datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S'))
-    out += "<p>"            
+    out += "<p>"
     out += '<h3>Contains ByteSet <a href="/byteset/{}">{}</a></h3>'.format(bytesetMd5, bytesetMd5)
 
     if prevUuid:
@@ -739,15 +739,15 @@ def show_datasetbyuuid(uuid):
     out = '<a href="/">Back to user listing</a>'
 
     id, title, desc, owner, modified, bytesetMd5, prevUuid, nextUuid = GDB.getDatasetInfoByUuid(uuid)
-    
+
     out += "<h1>{} (X{})</h1>".format(title, id)
     out += "<p>"
     out += "<h3>{}</h3>".format(desc)
-    out += "<p>"        
+    out += "<p>"
     out += '<h3>Owner: <a href="/user/{}">{}</a></h3>'.format(owner, owner)
-    out += "<p>"        
+    out += "<p>"
     out += "<h3>Modified: {}</h3>".format(datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S'))
-    out += "<p>"            
+    out += "<p>"
     out += '<h3>Contains ByteSet <a href="/byteset/{}">{}</a></h3>'.format(bytesetMd5, bytesetMd5)
 
     if prevUuid:
@@ -793,7 +793,7 @@ def show_file(fileid):
         out += '<a href="/file/{}">Previous version.</a> '.format(prevId)
     else:
         out += 'This is the first version of the file observed. '
-        
+
     if nextId:
         out += '<a href="/file/{}">Next version</a><p>'.format(nextId)
     else:
@@ -807,11 +807,11 @@ def show_file(fileid):
         out += '<tr><td><a href="/file/{}">{}</a></td>'.format(localFileId, localFname)
         out += '<td><a href="/user/{}">{}</a></td>'.format(owner, owner)
         out += '</tr>'
-    out += "</table>"        
+    out += "</table>"
 
 
     return out
-        
+
 
 
 #
@@ -914,8 +914,10 @@ def createDataset(username):
 
 if __name__ == '__main__':
     NEO4J_HOST = os.getenv('NEO4J_HOST', 'localhost')
-    KNPS_SERVER = os.getenv('KNPS_SERVER', 'localhost')
-    print(NEO4J_HOST, KNPS_SERVER)
-    GDB = GraphDB("bolt://{}:7687".format(NEO4J_HOST), "neo4j", "password")
+    NEO4J_PORT = int(os.getenv('NEO4J_PORT', '7687'))
+    KNPS_SERVER_HOST = os.getenv('KNPS_SERVER_HOST', 'localhost')
+    KNPS_SERVER_PORT = int(os.getenv('KNPS_SERVER_PORT', '8228'))
+    print(NEO4J_HOST, KNPS_SERVER_HOST)
+    GDB = GraphDB("bolt://{}:{}".format(NEO4J_HOST, NEO4J_PORT), "neo4j", "password")
 
-    app.run(debug=True, host=KNPS_SERVER, port=8889)
+    app.run(debug=True, host=KNPS_SERVER_HOST, port=KNPS_SERVER_PORT)

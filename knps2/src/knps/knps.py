@@ -24,8 +24,8 @@ CFG_FILE = 'knps.cfg'
 DB_FILE = '.knpsdb'
 
 
-KNPS_SERVER_DEV = '127.0.0.1:8889'
-KNPS_SERVER_PROD = '3.224.14.41:8889'
+KNPS_SERVER_DEV = '127.0.0.1:8228'
+KNPS_SERVER_PROD = '3.224.14.41:8228'
 
 ###################################################
 # Some util functions
