@@ -467,7 +467,7 @@ class GraphDB:
                             "MERGE (b2: ByteSet {md5hash: $newHash}) "
                             "ON CREATE SET b2.created = $sync_time, b.filetype = $filetype, b2.line_hashes = $line_hashes "
                             "CREATE (a2:ObservedFile {id: apoc.create.uuid(), filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
-                            "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size")
+                            "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname")
             for k, v in obs.get("optionalItems", {}).items():
                 txStr += ", a2.{}=\"{}\"".format("optional_" + k, v)
             txStr += " CREATE (a)-[r3:NextVersion]->(a2) "
@@ -481,7 +481,10 @@ class GraphDB:
                             filetype = obs["filetype"],
                             file_size = obs["file_size"],
                             sync_time = obs["sync_time"],
-                            line_hashes = obs["line_hashes"])
+                            line_hashes = obs["line_hashes"],
+                            install_id = obs["install_id"],
+                            knps_version = obs["knps_version"],
+                            hostname = obs["hostname"])
 
             result = result.single()
             if result is None:
@@ -489,7 +492,7 @@ class GraphDB:
                 txStr = ("MERGE (b2: ByteSet {md5hash: $newHash}) "
                         "ON CREATE SET b2.created = $sync_time, b2.filetype = $filetype, b2.line_hashes = $line_hashes "
                         "MERGE (a2:ObservedFile {filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
-                        "ON CREATE SET a2.id = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size")
+                        "ON CREATE SET a2.id = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname")
 
                 for k, v in obs.get("optionalItems", {}).items():
                     txStr += ", a2.{}=\"{}\"".format("optional_" + k, v)
@@ -507,7 +510,10 @@ class GraphDB:
                                 file_size = obs["file_size"],
                                 filetype = obs["filetype"],
                                 sync_time = obs["sync_time"],
-                                line_hashes = obs["line_hashes"])
+                                line_hashes = obs["line_hashes"],
+                                install_id = obs["install_id"],
+                                knps_version = obs["knps_version"],
+                                hostname = obs["hostname"])
 
     #
     # Add a new Dataset object to the store

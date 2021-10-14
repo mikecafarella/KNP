@@ -18,6 +18,7 @@ import webbrowser
 import yaml
 import subprocess
 import uuid
+import socket
 
 
 CFG_DIR = '.knps'
@@ -84,6 +85,7 @@ def hash_pdf_file_lines(fname):
 def send_synclist(user, observationList, comment=None):
     knps_version = get_version()
     install_id = user.get_install_id()
+    hostname = socket.gethostname()
     print("KNPS Version: ", knps_version)
 
     url = "{}/synclist/{}".format(user.get_server_url(), user.username)
@@ -108,6 +110,7 @@ def send_synclist(user, observationList, comment=None):
             'modified': info.st_mtime,
             'knps_version': knps_version,
             'install_id': install_id,
+            'hostname': hostname,
             'optionalItems': optionalItems
         }
         obsList.append({'metadata': metadata})
