@@ -67,6 +67,11 @@ login_manager.init_app(app)
 APP_STATE = 'ApplicationStateKNPS'
 NONCE = 'SampleNonceKNPS'
 
+NEO4J_HOST = os.getenv('NEO4J_HOST', 'localhost')
+NEO4J_PORT = int(os.getenv('NEO4J_PORT', '7687'))
+KNPS_SERVER_HOST = os.getenv('KNPS_SERVER_HOST', 'localhost')
+KNPS_SERVER_PORT = int(os.getenv('KNPS_SERVER_PORT', '8228'))
+
 loop = asyncio.get_event_loop()
 
 
@@ -89,7 +94,7 @@ def cli_login():
 
         # get request params
         query_params = {'client_id': config["client_id"],
-                        'redirect_uri': config["redirect_uri"],
+                        'redirect_uri': f'http://{KNPS_SERVER_HOST}:{KNPS_SERVER_PORT}/authorization-code/callback',
                         'scope': "openid email profile",
                         'state': login_state,
                         'nonce': NONCE,
@@ -507,7 +512,7 @@ class GraphDB:
                             "MERGE (b2: ByteSet {md5hash: $newHash}) "
                             "ON CREATE SET b2.created = $sync_time, b.filetype = $filetype, b2.line_hashes = $line_hashes "
                             "CREATE (a2:ObservedFile {id: apoc.create.uuid(), filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
-                            "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size")
+                            "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname")
             for k, v in obs.get("optionalItems", {}).items():
                 txStr += ", a2.{}=\"{}\"".format("optional_" + k, v)
             txStr += " CREATE (a)-[r3:NextVersion]->(a2) "
@@ -521,7 +526,11 @@ class GraphDB:
                             filetype = obs["filetype"],
                             file_size = obs["file_size"],
                             sync_time = obs["sync_time"],
-                            line_hashes = obs["line_hashes"])
+                            line_hashes = obs["line_hashes"],
+                            install_id = obs["install_id"],
+                            knps_version = obs["knps_version"],
+                            hostname = obs["hostname"])
+                            
 
             result = result.single()
             if result is None:
@@ -529,7 +538,7 @@ class GraphDB:
                 txStr = ("MERGE (b2: ByteSet {md5hash: $newHash}) "
                         "ON CREATE SET b2.created = $sync_time, b2.filetype = $filetype, b2.line_hashes = $line_hashes "
                         "MERGE (a2:ObservedFile {filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
-                        "ON CREATE SET a2.id = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size")
+                        "ON CREATE SET a2.id = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname")
 
                 for k, v in obs.get("optionalItems", {}).items():
                     txStr += ", a2.{}=\"{}\"".format("optional_" + k, v)
@@ -547,7 +556,10 @@ class GraphDB:
                                 file_size = obs["file_size"],
                                 filetype = obs["filetype"],                                
                                 sync_time = obs["sync_time"],
-                                line_hashes = obs["line_hashes"])
+                                line_hashes = obs["line_hashes"],
+                                install_id = obs["install_id"],
+                                knps_version = obs["knps_version"],
+                                hostname = obs["hostname"])
 
     #
     # Add a new Dataset object to the store
@@ -1410,8 +1422,8 @@ def createDataset(username):
 
 
 if __name__ == '__main__':
-    GDB = GraphDB("bolt://localhost:7687", "neo4j", "password")
+    GDB = GraphDB("bolt://{}:{}".format(NEO4J_HOST, NEO4J_PORT), "neo4j", "password")    
     
-    app.run(debug=True)
+    app.run(debug=True, host=KNPS_SERVER_HOST, port=KNPS_SERVER_PORT)
 
     greeter.close()    
