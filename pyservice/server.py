@@ -416,12 +416,12 @@ class GraphDB:
     #
     def findNearbyBytesetFiles(self, md5):
         with self.driver.session() as session:
-            results = session.run("MATCH (b1:ByteSet {md5hash: $md5hash})-[r1:JaccardMatch]->(b2:ByteSet)<-[r2:Contains]-(f1:ObservedFile {latest:1}) "
+            results = session.run("MATCH (b1:ByteSet {md5hash: $md5hash})-[r1:JaccardMatch]->(b2:ByteSet)<-[r2:Contains]-(f1:ObservedFile) "
                                   "WHERE b1.md5hash <> b2.md5hash "
-                                  "RETURN f1.filename, f1.id, f1.username",
+                                  "RETURN f1.filename, f1.id, f1.username, f1.latest, f1.modified",
                                   md5hash=md5)
-            for localFname, localId, user in results:
-                yield (localFname, localId, user)
+            for localFname, localId, owner, isLatest, modified in results:
+                yield (localFname, localId, owner, isLatest, modified)
 
     #
     #
@@ -481,12 +481,12 @@ class GraphDB:
 
             # Find the ObservedFiles that contain this ByteSet.
             files = session.run("MATCH (b: ByteSet {md5hash: $md5hash})<-[r:Contains]-(o:ObservedFile) "
-                                 "RETURN o.id, o.username, o.filename, o.latest",
+                                 "RETURN o.id, o.username, o.filename, o.latest, o.modified",
                                 md5hash=md5hash)
 
             # Find the Datasets that contain this ByteSet.
-            datasets = session.run("MATCH (b: ByteSet {md5hash: $md5hash, latest: 1})<-[r:Contains]-(d:Dataset) "
-                                   "RETURN d.id, d.uuid, d.title, d.desc",
+            datasets = session.run("MATCH (b: ByteSet {md5hash: $md5hash})<-[r:Contains]-(d:Dataset) "
+                                   "RETURN d.id, d.uuid, d.title, d.desc, d.modified, d.latest, d.owner",
                                    md5hash=md5hash)
 
             return (tuple(bytesetinfo.single()), [p for p in files], [d for d in datasets])
@@ -1181,7 +1181,7 @@ def show_byteset(md5):
     out += "<h2>Files that currently contain this ByteSet</h2>"
     out += "<table border=1 cellpadding=5>"
     out += "<tr><td><b>Filename</b></td><td><b>Owner</b></td></tr>"
-    for fileid, username, filename, isLatest in fileinfo:
+    for fileid, username, filename, isLatest, modified in fileinfo:
         obsoleteComment = " (Obsolete)"
         if isLatest:
             obsoleteComment = ""
@@ -1195,7 +1195,7 @@ def show_byteset(md5):
     out += "<h2>Files that currently contain near-duplicates of this ByteSet</h2>"
     out += "<table border=1 cellpadding=5>"
     out += "<tr><td><b>Filename</b></td><td><b>Owner</b></td></tr>"
-    for localFname, localFileId, owner in GDB.findNearbyBytesetFiles(md5):
+    for localFname, localFileId, owner, isLatest, modified in GDB.findNearbyBytesetFiles(md5):
         out += '<tr><td><a href="/file/{}">{}</a></td>'.format(localFileId, localFname)
         out += '<td><a href="/user/{}">{}</a></td>'.format(owner, owner)
         out += '</tr>'
@@ -1208,11 +1208,56 @@ def show_byteset(md5):
     out += "<h2>Datasets that currently contain these ByteSet</h2>"
     out += "<table border=1 cellpadding=5>"
     out += "<tr><td><b>Dataset title</b></td><td><b>Dataset desc</b></td></tr>"    
-    for id, uuid, title, desc in datasetInfo:
+    for id, uuid, title, desc, modified, isLatest, owner in datasetInfo:
         out += '<tr><td><a href="/datasetbyuuid/{}">{}</a></td><td>{}</td></tr>'.format(uuid, title, desc)
     out += "</table>"
 
     return f'<br> {out}'
+
+
+#
+# Show the details of a particular ByteSet
+#
+@app.route('/bytesetdata/<md5>')
+def show_bytesetdata(md5):
+    bytesetInfo, fileinfo, datasetInfo = GDB.getBytesetDetails(md5)
+    bytesetCreated, bytesetFormat = bytesetInfo
+
+    bytesetObj = {}
+    bytesetObj["id"] = md5
+    bytesetObj["created"] = datetime.datetime.fromtimestamp(bytesetCreated).strftime('%Y-%m-%d %H:%M:%S')
+    bytesetObj["format"] = bytesetFormat
+
+    files = []
+    for fileid, owner, filename, isLatest, modified in fileinfo:
+        files.append({"fileid": fileid,
+                      "owner": owner,
+                      "filename": filename,
+                      "modified": datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S'),
+                      "isLatest": isLatest})
+    bytesetObj["files"] = files
+
+    nearDuplicates = []
+    for localFname, localFileId, owner, isLatest, modified in GDB.findNearbyBytesetFiles(md5):
+        nearDuplicates.append({"fileid": localFileId,
+                               "owner": owner,
+                               "filename": localFname,
+                               "modified": datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S'),
+                               "isLatest": isLatest})
+    bytesetObj["nearDuplicates"] = nearDuplicates
+
+    datasets = []
+    for id, uuid, title, desc, modified, isLatest, owner in datasetInfo:
+        datasets.append({"id": id,
+                         "uuid": uuid,
+                         "title": title,
+                         "owner": owner,
+                         "modified": datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S'),
+                         "isLatest": isLatest,
+                         "desc": desc})
+    bytesetObj["datasets"] = datasets
+
+    return json.dumps(bytesetObj)
 
 
 #
@@ -1316,13 +1361,46 @@ def show_file(fileid):
     out += "<h2>Files that are currently near-duplicates of this File</h2>"
     out += "<table border=1 cellpadding=5>"
     out += "<tr><td><b>Filename</b></td><td><b>Owner</b></td></tr>"
-    for localFname, localFileId, owner in GDB.findNearbyBytesetFiles(md5hash):
+    for localFname, localFileId, owner, isLatest, modified in GDB.findNearbyBytesetFiles(md5hash):
         out += '<tr><td><a href="/file/{}">{}</a></td>'.format(localFileId, localFname)
         out += '<td><a href="/user/{}">{}</a></td>'.format(owner, owner)
         out += '</tr>'
     out += "</table>"        
 
     return out
+
+#
+# Show the details of a particular ObservedFile
+#
+@app.route('/knownlocationdata/<fileid>')
+def show_knownlocationdata(fileid):
+    foundFile = GDB.getFileObservationDetails(fileid)
+    
+    fileId, owner, filename, modified, synctime, prevId, nextId, isLatest, md5hash = foundFile
+
+    modified_str = datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S')
+    synctime_str = datetime.datetime.fromtimestamp(synctime).strftime('%Y-%m-%d %H:%M:%S')
+
+    kl = {"id": fileid,
+          "owner": owner,
+          "filename": filename,
+          "modified": modified_str,
+          "synctime": synctime_str,
+          "prevId": str(prevId) if prevId else "",
+          "nextId": str(nextId) if nextId else "",
+          "isLatest": isLatest,
+          "md5hash": md5hash}
+
+    nearDuplicates = []
+    for localFname, localFileId, owner, isLatest, modified in GDB.findNearbyBytesetFiles(md5hash):
+        nearDuplicates.append({"fileid": localFileId,
+                               "owner": owner,
+                               "filename": localFname,
+                               "modified": datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S'),
+                               "isLatest": isLatest})
+    kl["nearDuplicates"] = nearDuplicates
+
+    return json.dumps(kl)
 
 #
 # Accept an upload of a set of file observations
