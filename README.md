@@ -8,6 +8,13 @@ To use search, set environment variables:
 * ES_HOST = ElasticSearch server hostname
 * ES_PORT = ElasticSearch server port (defaults to 9200 if not set)
 
+The commandline tool sends data to the server, which is stored in a Neo4J graph database. Set the following variables with your Neo4J server, if it is not running on default localhost settings:
+
+* NEO4J_HOST
+* NEO4J_PORT (default 7687)
+
+Logins are currently handled by Okta in the backend server. Ask a KNPS maintainer for client_secrets.json.
+
 To install KNPS:
   
 1. Clone this repo. Go to root directory.
@@ -18,14 +25,18 @@ pip install -r requirements.txt
 alembic upgrade head
 python server.py
 ```
-3. Set up and start frontend.
+3. Set up and start web frontend.
 ```
-cd ../client
+cd ../web
 npm install
 npm run dev
 ```
-
-The initial database contains data that would be loaded with the following instructions, so don't run them, unless you want to reset.
+4. Set up commandline tool
+```
+cd ../cli
+pip install -r requirements.txt
+(optional) export PATH=$PATH:<INSTALL_DIRECTORY>/cli/bin
+```
 
 ---
 
