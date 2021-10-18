@@ -27,8 +27,8 @@ CFG_FILE = 'knps.cfg'
 DB_FILE = '.knpsdb'
 
 
-KNPS_SERVER_DEV = '127.0.0.1:8228'
-KNPS_SERVER_PROD = 'ec2-3-224-14-41.compute-1.amazonaws.com:8228'
+KNPS_SERVER_DEV = '127.0.0.1:5000'
+KNPS_SERVER_PROD = 'ec2-3-224-14-41.compute-1.amazonaws.com:5000'
 
 ###################################################
 # Some util functions
@@ -282,22 +282,6 @@ class User:
 
             print("Opening web browser for logout...")
             webbrowser.open('https://dev-66403161.okta.com/login/signout')
-            # token_url = ROOTURL + "/get_token"
-            # token_response = requests.post(token_url, data={'login_code': data['login_code']})
-            # token_data = token_response.json()
-            #
-            # username = token_data['email']
-            # # This is not really a login. TODO: make this good
-            # self.username = username
-            # self.access_token = token_data['access_token']
-            #
-            # if self.username not in self.db:
-            #     self.db[self.username] = {}
-            #
-            # self.db['__CURRENT_USER__'] = (self.username, self.access_token)
-            # self.save_db()
-            #
-            # print("You are now logged in as: {}".format(token_data['email']))
 
     def load_db(self):
         p = Path(Path.home(), DB_FILE)
