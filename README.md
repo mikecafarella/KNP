@@ -5,8 +5,8 @@ Recommended: Run this in a python virtual environment.
 To enable search, an ElasticSearch server is needed. The system was tested with an ES server with default settings.
 
 To use search, set environment variables:
-ES_HOST = <ElasticSearch server hostname>
-ES_PORT = <ElasticSearch server port> (defaults to 9200 if not set)
+* ES_HOST = ElasticSearch server hostname
+* ES_PORT = ElasticSearch server port (defaults to 9200 if not set)
 
 To install KNPS:
   
