@@ -35,7 +35,7 @@ npm run dev
 ```
 cd ../cli
 pip install -r requirements.txt
-(optional) export PATH=$PATH:<INSTALL_DIRECTORY>/cli/bin
+(optional) export PATH=$PATH:<ROOT_DIRECTORY>/cli/bin
 ```
 
 ---
