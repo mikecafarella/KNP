@@ -1,0 +1,184 @@
+A possible poor-man's demo of KNPS:TNG
+
+
+> knps status
+
+You are not logged in.
+
+You have 0 top-level directories watched by knps.
+
+Those directories contain 0 files.
+
+> knps login --user michjc
+Password: *******
+
+michjc authenticated
+
+> knps cover ~/Users/michjc/Downloads
+ok
+
+> knps cover ~/Users/michjc/work/2021
+ok
+
+> knps status
+
+You are logged in as michjc
+
+You have 2 top-level directories watched by knps:
+~/Users/michjc/Downloads
+~/Users/michjc/work/2021
+
+Those directories contain 781 files watched by knps.
+
+> knps capture `runPDFExtractor.sh ~/Users/michjc/work/2021/cord-19-crawl`
+ok
+
+> knps status
+
+You are logged in as michjc
+
+You have 2 top-level directories and 1349 files watched by knps.
+
+> ls ~/Users/michjc/work/2021/cord-19-crawl-extracts
+
+covid-1-paper-extracts.csv
+covid-2-paper-extracts.csv
+covid-3-paper-extracts.csv
+...
+
+> knps share --store ~/Users/michjc/work/2021/cord-19-crawl-extracts/covid-1-paper-extracts.csv
+
+This file:
+~/Users/michjc/work/2021/cord-19-crawl-extracts/covid-1-paper-extracts.csv
+
+can be shared using this URL:
+http://knps.org/afe6ee13-5171-49c6-ad78-27a4b45b23ee
+
+> mail --to mrander@umich.edu --subject "CORD-19 first step" --text "Hey mike, here's the PDF extraction you wanted: http://knps.org/afe6ee13-5171-49c6-ad78-27a4b45b23ee"
+
+
+------------------------------------------------------------
+MEANWHILE, ACROSS THE COUNTRY....
+------------------------------------------------------------
+
+> knps login --user mrander
+Password: *******
+
+mrander authenticated
+
+> mail
+From: michjc
+Subject: CORD-19 first step
+
+Hey mike, here's the PDF extraction you wanted: http://knps.org/afe6ee13-5171-49c6-ad78-27a4b45b23ee
+
+> knps status
+
+You are logged in as mrander
+
+You have 1 top-level directory watched by knps:
+~/Users/mrander/Downloads
+
+That directory contains 450 files watched by knps.
+
+
+> cd ~/Downloads
+
+> wget http://knps.org/afe6ee13-5171-49c6-ad78-27a4b45b23ee --O mjcExtracts.csv
+
+> knps status
+
+You are logged in as mrander
+
+You have 1 top-level directory watched by knps:
+~/Users/mrander/Downloads
+
+That directory contains 451 files watched by knps.
+
+> knps capture `getSentences.py mjcExtracts.csv test-sentences.csv`
+ok
+
+> knps capture `getEntities.py test-sentences.csv covid-entity-list.txt`
+ok
+
+> knps examine covid-entity-list.txt
+
+This is a file.
+
+The global URL for this file is: http://knps.org/201c7b03-f7da-416f-9005-8a9771c3c5f1
+
+> knps history covid-entity-list.txt
+
+------------------------------------------------
+"covid-entity-list.txt" (http://knps.org/201c7b03-f7da-416f-9005-8a9771c3c5f1)
+
+This data became known on August 17, 2021, at 11:35:20 (2021-17-08T11:35:20-05:00)
+
+Data creator: "mrander@umich.edu" (http://knps.org/511fedde-56b1-4fb2-9068-2321b271df7e)
+
+The data in this file exists in 1 known location.
+
+Creating process: "getEntities.py" (not known to knps)
+
+Predecessor(s): "test-sentences.csv" (http://knps.org/1babc365-5814-41e3-a39c-6c6ebc383e0d)
+
+------------------------------------------------
+"test-sentences.csv" (http://knps.org/1babc365-5814-41e3-a39c-6c6ebc383e0d)
+
+This data became known on August 17, 2021, at 11:32:15 (2021-17-08T11:32:15-05:00)
+
+Data creator: "mrander@umich.edu" (http://knps.org/511fedde-56b1-4fb2-9068-2321b271df7e)
+
+The data in this file exists in 1 known location.
+
+Process: "getSentences.py" (not known to knps)
+
+Predecessor(s): "mjcExtracts.csv" (http://knps.org/afe6ee13-5171-49c6-ad78-27a4b45b23ee)
+
+
+------------------------------------------------
+"mjcExtracts.csv" (http://knps.org/afe6ee13-5171-49c6-ad78-27a4b45b23ee)
+
+This data became known on August 17, 2021, at 09:50:15 (2021-17-08T09:50:15-05:00)
+
+Creator: "michjc@csail.mit.edu" (http://knps.org/5fa94358-3b81-4730-9460-eec79eef4d95)
+
+The data in this file exists in 2 known locations.
+
+Process: "runPDFExtractor.py" (http://knps.org/f9dfd807-73e7-4b87-9a97-d8a404a4661c)
+
+Predecessor(s): "cord-19-crawl" (http://knps.org/50036f0a-4e08-48a9-ba5c-66cf34b5c710)
+
+------------------------------------------------
+"cord-19-crawl" (http://knps.org/50036f0a-4e08-48a9-ba5c-66cf34b5c710)
+
+This data became known on March 10, 2020, at 15:40:11 (2020-10-03T15:40:11-05:00)
+
+Creator: "rodney@allenai.org" (http://knps.org/d5764541-7bf7-4dd8-977f-94fdf82b077a)
+
+The data in this file exists in 3,294 known locations.
+
+Process: "getPDFsForSemanticScholar" (not known to knps)
+
+Predecessors: none
+
+> mail --to michjc@csail.mit.edu --subject "Did it" --text "I've attached the results" --attachment covid-entity-list.txt
+
+
+------------------------------------------------------------
+BACK AT CAFARELLA'S OFFICE
+------------------------------------------------------------
+> mail --downloadAll
+From: mrander
+Subject: I've attached the results
+
+> ls ~/Users/michjc/Downloads/covid-entity-list.txt
+~/Users/michjc/Downloads/covid-entity-list.txt
+
+> knps examine covid-entity-list.txt
+This is a file.
+
+The global URL for this file is: http://knps.org/201c7b03-f7da-416f-9005-8a9771c3c5f1
+
+> echo "SUCCESS!"
+SUCCESS!
