@@ -1,9 +1,4 @@
 requests
-flask
-flask_cors
-flask_login
-okta_jwt_verifier
 pandas
 PyPDF2
-neo4j
 pyyaml
