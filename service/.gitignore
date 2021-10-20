@@ -1,2 +1,3 @@
 *.db
 client_secrets.json
+data/*
