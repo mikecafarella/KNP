@@ -240,32 +240,44 @@ class User:
         self.load_db()
         self.username, self.access_token = self.get_current_user()
 
-    def login(self):
-        ROOTURL = self.get_server_url()
-        url = ROOTURL + "/cli_login"
-
-        response = requests.get(url)
-        data = response.json()
-
-        if 'login_url' in data:
-            print("Opening web browser for login...")
-            webbrowser.open(data['login_url'])
-            token_url = ROOTURL + "/get_token"
-            token_response = requests.post(token_url, data={'login_code': data['login_code']})
-            token_data = token_response.json()
-
-            username = token_data['email']
-            # This is not really a login. TODO: make this good
+    def login(self, username=None):
+        # FOR TEMP LOGIN.
+        if username:
             self.username = username
-            self.access_token = token_data['access_token']
-
+            self.access_token = "INSECURE_TOKEN_{}".format(username)
             if self.username not in self.db:
                 self.db[self.username] = {}
 
             self.db['__CURRENT_USER__'] = (self.username, self.access_token)
             self.save_db()
+            print("You are now logged in as: {}".format(username))
 
-            print("You are now logged in as: {}".format(token_data['email']))
+        else:
+            ROOTURL = self.get_server_url()
+            url = ROOTURL + "/cli_login"
+
+            response = requests.get(url)
+            data = response.json()
+
+            if 'login_url' in data:
+                print("Opening web browser for login...")
+                webbrowser.open(data['login_url'])
+                token_url = ROOTURL + "/get_token"
+                token_response = requests.post(token_url, data={'login_code': data['login_code']})
+                token_data = token_response.json()
+
+                username = token_data['email']
+                # This is not really a login. TODO: make this good
+                self.username = username
+                self.access_token = token_data['access_token']
+
+                if self.username not in self.db:
+                    self.db[self.username] = {}
+
+                self.db['__CURRENT_USER__'] = (self.username, self.access_token)
+                self.save_db()
+
+                print("You are now logged in as: {}".format(token_data['email']))
 
     def logout(self):
         ROOTURL = self.get_server_url()
@@ -531,6 +543,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='KNPS command line')
 
     parser.add_argument("--login", action="store_true", help="Perform login")
+    parser.add_argument("--login_temp", help="Temporary dev login bypass. INSECURE!")
     parser.add_argument("--logout", action="store_true", help="Logout current user")
     parser.add_argument("--status", nargs="*", help="Check KNPS status", default=None)
     parser.add_argument("--watch", help="Add a directory to watch")
@@ -546,6 +559,9 @@ if __name__ == "__main__":
     u = User()
     if args.login:
         u.login()
+    elif args.login_temp:
+        # TODO: remove this. this is a temporary login bypass for dev purposes
+        u.login(args.login_temp)
     elif args.logout:
         u.logout()
     elif args.watch:
