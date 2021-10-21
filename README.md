@@ -40,6 +40,8 @@ pip install -r requirements.txt
 (optional) export PATH=$PATH:<ROOT_DIRECTORY>/cli/bin
 ```
 
+Note: if you only want to run the commmand line tool, you can point it to our central server using `knps --server prod`. This server is likely, but not gauranteed to be running.
+
 ---
 
 To install demo data, go to service directory and run `bootstrap_demo.sh`
