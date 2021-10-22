@@ -229,7 +229,7 @@ def callback():
     print(json.dumps(userinfo_response, indent=2))
 
     user = FlaskUser(
-        idv=unique_id,
+        id_=unique_id,
         name=user_name,
         email=user_email
         )
