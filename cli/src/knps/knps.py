@@ -302,8 +302,11 @@ class User:
         self.db['__SERVER__'] = url
         self.save_db()
 
+    def get_server(self):
+        return self.db.get('__SERVER__', 'dev')
+
     def get_server_url(self):
-        url = self.db.get('__SERVER__', 'dev')
+        url = self.get_server()
 
         if url == 'prod':
             url = KNPS_SERVER_PROD
@@ -574,10 +577,12 @@ if __name__ == "__main__":
             w.addDataset(args.addDataset)
 
     elif args.status is not None:
+        print("KNPS Version: ", get_version())
         if not u.username:
-            print("Not logged in.")
+            print("Not logged in; please run: knps --login")
         else:
-            print("You are logged in as", u.username)
+            print("User: {}    Server: {}".format(u.username, u.get_server()))
+            print()
             dirs = u.get_dirs()
             files = u.get_files()
             print("You have {} top-level directories and {} files watched by knps.".format(len(dirs), len(files)))
