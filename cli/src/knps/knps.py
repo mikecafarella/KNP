@@ -22,7 +22,11 @@ import socket
 import mimetypes
 from binaryornot.check import is_binary
 
-from settings import CACHE_FILE_PROCESSING
+from settings import (
+    CACHE_FILE_PROCESSING,
+    KNPS_SERVER_DEV,
+    KNPS_SERVER_PROD
+)
 
 CFG_DIR = '.knps'
 CFG_FILE = 'knps.cfg'
@@ -30,9 +34,6 @@ CFG_FILE = 'knps.cfg'
 DB_FILE = '.knpsdb'
 DIR_DB_FILE = 'knps_dir_db'
 
-
-KNPS_SERVER_DEV = '127.0.0.1:5000'
-KNPS_SERVER_PROD = 'ec2-3-224-14-41.compute-1.amazonaws.com:5000'
 
 ###################################################
 # Some util functions
