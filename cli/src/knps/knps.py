@@ -25,10 +25,13 @@ CFG_DIR = '.knps'
 CFG_FILE = 'knps.cfg'
 
 DB_FILE = '.knpsdb'
+DIR_DB_FILE = 'knps_dir_db'
 
 
 KNPS_SERVER_DEV = '127.0.0.1:5000'
 KNPS_SERVER_PROD = 'ec2-3-224-14-41.compute-1.amazonaws.com:5000'
+
+CACHE_FILE_PROCESSING = bool(os.getenv('CASHE_FILE_PROCESSING', True))
 
 ###################################################
 # Some util functions
@@ -40,12 +43,16 @@ def get_version():
     rev_count = len(rev_count.split("\n"))
     return f'{proj_ver}-{rev_count}'
 
+
+HASH_CACHE = {}
 def hash_file(fname):
-    hash_md5 = hashlib.md5()
-    with open(fname, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    return hash_md5.hexdigest()
+    if fname not in HASH_CACHE:
+        hash_md5 = hashlib.md5()
+        with open(fname, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        HASH_CACHE[fname] = hash_md5.hexdigest()
+    return HASH_CACHE[fname]
 
 #
 # Hash all the lines of a file. Should only be applied to a text file
@@ -69,7 +76,7 @@ def hash_file_lines(fname, file_type = "Unknown"):
 def hash_pdf_file_lines(fname):
     hashes = []
     pdfFileObj = open(fname, 'rb')
-    pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
+    pdfReader = PyPDF2.PdfFileReader(pdfFileObj, strict=False)
     for pageNumber in range(pdfReader.getNumPages()):
         pageObj = pdfReader.getPage(pageNumber)
         # hashes.append(hashlib.md5(pageObj.extractText().strip().encode()).hexdigest())
@@ -313,8 +320,6 @@ class User:
         elif url == 'dev':
             url = KNPS_SERVER_DEV
 
-        print("Using server {} for user {}".format(url, self.username))
-
         return 'http://{}'.format(url)
 
     def get_install_id(self):
@@ -369,6 +374,8 @@ class Watcher:
     def __init__(self, user):
         self.user = user
         self.config = None
+        self.db = None
+        self.knps_version = get_version()
 
     #
     # Add something to the watchlist
@@ -414,6 +421,43 @@ class Watcher:
 
         self.config.write(self.__get_cfg__(d).open("w"))
 
+    def __load_local_db__(self):
+        p = Path(CFG_DIR, DIR_DB_FILE)
+        db_version = None
+        if p.exists():
+            try:
+                self.db = json.load(p.open())
+                db_version = self.db.get('__KNPS_VERSION__', None)
+            except Exception as e:
+                print(e)
+                pass
+
+        if not self.db or db_version != self.knps_version:
+            self.db = {'__KNPS_VERSION__': self.knps_version}
+
+    def __save_local_db__(self):
+        json.dump(self.db, Path(CFG_DIR, DIR_DB_FILE).open('wt'), indent=2)
+
+    def file_already_processed(self, f):
+        if not CACHE_FILE_PROCESSING:
+            return False
+
+        if not self.db:
+            self.__load_local_db__()
+
+        file_hash = hash_file(f)
+
+        return file_hash in self.db and f in self.db[file_hash]
+
+    def record_file_processing(self, f):
+        if CACHE_FILE_PROCESSING:
+            if not self.db:
+                self.__load_local_db__()
+
+            file_hash = hash_file(f)
+            if file_hash not in self.db:
+                self.db[file_hash] = {}
+            self.db[file_hash][f] = 1
 
     #
     # Comment on an observed file
@@ -452,6 +496,7 @@ class Watcher:
         if todoPair is None:
             print("No existing observation list. Formulating new one...")
             k = 50
+
             longTodoList = [x for x in self.user.get_files()]
             smallTodoLists = [longTodoList[i:i+k] for i in range(0, len(longTodoList), k)]
 
@@ -465,6 +510,7 @@ class Watcher:
         # Now finish all outstanding TODO lists. Mark them
         # as done as we go.
         #
+        self.__load_local_db__()
         while todoPair is not None:
             k, todoList = todoPair
 
@@ -475,10 +521,17 @@ class Watcher:
             uploadCount = 0
             for f in todoChunk:
                 print("Processing", f)
+
+                if self.file_already_processed(f):
+                    print(" -- Already processed")
+                    continue
+
                 try:
                     observationList.append(self._observeFile_(f))
                     uploadCount += 1
-                except:
+                    self.record_file_processing(f)
+                except Exception as e:
+                    print("*** Skipping: {}".format(e))
                     skipCount += 1
             print("Sending the synclist")
             response = send_synclist(self.user, observationList)
@@ -488,6 +541,7 @@ class Watcher:
                 break
             else:
                 print("Observed and uploaded", uploadCount, "items. Skipped", skipCount)
+                self.__save_local_db__()
 
                 # Mark the TODO list as done
                 self.user.removeTodoList(k)
@@ -601,9 +655,12 @@ if __name__ == "__main__":
             print()
 
     elif args.sync:
+        print("KNPS Version: ", get_version())
         if not u.username:
             print("Not logged in.")
         else:
+            print("User: {}    Server: {}".format(u.username, u.get_server()))
+            print()
             Watcher(u).observeAndSync()
 
     elif args.server:
