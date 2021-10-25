@@ -9,7 +9,6 @@ import { useRouter } from 'next/router'
 
 
   const DataObj: React.FC<DataobjProps> = (props) => {
-    console.log(props)
     return (
       <Layout>
         <Pane>
@@ -20,8 +19,6 @@ import { useRouter } from 'next/router'
   }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-    console.log('DOBJ', context.query)
-
     const res = await fetch(`http://localhost:5000/dobjs/${context.query.id}`)
     const data = await res.json()
 

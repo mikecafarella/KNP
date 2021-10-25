@@ -24,7 +24,7 @@
     "formidable": "^1.2.2",
     "micro": "^9.3.4",
     "next": "^10.0.9",
-    "next-auth": "^3.25.0",
+    "next-auth": "^3.29.0",
     "nextjs": "0.0.3",
     "prismjs": "^1.23.0",
     "react": "^17.0.1",
@@ -34,7 +34,8 @@
     "react-markdown": "^5.0.0",
     "react-papaparse": "^3.14.0",
     "react-simple-code-editor": "^0.11.0",
-    "react-syntax-highlighter": "^15.4.3"
+    "react-syntax-highlighter": "^15.4.3",
+    "swr": "^1.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.12.7",

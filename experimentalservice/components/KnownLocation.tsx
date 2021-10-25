@@ -25,8 +25,6 @@ export type KnownLocationProps = {
 }
 
 const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
-  const ownerid = 1
-
   const bytesetLink = "/byteset/" + dobj.md5hash
   const previousLink = "/knownlocation/" + dobj.prevId
   const nextLink = "/knownlocation/" + dobj.nextId
@@ -35,8 +33,16 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
       <Pane width="100%">
         <Pane display="flex" padding={majorScale(1)} border>
           <Pane flex={1} >
-            <Heading size={800}>Known Location {dobj.filename}
+            
+            {dobj.latest == 1 &&
+            <Heading size={800}>File {dobj.filename}
             </Heading>
+            }
+
+            {dobj.latest == 0 &&
+            <Heading size={800}>File {dobj.filename} (Obsolete)
+            </Heading>
+            }
 
             <Pane marginLeft={majorScale(1)}>
             <Paragraph size={300} color="muted">
@@ -52,7 +58,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
             </Paragraph>
 
             <Paragraph size={300} color="muted">            
-                This file contains <a href={bytesetLink}>Byteset {dobj.md5hash}</a>
+                This file contains <a href={bytesetLink}>Content {dobj.md5hash}</a>
             </Paragraph>
 
             </Pane>
