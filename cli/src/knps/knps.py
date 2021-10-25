@@ -63,7 +63,7 @@ def hash_file_lines(fname, file_type):
     hashes = []
     text = ""
 
-    if file_type == "pdf":
+    if file_type == "application/pdf":
         return hash_pdf_file_lines(fname)
 
     if not is_binary(fname):
