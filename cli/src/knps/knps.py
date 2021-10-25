@@ -19,7 +19,8 @@ import yaml
 import subprocess
 import uuid
 import socket
-
+import mimetypes
+from binaryornot.check import is_binary
 
 CFG_DIR = '.knps'
 CFG_FILE = 'knps.cfg'
@@ -57,17 +58,21 @@ def hash_file(fname):
 #
 # Hash all the lines of a file. Should only be applied to a text file
 #
-def hash_file_lines(fname, file_type = "Unknown"):
+def hash_file_lines(fname, file_type):
     hashes = []
     text = ""
+
     if file_type == "pdf":
         return hash_pdf_file_lines(fname)
-    with open(fname, "rt") as f:
-        for line in f:
-            text = text + " " + line
-            line = line.strip().encode()
-            hashes.append(hashlib.md5(line).hexdigest())
-    if file_type == "txt":
+
+    if not is_binary(fname):
+        with open(fname, "rt") as f:
+            for line in f:
+                text = text + " " + line
+                line = line.strip().encode()
+                hashes.append(hashlib.md5(line).hexdigest())
+
+    if file_type.startswith("text/"):
         getShingles(text)
     return hashes
 
@@ -205,25 +210,20 @@ def getShingles(s, shingle_length = 5, num_shingles = 10, fingerprint_bytes = 8)
         shingles.append(new_shingles[minimum])
     return shingles
 
-## distingiush between binary and text for unknown files
-def getFileType(f):
-    if f.lower().endswith(('.csv')):
-        return "csv"
-    if f.lower().endswith(('.doc', '.docx')):
-        return "doc"
-    if f.lower().endswith(('.html', '.htm')):
-        return "html"
-    if f.lower().endswith(('.odt')):
-        return "doc"
-    if f.lower().endswith(('.pdf')):
-        return "pdf"
-    if f.lower().endswith(('.xls', '.xlsx')):
-        return "excel"
-    if f.lower().endswith(('.ppt', '.pptx')):
-        return "ppt"
-    if f.lower().endswith(('.txt')):
-        return "txt"
-    return "Unknown"
+## use the mimetype
+def get_file_type(f):
+    type, encoding = mimetypes.guess_type(f)
+
+    if type:
+        return type
+    elif is_binary(f):
+        return 'binary/unknown'
+    else:
+        return 'text/unknown'
+
+
+## check if the file is binary by trying to open it
+
 
 class Error(Exception):
     """Base class for exceptions in this module."""
@@ -569,7 +569,7 @@ class Watcher:
 
     def _observeFile_(self, f):
         file_hash = hash_file(f)
-        file_type = getFileType(f)
+        file_type = get_file_type(f)
         line_hashes = hash_file_lines(f, file_type)
         optionalFields = {}
         optionalFields["filetype"] = file_type

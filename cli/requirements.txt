@@ -2,3 +2,4 @@ requests
 pandas
 PyPDF2
 pyyaml
+binaryornot
