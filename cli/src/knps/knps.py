@@ -22,6 +22,8 @@ import socket
 import mimetypes
 from binaryornot.check import is_binary
 
+from settings import CACHE_FILE_PROCESSING
+
 CFG_DIR = '.knps'
 CFG_FILE = 'knps.cfg'
 
@@ -31,8 +33,6 @@ DIR_DB_FILE = 'knps_dir_db'
 
 KNPS_SERVER_DEV = '127.0.0.1:5000'
 KNPS_SERVER_PROD = 'ec2-3-224-14-41.compute-1.amazonaws.com:5000'
-
-CACHE_FILE_PROCESSING = bool(os.getenv('CASHE_FILE_PROCESSING', True))
 
 ###################################################
 # Some util functions
