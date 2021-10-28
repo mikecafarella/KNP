@@ -423,18 +423,44 @@ class GraphDB:
             for localFname, localId, owner, isLatest, modified in results:
                 yield (localFname, localId, owner, isLatest, modified)
 
-    #
-    #
-    #
     def createNearMatches(self):
         with self.driver.session() as session:
             results = session.run("MATCH (a: ByteSet), (b: ByteSet) "
-                                  "WHERE a.md5hash <> b.md5hash "
-                                  "WITH a, b, size(apoc.coll.intersection(a.line_hashes, b.line_hashes)) / apoc.convert.toFloat(size(apoc.coll.union(a.line_hashes, b.line_hashes))) as jaccard "
-                                  "WHERE jaccard > 0.9 "
+                                  "WHERE a.md5hash <> b.md5hash AND EXISTS(a.optional_shingles) AND EXISTS(b.optional_shingles)"
+                                  "WITH a, b, apoc.convert.toFloat(size([i IN RANGE(0, SIZE(a.optional_shingles)-1) WHERE a.optional_shingles[i] = b.optional_shingles[i]]))/apoc.convert.toFloat(size(a.optional_shingles)) as jaccard "
+                                  "WHERE jaccard > 0.7 "
                                   "MERGE (a)-[r:JaccardMatch]->(b) "
                                   "RETURN id(a), id(b), jaccard")
+            print(results.data())
+            results = session.run("MATCH (a: ByteSet) RETURN id(a)")
+            print(results.data())
+    #
+    #
+    #
+    def createNearLineMatches(self):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a: ByteSet), (b: ByteSet) "
+                                  "WHERE a.md5hash <> b.md5hash "
+                                  "WITH a, b, size(apoc.coll.intersection(a.line_hashes, b.line_hashes)) / apoc.convert.toFloat(size(apoc.coll.union(a.line_hashes, b.line_hashes))) as linejaccard "
+                                  "WHERE linejaccard > 0.85 "
+                                  "MERGE (a)-[r:LineJaccardMatch]->(b) "
+                                  "RETURN id(a), id(b), linejaccard")
 
+    ## MAKE THIS BE DONE EARLIER PUSHING THEM ONTO THIS LATER IS SLOW
+    def applyFileInfoToByteSet(self):
+        with self.driver.session() as session:
+            results = session.run("MATCH (n:ByteSet)--(m:ObservedFile) WHERE EXISTS(m.optional_column_hashes) SET n.optional_column_hashes = m.optional_column_hashes")
+            results = session.run("MATCH (n:ByteSet)--(m:ObservedFile) WHERE EXISTS(m.optional_shingles) SET n.optional_shingles = m.optional_shingles")
+
+
+    def createNearColumnMatches(self):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a: ByteSet), (b: ByteSet) "
+                                  "WHERE a.md5hash <> b.md5hash AND EXISTS(a.optional_column_hashes) AND EXISTS(b.optional_column_hashes) "
+                                  "WITH a, b, size(apoc.coll.intersection(a.optional_column_hashes, b.optional_column_hashes)) / apoc.convert.toFloat(size(apoc.coll.union(a.optional_column_hashes, b.optional_column_hashes))) as columnjaccard "
+                                  "WHERE columnjaccard >= 0.5 "
+                                  "MERGE (a)-[r:ColumnJaccardMatch]->(b) "
+                                  "RETURN id(a), id(b), columnjaccard")
 
     #
     #
@@ -511,10 +537,15 @@ class GraphDB:
                             "WHERE b.md5hash <> $newHash "
                             "MERGE (b2: ByteSet {md5hash: $newHash}) "
                             "ON CREATE SET b2.created = $sync_time, b.filetype = $filetype, b2.line_hashes = $line_hashes "
-                            "CREATE (a2:ObservedFile {id: apoc.create.uuid(), filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
-                            "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname")
+                            "CREATE (a2:ObservedFile {id: apoc.create.uuid(), filename: $filename, username: $username, latest: 1")
             for k, v in obs.get("optionalItems", {}).items():
-                txStr += ", a2.{}=\"{}\"".format("optional_" + k, v)
+                if k in ["column_hashes", "shingles"]:
+                    txStr += ", {}: {}".format("optional_" + k, json.dumps(v))
+                else:
+                    txStr += ", {}: \"{}\"".format("optional_" + k, v)
+                
+            txStr += ("})-[r2:Contains]->(b2) "
+                    "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname")
             txStr += " CREATE (a)-[r3:NextVersion]->(a2) "
             txStr += "RETURN id(a2)"
 
@@ -530,20 +561,23 @@ class GraphDB:
                             install_id = obs["install_id"],
                             knps_version = obs["knps_version"],
                             hostname = obs["hostname"])
-
-
             result = result.single()
+
             if result is None:
                 # This gets run when there's no predecessor OR when the hash isn't new.
                 txStr = ("MERGE (b2: ByteSet {md5hash: $newHash}) "
                         "ON CREATE SET b2.created = $sync_time, b2.filetype = $filetype, b2.line_hashes = $line_hashes "
-                        "MERGE (a2:ObservedFile {filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
-                        "ON CREATE SET a2.id = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname")
-
+                        "MERGE (a2:ObservedFile {filename: $filename, username: $username, latest: 1")
+                
                 for k, v in obs.get("optionalItems", {}).items():
-                    txStr += ", a2.{}=\"{}\"".format("optional_" + k, v)
-                txStr += " RETURN id(a2)"
+                    if k in ["column_hashes", "shingles"]:
+                        txStr += ", {}: {}".format("optional_" + k, json.dumps(v))
+                    else:
+                        txStr += ", {}: \"{}\"".format("optional_" + k, v)
 
+                txStr += ("})-[r2:Contains]->(b2) "
+                        "ON CREATE SET a2.id = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname"
+                        " RETURN id(a2)")
 
                 #
                 # Create a FileObservation and its ByteSet when there is no predecessor
@@ -1085,7 +1119,7 @@ def show_user_profile(username):
     out += "<h2>All files</h2>"
     out += "<table border=1 cellpadding=5>"
     out += "<tr><td>Filename</td><td>Size</td><td>Last Modified</td><td>Last Sync</td><td># optional fields</td><td>Other Users</td></tr>"
-    maxItems = 3
+    maxItems = 10
     count = 0
     for fileId, fname, fsize, modified, synctime in GDB.getUserDetails(username):
         mod_date = datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S')
@@ -1440,7 +1474,10 @@ def sync_filelist(username):
     # This call is currently quite bad, algorithmically.
     # It will get too slow when the repository is large.
     # We need to reimplement eventually
+    GDB.applyFileInfoToByteSet()
     GDB.createNearMatches()
+    GDB.createNearLineMatches()
+    GDB.createNearColumnMatches()
 
     # show the user profile for that user
     return json.dumps(username)

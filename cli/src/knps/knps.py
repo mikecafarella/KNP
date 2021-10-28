@@ -60,9 +60,14 @@ def hash_file_lines(fname, file_type = "Unknown"):
             text = text + " " + line
             line = line.strip().encode()
             hashes.append(hashlib.md5(line).hexdigest())
-    if file_type == "txt":
-        getShingles(text)
     return hashes
+
+def getShinglesFname(fname):
+    text = ""
+    with open(fname, "rt") as f:
+        for line in f:
+            text = text + " " + line
+    return getShingles(text)
 
 ## This is very slow
 ## near-miss detection (hash-shingling)
@@ -195,7 +200,7 @@ def getShingles(s, shingle_length = 5, num_shingles = 10, fingerprint_bytes = 8)
         for shingle in all_shingles:
             new_shingles[(factor*shingle+shift)%(256**fingerprint_bytes)] = shingle
         minimum = min(new_shingles.keys())
-        shingles.append(new_shingles[minimum])
+        shingles.append(str(new_shingles[minimum]))
     return shingles
 
 ## distingiush between binary and text for unknown files
@@ -490,6 +495,7 @@ class Watcher:
                 except:
                     skipCount += 1
             print("Sending the synclist")
+
             response = send_synclist(self.user, observationList)
 
             if 'error' in response:
@@ -532,7 +538,9 @@ class Watcher:
         if file_type == "csv":
             column_hashes = hash_CSV_columns(f)
             optionalFields["column_hashes"] = column_hashes
-
+        if file_type == "txt":
+            shingles = getShinglesFname(f)
+            optionalFields["shingles"] = shingles
         return (f, file_hash, file_type, line_hashes, optionalFields)
 
 #
