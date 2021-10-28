@@ -32,7 +32,7 @@ CFG_DIR = '.knps'
 CFG_FILE = 'knps.cfg'
 
 DB_FILE = '.knpsdb'
-DIR_DB_FILE = 'knps_dir_db'
+DIR_DB_FILE = '.knps_dir_db'
 
 
 ###################################################
@@ -423,7 +423,7 @@ class Watcher:
         self.config.write(self.__get_cfg__(d).open("w"))
 
     def __load_local_db__(self):
-        p = Path(CFG_DIR, DIR_DB_FILE)
+        p = Path(Path.home(), DIR_DB_FILE)
         db_version = None
         if p.exists():
             try:
@@ -436,8 +436,14 @@ class Watcher:
         if not self.db or db_version != self.knps_version:
             self.db = {'__KNPS_VERSION__': self.knps_version}
 
+        if self.user.username not in self.db:
+            self.db[self.user.username] = {}
+
+        if self.user.get_server() not in self.db[self.user.username]:
+            self.db[self.user.username][self.user.get_server()] = {}
+
     def __save_local_db__(self):
-        json.dump(self.db, Path(CFG_DIR, DIR_DB_FILE).open('wt'), indent=2)
+        json.dump(self.db, Path(Path.home(), DIR_DB_FILE).open('wt'), indent=2)
 
     def file_already_processed(self, f):
         if not CACHE_FILE_PROCESSING:
@@ -448,7 +454,7 @@ class Watcher:
 
         file_hash = hash_file(f)
 
-        return file_hash in self.db and f in self.db[file_hash]
+        return file_hash in self.db[self.user.username][self.user.get_server()] and f in self.db[self.user.username][self.user.get_server()][file_hash]
 
     def record_file_processing(self, f):
         if CACHE_FILE_PROCESSING:
@@ -457,8 +463,8 @@ class Watcher:
 
             file_hash = hash_file(f)
             if file_hash not in self.db:
-                self.db[file_hash] = {}
-            self.db[file_hash][f] = 1
+                self.db[self.user.username][self.user.get_server()][file_hash] = {}
+            self.db[self.user.username][self.user.get_server()][file_hash][f] = 1
 
     #
     # Comment on an observed file
