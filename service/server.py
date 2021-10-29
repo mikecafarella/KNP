@@ -423,17 +423,61 @@ class GraphDB:
             for localFname, localId, owner, isLatest, modified in results:
                 yield (localFname, localId, owner, isLatest, modified)
 
+    def getFileShinglePairs(self, shinglePairList):
+        shingle_pairs = []
+        for i in shinglePairList:
+            used = set()
+            for shingle in i[1]:
+                if shingle not in used:
+                    shingle_pairs.append((shingle, i[0]))
+                    used.add(shingle)
+
+        shingle_pairs.sort()
+        return shingle_pairs
+
+    def createDocumentDocumentList(self, shingle_pairs):
+        current_shingle = ""
+        low_index = -1
+        document_document_shingle = []
+        for k in range(0, len (shingle_pairs)):
+            if shingle_pairs[k][0] != current_shingle:
+                current_shingle = shingle_pairs[k][0]
+                low_index = k
+            else:
+                for i in range(low_index, k):
+                    document_document_shingle.append((shingle_pairs[i][1], shingle_pairs[k][1], current_shingle))
+
+        document_document_shingle.sort()
+        return document_document_shingle
+
+    def getCloseMatches(self, document_document_shingle, cutoff = 0):
+        total_similarity = {}
+        for pair in document_document_shingle:
+            docs = (pair[0], pair[1])
+            if docs not in total_similarity:
+                total_similarity[docs] = 0
+            total_similarity[docs] += 1
+
+        close_documents = []
+        for i in total_similarity.keys():
+            if total_similarity[i] > cutoff:
+                close_documents.append(i)
+        return close_documents
+
+    ##
     def createNearMatches(self):
         with self.driver.session() as session:
-            results = session.run("MATCH (a: ByteSet), (b: ByteSet) "
-                                  "WHERE a.md5hash <> b.md5hash AND EXISTS(a.optional_shingles) AND EXISTS(b.optional_shingles)"
-                                  "WITH a, b, apoc.convert.toFloat(size([i IN RANGE(0, SIZE(a.optional_shingles)-1) WHERE a.optional_shingles[i] = b.optional_shingles[i]]))/apoc.convert.toFloat(size(a.optional_shingles)) as jaccard "
-                                  "WHERE jaccard > 0.7 "
-                                  "MERGE (a)-[r:JaccardMatch]->(b) "
-                                  "RETURN id(a), id(b), jaccard")
-            print(results.data())
-            results = session.run("MATCH (a: ByteSet) RETURN id(a)")
-            print(results.data())
+            results = session.run("MATCH (a: ByteSet) WHERE EXISTS(a.optional_shingles) RETURN id(a), a.optional_shingles")
+            fileShingleList = [tuple(x.values()) for x in results.data()]
+            shingle_pairs = self.getFileShinglePairs(fileShingleList)
+            document_document_shingle = self.createDocumentDocumentList(shingle_pairs)
+            close_matches = self.getCloseMatches(document_document_shingle)
+            print(close_matches)
+            for i in close_matches:
+                results = session.run("MATCH (a: ByteSet), (b: ByteSet) WHERE id(a) = " + str(i[0]) + " AND id(b) = " + str(i[1]) +
+                                        " MERGE (a)-[r1:JaccardMatch]->(b)"
+                                        " MERGE (b)-[r2:JaccardMatch]->(a)"
+                                        " RETURN id(a)")
     #
     #
     #
