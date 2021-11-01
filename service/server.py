@@ -478,6 +478,7 @@ class GraphDB:
                                         " MERGE (a)-[r1:JaccardMatch]->(b)"
                                         " MERGE (b)-[r2:JaccardMatch]->(a)"
                                         " RETURN id(a)")
+
     #
     #
     #
@@ -579,7 +580,14 @@ class GraphDB:
             #
             txStr = ("MATCH (a:ObservedFile {filename: $filename, username: $username, latest: 1})-[r:Contains]->(b:ByteSet) "
                             "WHERE b.md5hash <> $newHash "
-                            "MERGE (b2: ByteSet {md5hash: $newHash}) "
+                            "MERGE (b2: ByteSet {md5hash: $newHash")
+            for k, v in obs.get("optionalItems", {}).items():
+                if k in ["column_hashes", "shingles"]:
+                    txStr += ", {}: {}".format("optional_" + k, json.dumps(v))
+                else:
+                    txStr += ", {}: \"{}\"".format("optional_" + k, v)
+
+            txStr += ("}) "
                             "ON CREATE SET b2.created = $sync_time, b.filetype = $filetype, b2.line_hashes = $line_hashes "
                             "CREATE (a2:ObservedFile {id: apoc.create.uuid(), filename: $filename, username: $username, latest: 1")
             for k, v in obs.get("optionalItems", {}).items():
@@ -609,7 +617,15 @@ class GraphDB:
 
             if result is None:
                 # This gets run when there's no predecessor OR when the hash isn't new.
-                txStr = ("MERGE (b2: ByteSet {md5hash: $newHash}) "
+                txStr = "MERGE (b2: ByteSet {md5hash: $newHash"
+
+                for k, v in obs.get("optionalItems", {}).items():
+                    if k in ["column_hashes", "shingles"]:
+                        txStr += ", {}: {}".format("optional_" + k, json.dumps(v))
+                    else:
+                        txStr += ", {}: \"{}\"".format("optional_" + k, v)
+
+                txStr += ("}) "
                         "ON CREATE SET b2.created = $sync_time, b2.filetype = $filetype, b2.line_hashes = $line_hashes "
                         "MERGE (a2:ObservedFile {filename: $filename, username: $username, latest: 1")
                 
@@ -1518,8 +1534,9 @@ def sync_filelist(username):
     # This call is currently quite bad, algorithmically.
     # It will get too slow when the repository is large.
     # We need to reimplement eventually
-    GDB.applyFileInfoToByteSet()
+
     GDB.createNearMatches()
+    ## NOTE: WE MAY NOT WANT LINE OR COLUMN MATCHES.
     GDB.createNearLineMatches()
     GDB.createNearColumnMatches()
 

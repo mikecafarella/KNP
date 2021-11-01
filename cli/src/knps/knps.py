@@ -19,6 +19,7 @@ import yaml
 import subprocess
 import uuid
 import socket
+import threading
 
 
 CFG_DIR = '.knps'
@@ -33,8 +34,8 @@ KNPS_SERVER_PROD = 'ec2-3-224-14-41.compute-1.amazonaws.com:5000'
 ###################################################
 # Some util functions
 ###################################################
-def get_version():
-    cwdir = os.path.dirname(os.path.realpath(__file__))
+def get_version(file_loc):
+    cwdir = os.path.dirname(os.path.realpath(file_loc))
     proj_ver = subprocess.run(["git", "describe", "--tags", "--long"], stdout=subprocess.PIPE, text=True, cwd=cwdir).stdout.strip()
     rev_count = subprocess.run(["git", "log", "--oneline"], stdout=subprocess.PIPE, text=True, cwd=cwdir).stdout.strip()
     rev_count = len(rev_count.split("\n"))
@@ -84,11 +85,16 @@ def hash_pdf_file_lines(fname):
             hashes.append(hashlib.md5(line).hexdigest())
     pdfFileObj.close()
     return hashes
+
+# def send_synclist_thread(user, observationList, comment=None):
+def observeAndSyncThread(user, file_loc):
+    user.observeAndSync(file_loc)
+
 #
 # Transmit observations to the server
 #
-def send_synclist(user, observationList, comment=None):
-    knps_version = get_version()
+def send_synclist(user, observationList, file_loc, comment=None):
+    knps_version = get_version(file_loc)
     install_id = user.get_install_id()
     hostname = socket.gethostname()
     print("KNPS Version: ", knps_version)
@@ -453,7 +459,9 @@ class Watcher:
     #
     # Collect some observations
     #
-    def observeAndSync(self):
+    def observeAndSync(self, file_loc = None):
+        if file_loc == None:
+            file_loc = __file__
         # If there are TODO items outstanding, great.
         todoPair = self.user.getNextTodoList()
 
@@ -496,7 +504,7 @@ class Watcher:
                     skipCount += 1
             print("Sending the synclist")
 
-            response = send_synclist(self.user, observationList)
+            response = send_synclist(self.user, observationList, file_loc)
 
             if 'error' in response:
                 print('ERROR: {}'.format(response['error']))
@@ -623,7 +631,9 @@ if __name__ == "__main__":
         if not u.username:
             print("Not logged in.")
         else:
-            Watcher(u).observeAndSync()
+            # Watcher(u).observeAndSync()
+            thread = threading.Thread(target = observeAndSyncThread, args = (Watcher(u), __file__))
+            thread.start()
 
     elif args.server:
         print("Setting KNPS server to: {}".format(args.server))
