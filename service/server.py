@@ -423,18 +423,89 @@ class GraphDB:
             for localFname, localId, owner, isLatest, modified in results:
                 yield (localFname, localId, owner, isLatest, modified)
 
-    #
-    #
-    #
+    def getFileShinglePairs(self, shinglePairList):
+        shingle_pairs = []
+        for i in shinglePairList:
+            used = set()
+            for shingle in i[1]:
+                if shingle not in used:
+                    shingle_pairs.append((shingle, i[0]))
+                    used.add(shingle)
+
+        shingle_pairs.sort()
+        return shingle_pairs
+
+    def createDocumentDocumentList(self, shingle_pairs):
+        current_shingle = ""
+        low_index = -1
+        document_document_shingle = []
+        for k in range(0, len (shingle_pairs)):
+            if shingle_pairs[k][0] != current_shingle:
+                current_shingle = shingle_pairs[k][0]
+                low_index = k
+            else:
+                for i in range(low_index, k):
+                    document_document_shingle.append((shingle_pairs[i][1], shingle_pairs[k][1], current_shingle))
+
+        document_document_shingle.sort()
+        return document_document_shingle
+
+    def getCloseMatches(self, document_document_shingle, cutoff = 0):
+        total_similarity = {}
+        for pair in document_document_shingle:
+            docs = (pair[0], pair[1])
+            if docs not in total_similarity:
+                total_similarity[docs] = 0
+            total_similarity[docs] += 1
+
+        close_documents = []
+        for i in total_similarity.keys():
+            if total_similarity[i] > cutoff:
+                close_documents.append(i)
+        return close_documents
+
+    ##
     def createNearMatches(self):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a: ByteSet) WHERE EXISTS(a.optional_shingles) RETURN id(a), a.optional_shingles")
+            fileShingleList = [tuple(x.values()) for x in results.data()]
+            shingle_pairs = self.getFileShinglePairs(fileShingleList)
+            document_document_shingle = self.createDocumentDocumentList(shingle_pairs)
+            close_matches = self.getCloseMatches(document_document_shingle)
+            print(close_matches)
+            for i in close_matches:
+                results = session.run("MATCH (a: ByteSet), (b: ByteSet) WHERE id(a) = " + str(i[0]) + " AND id(b) = " + str(i[1]) +
+                                        " MERGE (a)-[r1:JaccardMatch]->(b)"
+                                        " MERGE (b)-[r2:JaccardMatch]->(a)"
+                                        " RETURN id(a)")
+
+    #
+    #
+    #
+    def createNearLineMatches(self):
         with self.driver.session() as session:
             results = session.run("MATCH (a: ByteSet), (b: ByteSet) "
                                   "WHERE a.md5hash <> b.md5hash "
-                                  "WITH a, b, size(apoc.coll.intersection(a.line_hashes, b.line_hashes)) / apoc.convert.toFloat(size(apoc.coll.union(a.line_hashes, b.line_hashes))) as jaccard "
-                                  "WHERE jaccard > 0.9 "
-                                  "MERGE (a)-[r:JaccardMatch]->(b) "
-                                  "RETURN id(a), id(b), jaccard")
+                                  "WITH a, b, size(apoc.coll.intersection(a.line_hashes, b.line_hashes)) / apoc.convert.toFloat(size(apoc.coll.union(a.line_hashes, b.line_hashes))) as linejaccard "
+                                  "WHERE linejaccard > 0.85 "
+                                  "MERGE (a)-[r:LineJaccardMatch]->(b) "
+                                  "RETURN id(a), id(b), linejaccard")
 
+    ## MAKE THIS BE DONE EARLIER PUSHING THEM ONTO THIS LATER IS SLOW
+    def applyFileInfoToByteSet(self):
+        with self.driver.session() as session:
+            results = session.run("MATCH (n:ByteSet)--(m:ObservedFile) WHERE EXISTS(m.optional_column_hashes) SET n.optional_column_hashes = m.optional_column_hashes")
+            results = session.run("MATCH (n:ByteSet)--(m:ObservedFile) WHERE EXISTS(m.optional_shingles) SET n.optional_shingles = m.optional_shingles")
+
+
+    def createNearColumnMatches(self):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a: ByteSet), (b: ByteSet) "
+                                  "WHERE a.md5hash <> b.md5hash AND EXISTS(a.optional_column_hashes) AND EXISTS(b.optional_column_hashes) "
+                                  "WITH a, b, size(apoc.coll.intersection(a.optional_column_hashes, b.optional_column_hashes)) / apoc.convert.toFloat(size(apoc.coll.union(a.optional_column_hashes, b.optional_column_hashes))) as columnjaccard "
+                                  "WHERE columnjaccard >= 0.5 "
+                                  "MERGE (a)-[r:ColumnJaccardMatch]->(b) "
+                                  "RETURN id(a), id(b), columnjaccard")
 
     #
     #
@@ -509,12 +580,24 @@ class GraphDB:
             #
             txStr = ("MATCH (a:ObservedFile {filename: $filename, username: $username, latest: 1})-[r:Contains]->(b:ByteSet) "
                             "WHERE b.md5hash <> $newHash "
-                            "MERGE (b2: ByteSet {md5hash: $newHash}) "
-                            "ON CREATE SET b2.created = $sync_time, b.filetype = $filetype, b2.line_hashes = $line_hashes "
-                            "CREATE (a2:ObservedFile {id: apoc.create.uuid(), filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
-                            "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname")
+                            "MERGE (b2: ByteSet {md5hash: $newHash")
             for k, v in obs.get("optionalItems", {}).items():
-                txStr += ", a2.{}=\"{}\"".format("optional_" + k, v)
+                if k in ["column_hashes", "shingles"]:
+                    txStr += ", {}: {}".format("optional_" + k, json.dumps(v))
+                else:
+                    txStr += ", {}: \"{}\"".format("optional_" + k, v)
+
+            txStr += ("}) "
+                            "ON CREATE SET b2.created = $sync_time, b.filetype = $filetype, b2.line_hashes = $line_hashes "
+                            "CREATE (a2:ObservedFile {id: apoc.create.uuid(), filename: $filename, username: $username, latest: 1")
+            for k, v in obs.get("optionalItems", {}).items():
+                if k in ["column_hashes", "shingles"]:
+                    txStr += ", {}: {}".format("optional_" + k, json.dumps(v))
+                else:
+                    txStr += ", {}: \"{}\"".format("optional_" + k, v)
+                
+            txStr += ("})-[r2:Contains]->(b2) "
+                    "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname")
             txStr += " CREATE (a)-[r3:NextVersion]->(a2) "
             txStr += "RETURN id(a2)"
 
@@ -530,20 +613,31 @@ class GraphDB:
                             install_id = obs["install_id"],
                             knps_version = obs["knps_version"],
                             hostname = obs["hostname"])
-
-
             result = result.single()
+
             if result is None:
                 # This gets run when there's no predecessor OR when the hash isn't new.
-                txStr = ("MERGE (b2: ByteSet {md5hash: $newHash}) "
-                        "ON CREATE SET b2.created = $sync_time, b2.filetype = $filetype, b2.line_hashes = $line_hashes "
-                        "MERGE (a2:ObservedFile {filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
-                        "ON CREATE SET a2.id = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname")
+                txStr = "MERGE (b2: ByteSet {md5hash: $newHash"
 
                 for k, v in obs.get("optionalItems", {}).items():
-                    txStr += ", a2.{}=\"{}\"".format("optional_" + k, v)
-                txStr += " RETURN id(a2)"
+                    if k in ["column_hashes", "shingles"]:
+                        txStr += ", {}: {}".format("optional_" + k, json.dumps(v))
+                    else:
+                        txStr += ", {}: \"{}\"".format("optional_" + k, v)
 
+                txStr += ("}) "
+                        "ON CREATE SET b2.created = $sync_time, b2.filetype = $filetype, b2.line_hashes = $line_hashes "
+                        "MERGE (a2:ObservedFile {filename: $filename, username: $username, latest: 1")
+                
+                for k, v in obs.get("optionalItems", {}).items():
+                    if k in ["column_hashes", "shingles"]:
+                        txStr += ", {}: {}".format("optional_" + k, json.dumps(v))
+                    else:
+                        txStr += ", {}: \"{}\"".format("optional_" + k, v)
+
+                txStr += ("})-[r2:Contains]->(b2) "
+                        "ON CREATE SET a2.id = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname"
+                        " RETURN id(a2)")
 
                 #
                 # Create a FileObservation and its ByteSet when there is no predecessor
@@ -1085,7 +1179,7 @@ def show_user_profile(username):
     out += "<h2>All files</h2>"
     out += "<table border=1 cellpadding=5>"
     out += "<tr><td>Filename</td><td>Size</td><td>Last Modified</td><td>Last Sync</td><td># optional fields</td><td>Other Users</td></tr>"
-    maxItems = 3
+    maxItems = 10
     count = 0
     for fileId, fname, fsize, modified, synctime in GDB.getUserDetails(username):
         mod_date = datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S')
@@ -1420,12 +1514,13 @@ def sync_filelist(username):
     else:
         login_data = {}
 
-    if (not access_token or
-        not username or
-        username not in login_data or
-        access_token != login_data[username].get('access_token', None) or
-        not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
-        return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
+    if 'INSECURE_TOKEN_' not in access_token: # TODO: fix this!
+        if (not access_token or
+            not username or
+            username not in login_data or
+            access_token != login_data[username].get('access_token', None) or
+            not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
+            return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
 
     observations = json.load(request.files['observations'])
     observations = [x["metadata"] for x in observations]
@@ -1439,7 +1534,11 @@ def sync_filelist(username):
     # This call is currently quite bad, algorithmically.
     # It will get too slow when the repository is large.
     # We need to reimplement eventually
+
     GDB.createNearMatches()
+    ## NOTE: WE MAY NOT WANT LINE OR COLUMN MATCHES.
+    GDB.createNearLineMatches()
+    GDB.createNearColumnMatches()
 
     # show the user profile for that user
     return json.dumps(username)
