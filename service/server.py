@@ -595,7 +595,7 @@ class GraphDB:
                     txStr += ", {}: {}".format("optional_" + k, json.dumps(v))
                 else:
                     txStr += ", {}: \"{}\"".format("optional_" + k, v)
-                
+
             txStr += ("})-[r2:Contains]->(b2) "
                     "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname")
             txStr += " CREATE (a)-[r3:NextVersion]->(a2) "
@@ -628,7 +628,7 @@ class GraphDB:
                 txStr += ("}) "
                         "ON CREATE SET b2.created = $sync_time, b2.filetype = $filetype, b2.line_hashes = $line_hashes "
                         "MERGE (a2:ObservedFile {filename: $filename, username: $username, latest: 1")
-                
+
                 for k, v in obs.get("optionalItems", {}).items():
                     if k in ["column_hashes", "shingles"]:
                         txStr += ", {}: {}".format("optional_" + k, json.dumps(v))
@@ -1530,15 +1530,15 @@ def sync_filelist(username):
 
     GDB.addObservations(observations)
 
-    #
-    # This call is currently quite bad, algorithmically.
-    # It will get too slow when the repository is large.
-    # We need to reimplement eventually
-
-    GDB.createNearMatches()
     ## NOTE: WE MAY NOT WANT LINE OR COLUMN MATCHES.
-    GDB.createNearLineMatches()
-    GDB.createNearColumnMatches()
+    # Commenting out these, since they are currently very slow.
+    # These should probably happen elsewhere, anyway, since they are not
+    # pertinant to the user's sync. cronjob, perhaps.
+    # GDB.createNearLineMatches()
+    # GDB.createNearColumnMatches()
+
+    # TODO: Move this out of the api call.
+    GDB.createNearMatches()
 
     # show the user profile for that user
     return json.dumps(username)

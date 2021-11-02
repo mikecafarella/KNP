@@ -39,7 +39,7 @@ DIR_DB_FILE = '.knps_dir_db'
 ###################################################
 # Some util functions
 ###################################################
-def get_version(file_loc):
+def get_version(file_loc = __file__):
     cwdir = os.path.dirname(os.path.realpath(file_loc))
     proj_ver = subprocess.run(["git", "describe", "--tags", "--long"], stdout=subprocess.PIPE, text=True, cwd=cwdir).stdout.strip()
     rev_count = subprocess.run(["git", "log", "--oneline"], stdout=subprocess.PIPE, text=True, cwd=cwdir).stdout.strip()
@@ -611,7 +611,7 @@ class Watcher:
         if "csv" in file_type:
             column_hashes = hash_CSV_columns(f)
             optionalFields["column_hashes"] = column_hashes
-            
+
         elif file_type.startswith("text/"):
             shingles = getShinglesFname(f)
             optionalFields["shingles"] = shingles
