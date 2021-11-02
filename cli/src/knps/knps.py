@@ -20,16 +20,21 @@ import subprocess
 import uuid
 import socket
 import threading
+import mimetypes
+from binaryornot.check import is_binary
 
+from settings import (
+    CACHE_FILE_PROCESSING,
+    KNPS_SERVER_DEV,
+    KNPS_SERVER_PROD
+)
 
 CFG_DIR = '.knps'
 CFG_FILE = 'knps.cfg'
 
 DB_FILE = '.knpsdb'
+DIR_DB_FILE = '.knps_dir_db'
 
-
-KNPS_SERVER_DEV = '127.0.0.1:5000'
-KNPS_SERVER_PROD = 'ec2-3-224-14-41.compute-1.amazonaws.com:5000'
 
 ###################################################
 # Some util functions
@@ -41,26 +46,35 @@ def get_version(file_loc):
     rev_count = len(rev_count.split("\n"))
     return f'{proj_ver}-{rev_count}'
 
+
+HASH_CACHE = {}
 def hash_file(fname):
-    hash_md5 = hashlib.md5()
-    with open(fname, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    return hash_md5.hexdigest()
+    if fname not in HASH_CACHE:
+        hash_md5 = hashlib.md5()
+        with open(fname, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        HASH_CACHE[fname] = hash_md5.hexdigest()
+    return HASH_CACHE[fname]
 
 #
 # Hash all the lines of a file. Should only be applied to a text file
 #
-def hash_file_lines(fname, file_type = "Unknown"):
+def hash_file_lines(fname, file_type):
     hashes = []
     text = ""
-    if file_type == "pdf":
+
+    if file_type == "application/pdf":
         return hash_pdf_file_lines(fname)
-    with open(fname, "rt") as f:
-        for line in f:
-            text = text + " " + line
-            line = line.strip().encode()
-            hashes.append(hashlib.md5(line).hexdigest())
+
+
+    if not is_binary(fname):
+        with open(fname, "rt") as f:
+            for line in f:
+                text = text + " " + line
+                line = line.strip().encode()
+                hashes.append(hashlib.md5(line).hexdigest())
+
     return hashes
 
 def getShinglesFname(fname):
@@ -75,7 +89,7 @@ def getShinglesFname(fname):
 def hash_pdf_file_lines(fname):
     hashes = []
     pdfFileObj = open(fname, 'rb')
-    pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
+    pdfReader = PyPDF2.PdfFileReader(pdfFileObj, strict=False)
     for pageNumber in range(pdfReader.getNumPages()):
         pageObj = pdfReader.getPage(pageNumber)
         # hashes.append(hashlib.md5(pageObj.extractText().strip().encode()).hexdigest())
@@ -209,25 +223,20 @@ def getShingles(s, shingle_length = 5, num_shingles = 10, fingerprint_bytes = 8)
         shingles.append(str(new_shingles[minimum]))
     return shingles
 
-## distingiush between binary and text for unknown files
-def getFileType(f):
-    if f.lower().endswith(('.csv')):
-        return "csv"
-    if f.lower().endswith(('.doc', '.docx')):
-        return "doc"
-    if f.lower().endswith(('.html', '.htm')):
-        return "html"
-    if f.lower().endswith(('.odt')):
-        return "doc"
-    if f.lower().endswith(('.pdf')):
-        return "pdf"
-    if f.lower().endswith(('.xls', '.xlsx')):
-        return "excel"
-    if f.lower().endswith(('.ppt', '.pptx')):
-        return "ppt"
-    if f.lower().endswith(('.txt')):
-        return "txt"
-    return "Unknown"
+## use the mimetype
+def get_file_type(f):
+    type, encoding = mimetypes.guess_type(f)
+
+    if type:
+        return type
+    elif is_binary(f):
+        return 'binary/unknown'
+    else:
+        return 'text/unknown'
+
+
+## check if the file is binary by trying to open it
+
 
 class Error(Exception):
     """Base class for exceptions in this module."""
@@ -325,15 +334,16 @@ class User:
         self.db['__SERVER__'] = url
         self.save_db()
 
+    def get_server(self):
+        return self.db.get('__SERVER__', 'dev')
+
     def get_server_url(self):
-        url = self.db.get('__SERVER__', 'dev')
+        url = self.get_server()
 
         if url == 'prod':
             url = KNPS_SERVER_PROD
         elif url == 'dev':
             url = KNPS_SERVER_DEV
-
-        print("Using server {} for user {}".format(url, self.username))
 
         return 'http://{}'.format(url)
 
@@ -389,6 +399,8 @@ class Watcher:
     def __init__(self, user):
         self.user = user
         self.config = None
+        self.db = None
+        self.knps_version = get_version()
 
     #
     # Add something to the watchlist
@@ -434,6 +446,49 @@ class Watcher:
 
         self.config.write(self.__get_cfg__(d).open("w"))
 
+    def __load_local_db__(self):
+        p = Path(Path.home(), DIR_DB_FILE)
+        db_version = None
+        if p.exists():
+            try:
+                self.db = json.load(p.open())
+                db_version = self.db.get('__KNPS_VERSION__', None)
+            except Exception as e:
+                print(e)
+                pass
+
+        if not self.db or db_version != self.knps_version:
+            self.db = {'__KNPS_VERSION__': self.knps_version}
+
+        if self.user.username not in self.db:
+            self.db[self.user.username] = {}
+
+        if self.user.get_server() not in self.db[self.user.username]:
+            self.db[self.user.username][self.user.get_server()] = {}
+
+    def __save_local_db__(self):
+        json.dump(self.db, Path(Path.home(), DIR_DB_FILE).open('wt'), indent=2)
+
+    def file_already_processed(self, f):
+        if not CACHE_FILE_PROCESSING:
+            return False
+
+        if not self.db:
+            self.__load_local_db__()
+
+        file_hash = hash_file(f)
+
+        return file_hash in self.db[self.user.username][self.user.get_server()] and f in self.db[self.user.username][self.user.get_server()][file_hash]
+
+    def record_file_processing(self, f):
+        if CACHE_FILE_PROCESSING:
+            if not self.db:
+                self.__load_local_db__()
+
+            file_hash = hash_file(f)
+            if file_hash not in self.db:
+                self.db[self.user.username][self.user.get_server()][file_hash] = {}
+            self.db[self.user.username][self.user.get_server()][file_hash][f] = 1
 
     #
     # Comment on an observed file
@@ -474,6 +529,7 @@ class Watcher:
         if todoPair is None:
             print("No existing observation list. Formulating new one...")
             k = 50
+
             longTodoList = [x for x in self.user.get_files()]
             smallTodoLists = [longTodoList[i:i+k] for i in range(0, len(longTodoList), k)]
 
@@ -487,6 +543,7 @@ class Watcher:
         # Now finish all outstanding TODO lists. Mark them
         # as done as we go.
         #
+        self.__load_local_db__()
         while todoPair is not None:
             k, todoList = todoPair
 
@@ -497,10 +554,17 @@ class Watcher:
             uploadCount = 0
             for f in todoChunk:
                 print("Processing", f)
+
+                if self.file_already_processed(f):
+                    print(" -- Already processed")
+                    continue
+
                 try:
                     observationList.append(self._observeFile_(f))
                     uploadCount += 1
-                except:
+                    self.record_file_processing(f)
+                except Exception as e:
+                    print("*** Skipping: {}".format(e))
                     skipCount += 1
             print("Sending the synclist")
 
@@ -511,6 +575,7 @@ class Watcher:
                 break
             else:
                 print("Observed and uploaded", uploadCount, "items. Skipped", skipCount)
+                self.__save_local_db__()
 
                 # Mark the TODO list as done
                 self.user.removeTodoList(k)
@@ -538,15 +603,16 @@ class Watcher:
 
     def _observeFile_(self, f):
         file_hash = hash_file(f)
-        file_type = getFileType(f)
+        file_type = get_file_type(f)
         line_hashes = hash_file_lines(f, file_type)
         optionalFields = {}
         optionalFields["filetype"] = file_type
         ##CSV_Column_hashs
-        if file_type == "csv":
+        if "csv" in file_type:
             column_hashes = hash_CSV_columns(f)
             optionalFields["column_hashes"] = column_hashes
-        if file_type == "txt":
+            
+        elif file_type.startswith("text/"):
             shingles = getShinglesFname(f)
             optionalFields["shingles"] = shingles
         return (f, file_hash, file_type, line_hashes, optionalFields)
@@ -606,10 +672,12 @@ if __name__ == "__main__":
             w.addDataset(args.addDataset)
 
     elif args.status is not None:
+        print("KNPS Version: ", get_version())
         if not u.username:
-            print("Not logged in.")
+            print("Not logged in; please run: knps --login")
         else:
-            print("You are logged in as", u.username)
+            print("User: {}    Server: {}".format(u.username, u.get_server()))
+            print()
             dirs = u.get_dirs()
             files = u.get_files()
             print("You have {} top-level directories and {} files watched by knps.".format(len(dirs), len(files)))
@@ -628,12 +696,14 @@ if __name__ == "__main__":
             print()
 
     elif args.sync:
+        print("KNPS Version: ", get_version())
         if not u.username:
             print("Not logged in.")
         else:
             # Watcher(u).observeAndSync()
             thread = threading.Thread(target = observeAndSyncThread, args = (Watcher(u), __file__))
             thread.start()
+
 
     elif args.server:
         print("Setting KNPS server to: {}".format(args.server))

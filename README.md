@@ -13,6 +13,8 @@ The commandline tool sends data to the server, which is stored in a Neo4J graph 
 * NEO4J_HOST
 * NEO4J_PORT (default 7687)
 
+We also use the APOC library in Neo4j, which can be installed like so: https://neo4j.com/labs/apoc/4.2/installation/#neo4j-server
+
 Logins are currently handled by Okta in the backend server. Ask a KNPS maintainer for client_secrets.json.
 
 To install KNPS:
@@ -37,6 +39,8 @@ cd ../cli
 pip install -r requirements.txt
 (optional) export PATH=$PATH:<ROOT_DIRECTORY>/cli/bin
 ```
+
+Note: if you only want to run the commmand line tool, you can point it to our central server using `knps --server prod`. This server is likely, but not gauranteed to be running.
 
 ---
 
