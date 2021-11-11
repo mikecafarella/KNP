@@ -1,9 +1,10 @@
-import React, { useState} from 'react'
+import React, { useRef, useEffect, useLayoutEffect, useState, useCallback} from 'react'
 import Router from 'next/router'
 import ReactMarkdown from 'react-markdown'
 import useSWR, { useSWRConfig } from 'swr'
 import { majorScale, IconButton, TextareaField, TextInputField,
 Popover, Icon, AddIcon, EditIcon, InfoSignIcon, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table } from 'evergreen-ui'
+import Tree from 'react-d3-tree'
 
 export type DatasetProps = {
   id: string;
@@ -17,7 +18,6 @@ export type DatasetProps = {
   prevId: string;
   nextId: string;
 }
-
 
 const Dataset: React.FC<{dobj: DatasetProps}> = ({dobj}) => {
   const [titleVal, setTitleVal] = useState("")
@@ -51,6 +51,101 @@ const Dataset: React.FC<{dobj: DatasetProps}> = ({dobj}) => {
   fetcher)
   const {data: allQualityTestsData, error: allQualityTestsError, isValidating: allQualityTestsIsValidating, mutate: allQualityTestsMutate} = useSWR(allQualityTestsUrl, fetcher)
 
+
+const useCenteredTree = (defaultTranslate = { x: 0, y: 0 }) => {
+  const [translate, setTranslate] = useState(defaultTranslate);
+  const containerRef = useCallback((containerElem) => {
+    if (containerElem !== null) {
+      const { width, height } = containerElem.getBoundingClientRect();
+      setTranslate({ x: width * 0.2, y: height * 0.43 });
+    }
+  }, []);
+  return [translate, containerRef];
+};
+
+const [translate, containerRef] = useCenteredTree();
+
+
+const renderForeignObjectNode = ({
+  nodeDatum,
+  toggleNode,
+  foreignObjectProps
+}) => (
+      <g>
+    {(nodeDatum.kind == 'Dataset') &&
+       <rect fill="orange" width="40" height="40" y="-20"
+       x="-10"></rect>
+    }
+    <text font-family="Arial, Helvetica, sans-serif" 
+    strokeWidth="1" y="40" x="-20" onClick={()=>Router.push(`/dataset/${nodeDatum.uuid}`)}>
+      {nodeDatum.name}
+    </text>
+    <text font-family="Arial, Helvetica, sans-serif" fill="black" strokeWidth="1" font-size="smaller" x="-20" dy="60">
+      {nodeDatum.kind}
+    </text>
+   </g>    
+);
+
+const renderRectSvgNode = ({ nodeDatum, toggleNode }) => (
+  <g>
+    <circle r={25} fill="lightblue" width="20" height="20" onClick={toggleNode} />
+    <text font-family="Arial, Helvetica, sans-serif" fill="black" strokeWidth="1" x="20">
+      {nodeDatum.name}
+    </text>
+    {nodeDatum.attributes?.department && (
+      <text font-family="Arial, Helvetica, sans-serif" fill="red" x="20" dy="20" strokeWidth="1">
+        Department: {nodeDatum.attributes?.department}
+      </text>
+    )}
+  </g>
+);
+
+const orgChart = {
+  name: 'Dataset',
+  children: [
+    {
+      name: 'Byteset',
+      attributes: {
+        department: 'Production',
+      },
+      children: [
+        {
+          name: 'Foreman',
+          attributes: {
+            department: 'Fabrication',
+          },
+          children: [
+            {
+              name: 'Worker',
+            },
+          ],
+        },
+        {
+          name: 'Foreman',
+          attributes: {
+            department: 'Fabrication',
+          },
+          children: [
+            {
+              name: 'Worker',
+            },
+          ],
+        },
+        {
+          name: 'Foreman',
+          attributes: {
+            department: 'Assembly',
+          },
+          children: [
+            {
+              name: 'Worker',
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
 
 
   if (!data || !commentData || !schemasData || !allSchemasData || !qualityTestsData || !allQualityTestsData ) return <div>loading...</div>
@@ -253,6 +348,25 @@ const Dataset: React.FC<{dobj: DatasetProps}> = ({dobj}) => {
             </Pane>
           </Pane>
         </Pane>
+
+
+        <Pane display="flex" padding={majorScale(1)} border>
+          <Pane flex={1} >
+            <Heading size={600}>Provenance</Heading>
+           <div style={{ width: '100%', height:'25em' }} ref={containerRef}>
+            
+         <Tree
+          data={data.descendentData}
+          separation={{nonSiblings: 1, siblings: 1}} 
+          orientation="horizontal"
+          translate={translate}
+          renderCustomNodeElement={(rd3tProps) =>renderForeignObjectNode({ ...rd3tProps })}
+        />
+        </div>
+
+
+          </Pane>
+        </Pane>          
 
 
         <Pane display="flex" padding={majorScale(1)} border>

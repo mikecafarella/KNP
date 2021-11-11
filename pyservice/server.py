@@ -374,6 +374,42 @@ class GraphDB:
                                   uuid=uuid)
             return results.single()
 
+    def getDatasetDescendentGraphInfo(self, uuid):
+        with self.driver.session() as session:
+            results = session.run("MATCH (d1:Dataset {uuid: $uuid}) "
+                                  "OPTIONAL MATCH (d1)-[r:NextVersion]->(d2:Dataset) "
+                                  "OPTIONAL MATCH (d2)-[r2:NextVersion]->(d3:Dataset) "
+                                  "RETURN properties(d1), properties(d2), properties(d3)",
+                                  uuid=uuid)
+            graphInfo = {}
+            for d1Props, d2Props, d3Props in results:
+                graphInfo.setdefault("name", d1Props.get("title"))
+                graphInfo.setdefault("uuid", d1Props.get("uuid"))
+                graphInfo["kind"] = "Dataset"
+                rootChildren = graphInfo.setdefault("childrenD", {})
+                if d2Props:
+                    childDict = rootChildren.setdefault(d2Props.uuid, {})
+                    childDict.setdefault("name", d2Props.get("title"))
+                    childDict.setdefault("uuid", d2Props.get("uuid"))
+                    childDict["kind"] = "Dataset"                    
+                    rootGrandchildren = childDict.setdefault("childrenD", {})
+                    if d3Props:
+                        gcDict = rootGrandchildren.setdefault(d3Props.uuid, {})
+                        gcDict.setdefault("name", d3Props.get("title"))
+                        gcDict.setdefault("uuid", d3Props.get("uuid"))
+                        gcDict["kind"] = "Dataset"
+
+            
+            for childDict in graphInfo.get("childrenD", {}).values():
+                childDict["children"] = [gcDict for gcDict in childDict.setdefault("childrenD", {}).values()]
+                if "childrenD" in childDict:
+                    del childDict["childrenD"]
+                    
+            graphInfo["children"] = [cDict for cDict in graphInfo.get("childrenD", {}).values()]
+            if "childrenD" in graphInfo:
+                del graphInfo["childrenD"]
+            return graphInfo
+
     #
     #
     #
@@ -563,6 +599,44 @@ class GraphDB:
                                  id=id)
             return result.single()
 
+    def getFileObservationDescendentGraphInfo(self, uuid):
+        print("GETTING UUID", uuid)
+        with self.driver.session() as session:
+            results = session.run("MATCH (f2:ObservedFile {uuid: $uuid}) "
+                                  "OPTIONAL MATCH (f1:ObservedFile)-[r:NextVersion]->(f2) "
+                                  "OPTIONAL MATCH (f2)-[r:NextVersion]->(f3:ObservedFile) "
+                                  "RETURN properties(f1), properties(f2), properties(f3)",
+                                  uuid=uuid)
+            graphInfo = {}
+            for d1Props, d2Props, d3Props in results:
+                graphInfo.setdefault("name", d1Props.get("filename"))
+                graphInfo.setdefault("uuid", d1Props.get("uuid"))
+                graphInfo["kind"] = "FileObservation"
+                rootChildren = graphInfo.setdefault("childrenD", {})
+                if d2Props:
+                    childDict = rootChildren.setdefault(d2Props.get("uuid"), {})
+                    childDict.setdefault("name", d2Props.get("filename"))
+                    childDict.setdefault("uuid", d2Props.get("uuid"))
+                    childDict["kind"] = "FileObservation"                    
+                    rootGrandchildren = childDict.setdefault("childrenD", {})
+                    if d3Props:
+                        gcDict = rootGrandchildren.setdefault(d3Props.get("uuid"), {})
+                        gcDict.setdefault("name", d3Props.get("filename"))
+                        gcDict.setdefault("uuid", d3Props.get("uuid"))
+                        gcDict["kind"] = "FileObservation"
+
+            
+            for childDict in graphInfo.get("childrenD", {}).values():
+                childDict["children"] = [gcDict for gcDict in childDict.setdefault("childrenD", {}).values()]
+                if "childrenD" in childDict:
+                    del childDict["childrenD"]
+                    
+            graphInfo["children"] = [cDict for cDict in graphInfo.get("childrenD", {}).values()]
+            if "childrenD" in graphInfo:
+                del graphInfo["childrenD"]
+            return graphInfo
+
+
 
     #
     # Get details on a user's ObservedFiles
@@ -659,7 +733,7 @@ class GraphDB:
                 txStr = ("MERGE (b2: ByteSet {md5hash: $newHash}) "
                         "ON CREATE SET b2.created = $sync_time, b2.filetype = $filetype, b2.line_hashes = $line_hashes "
                         "MERGE (a2:ObservedFile {filename: $filename, username: $username, latest: 1})-[r2:Contains]->(b2) "
-                        "ON CREATE SET a2.uuid = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname")
+                        "ON CREATE SET a2.uuid = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname, a2.username=$username")
 
                 for k, v in obs.get("optionalItems", {}).items():
                     txStr += ", a2.{}=\"{}\"".format("optional_" + k, v)
@@ -1237,6 +1311,9 @@ def show_knownlocationdata(fileid):
 
     kl["nearDuplicates"] = nearbyFiles
 
+    print("IS THIS WORKING")
+    kl["descendentData"] = GDB.getFileObservationDescendentGraphInfo(fileid)
+
     return json.dumps(kl)
 
 
@@ -1251,6 +1328,9 @@ def show_datasetdata(id):
     kl["md5hash"] = md5hash
     kl["prevId"] = str(prevId) if prevId else ""
     kl["nextId"] = str(nextId) if nextId else ""    
+
+    kl["descendentData"] = GDB.getDatasetDescendentGraphInfo(id)
+    print("Here it is:", kl["descendentData"])
 
     return json.dumps(kl)
 
