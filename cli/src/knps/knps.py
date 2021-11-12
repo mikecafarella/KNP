@@ -567,9 +567,7 @@ class Watcher:
                     print("*** Skipping: {}".format(e))
                     skipCount += 1
             print("Sending the synclist")
-
             response = send_synclist(self.user, observationList, file_loc)
-
             if 'error' in response:
                 print('ERROR: {}'.format(response['error']))
                 break
@@ -582,7 +580,6 @@ class Watcher:
 
                 # Get the next one if available
                 todoPair = self.user.getNextTodoList()
-
 
     #
     # This is where we collect observation data.
@@ -604,15 +601,16 @@ class Watcher:
     def _observeFile_(self, f):
         file_hash = hash_file(f)
         file_type = get_file_type(f)
-        line_hashes = hash_file_lines(f, file_type)
+        line_hashes = None #hash_file_lines(f, file_type)
         optionalFields = {}
         optionalFields["filetype"] = file_type
         ##CSV_Column_hashs
-        if "csv" in file_type:
-            column_hashes = hash_CSV_columns(f)
-            optionalFields["column_hashes"] = column_hashes
+        # if "csv" in file_type:
+        #     column_hashes = hash_CSV_columns(f)
+        #     optionalFields["column_hashes"] = column_hashes
 
-        elif file_type.startswith("text/"):
+        if file_type.startswith("text/") and file_type != "text/csv":
+        # if file_type.startswith("text/"):
             shingles = getShinglesFname(f)
             optionalFields["shingles"] = shingles
         return (f, file_hash, file_type, line_hashes, optionalFields)
