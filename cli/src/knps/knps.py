@@ -3,6 +3,7 @@ from pathlib import Path
 import argparse
 import configparser
 from datetime import datetime
+from datetime import timezone
 import json
 import os
 import requests
@@ -20,6 +21,7 @@ import subprocess
 import uuid
 import socket
 import threading
+import psutil
 import mimetypes
 from binaryornot.check import is_binary
 
@@ -35,6 +37,7 @@ CFG_FILE = 'knps.cfg'
 DB_FILE = '.knpsdb'
 DIR_DB_FILE = '.knps_dir_db'
 
+PROCESS_SYNC_AGE_SECONDS = 10
 
 ###################################################
 # Some util functions
@@ -141,6 +144,29 @@ def send_synclist(user, observationList, file_loc, comment=None):
         obsList.append({'metadata': metadata})
 
     fDict = {'observations': json.dumps(obsList)}
+    response = requests.post(url, files=fDict, data=login)
+    obj_data = response.json()
+
+    return obj_data
+
+
+#
+# Transmit observations to the server
+#
+def send_process_sync(user, process, file_loc=None, comment=None):
+    knps_version = get_version(file_loc)
+    install_id = user.get_install_id()
+    hostname = socket.gethostname()
+    print("KNPS Version: ", knps_version)
+
+    url = "{}/syncprocess/{}".format(user.get_server_url(), user.username)
+
+    login = {
+        'username': user.username,
+        'access_token': user.access_token
+    }
+
+    fDict = {'process': json.dumps(process, default=str)}
     response = requests.post(url, files=fDict, data=login)
     obj_data = response.json()
 
@@ -514,11 +540,13 @@ class Watcher:
     #
     # Collect some observations
     #
-    def observeAndSync(self, file_loc = None):
+    def observeAndSync(self, file_loc = None, process=None):
         if file_loc == None:
             file_loc = __file__
         # If there are TODO items outstanding, great.
         todoPair = self.user.getNextTodoList()
+
+
 
         #
         # If not, then we need to generate a TODO list and add it
@@ -526,11 +554,19 @@ class Watcher:
         # make incremental progress in case the program gets
         # interrupted.
         #
-        if todoPair is None:
+        if todoPair is None or process:
             print("No existing observation list. Formulating new one...")
             k = 50
 
-            longTodoList = [x for x in self.user.get_files()]
+            file_list = self.user.get_files()
+
+            if process and len(process['outputs']) + len(process['accesses']) > 0:
+                process_files = process['inputs'] + process['outputs'] + process['accesses']
+                file_list = set(file_list)
+                file_list = [value for value in process_files if value in file_list]
+
+
+            longTodoList = [x for x in file_list]
             smallTodoLists = [longTodoList[i:i+k] for i in range(0, len(longTodoList), k)]
 
             for smallTodoList in smallTodoLists:
@@ -544,6 +580,7 @@ class Watcher:
         # as done as we go.
         #
         self.__load_local_db__()
+        file_hashes = {}
         while todoPair is not None:
             k, todoList = todoPair
 
@@ -554,6 +591,8 @@ class Watcher:
             uploadCount = 0
             for f in todoChunk:
                 print("Processing", f)
+
+                file_hashes[f] = hash_file(f)
 
                 if self.file_already_processed(f):
                     print(" -- Already processed")
@@ -582,6 +621,19 @@ class Watcher:
 
                 # Get the next one if available
                 todoPair = self.user.getNextTodoList()
+
+
+        # Now process the process
+        if process and len(process['outputs']) + len(process['accesses']) > 0:
+            process['input_files'] = [(x, file_hashes[x]) for x in process['inputs'] if x in file_hashes]
+            process['output_files'] = [(x, file_hashes[x]) for x in process['outputs'] if x in file_hashes]
+            process['access_files'] = [(x, file_hashes[x]) for x in process['accesses'] if x in file_hashes]
+            process['username'] = self.user.username
+
+            print(json.dumps(process, indent=2, default=str))
+
+            send_process_sync(self.user, process, file_loc=file_loc)
+
 
 
     #
@@ -617,6 +669,119 @@ class Watcher:
             optionalFields["shingles"] = shingles
         return (f, file_hash, file_type, line_hashes, optionalFields)
 
+class Monitor:
+    def __init__(self, user):
+        self.user = user
+        self.watcher = Watcher(self.user)
+        self.config = None
+        self.db = None
+        self.knps_version = get_version()
+
+        self.dirs = self.user.get_dirs()
+
+        self.proc_cache = {}
+
+    def __get_process__(self, procname, threadid, filename):
+        proc_key = f'{procname}.{threadid}'
+        if proc_key not in self.proc_cache:
+            for proc in psutil.process_iter():
+                try:
+                    pinfo = proc.as_dict(attrs=['pid', 'name', 'cmdline', 'open_files'])
+                    if pinfo['name'] == procname:
+                        for f in pinfo['open_files']:
+                            if filename in f.path:
+                                self.proc_cache[proc_key] = pinfo
+                        # self.proc_cache[proc_key] = pinfo
+                except psutil.NoSuchProcess:
+                    pass
+
+            if proc_key not in self.proc_cache:
+                return None
+        else:
+            return self.proc_cache[proc_key]
+
+
+    def run(self):
+        cmd = ['sudo', 'nice', 'fs_usage', '-f filesys', '-w', '-e', 'mds', 'fseventsd', 'mdworker_shared']
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        dir_regex = r'{}'.format('|'.join([x.lstrip('/') for x in self.dirs]))
+
+        procs = {}
+
+        for line in proc.stdout:
+            dt = datetime.now()
+
+            for key, p in procs.items():
+                if 'last_update' in p and 'synced' not in p:
+                    diff = dt - p['last_update']
+                    if diff.seconds >= PROCESS_SYNC_AGE_SECONDS:
+                        print(f'Syncing {p["name"]}')
+                        procs[key]['synced'] = True
+                        self.watcher.observeAndSync(process=p)
+
+
+
+            line = line.rstrip().decode()
+            if 'stat64' in line:
+                continue
+            match = re.search(dir_regex, line)
+            if match:
+                data = re.split(r'\s+', line)
+                timestamp = data[0]
+                action = data[1]
+                process_name, thread_id = data[-1].rsplit('.', 1)
+                proc_key = f'{process_name}.{thread_id}'
+                pathname = [x for x in data if re.search(dir_regex, x)]
+                if len(pathname):
+                    pathname = pathname[0]
+                else:
+                    pathname = None
+                    continue
+
+                open_type = None
+
+                if action == 'open':
+                    open_flags = [x for x in data if re.search(r'^\(.+\)$', x)]
+                    if len(open_flags):
+                        open_flags = open_flags[0]
+                        if open_flags[1] == 'R':
+                            open_type = 'read'
+                        elif open_flags[2] == 'W':
+                            open_type = 'write'
+
+
+                if proc_key not in procs:
+                    procs[proc_key] = {'name': process_name,
+                                        'timestamp': dt,
+                                        'inputs': [],
+                                        'outputs': [],
+                                        'accesses': [],
+                                        'cmdline': [],
+                                        'pid': ''}
+
+                if not re.search(r'.swp$', pathname):
+                    proc = self.__get_process__(process_name, thread_id, pathname)
+                    if proc:
+                        procs[proc_key]['cmdline'] = proc['cmdline']
+                        procs[proc_key]['pid'] = proc['pid']
+                        procs[proc_key]['last_update'] = dt
+
+                    if ('RdData' in action or open_type == 'read') and pathname not in procs[proc_key]['inputs']:
+                        procs[proc_key]['inputs'].append(pathname)
+                        procs[proc_key]['last_update'] = dt
+                    elif ('WrData' in action or open_type == 'write') and pathname not in procs[proc_key]['outputs']:
+                        procs[proc_key]['outputs'].append(pathname)
+                        procs[proc_key]['last_update'] = dt
+                    elif pathname not in procs[proc_key]['accesses'] and pathname not in procs[proc_key]['inputs'] and pathname not in procs[proc_key]['outputs']:
+                        procs[proc_key]['accesses'].append(pathname)
+                        procs[proc_key]['last_update'] = dt
+
+
+                    # print(f'{timestamp} - {action} - {pathname} - {process_name} - Thread: {thread_id}')
+                    # print(line)
+                    # print(json.dumps(procs, indent=2, default=str))
+
+
 #
 # main()
 #
@@ -633,6 +798,7 @@ if __name__ == "__main__":
     parser.add_argument("--addDataset", help="Add a Dataset to the graph. Takes a YAML file")
     parser.add_argument("--sync", action="store_true", help="Sync observations to service")
     parser.add_argument("--server", help="Set KNPS server. Options: dev, prod, or address:port")
+    parser.add_argument("--monitor", action="store_true", help="Run KNPS as a process and file system monitor.")
     parser.add_argument("--version", action="store_true", help="Display version information")
     parser.add_argument('args', type=str, help="KNPS command arguments", nargs='*' )
 
@@ -711,3 +877,10 @@ if __name__ == "__main__":
 
     elif args.version:
         print(f'KNPS Version: {get_version()}')
+
+    elif args.monitor:
+        if not u.username:
+            print("Not logged in; please run: knps --login")
+        else:
+            m = Monitor(u)
+            m.run()
