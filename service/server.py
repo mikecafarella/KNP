@@ -475,16 +475,22 @@ class GraphDB:
     ##
     def createNearMatches(self):
         with self.driver.session() as session:
+            start_time = time.time()
             results = session.run("MATCH (a: ByteSet)<-[r:Contains]-(o:ObservedFile) WHERE EXISTS(a.optional_shingles) RETURN id(a), a.optional_shingles, o.latest")
+            print(time.time()-start_time)
             fileShingleList = [tuple(x.values()) for x in results.data()]
             shingle_pairs = self.getFileShinglePairs(fileShingleList)
+            print(time.time()-start_time)
             document_document_shingle = self.createDocumentDocumentList(shingle_pairs)
             close_matches = self.getCloseMatches(document_document_shingle)
+            print(time.time()-start_time)
+            print(close_matches)
             for i in close_matches:
                 results = session.run("MATCH (a: ByteSet), (b: ByteSet) WHERE id(a) = " + str(i[0]) + " AND id(b) = " + str(i[1]) +
                                         " MERGE (a)-[r1:JaccardMatch]->(b)"
                                         " MERGE (b)-[r2:JaccardMatch]->(a)"
                                         " RETURN id(a)")
+            print(time.time()-start_time)
 
     #
     #
@@ -1543,7 +1549,7 @@ def sync_filelist(username):
     # GDB.createNearColumnMatches()
 
     # TODO: Move this out of the api call.
-    GDB.createNearMatches()
+    # GDB.createNearMatches()
     # show the user profile for that user
     return json.dumps(username)
 

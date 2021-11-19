@@ -67,6 +67,8 @@ def hash_file_lines(fname, file_type):
     if file_type == "application/pdf":
         return hash_pdf_file_lines(fname)
 
+    if file_type == "text/csv":
+        return hash_csv_file_lines(fname)
 
     if not is_binary(fname):
         with open(fname, "rt") as f:
@@ -77,12 +79,18 @@ def hash_file_lines(fname, file_type):
 
     return hashes
 
-def getShinglesFname(fname):
+def getShinglesFname(fname, file_type):
     text = ""
-    with open(fname, "rt") as f:
-        for line in f:
-            text = text + " " + line
-    return getShingles(text)
+    if file_type != "text/csv":
+        with open(fname, "rt") as f:
+            for line in f:
+                text = text + " " + line
+    return getShingles(text, fname, file_type)
+
+def hash_csv_file_lines(fname):
+    data = pd.read_csv(fname)
+    hashes = data.apply(lambda x: hashlib.md5(x.__str__().strip().encode()).hexdigest(), axis = 1)
+    return list(hashes)
 
 ## This is very slow
 ## near-miss detection (hash-shingling)
@@ -193,9 +201,16 @@ def hash_image(fname):
     #Have this take in and hash an image through thing described earlier.
     return None
 
+def get_csv_file_shingles(fname, fingerprint_bytes):
+    data = pd.read_csv(fname)
+    hashes = data.apply(lambda x: int.from_bytes(hashlib.sha256(x.__str__().encode()).digest()[:fingerprint_bytes], 'little'), axis = 1)
+    return list(hashes)
+
 # This fucntion removes punctiation and whitespace.
 # The returns a list of tokens(words) and should not contain any lists or anything along those lines.
-def createShingleFingerprints(s, shingle_length = 5, fingerprint_bytes = 8):
+def createShingleFingerprints(s, fname, file_type, shingle_length = 5, fingerprint_bytes = 8):
+    if file_type == "text/csv":
+        return get_csv_file_shingles(fname, fingerprint_bytes)
     s = re.sub(r'[^\w\s]', '', s)
     words = s.lower().split()
     shingles = []
@@ -209,10 +224,10 @@ def createShingleFingerprints(s, shingle_length = 5, fingerprint_bytes = 8):
 
 ## So for each s
 ## This function should find shingles.
-def getShingles(s, shingle_length = 5, num_shingles = 10, fingerprint_bytes = 8):
+def getShingles(s, fname, file_type, shingle_length = 5, num_shingles = 10, fingerprint_bytes = 8):
     random.seed(0)
     shingles = []
-    all_shingles = createShingleFingerprints(s, shingle_length, fingerprint_bytes)
+    all_shingles = createShingleFingerprints(s, fname, file_type, shingle_length, fingerprint_bytes)
     for i in range(num_shingles):
         factor = int(random.random()*(256**fingerprint_bytes))
         shift = int(random.random()*(256**fingerprint_bytes))
@@ -317,6 +332,7 @@ class User:
 
     def load_db(self):
         p = Path(Path.home(), DB_FILE)
+        print(p)
         if p.exists():
             self.db = json.load(p.open())
         else:
@@ -414,7 +430,6 @@ class Watcher:
         # Make sure it's an absolute path
         dir = p.resolve()
         cfg = self.__get_cfg__(dir)
-
         # The target shouldn't already have a .knps config dir
         if cfg.exists():
             self.config = configparser.ConfigParser()
@@ -601,7 +616,7 @@ class Watcher:
     def _observeFile_(self, f):
         file_hash = hash_file(f)
         file_type = get_file_type(f)
-        line_hashes = None #hash_file_lines(f, file_type)
+        line_hashes = hash_file_lines(f, file_type)
         optionalFields = {}
         optionalFields["filetype"] = file_type
         ##CSV_Column_hashs
@@ -609,9 +624,10 @@ class Watcher:
         #     column_hashes = hash_CSV_columns(f)
         #     optionalFields["column_hashes"] = column_hashes
 
-        if file_type.startswith("text/") and file_type != "text/csv":
-        # if file_type.startswith("text/"):
-            shingles = getShinglesFname(f)
+        # if file_type.startswith("text/") and file_type != "text/csv":
+        if file_type.startswith("text/"):
+            shingles = getShinglesFname(f, file_type)
+            print(shingles)
             optionalFields["shingles"] = shingles
         return (f, file_hash, file_type, line_hashes, optionalFields)
 
@@ -698,9 +714,9 @@ if __name__ == "__main__":
         if not u.username:
             print("Not logged in.")
         else:
-            # Watcher(u).observeAndSync()
-            thread = threading.Thread(target = observeAndSyncThread, args = (Watcher(u), __file__))
-            thread.start()
+            Watcher(u).observeAndSync()
+            # thread = threading.Thread(target = observeAndSyncThread, args = (Watcher(u), __file__))
+            # thread.start()
 
 
     elif args.server:
