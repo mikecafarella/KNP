@@ -655,11 +655,9 @@ class Watcher:
     ### more ways to do partial hashes (based upon file type)
 
     def _observeFile_(self, f):
-        start_time = time.time()
         file_hash = hash_file(f)
         file_type = get_file_type(f)
         line_hashes = hash_file_lines(f, file_type)
-        print(time.time()-start_time)
         optionalFields = {}
         optionalFields["filetype"] = file_type
         ##CSV_Column_hashs
@@ -670,7 +668,6 @@ class Watcher:
         # if file_type.startswith("text/") and file_type != "text/csv":
         if file_type.startswith("text/"):
             shingles = getShinglesFname(f, file_type)
-            print(time.time()-start_time)
             optionalFields["shingles"] = shingles
         return (f, file_hash, file_type, line_hashes, optionalFields)
 

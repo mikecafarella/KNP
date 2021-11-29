@@ -15,9 +15,10 @@ parent_directory = str(pathlib.Path(__file__).parent.resolve())
 # os.system("rm covid-19-data")
 # os.system("git clone https://github.com/nytimes/covid-19-data.git")
 
+## CHANGE THIS IF YOUR COVID DATA IS SAVED IN A DIFF LOCATION THAN THE CURRENT DIRECTORY
 covid_19_folder_path = parent_directory + "/covid-19-data"
 
-
+## Creates a folder for knps to watch, no need to change this folder, but can if you want to.
 output_folder_path = parent_directory + "/covid-19-data-output"
 print("Output Foler: ", output_folder_path)
 
@@ -35,8 +36,6 @@ excess_deaths_data = pd.read_csv(covid_19_folder_path + "/excess-deaths/deaths.c
 mask_use_data = pd.read_csv(covid_19_folder_path + "/mask-use/mask-use-by-county.csv") ## July 20, 2020 UPDATE
 prison_facility_data = pd.read_csv(covid_19_folder_path + "/prisons/facilities.csv") ## MARCH 2020 - MARCH 2021
 prison_systems_data = pd.read_csv(covid_19_folder_path + "/prisons/systems.csv") ## ^^
-
-## TODO POSSIBILY INCLUDE ROLLING DATA AS WELL
 
 def updateFile(outfilepath, curr_date, data):
 	temp = data[data.date <= curr_date]
