@@ -614,6 +614,7 @@ class GraphDB:
             txStr += " CREATE (a)-[r3:NextVersion]->(a2) "
             txStr += "RETURN id(a2)"
 
+
             result = tx.run(txStr,
                             filename = obs["file_name"],
                             username = obs["username"],
@@ -1549,7 +1550,7 @@ def sync_filelist(username):
     # GDB.createNearColumnMatches()
 
     # TODO: Move this out of the api call.
-    # GDB.createNearMatches()
+    GDB.createNearMatches()
     # show the user profile for that user
     return json.dumps(username)
 

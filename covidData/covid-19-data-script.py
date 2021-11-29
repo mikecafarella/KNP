@@ -17,13 +17,15 @@ parent_directory = str(pathlib.Path(__file__).parent.resolve())
 
 covid_19_folder_path = parent_directory + "/covid-19-data"
 
+
 output_folder_path = parent_directory + "/covid-19-data-output"
+print("Output Foler: ", output_folder_path)
 
 ## CHANGE THIS POSSIBLY ~
 os.system("rm ~/.knps_dir_db") ##NEED TO DO THIS SO IT DOES NOT THINK THINGS R INACCURATELY PROCCESSED
 os.system("rm -r " + output_folder_path)
 os.system("mkdir " + output_folder_path)
-os.system("knps --watch " + output_folder_path)
+# os.system("knps --watch " + output_folder_path)
 
 us_data = pd.read_csv(covid_19_folder_path + "/us.csv")
 us_state_data = pd.read_csv(covid_19_folder_path + "/us-states.csv")
@@ -44,7 +46,7 @@ all_dates = us_data.date.unique()
 k = 0
 start_time = time.time()
 sec_time = time.time()
-print("There are ", len(all_dates), "days total.")
+print("There are", len(all_dates), "days total.")
 for curr_date in all_dates:
 	# print(curr_date)
 	if curr_date == "2020-07-20":
@@ -64,8 +66,10 @@ for curr_date in all_dates:
 	updateFile(output_folder_path + "/us_state_data.csv", curr_date, us_state_data)
 	updateFile(output_folder_path + "/us_county_data.csv", curr_date, us_county_data)
 	k += 1
+	## USE THESE TWO LINES TO SEE OUTPUT OF EACH KNPS --SYNC
 	# os.system("knps --sync")
 	# print("\n\n\n\n\n\n")
+	## USE THIS LINE TO SEE NO OUTPUT
 	subprocess.check_output('knps --sync', shell=True) 
 	if k % 10 == 0: 
 		print(f"--------------------------------{k}--------------------------------")

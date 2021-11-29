@@ -89,8 +89,29 @@ def getShinglesFname(fname, file_type):
 
 def hash_csv_file_lines(fname):
     data = pd.read_csv(fname)
-    hashes = data.apply(lambda x: hashlib.md5(x.__str__().strip().encode()).hexdigest(), axis = 1)
-    return list(hashes)
+    hashes = []
+    for i in range(100):
+        if i >= data.shape[0]:
+            return hashes;
+        row = data.iloc[i]
+        hashes.append(hashlib.md5(row.__str__().strip().encode()).hexdigest())
+    for i in range(100, 1000, 5):
+        if i >= data.shape[0]:
+            return hashes;
+        row = data.iloc[i:(i+10)]
+        hashes.append(hashlib.md5(row.__str__().strip().encode()).hexdigest())
+    for i in range(1000, 10000, 50):
+        if i >= data.shape[0]:
+            return hashes;
+        row = data.iloc[i:(i+100)]
+        hashes.append(hashlib.md5(row.__str__().strip().encode()).hexdigest())
+    diff = data.shape[0] - 10000
+    jump = diff//100
+    for i in range(10000, data.shape[0], jump):
+        row = data.iloc[i:(i+jump)]
+        hashes.append(hashlib.md5(row.__str__().strip().encode()).hexdigest())
+
+    return hashes
 
 ## This is very slow
 ## near-miss detection (hash-shingling)
@@ -203,8 +224,28 @@ def hash_image(fname):
 
 def get_csv_file_shingles(fname, fingerprint_bytes):
     data = pd.read_csv(fname)
-    hashes = data.apply(lambda x: int.from_bytes(hashlib.sha256(x.__str__().encode()).digest()[:fingerprint_bytes], 'little'), axis = 1)
-    return list(hashes)
+    hashes = []
+    for i in range(100):
+        if i >= data.shape[0]:
+            return hashes;
+        row = data.iloc[i]
+        hashes.append(int.from_bytes(hashlib.sha256(row.__str__().encode()).digest()[:fingerprint_bytes], 'little'))
+    for i in range(100, 1000, 5):
+        if i >= data.shape[0]:
+            return hashes;
+        row = data.iloc[i:(i+10)]
+        hashes.append(int.from_bytes(hashlib.sha256(row.__str__().encode()).digest()[:fingerprint_bytes], 'little'))
+    for i in range(1000, 10000, 50):
+        if i >= data.shape[0]:
+            return hashes;
+        row = data.iloc[i:(i+100)]
+        hashes.append(int.from_bytes(hashlib.sha256(row.__str__().encode()).digest()[:fingerprint_bytes], 'little'))
+    diff = data.shape[0] - 10000
+    jump = diff//100
+    for i in range(10000, data.shape[0], jump):
+        row = data.iloc[i:(i+jump)]
+        hashes.append(int.from_bytes(hashlib.sha256(row.__str__().encode()).digest()[:fingerprint_bytes], 'little'))
+    return hashes
 
 # This fucntion removes punctiation and whitespace.
 # The returns a list of tokens(words) and should not contain any lists or anything along those lines.
@@ -614,9 +655,11 @@ class Watcher:
     ### more ways to do partial hashes (based upon file type)
 
     def _observeFile_(self, f):
+        start_time = time.time()
         file_hash = hash_file(f)
         file_type = get_file_type(f)
         line_hashes = hash_file_lines(f, file_type)
+        print(time.time()-start_time)
         optionalFields = {}
         optionalFields["filetype"] = file_type
         ##CSV_Column_hashs
@@ -627,7 +670,7 @@ class Watcher:
         # if file_type.startswith("text/") and file_type != "text/csv":
         if file_type.startswith("text/"):
             shingles = getShinglesFname(f, file_type)
-            print(shingles)
+            print(time.time()-start_time)
             optionalFields["shingles"] = shingles
         return (f, file_hash, file_type, line_hashes, optionalFields)
 
