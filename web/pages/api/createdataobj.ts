@@ -135,7 +135,6 @@ export default async function handle(req, res) {
                 for (let i = 0; i < predecessors.length; i++) {
                   preds.push({ id: predecessors[i] })
                 }
-                console.log(preds)
                 jobj = await prisma.imgData.create({
                   data: {
                     img: JSON.stringify(datacontents),
@@ -176,7 +175,6 @@ export default async function handle(req, res) {
                 for (let i = 0; i < predecessors.length; i++) {
                   preds.push({ id: predecessors[i] })
                 }
-                console.log(preds)
                 jobj = await prisma.imgData.create({
                   data: {
                     img: JSON.stringify(datacontents),
