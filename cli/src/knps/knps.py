@@ -19,6 +19,7 @@ import yaml
 import subprocess
 import uuid
 import socket
+import threading
 import mimetypes
 from binaryornot.check import is_binary
 
@@ -32,14 +33,14 @@ CFG_DIR = '.knps'
 CFG_FILE = 'knps.cfg'
 
 DB_FILE = '.knpsdb'
-DIR_DB_FILE = 'knps_dir_db'
+DIR_DB_FILE = '.knps_dir_db'
 
 
 ###################################################
 # Some util functions
 ###################################################
-def get_version():
-    cwdir = os.path.dirname(os.path.realpath(__file__))
+def get_version(file_loc = __file__):
+    cwdir = os.path.dirname(os.path.realpath(file_loc))
     proj_ver = subprocess.run(["git", "describe", "--tags", "--long"], stdout=subprocess.PIPE, text=True, cwd=cwdir).stdout.strip()
     rev_count = subprocess.run(["git", "log", "--oneline"], stdout=subprocess.PIPE, text=True, cwd=cwdir).stdout.strip()
     rev_count = len(rev_count.split("\n"))
@@ -66,6 +67,7 @@ def hash_file_lines(fname, file_type):
     if file_type == "application/pdf":
         return hash_pdf_file_lines(fname)
 
+
     if not is_binary(fname):
         with open(fname, "rt") as f:
             for line in f:
@@ -73,9 +75,14 @@ def hash_file_lines(fname, file_type):
                 line = line.strip().encode()
                 hashes.append(hashlib.md5(line).hexdigest())
 
-    if file_type.startswith("text/"):
-        getShingles(text)
     return hashes
+
+def getShinglesFname(fname):
+    text = ""
+    with open(fname, "rt") as f:
+        for line in f:
+            text = text + " " + line
+    return getShingles(text)
 
 ## This is very slow
 ## near-miss detection (hash-shingling)
@@ -92,11 +99,16 @@ def hash_pdf_file_lines(fname):
             hashes.append(hashlib.md5(line).hexdigest())
     pdfFileObj.close()
     return hashes
+
+# def send_synclist_thread(user, observationList, comment=None):
+def observeAndSyncThread(user, file_loc):
+    user.observeAndSync(file_loc)
+
 #
 # Transmit observations to the server
 #
-def send_synclist(user, observationList, comment=None):
-    knps_version = get_version()
+def send_synclist(user, observationList, file_loc, comment=None):
+    knps_version = get_version(file_loc)
     install_id = user.get_install_id()
     hostname = socket.gethostname()
     print("KNPS Version: ", knps_version)
@@ -208,7 +220,7 @@ def getShingles(s, shingle_length = 5, num_shingles = 10, fingerprint_bytes = 8)
         for shingle in all_shingles:
             new_shingles[(factor*shingle+shift)%(256**fingerprint_bytes)] = shingle
         minimum = min(new_shingles.keys())
-        shingles.append(new_shingles[minimum])
+        shingles.append(str(new_shingles[minimum]))
     return shingles
 
 ## use the mimetype
@@ -248,32 +260,44 @@ class User:
         self.load_db()
         self.username, self.access_token = self.get_current_user()
 
-    def login(self):
-        ROOTURL = self.get_server_url()
-        url = ROOTURL + "/cli_login"
-
-        response = requests.get(url)
-        data = response.json()
-
-        if 'login_url' in data:
-            print("Opening web browser for login...")
-            webbrowser.open(data['login_url'])
-            token_url = ROOTURL + "/get_token"
-            token_response = requests.post(token_url, data={'login_code': data['login_code']})
-            token_data = token_response.json()
-
-            username = token_data['email']
-            # This is not really a login. TODO: make this good
+    def login(self, username=None):
+        # FOR TEMP LOGIN.
+        if username:
             self.username = username
-            self.access_token = token_data['access_token']
-
+            self.access_token = "INSECURE_TOKEN_{}".format(username)
             if self.username not in self.db:
                 self.db[self.username] = {}
 
             self.db['__CURRENT_USER__'] = (self.username, self.access_token)
             self.save_db()
+            print("You are now logged in as: {}".format(username))
 
-            print("You are now logged in as: {}".format(token_data['email']))
+        else:
+            ROOTURL = self.get_server_url()
+            url = ROOTURL + "/cli_login"
+
+            response = requests.get(url)
+            data = response.json()
+
+            if 'login_url' in data:
+                print("Opening web browser for login...")
+                webbrowser.open(data['login_url'])
+                token_url = ROOTURL + "/get_token"
+                token_response = requests.post(token_url, data={'login_code': data['login_code']})
+                token_data = token_response.json()
+
+                username = token_data['email']
+                # This is not really a login. TODO: make this good
+                self.username = username
+                self.access_token = token_data['access_token']
+
+                if self.username not in self.db:
+                    self.db[self.username] = {}
+
+                self.db['__CURRENT_USER__'] = (self.username, self.access_token)
+                self.save_db()
+
+                print("You are now logged in as: {}".format(token_data['email']))
 
     def logout(self):
         ROOTURL = self.get_server_url()
@@ -423,7 +447,7 @@ class Watcher:
         self.config.write(self.__get_cfg__(d).open("w"))
 
     def __load_local_db__(self):
-        p = Path(CFG_DIR, DIR_DB_FILE)
+        p = Path(Path.home(), DIR_DB_FILE)
         db_version = None
         if p.exists():
             try:
@@ -436,8 +460,14 @@ class Watcher:
         if not self.db or db_version != self.knps_version:
             self.db = {'__KNPS_VERSION__': self.knps_version}
 
+        if self.user.username not in self.db:
+            self.db[self.user.username] = {}
+
+        if self.user.get_server() not in self.db[self.user.username]:
+            self.db[self.user.username][self.user.get_server()] = {}
+
     def __save_local_db__(self):
-        json.dump(self.db, Path(CFG_DIR, DIR_DB_FILE).open('wt'), indent=2)
+        json.dump(self.db, Path(Path.home(), DIR_DB_FILE).open('wt'), indent=2)
 
     def file_already_processed(self, f):
         if not CACHE_FILE_PROCESSING:
@@ -448,7 +478,7 @@ class Watcher:
 
         file_hash = hash_file(f)
 
-        return file_hash in self.db and f in self.db[file_hash]
+        return file_hash in self.db[self.user.username][self.user.get_server()] and f in self.db[self.user.username][self.user.get_server()][file_hash]
 
     def record_file_processing(self, f):
         if CACHE_FILE_PROCESSING:
@@ -457,8 +487,8 @@ class Watcher:
 
             file_hash = hash_file(f)
             if file_hash not in self.db:
-                self.db[file_hash] = {}
-            self.db[file_hash][f] = 1
+                self.db[self.user.username][self.user.get_server()][file_hash] = {}
+            self.db[self.user.username][self.user.get_server()][file_hash][f] = 1
 
     #
     # Comment on an observed file
@@ -484,7 +514,9 @@ class Watcher:
     #
     # Collect some observations
     #
-    def observeAndSync(self):
+    def observeAndSync(self, file_loc = None):
+        if file_loc == None:
+            file_loc = __file__
         # If there are TODO items outstanding, great.
         todoPair = self.user.getNextTodoList()
 
@@ -535,7 +567,8 @@ class Watcher:
                     print("*** Skipping: {}".format(e))
                     skipCount += 1
             print("Sending the synclist")
-            response = send_synclist(self.user, observationList)
+
+            response = send_synclist(self.user, observationList, file_loc)
 
             if 'error' in response:
                 print('ERROR: {}'.format(response['error']))
@@ -575,10 +608,13 @@ class Watcher:
         optionalFields = {}
         optionalFields["filetype"] = file_type
         ##CSV_Column_hashs
-        if file_type == "csv":
+        if "csv" in file_type:
             column_hashes = hash_CSV_columns(f)
             optionalFields["column_hashes"] = column_hashes
 
+        elif file_type.startswith("text/"):
+            shingles = getShinglesFname(f)
+            optionalFields["shingles"] = shingles
         return (f, file_hash, file_type, line_hashes, optionalFields)
 
 #
@@ -589,6 +625,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='KNPS command line')
 
     parser.add_argument("--login", action="store_true", help="Perform login")
+    parser.add_argument("--login_temp", help="Temporary dev login bypass. INSECURE!")
     parser.add_argument("--logout", action="store_true", help="Logout current user")
     parser.add_argument("--status", nargs="*", help="Check KNPS status", default=None)
     parser.add_argument("--watch", help="Add a directory to watch")
@@ -604,6 +641,9 @@ if __name__ == "__main__":
     u = User()
     if args.login:
         u.login()
+    elif args.login_temp:
+        # TODO: remove this. this is a temporary login bypass for dev purposes
+        u.login(args.login_temp)
     elif args.logout:
         u.logout()
     elif args.watch:
@@ -660,9 +700,10 @@ if __name__ == "__main__":
         if not u.username:
             print("Not logged in.")
         else:
-            print("User: {}    Server: {}".format(u.username, u.get_server()))
-            print()
-            Watcher(u).observeAndSync()
+            # Watcher(u).observeAndSync()
+            thread = threading.Thread(target = observeAndSyncThread, args = (Watcher(u), __file__))
+            thread.start()
+
 
     elif args.server:
         print("Setting KNPS server to: {}".format(args.server))
