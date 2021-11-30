@@ -362,6 +362,17 @@ class GraphDB:
                                   uuid=uuid)
             return results.single()
 
+    #
+    #
+    #
+    def getDatasetInfoByContent(self, contentUuid):
+        with self.driver.session() as session:
+            results = session.run("MATCH (d:Dataset)-[r:Contains]->(b:ByteSet {md5hash: $md5hash}) "
+                                  "RETURN properties(d)",
+                                  md5hash=contentUuid)
+            return [x[0] for x in results]
+
+
     def getDatasetDescendentGraphInfo(self, uuid):
         with self.driver.session() as session:
             results = session.run("MATCH (d1:Dataset {uuid: $uuid}) "
@@ -694,11 +705,12 @@ class GraphDB:
     #
     def getFileObservationDetailsByUser(self, username):
         with self.driver.session() as session:
-            result = session.run("MATCH (a: ObservedFile {username: $username, latest: 1}) "
+            result = session.run("MATCH (a: ObservedFile {username: $username, latest: 1})-[r:Contains]->(b:ByteSet) "
                                  "OPTIONAL MATCH (previous:ObservedFile)-[r1:NextVersion]->(a) "
-                                 "RETURN properties(a), previous.uuid as prevId",
+                                 "OPTIONAL MATCH (d:Dataset)-[r2:Contains]->(b) "
+                                 "RETURN properties(a), previous.uuid as prevId, properties(b), properties(d)",
                                  username=username)
-            return [(x[0], x[1]) for x in result]
+            return [(x[0], x[1], x[2], x[3]) for x in result]
 
 
     #
@@ -1319,15 +1331,20 @@ def show_userdata(username):
         ds["prevId"] = str(prevId) if prevId else ""
 
     fileInfo = GDB.getFileObservationDetailsByUser(username)
-    for of, prevId in datasetInfo:
-        ds["prevId"] = str(prevId) if prevId else ""
+    for of, prevId, bi, di in fileInfo:
+        of["prevId"] = str(prevId) if prevId else ""
+        of["bytesetInfo"] = bi
+        of["datasetInfo"] = di
 
     collaborations = GDB.findCollaborationsForUser(username)
+
     
     kl = {"ds": [x[0] for x in datasetInfo],
           "of": [x[0] for x in fileInfo],
           "collabs": [{"userfile": x[0], "remotefile": x[1], "bs": x[2], "ds": x[3]} for x in collaborations],
           }
+
+
     return json.dumps(kl)
 
 
@@ -1391,6 +1408,8 @@ def show_knownlocationdata(fileid):
 
     kl["descendentData"] = GDB.getFileObservationDescendentGraphInfo(fileid)
 
+    kl["datasets"] = GDB.getDatasetInfoByContent(md5hash)
+
     return json.dumps(kl)
 
 
@@ -1407,7 +1426,7 @@ def show_datasetdata(id):
     kl["nextId"] = str(nextId) if nextId else ""    
 
     kl["descendentData"] = GDB.getDatasetDescendentGraphInfo(id)
-    print("Here it is:", kl["descendentData"])
+
 
     return json.dumps(kl)
 

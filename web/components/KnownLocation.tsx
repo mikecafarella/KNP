@@ -28,6 +28,7 @@ export type KnownLocationProps = {
 
 const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   const bytesetLink = "/byteset/" + dobj.md5hash
+  const datasetLink = "/dataset/" + (dobj.datasets.length > 0 ? dobj.datasets[0].uuid : "")
   const previousLink = "/knownlocation/" + dobj.prevId
   const nextLink = "/knownlocation/" + dobj.nextId
 
@@ -110,7 +111,11 @@ const renderRectSvgNode = ({ nodeDatum, toggleNode }) => (
             </Paragraph>
 
             <Paragraph size={300} color="muted">            
-                This file contains <a href={bytesetLink}>Content {dobj.md5hash}</a>
+                This file contains {dobj.datasets.length > 0 &&
+                  <a href={datasetLink}>Dataset {dobj.datasets[0].uuid}</a>
+                }
+                {dobj.datasets.length == 0 && <a href={bytesetLink}>Raw Content {dobj.md5hash}</a>
+                }
             </Paragraph>
 
             </Pane>

@@ -156,6 +156,9 @@ const Blog : React.FC<{dobj: UserProps}> = ({dobj}) => {
                     Filename
                   </Table.TextHeaderCell>                    
                   <Table.TextHeaderCell>
+                    Contents
+                  </Table.TextHeaderCell>
+                  <Table.TextHeaderCell>
                     Owner
                   </Table.TextHeaderCell>
                   <Table.TextHeaderCell>
@@ -167,6 +170,13 @@ const Blog : React.FC<{dobj: UserProps}> = ({dobj}) => {
                   <Table.Row key={nd.fileid} isSelectable onSelect={() => Router.push(`/knownlocation/${nd.uuid}`)}>
                     <Table.TextCell>{nd.filename} {nd.latest==1 ? '' :
                     '(Obsolete)'} </Table.TextCell>
+                    
+                    {nd.datasetInfo &&
+                    <Table.TextCell>"{nd.datasetInfo.title}" dataset</Table.TextCell>}
+
+                    {(! nd.datasetInfo) &&
+                    <Table.TextCell>Raw Content {nd.bytesetInfo.md5hash}</Table.TextCell>}
+
                     <Table.TextCell>{nd.username}</Table.TextCell>
                     <Table.TextCell>{nd.modified}</Table.TextCell>                                        
                   </Table.Row>
