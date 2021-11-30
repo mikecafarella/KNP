@@ -662,7 +662,6 @@ class GraphDB:
             return result.single()
 
     def getFileObservationDescendentGraphInfo(self, uuid):
-        print("GETTING UUID", uuid)
         with self.driver.session() as session:
             results = session.run("MATCH (f1:ObservedFile {uuid: $uuid}) "
                                   "OPTIONAL MATCH (f1:ObservedFile)-[r:NextVersion]->(f2) "
@@ -719,7 +718,7 @@ class GraphDB:
                                 md5hash=md5hash)
 
             # Find the Datasets that contain this ByteSet.
-            datasets = session.run("MATCH (b: ByteSet {md5hash: $md5hash, latest:1})<-[r:Contains]-(d:Dataset) "
+            datasets = session.run("MATCH (b: ByteSet {md5hash: $md5hash})<-[r:Contains]-(d:Dataset {latest:1}) "
                                    "RETURN properties(d)",
                                    md5hash=md5hash)
 
@@ -1329,7 +1328,6 @@ def show_userdata(username):
           "of": [x[0] for x in fileInfo],
           "collabs": [{"userfile": x[0], "remotefile": x[1], "bs": x[2], "ds": x[3]} for x in collaborations],
           }
-    print("Returning ", kl)
     return json.dumps(kl)
 
 
@@ -1391,7 +1389,6 @@ def show_knownlocationdata(fileid):
 
     kl["nearDuplicates"] = nearbyFiles
 
-    print("IS THIS WORKING")
     kl["descendentData"] = GDB.getFileObservationDescendentGraphInfo(fileid)
 
     return json.dumps(kl)
