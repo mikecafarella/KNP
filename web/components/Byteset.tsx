@@ -188,7 +188,7 @@ const Byteset: React.FC<{dobj: BytesetProps}> = ({dobj}) => {
                   <Table.Row key={nd.fileid} isSelectable onSelect={() => Router.push(`/knownlocation/${nd.uuid}`)}>
                     <Table.TextCell>{nd.filename} {nd.latest==1 ? '' :
                     '(Obsolete)'} </Table.TextCell>
-                    <Table.TextCell>{nd.owner}</Table.TextCell>
+                    <Table.TextCell>{nd.username}</Table.TextCell>
                     <Table.TextCell>{nd.modified}</Table.TextCell>                                        
                   </Table.Row>
 

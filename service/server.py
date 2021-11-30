@@ -330,7 +330,7 @@ class GraphDB:
         with self.driver.session() as session:
             resultPairs = session.run("MATCH (a:ObservedFile {latest: 1}) "
                                       "WHERE a.username = $username "
-                                      "RETURN a.id, a.filename, a.file_size, a.modified, a.sync_time",
+                                      "RETURN a.uuid, a.filename, a.file_size, a.modified, a.sync_time",
                                      username = username)
 
             for id, fn, fs, m, st in resultPairs:
@@ -657,20 +657,21 @@ class GraphDB:
             result = session.run("MATCH (a: ObservedFile {uuid: $id})-[r:Contains]->(b:ByteSet) "
                                  "OPTIONAL MATCH (previous:ObservedFile)-[r1:NextVersion]->(a) "
                                  "OPTIONAL MATCH (next:ObservedFile)<-[r2:NextVersion]-(a) "
-                                 "RETURN a.uuid, a.username, a.filename, a.modified, a.sync_time, previous.id, next.uuid, a.latest, b.md5hash",
+                                 "RETURN a.uuid, a.username, a.filename, a.modified, a.sync_time, previous.uuid, next.uuid, a.latest, b.md5hash",
                                  id=id)
             return result.single()
 
     def getFileObservationDescendentGraphInfo(self, uuid):
         print("GETTING UUID", uuid)
         with self.driver.session() as session:
-            results = session.run("MATCH (f2:ObservedFile {uuid: $uuid}) "
+            results = session.run("MATCH (f1:ObservedFile {uuid: $uuid}) "
                                   "OPTIONAL MATCH (f1:ObservedFile)-[r:NextVersion]->(f2) "
-                                  "OPTIONAL MATCH (f2)-[r:NextVersion]->(f3:ObservedFile) "
-                                  "RETURN properties(f1), properties(f2), properties(f3)",
+                                  "RETURN properties(f1), properties(f2)",
                                   uuid=uuid)
+
+            # Represent the returned subgraph with nested dictionaries
             graphInfo = {}
-            for d1Props, d2Props, d3Props in results:
+            for d1Props, d2Props in results:
                 graphInfo.setdefault("name", d1Props.get("filename"))
                 graphInfo.setdefault("uuid", d1Props.get("uuid"))
                 graphInfo["kind"] = "FileObservation"
@@ -680,19 +681,9 @@ class GraphDB:
                     childDict.setdefault("name", d2Props.get("filename"))
                     childDict.setdefault("uuid", d2Props.get("uuid"))
                     childDict["kind"] = "FileObservation"                    
-                    rootGrandchildren = childDict.setdefault("childrenD", {})
-                    if d3Props:
-                        gcDict = rootGrandchildren.setdefault(d3Props.get("uuid"), {})
-                        gcDict.setdefault("name", d3Props.get("filename"))
-                        gcDict.setdefault("uuid", d3Props.get("uuid"))
-                        gcDict["kind"] = "FileObservation"
 
-            
-            for childDict in graphInfo.get("childrenD", {}).values():
-                childDict["children"] = [gcDict for gcDict in childDict.setdefault("childrenD", {}).values()]
-                if "childrenD" in childDict:
-                    del childDict["childrenD"]
-                    
+            # Get all the descendant dictionaries, convert the stored-by-uuid subdicts into an array of dicts.
+            # That is, remove the whole uuid-pointer business that we needed to build up the structure
             graphInfo["children"] = [cDict for cDict in graphInfo.get("childrenD", {}).values()]
             if "childrenD" in graphInfo:
                 del graphInfo["childrenD"]
@@ -820,7 +811,7 @@ class GraphDB:
                         txStr += ", {}: \"{}\"".format("optional_" + k, v)
 
                 txStr += ("})-[r2:Contains]->(b2) "
-                        "ON CREATE SET a2.id = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname"
+                        "ON CREATE SET a2.uuid = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname"
                         " RETURN id(a2)")
 
                 #
@@ -1070,7 +1061,7 @@ class DataObjectsResource(Resource):
 
         # Send it to Elasticsearch
         record =  {
-            'url': 'http://localhost:3000/dobj/X{}'.format(new_dobj.id),
+            'url': 'http://localhost:3000/dobj/X{}'.format(new_dobj.uuid),
             'owner': new_dobj.owner.name,
             'name': new_dobj.name,
             'description': new_dobj.description,
@@ -1079,7 +1070,7 @@ class DataObjectsResource(Resource):
             'timestamp': new_version.created.isoformat()
         }
 
-        doc_id = 'X{}'.format(new_dobj.id)
+        doc_id = 'X{}'.format(new_dobj.uuid)
         es_store_record(ES_INDEX, doc_id, record)
 
         return jsonify(dobj_schema.dump(new_dobj))
@@ -1142,7 +1133,7 @@ class DataVersionsResource(Resource):
 
         # Send it to Elasticsearch
         record =  {
-            'url': 'http://localhost:3000/dobj/X{}'.format(dataobject.id),
+            'url': 'http://localhost:3000/dobj/X{}'.format(dataobject.uuid),
             'owner': dataobject.owner.name,
             'name': dataobject.name,
             'description': dataobject.description,
@@ -1150,7 +1141,7 @@ class DataVersionsResource(Resource):
             'pytype': new_version.datatype,
             'timestamp': new_version.created.isoformat()
         }
-        doc_id = 'X{}'.format(dataobject.id)
+        doc_id = 'X{}'.format(dataobject.uuid)
         es_store_record(ES_INDEX, doc_id, record)
 
         return jsonify(version_full_schema.dump(new_version))
@@ -1160,7 +1151,7 @@ api.add_resource(DataVersionsResource, '/versions')
 class DataVersionResource(Resource):
     def get(self, v_id):
         v = db.query(DataVersion).filter_by(id = v_id).first()
-        print(v.contents.id)
+        print(v.contents.uuid)
         if not v:
             abort(404)
 
@@ -1288,7 +1279,7 @@ class FunctionResource(Resource):
 
         # Send it to Elasticsearch
         record =  {
-            'url': 'http://localhost:3000/dobj/X{}'.format(new_dobj.id),
+            'url': 'http://localhost:3000/dobj/X{}'.format(new_dobj.uuid),
             'owner': new_dobj.owner.name,
             'name': new_dobj.name,
             'description': new_dobj.description,
@@ -1297,7 +1288,7 @@ class FunctionResource(Resource):
             'timestamp': new_version.created.isoformat()
         }
 
-        doc_id = 'X{}'.format(new_dobj.id)
+        doc_id = 'X{}'.format(new_dobj.uuid)
         es_store_record(ES_INDEX, doc_id, record)
 
         return jsonify(dobj_schema.dump(new_dobj))
@@ -1338,60 +1329,9 @@ def show_userdata(username):
           "of": [x[0] for x in fileInfo],
           "collabs": [{"userfile": x[0], "remotefile": x[1], "bs": x[2], "ds": x[3]} for x in collaborations],
           }
+    print("Returning ", kl)
     return json.dumps(kl)
 
-#
-# Show the details of a particular ByteSet
-#
-@app.route('/byteset/<md5>')
-def show_byteset(md5):
-    out = '<a href="/">Back to user listing</a>'
-    out += "<h1>ByteSet {}</h1>".format(md5)
-
-    bytesetInfo, fileinfo, datasetInfo = GDB.getBytesetDetails(md5)
-    bytesetCreated, bytesetFormat = bytesetInfo
-
-    out += "<p>"
-    out += "<h2>Created on: {}</h2>".format(datetime.datetime.fromtimestamp(bytesetCreated).strftime('%Y-%m-%d %H:%M:%S'))
-    out += "<p>"
-    out += "<h2>Data format: {}</h2>".format(bytesetFormat)
-    out += "<p>"
-    out += "<h2>Files that currently contain this ByteSet</h2>"
-    out += "<table border=1 cellpadding=5>"
-    out += "<tr><td><b>Filename</b></td><td><b>Owner</b></td></tr>"
-    for fileid, username, filename, isLatest, modified in fileinfo:
-        obsoleteComment = " (Obsolete)"
-        if isLatest:
-            obsoleteComment = ""
-        out += "<tr><td><a href='/file/{}'>{}</a>{}</td><td><a href='/user/{}'>{}</a></td></tr>".format(fileid, filename, obsoleteComment, username, username)
-    out += "</table>"
-
-    #
-    # Identify near-hit ByteSets
-    #
-    out += "<p>"
-    out += "<h2>Files that currently contain near-duplicates of this ByteSet</h2>"
-    out += "<table border=1 cellpadding=5>"
-    out += "<tr><td><b>Filename</b></td><td><b>Owner</b></td></tr>"
-    for localFname, localFileId, owner, isLatest, modified in GDB.findNearbyBytesetFiles(md5):
-        out += '<tr><td><a href="/file/{}">{}</a></td>'.format(localFileId, localFname)
-        out += '<td><a href="/user/{}">{}</a></td>'.format(owner, owner)
-        out += '</tr>'
-    out += "</table>"
-
-    #
-    # Identify relevant Datasets
-    #
-    out += "<p>"
-    out += "<h2>Datasets that currently contain these ByteSet</h2>"
-    out += "<table border=1 cellpadding=5>"
-    out += "<tr><td><b>Dataset title</b></td><td><b>Dataset desc</b></td></tr>"
-    for id, uuid, title, desc, modified, isLatest, owner in datasetInfo:
-        out += '<tr><td><a href="/datasetbyuuid/{}">{}</a></td><td>{}</td></tr>'.format(uuid, title, desc)
-    out += "</table>"
-
-    return f'<br> {out}'
->>>>>>> 041cd7c14df81d63f3fee3b5155db4772e5d75ea
 
 
 #
@@ -1617,7 +1557,7 @@ def sync_filelist(username):
     # pertinant to the user's sync. cronjob, perhaps.
     # GDB.createNearLineMatches()
     # GDB.createNearColumnMatches()
-    GDB.createNearMatches()
+    #GDB.createNearMatches()
 
     # show the user profile for that user
     return json.dumps(username)
