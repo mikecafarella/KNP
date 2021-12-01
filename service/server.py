@@ -569,6 +569,14 @@ class GraphDB:
         with self.driver.session() as session:
             result = session.write_transaction(self._create_and_return_observations, observations)
 
+
+    #
+    # Add new FileObservations to the store
+    #
+    def addObservedProcess(self, process):
+        with self.driver.session() as session:
+            result = session.write_transaction(self._create_and_return_observed_process, process)
+
     #
     # Static helper method
     #
@@ -654,6 +662,45 @@ class GraphDB:
                                 install_id = obs["install_id"],
                                 knps_version = obs["knps_version"],
                                 hostname = obs["hostname"])
+
+    #
+    # Static helper method
+    #
+    @staticmethod
+    def _create_and_return_observed_process(tx, process):
+        txStr = """MATCH (f_out: ObservedFile {username: $username})-[r_out:Contains]->(b_out:ByteSet)
+            WHERE b_out.md5hash IN $out_md5s AND f_out.filename IN $out_filenames
+            MERGE (p:ObservedProcess {name: $name, username: $username, start_time: $start_time, last_update: $last_update,
+                                      cmdline: $cmdline, uuid: apoc.create.uuid(),
+                                      install_id: $install_id, knps_version: $knps_version, hostname: $hostname})
+            CREATE (p)-[rp_out:HasOutput]->(f_out)
+
+            WITH p
+            OPTIONAL MATCH (f_in: ObservedFile {username: $username})-[r_in:Contains]->(b_in:ByteSet)
+            WHERE b_in.md5hash IN $in_md5s  AND f_in.filename IN $in_filenames
+            CALL apoc.do.when(
+                f_in IS NOT NULL,
+                'CREATE (p)-[rp_in:HasInput]->(f_in)',
+                '',
+                {f_in: f_in, p: p}) YIELD value
+
+            RETURN(p)"""
+        #
+        # Create a FileObservation and its ByteSet when there is no predecessor
+        #
+        result = tx.run(txStr,
+                        username = process["username"],
+                        out_md5s = [x[1] for x in process['output_files']],
+                        out_filenames = [x[0] for x in process['output_files']],
+                        in_md5s = [x[1] for x in process['input_files']],
+                        in_filenames = [x[0] for x in process['input_files']],
+                        name = process["name"],
+                        cmdline = ' '.join(process['cmdline']),
+                        start_time = process["timestamp"],
+                        last_update = process["last_update"],
+                        install_id = process["install_id"],
+                        knps_version = process["knps_version"],
+                        hostname = process["hostname"])
 
     #
     # Add a new Dataset object to the store
@@ -1518,8 +1565,9 @@ def sync_filelist(username):
         if (not access_token or
             not username or
             username not in login_data or
-            access_token != login_data[username].get('access_token', None) or
-            not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
+            access_token != login_data[username].get('access_token', None)):
+             # or
+            # not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
             return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
 
     observations = json.load(request.files['observations'])
@@ -1555,6 +1603,7 @@ def sync_process(username):
 
     login_file = 'data/login_info.json'.format(username)
     p = Path(login_file)
+
     if p.exists():
         with open(login_file, 'rt') as f:
             login_data = json.load(f)
@@ -1565,15 +1614,16 @@ def sync_process(username):
         if (not access_token or
             not username or
             username not in login_data or
-            access_token != login_data[username].get('access_token', None) or
-            not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
+            access_token != login_data[username].get('access_token', None)):
+            #  or
+            # not is_access_token_valid(access_token, config["issuer"], config["client_id"])
             return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
 
     process_data = json.load(request.files['process'])
 
     print(json.dumps(process_data, indent=2, default=str))
 
-    # GDB.addObservations(observations)
+    GDB.addObservedProcess(process_data)
     #
     # ## NOTE: WE MAY NOT WANT LINE OR COLUMN MATCHES.
     # # Commenting out these, since they are currently very slow.

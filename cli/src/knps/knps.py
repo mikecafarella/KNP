@@ -625,11 +625,17 @@ class Watcher:
 
         # Now process the process
         if process and len(process['outputs']) + len(process['accesses']) > 0:
+            knps_version = get_version(file_loc)
+            install_id = self.user.get_install_id()
+            hostname = socket.gethostname()
+
             process['input_files'] = [(x, file_hashes[x]) for x in process['inputs'] if x in file_hashes]
             process['output_files'] = [(x, file_hashes[x]) for x in process['outputs'] if x in file_hashes]
             process['access_files'] = [(x, file_hashes[x]) for x in process['accesses'] if x in file_hashes]
             process['username'] = self.user.username
-
+            process['knps_version'] = knps_version
+            process['install_id'] = install_id
+            process['hostname'] = hostname
             print(json.dumps(process, indent=2, default=str))
 
             send_process_sync(self.user, process, file_loc=file_loc)
@@ -706,13 +712,16 @@ class Monitor:
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         dir_regex = r'{}'.format('|'.join([x.lstrip('/') for x in self.dirs]))
 
+        blacklist = ['stat64', 'filecoordinationd', 'getattrlist', 'fsgetpath', 'getxattr', 'fsctl', 'statfs64']
+        blacklist_regex = r'{}'.format('|'.join(blacklist))
+
         procs = {}
 
         for line in proc.stdout:
             dt = datetime.now()
 
             for key, p in procs.items():
-                if 'last_update' in p and 'synced' not in p:
+                if 'last_update' in p and 'synced' not in p and len(p['outputs']) > 0:
                     diff = dt - p['last_update']
                     if diff.seconds >= PROCESS_SYNC_AGE_SECONDS:
                         print(f'Syncing {p["name"]}')
@@ -722,10 +731,12 @@ class Monitor:
 
 
             line = line.rstrip().decode()
-            if 'stat64' in line:
+            if re.search(blacklist_regex, line):
                 continue
+
             match = re.search(dir_regex, line)
             if match:
+                print(line)
                 data = re.split(r'\s+', line)
                 timestamp = data[0]
                 action = data[1]
@@ -744,10 +755,10 @@ class Monitor:
                     open_flags = [x for x in data if re.search(r'^\(.+\)$', x)]
                     if len(open_flags):
                         open_flags = open_flags[0]
-                        if open_flags[1] == 'R':
-                            open_type = 'read'
-                        elif open_flags[2] == 'W':
+                        if open_flags[2] == 'W':
                             open_type = 'write'
+                        elif open_flags[1] == 'R':
+                            open_type = 'read'
 
 
                 if proc_key not in procs:
@@ -766,11 +777,20 @@ class Monitor:
                         procs[proc_key]['pid'] = proc['pid']
                         procs[proc_key]['last_update'] = dt
 
-                    if ('RdData' in action or open_type == 'read') and pathname not in procs[proc_key]['inputs']:
-                        procs[proc_key]['inputs'].append(pathname)
-                        procs[proc_key]['last_update'] = dt
-                    elif ('WrData' in action or open_type == 'write') and pathname not in procs[proc_key]['outputs']:
+                    # see if the 'accessed' files were modified, if so, they're outputs
+                    modified_flag = False
+                    try:
+                        last_modified = Path(pathname).stat().st_mtime
+                        if last_modified >= procs[proc_key]['timestamp'].timestamp():
+                            modified_flag = True
+                    except:
+                        pass
+
+                    if ('WrData' in action or open_type == 'write' or modified_flag) and pathname not in procs[proc_key]['outputs']:
                         procs[proc_key]['outputs'].append(pathname)
+                        procs[proc_key]['last_update'] = dt
+                    elif ('RdData' in action or open_type == 'read' or not modified_flag) and pathname not in procs[proc_key]['inputs']:
+                        procs[proc_key]['inputs'].append(pathname)
                         procs[proc_key]['last_update'] = dt
                     elif pathname not in procs[proc_key]['accesses'] and pathname not in procs[proc_key]['inputs'] and pathname not in procs[proc_key]['outputs']:
                         procs[proc_key]['accesses'].append(pathname)
