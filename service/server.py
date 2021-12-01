@@ -745,6 +745,21 @@ class GraphDB:
         with self.driver.session() as session:
             result = session.write_transaction(self._create_and_return_observations, observations)
 
+        #
+        # Handle optional content storage. In the future we could change this so
+        # that it aims at S3 or some other blob storage system. It should be kept
+        # as simple as possible: basically a key/val store (with very big vals). All the
+        # metadata should be maintained elsewhere.
+        #
+        for obs in observations:
+            optionalItems = obs["optionalItems"]
+
+            if "content" in optionalItems:
+                result = db.query(BlobObject).filter_by(id=obs['file_hash']).first()
+                if result is None:
+                    db.add(BlobObject(id=obs['file_hash'], contents=bytearray(optionalItems["content"])))
+                    db.commit()
+
     #
     # Static helper method
     #
@@ -974,6 +989,14 @@ class DataObjectSchema(ma.Schema):
 dobj_schema = DataObjectSchema()
 dobjs_schema = DataObjectSchema(many=True)
 
+
+class BlobObjectSchema(ma.Schema):
+    class Meta:
+        model = BlobObject
+        fields = ('id',
+                  'contents')
+
+blob_schema = BlobObjectSchema()
 
 #class UserListResource(Resource):
 #    def get(self):
@@ -1554,7 +1577,8 @@ def sync_filelist(username):
 
 
 if __name__ == '__main__':
-    GDB = GraphDB("bolt://{}:{}".format(NEO4J_HOST, NEO4J_PORT), "neo4j", "password")    
+    GDB = GraphDB("bolt://{}:{}".format(NEO4J_HOST, NEO4J_PORT), "neo4j", "password")
+    #db.create_all()
     
     app.run(debug=True, host=KNPS_SERVER_HOST, port=KNPS_SERVER_PORT)
 

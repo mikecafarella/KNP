@@ -4,6 +4,7 @@ import argparse
 import configparser
 from datetime import datetime
 import json
+import distutils.util
 import os
 import requests
 import json
@@ -141,6 +142,7 @@ def send_synclist(user, observationList, file_loc, comment=None):
         obsList.append({'metadata': metadata})
 
     fDict = {'observations': json.dumps(obsList)}
+
     response = requests.post(url, files=fDict, data=login)
     obj_data = response.json()
 
@@ -346,6 +348,14 @@ class User:
             url = KNPS_SERVER_DEV
 
         return 'http://{}'.format(url)
+
+    def set_store(self, shouldStore):
+        # TODO: do some validation here
+        self.db['__STORE__'] = bool(distutils.util.strtobool(shouldStore))
+        self.save_db()
+
+    def get_store(self):
+        return self.db.get('__STORE__', False)
 
     def get_install_id(self):
         if not self.db:
@@ -607,6 +617,11 @@ class Watcher:
         line_hashes = hash_file_lines(f, file_type)
         optionalFields = {}
         optionalFields["filetype"] = file_type
+
+        if self.user.get_store():
+            if os.stat(f).st_size < 10 * 1000 * 1000:
+                optionalFields["content"] = list(open(f, "rb").read())
+        
         ##CSV_Column_hashs
         if "csv" in file_type:
             column_hashes = hash_CSV_columns(f)
@@ -633,6 +648,7 @@ if __name__ == "__main__":
     parser.add_argument("--addDataset", help="Add a Dataset to the graph. Takes a YAML file")
     parser.add_argument("--sync", action="store_true", help="Sync observations to service")
     parser.add_argument("--server", help="Set KNPS server. Options: dev, prod, or address:port")
+    parser.add_argument("--store", help="Upload bytes in addition to metadata. Options: True or False (default)")    
     parser.add_argument("--version", action="store_true", help="Display version information")
     parser.add_argument('args', type=str, help="KNPS command arguments", nargs='*' )
 
@@ -677,6 +693,7 @@ if __name__ == "__main__":
             print("Not logged in; please run: knps --login")
         else:
             print("User: {}    Server: {}".format(u.username, u.get_server()))
+            print("Upload bytes? {}".format(u.get_store()))
             print()
             dirs = u.get_dirs()
             files = u.get_files()
@@ -708,6 +725,10 @@ if __name__ == "__main__":
     elif args.server:
         print("Setting KNPS server to: {}".format(args.server))
         u.set_server(args.server)
+
+    elif args.store:
+        print("Setting KNPS byte storage flag to: {}".format(args.store))
+        u.set_store(args.store)
 
     elif args.version:
         print(f'KNPS Version: {get_version()}')
