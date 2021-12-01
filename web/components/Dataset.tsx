@@ -267,7 +267,7 @@ const orgChart = {
             </Paragraph>
 
             <Paragraph size={300} color="muted">
-                Last modified on: {dobj.modified}
+                Last modified on: {new Date(dobj.modified * 1000).toLocaleString()}
             </Paragraph>
 
             <Paragraph size={300} color="muted">
@@ -395,7 +395,7 @@ const orgChart = {
                 {commentData.comments.map(c => (
                   <Table.Row>
                     <Table.TextCell>{c.comment}</Table.TextCell>
-                    <Table.TextCell>{c.modified}</Table.TextCell>
+                    <Table.TextCell>{new Date(c.modified * 1000).toLocaleString()}</Table.TextCell>
                   <Table.TextCell>{c.author}</Table.TextCell>              
                 </Table.Row>
                 ))}
@@ -727,11 +727,11 @@ const orgChart = {
             <Heading size={600}>Publication History</Heading>
             <Paragraph size={300}>            
                 The best version of this Dataset was published on
-                {dobj.modified}, X days ago.
+                {new Date(dobj.modified * 1000).toLocaleString()}
             </Paragraph>
             <Paragraph size={300}>
                 There have been 2 versions of this Dataset. The first was published on
-                {dobj.modified}, X days ago.
+                {new Date(dobj.modified * 1000).toLocaleString()}
             </Paragraph>
           </Pane>
         </Pane>

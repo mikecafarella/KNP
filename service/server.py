@@ -544,8 +544,6 @@ class GraphDB:
                                   "RETURN properties(b) "
                                   "ORDER BY b.modified DESC")
             ret = [x[0] for x in results]
-            for x in ret:
-                x["modified"] = datetime.datetime.fromtimestamp(x["modified"]).strftime('%Y-%m-%d %H:%M:%S')
             return ret
     
     def getSchemasForNode(self, nodeId):
@@ -556,8 +554,6 @@ class GraphDB:
                                   nodeId=nodeId)
 
             ret = [x[0] for x in results]
-            for x in ret:
-                x["modified"] = datetime.datetime.fromtimestamp(x["modified"]).strftime('%Y-%m-%d %H:%M:%S')
             return ret
 
     def addSchemaEdge(self, nodeId, schemaId):
@@ -578,8 +574,6 @@ class GraphDB:
                                   "RETURN properties(b) "
                                   "ORDER BY b.modified DESC")
             ret = [x[0] for x in results]
-            for x in ret:
-                x["modified"] = datetime.datetime.fromtimestamp(x["modified"]).strftime('%Y-%m-%d %H:%M:%S')
             return ret
     
     def getQualityTestsForNode(self, nodeId):
@@ -590,8 +584,6 @@ class GraphDB:
                                   nodeId=nodeId)
 
             ret = [x[0] for x in results]
-            for x in ret:
-                x["modified"] = datetime.datetime.fromtimestamp(x["modified"]).strftime('%Y-%m-%d %H:%M:%S')
             return ret
 
     def addQualityTestEdge(self, nodeId, qualityTestId):
@@ -615,8 +607,6 @@ class GraphDB:
                                   nodeId=nodeId)
 
             ret = [x[0] for x in results]
-            for x in ret:
-                x["modified"] = datetime.datetime.fromtimestamp(x["modified"]).strftime('%Y-%m-%d %H:%M:%S')
             return ret
 
     def addComment(self, nodeId, commentStr):
@@ -1356,17 +1346,7 @@ def show_userdata(username):
 def show_bytesetdata(md5):
     bytesetInfo, containingFiles, containingDatasets = GDB.getBytesetDetails(md5)
 
-    bytesetInfo["created"] = datetime.datetime.fromtimestamp(bytesetInfo["created"]).strftime('%Y-%m-%d %H:%M:%S')
-
-    for cf in containingFiles:
-        cf["modified"] = datetime.datetime.fromtimestamp(cf["modified"]).strftime('%Y-%m-%d %H:%M:%S')
-
-    for cd in containingDatasets:
-        cd["modified"] = datetime.datetime.fromtimestamp(cd["modified"]).strftime('%Y-%m-%d %H:%M:%S')
-
     nearbyFiles = GDB.findNearbyBytesetFiles(md5)
-    for nf in nearbyFiles:
-        nf["modified"] = datetime.datetime.fromtimestamp(nf["modified"]).strftime('%Y-%m-%d %H:%M:%S')
 
     likelyCollaborations = GDB.findCollaborationsForByteset(md5)
 
@@ -1387,22 +1367,17 @@ def show_knownlocationdata(fileid):
     
     fileId, owner, filename, modified, synctime, prevId, nextId, isLatest, md5hash = foundFile
 
-    modified_str = datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S')
-    synctime_str = datetime.datetime.fromtimestamp(synctime).strftime('%Y-%m-%d %H:%M:%S')
-
     kl = {"id": fileid,
           "owner": owner,
           "filename": filename,
-          "modified": modified_str,
-          "synctime": synctime_str,
+          "modified": modified,
+          "synctime": synctime,
           "prevId": str(prevId) if prevId else "",
           "nextId": str(nextId) if nextId else "",
           "latest": isLatest,
           "md5hash": md5hash}
 
     nearbyFiles = GDB.findNearbyBytesetFiles(md5hash)
-    for nf in nearbyFiles:
-        nf["modified"] = datetime.datetime.fromtimestamp(nf["modified"]).strftime('%Y-%m-%d %H:%M:%S')
 
     kl["nearDuplicates"] = nearbyFiles
 
@@ -1420,7 +1395,6 @@ def show_knownlocationdata(fileid):
 def show_datasetdata(id):
     #uuid, title, desc, owner, modified, isLatest, md5hash, prevId, nextId = GDB.getDatasetInfoByUuid(id)
     kl, md5hash, prevId, nextId = GDB.getDatasetInfoByUuid(id)
-    kl["modified"] = datetime.datetime.fromtimestamp(kl["modified"]).strftime('%Y-%m-%d %H:%M:%S')
     kl["md5hash"] = md5hash
     kl["prevId"] = str(prevId) if prevId else ""
     kl["nextId"] = str(nextId) if nextId else ""    
@@ -1441,7 +1415,6 @@ def add_dataset(md5):
     incomingData = json.loads(request.get_json())
     kl  = GDB.addNewDataset(incomingData["user"], "Default Title", "Default Description", md5)
 
-    kl["modified"] = datetime.datetime.fromtimestamp(kl["modified"]).strftime('%Y-%m-%d %H:%M:%S')
     kl["md5hash"] = md5
     kl["prevId"] = ""
     kl["nextId"] = ""    

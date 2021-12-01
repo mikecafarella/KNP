@@ -46,7 +46,7 @@ const Byteset: React.FC<{dobj: BytesetProps}> = ({dobj}) => {
 
             <Pane marginLeft={majorScale(1)}>
             <Paragraph size={300} color="muted">
-                First seen on {dobj.created}
+                First seen on {new Date(dobj.created * 1000).toLocaleString()}
             </Paragraph>
 
             <Paragraph size={300} color="muted">
@@ -106,7 +106,7 @@ const Byteset: React.FC<{dobj: BytesetProps}> = ({dobj}) => {
                     '(Obsolete)'} </Table.TextCell>
                     <Table.TextCell>{ds.desc}</Table.TextCell>
                     <Table.TextCell>{ds.owner}</Table.TextCell>                                        
-                    <Table.TextCell>{ds.modified}</Table.TextCell>                    
+                    <Table.TextCell>{new Date(ds.modified * 1000).toLocaleString()}</Table.TextCell>                    
                   </Table.Row>
                 ))}
                 </Table.Body>
@@ -189,7 +189,7 @@ const Byteset: React.FC<{dobj: BytesetProps}> = ({dobj}) => {
                     <Table.TextCell>{nd.filename} {nd.latest==1 ? '' :
                     '(Obsolete)'} </Table.TextCell>
                     <Table.TextCell>{nd.username}</Table.TextCell>
-                    <Table.TextCell>{nd.modified}</Table.TextCell>                                        
+                    <Table.TextCell>{new Date(nd.modified * 1000).toLocaleString()}</Table.TextCell>                                        
                   </Table.Row>
 
                 ))}

@@ -4,6 +4,7 @@ import Layout from '../components/Layout'
 import Router from 'next/router'
 import Feed, { FeedProps } from '../components/Feed'
 import useSWR, { useSWRConfig } from 'swr'
+
 import { majorScale, Table, Paragraph, Heading, Card, Pane, Text } from 'evergreen-ui'
 import { useSession } from 'next-auth/client'
 
@@ -127,7 +128,7 @@ const Blog : React.FC<{dobj: UserProps}> = ({dobj}) => {
                     <Table.TextCell>{ds.title} {ds.latest==1 ? '' :
                     '(Obsolete)'} </Table.TextCell>
                     <Table.TextCell>{ds.desc}</Table.TextCell>
-                    <Table.TextCell>{ds.modified}</Table.TextCell>                                        
+                    <Table.TextCell>{new Date(ds.modified * 1000).toLocaleString()}</Table.TextCell>                                        
                   </Table.Row>
 
                 ))}
@@ -178,7 +179,7 @@ const Blog : React.FC<{dobj: UserProps}> = ({dobj}) => {
                     <Table.TextCell>Raw Content {nd.bytesetInfo.md5hash}</Table.TextCell>}
 
                     <Table.TextCell>{nd.username}</Table.TextCell>
-                    <Table.TextCell>{nd.modified}</Table.TextCell>                                        
+                    <Table.TextCell>{new Date(nd.modified * 1000).toLocaleString()}</Table.TextCell>                                        
                   </Table.Row>
 
                 ))}

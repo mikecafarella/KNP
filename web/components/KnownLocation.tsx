@@ -103,7 +103,7 @@ const renderRectSvgNode = ({ nodeDatum, toggleNode }) => (
             </Paragraph>
 
             <Paragraph size={300} color="muted">
-                Last modified on: {dobj.modified}
+                Last modified on: {new Date(dobj.modified * 1000).toLocaleString()}
             </Paragraph>
 
             <Paragraph size={300} color="muted">
