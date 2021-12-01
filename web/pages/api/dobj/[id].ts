@@ -10,7 +10,6 @@ export default async function handle(req, res) {
     Or it has no prefix, in which case it's a raw data object.
     This returns data in the format of "DataObjProps".
   */}
-  console.log('API', req.query)
   if (req.query.id.startsWith("X")) {
     var realId = Number(req.query.id.substring(1))
 
@@ -97,8 +96,6 @@ export default async function handle(req, res) {
         if (obj[0].versions[i].id == req.query.v) vid = i
       }
     }
-
-    console.log(vid)
 
     var outobj = {
       label: {

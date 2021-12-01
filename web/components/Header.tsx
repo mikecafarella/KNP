@@ -12,11 +12,9 @@ const Header: React.FC = () => {
   const [session, loading] = useSession();
 
   var button;
-  var addObjButton;
 
   if (session) {
-    button = <Button marginRight={16} onClick={() => signOut({callbackUrl: '/'})}>Logout user {session.user.name} (ID {session.userid}) </Button>
-    addObjButton = <Button appearance="primary" onClick={() => router.push('/newobj')}>Create data object</Button>
+    button = <Button marginRight={16} onClick={() => signOut({callbackUrl: '/'})}>Logout user {session.user.name} ({session.user.email}) </Button>
   } else {
     button = <Button marginRight={16} onClick={signIn}>Login</Button>
   }
@@ -35,9 +33,6 @@ const Header: React.FC = () => {
           <Link href="/listfunctions" marginLeft={12} color={isActive('/listfunctions') ? "neutral" : "blue"}>
               Functions
           </Link>
-          <Link href="/listusers" marginLeft={12} color={isActive('/listusers') ? "neutral" : "blue"}>
-              Users
-          </Link>
           <Link href="/searchpage" marginLeft={12} color={isActive('/searchpage') ? "neutral" : "blue"}>
               Search Page
           </Link>
@@ -49,7 +44,6 @@ const Header: React.FC = () => {
           {/*</Button>*/}
 
           {button}
-          {addObjButton}
 
         </Pane>
       </Pane>
