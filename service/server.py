@@ -448,12 +448,18 @@ class GraphDB:
 
     def getFileShinglePairs(self, shinglePairList):
         shingle_pairs = []
-        for i in shinglePairList:
+        isNew = 0
+        for i in range(len(shinglePairList)):
+            isNew += shinglePairList[i][2]
+            if i < len(shinglePairList)-1:
+                if shinglePairList[i][0] ==  shinglePairList[i+1][0]:
+                    continue
             used = set()
-            for shingle in i[1]:
+            for shingle in shinglePairList[i][1]:
                 if shingle not in used:
-                    shingle_pairs.append((shingle, i[0]))
+                    shingle_pairs.append((shingle, shinglePairList[i][0], isNew != 0))
                     used.add(shingle)
+            isNew = 0
 
         shingle_pairs.sort()
         return shingle_pairs
@@ -468,12 +474,14 @@ class GraphDB:
                 low_index = k
             else:
                 for i in range(low_index, k):
-                    document_document_shingle.append((shingle_pairs[i][1], shingle_pairs[k][1], current_shingle))
+                    if shingle_pairs[i][2] or shingle_pairs[k][2]:
+                        document_document_shingle.append((shingle_pairs[i][1], shingle_pairs[k][1], current_shingle))
 
         document_document_shingle.sort()
         return document_document_shingle
 
-    def getCloseMatches(self, document_document_shingle, cutoff = 0):
+    ## Cutoff is out of 10
+    def getCloseMatches(self, document_document_shingle, cutoff_percentage = 0.8, total = 10):
         total_similarity = {}
         for pair in document_document_shingle:
             docs = (pair[0], pair[1])
@@ -483,24 +491,29 @@ class GraphDB:
 
         close_documents = []
         for i in total_similarity.keys():
-            if total_similarity[i] > cutoff:
+            if total_similarity[i] > cutoff_percentage*total:
                 close_documents.append(i)
         return close_documents
 
     ##
     def createNearMatches(self):
         with self.driver.session() as session:
-            results = session.run("MATCH (a: ByteSet) WHERE EXISTS(a.optional_shingles) RETURN id(a), a.optional_shingles")
+            # start_time = time.time()
+            results = session.run("MATCH (a: ByteSet)<-[r:Contains]-(o:ObservedFile) WHERE EXISTS(a.optional_shingles) RETURN id(a), a.optional_shingles, o.latest")
+            # print(time.time()-start_time)
             fileShingleList = [tuple(x.values()) for x in results.data()]
             shingle_pairs = self.getFileShinglePairs(fileShingleList)
+            # print(time.time()-start_time)
             document_document_shingle = self.createDocumentDocumentList(shingle_pairs)
             close_matches = self.getCloseMatches(document_document_shingle)
-            print(close_matches)
+            # print(time.time()-start_time)
+            # print(close_matches)
             for i in close_matches:
                 results = session.run("MATCH (a: ByteSet), (b: ByteSet) WHERE id(a) = " + str(i[0]) + " AND id(b) = " + str(i[1]) +
                                         " MERGE (a)-[r1:JaccardMatch]->(b)"
                                         " MERGE (b)-[r2:JaccardMatch]->(a)"
                                         " RETURN id(a)")
+            # print(time.time()-start_time)
 
     #
     #
@@ -802,6 +815,7 @@ class GraphDB:
                     "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname")
             txStr += " CREATE (a)-[r3:NextVersion]->(a2) "
             txStr += "RETURN id(a2)"
+
 
             result = tx.run(txStr,
                             filename = obs["file_name"],
@@ -1470,7 +1484,6 @@ def createDataset(username):
             login_data = json.load(f)
     else:
         login_data = {}
-
     if 'INSECURE_TOKEN_' not in access_token: # TODO: fix this!
         if (not access_token or
             not username or
@@ -1479,13 +1492,14 @@ def createDataset(username):
             not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
             return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
 
+    GDB.createNearMatches()
+    
     id = json.load(request.files['id'])
     title = json.load(request.files['title'])
     desc = json.load(request.files['desc'])
     targetHash = json.load(request.files['targetHash'])
 
     return json.dumps(str(GDB.addDataset(id, username, title, desc, targetHash)))
-
 #
 # MANAGE SCHEMAS
 #
