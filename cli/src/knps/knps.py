@@ -693,7 +693,9 @@ class Monitor:
             for proc in psutil.process_iter():
                 try:
                     pinfo = proc.as_dict(attrs=['pid', 'name', 'cmdline', 'open_files'])
-                    if pinfo['name'] == procname:
+                    # if pinfo['open_files'] != None:
+                    #     print(pinfo)
+                    if pinfo['name'] == procname and pinfo['open_files'] != None:
                         for f in pinfo['open_files']:
                             if filename in f.path:
                                 self.proc_cache[proc_key] = pinfo
@@ -736,7 +738,10 @@ class Monitor:
 
             match = re.search(dir_regex, line)
             if match:
-                print(line)
+                line_breakdown = line.split(maxsplit = 6)
+                if any(substring in line_breakdown[-1] for substring in ["Sublime Text", "bird", "quicklookd"]):
+                    continue
+                print(line_breakdown)
                 data = re.split(r'\s+', line)
                 timestamp = data[0]
                 action = data[1]
