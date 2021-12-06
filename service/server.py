@@ -739,6 +739,17 @@ class GraphDB:
             return (bytesetinfo.single()[0], [p[0] for p in files], [d[0] for d in datasets])
 
     #
+    # Get a content profile object
+    #
+    def getBytecontentStruct(self, md5):
+        result = db.query(BlobObject).filter_by(id=md5).first()        
+        if result is None:
+            return {"hasContent": False}
+        else:
+            return {"hasContent": True,
+                    "content": result}
+
+    #
     # Add new FileObservations to the store
     #
     def addObservations(self, observations):
@@ -1373,9 +1384,12 @@ def show_bytesetdata(md5):
 
     likelyCollaborations = GDB.findCollaborationsForByteset(md5)
 
+    content = GDB.getBytecontentStruct(md5)
+
     bytesetInfo["files"] = containingFiles
     bytesetInfo["datasets"] = containingDatasets    
     bytesetInfo["nearDuplicates"] = nearbyFiles
+    bytesetInfo["content"] = content
     bytesetInfo["likelyCollaborations"] = [{"user1": x[0], "user2": x[1]} for x in likelyCollaborations]
 
     return json.dumps(bytesetInfo)
