@@ -19,6 +19,11 @@ dataversions_generator = Table(
     Column("generator_id", Integer, ForeignKey("dataversion.id")),
 )
 
+class BlobObject(Base):
+    __tablename__ = "blobs"
+    id = Column(String, primary_key=True)
+    contents = Column(LargeBinary)
+
 class DataObject(Base):
     __tablename__ = "dataobject"
     id = Column(Integer, primary_key=True)

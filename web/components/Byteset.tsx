@@ -1,6 +1,7 @@
 import React, { useState} from 'react'
 import Router from 'next/router'
 import ReactMarkdown from 'react-markdown'
+import { useSession } from 'next-auth/client'
 import { majorScale, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table } from 'evergreen-ui'
 
 export type FileProps = {
@@ -32,23 +33,24 @@ export type BytesetProps = {
 }
 
 const Byteset: React.FC<{dobj: BytesetProps}> = ({dobj}) => {
-
   const ownerid = 1
+  const [session, loading] = useSession();  
+  const createDatasetUrl = '/api/datasets/' + dobj.id
 
   return (
       <Pane width="100%">
         <Pane display="flex" padding={majorScale(1)} border>
           <Pane flex={1} >
-            <Heading size={800}>Byteset {dobj.id}
+            <Heading size={800}>Content {dobj.id}
             </Heading>
 
             <Pane marginLeft={majorScale(1)}>
             <Paragraph size={300} color="muted">
-                First seen on {dobj.created}
+                First seen on {new Date(dobj.created * 1000).toLocaleString()}
             </Paragraph>
 
             <Paragraph size={300} color="muted">
-                This data has type {dobj.format}
+                This data has type {dobj.filetype}
             </Paragraph>
             </Pane>
 
@@ -74,40 +76,86 @@ const Byteset: React.FC<{dobj: BytesetProps}> = ({dobj}) => {
             <Heading size={600}>Curated Datasets</Heading>
             
             <Pane marginLeft={majorScale(1)}>
-            <Paragraph size={300} color="muted">            
-                This data is currently part of {dobj.datasets.length} Curated Dataset(s).
+            <Paragraph size={300} color="muted">
+            
+            {dobj.datasets.length == 0 &&
+            <Pane>
+             <Text color="red">This Content is currently uncurated</Text>
+            <Pane>             
+            <Button appearance="primary" onClick={async() =>{
+              await fetch(createDatasetUrl, {
+                method: "POST",
+                body: JSON.stringify({"user": session.user.email})
+                })
+              Router.push(`/byteset/${dobj.id}`)
+            }}>Curate this Content</Button>
+            </Pane>             
+            </Pane>
+             }
+
+             {dobj.datasets.length > 0 &&
+               <Paragraph size={300} color="muted">This Content is currently part of {dobj.datasets.length} Curated Dataset(s).</Paragraph>
+             }
 
                 {dobj.datasets.length > 0 &&
                 <Table>
-                <Table.Head>
-                  <Table.TextHeaderCell>
-                    Title
-                  </Table.TextHeaderCell>                    
-                  <Table.TextHeaderCell>
-                    Description
-                  </Table.TextHeaderCell>                    
-                  <Table.TextHeaderCell>
-                    Owner
-                  </Table.TextHeaderCell>                    
-                  <Table.TextHeaderCell>
-                    Modified
-                  </Table.TextHeaderCell>                    
-                </Table.Head>
                 <Table.Body>
                 {dobj.datasets.map(ds => (
                   <Table.Row key={ds.fileid} isSelectable onSelect={() => Router.push(`/dataset/${ds.uuid}`)}>
-                    <Table.TextCell>{ds.title} {ds.isLatest==1 ? '' :
+                    <Table.TextCell>{ds.title} {ds.latest==1 ? '' :
                     '(Obsolete)'} </Table.TextCell>
                     <Table.TextCell>{ds.desc}</Table.TextCell>
                     <Table.TextCell>{ds.owner}</Table.TextCell>                                        
-                    <Table.TextCell>{ds.modified}</Table.TextCell>                    
+                    <Table.TextCell>{new Date(ds.modified * 1000).toLocaleString()}</Table.TextCell>                    
                   </Table.Row>
                 ))}
                 </Table.Body>
                 </Table>
                 }
-
             </Paragraph>
+            </Pane>
+            
+          </Pane>
+        </Pane>      
+
+
+        <Pane display="flex" padding={majorScale(1)} border>
+          <Pane flex={1} >
+            <Heading size={600}>Known Collaborations</Heading>
+
+            <Pane marginLeft={majorScale(1)}>
+            <Paragraph size={300} color="muted">
+                This Content is currently part of {dobj.likelyCollaborations.length} Known Collaboration(s).
+
+                {dobj.likelyCollaborations.length > 0 &&
+                <Table>
+                <Table.Head>
+                  <Table.TextHeaderCell>
+                    User 1
+                  </Table.TextHeaderCell>                    
+                  <Table.TextHeaderCell>
+                    File 1
+                  </Table.TextHeaderCell>                    
+                  <Table.TextHeaderCell>
+                    User 2
+                  </Table.TextHeaderCell>                    
+                  <Table.TextHeaderCell>
+                    File 2
+                  </Table.TextHeaderCell>                    
+                </Table.Head>
+                <Table.Body>
+                  {dobj.likelyCollaborations.map(c => (
+                  <Table.Row>
+                    <Table.TextCell>{c.user1.username}</Table.TextCell>
+                    <Table.TextCell>{c.user1.filename}</Table.TextCell>
+                    <Table.TextCell>{c.user2.username}</Table.TextCell>
+                    <Table.TextCell>{c.user2.filename}</Table.TextCell>
+                  </Table.Row>
+                ))}
+                </Table.Body>
+                </Table>
+                }
+             </Paragraph>
             </Pane>
           </Pane>
         </Pane>      
@@ -119,7 +167,7 @@ const Byteset: React.FC<{dobj: BytesetProps}> = ({dobj}) => {
             
             <Pane marginLeft={majorScale(1)}>
             <Paragraph size={300} color="muted">            
-                This data currently appears in {dobj.files.length} Known
+                This Content currently appears in {dobj.files.length} Known
                 Location(s).
 
                 {dobj.files.length > 0 &&
@@ -137,11 +185,11 @@ const Byteset: React.FC<{dobj: BytesetProps}> = ({dobj}) => {
                 </Table.Head>
                 <Table.Body>                
                 {dobj.files.map(nd => (
-                  <Table.Row key={nd.fileid} isSelectable onSelect={() => Router.push(`/knownlocation/${nd.fileid}`)}>
-                    <Table.TextCell>{nd.filename} {nd.isLatest==1 ? '' :
+                  <Table.Row key={nd.fileid} isSelectable onSelect={() => Router.push(`/knownlocation/${nd.uuid}`)}>
+                    <Table.TextCell>{nd.filename} {nd.latest==1 ? '' :
                     '(Obsolete)'} </Table.TextCell>
-                    <Table.TextCell>{nd.owner}</Table.TextCell>
-                    <Table.TextCell>{nd.modified}</Table.TextCell>                                        
+                    <Table.TextCell>{nd.username}</Table.TextCell>
+                    <Table.TextCell>{new Date(nd.modified * 1000).toLocaleString()}</Table.TextCell>                                        
                   </Table.Row>
 
                 ))}
@@ -157,11 +205,11 @@ const Byteset: React.FC<{dobj: BytesetProps}> = ({dobj}) => {
 
         <Pane display="flex" padding={majorScale(1)} border>
           <Pane flex={1} >
-            <Heading size={600}>Similar Data</Heading>
+            <Heading size={600}>Known Locations for Similar Data</Heading>
             
             <Pane marginLeft={majorScale(1)}>
             <Paragraph size={300} color="muted">            
-                Near duplicates of this data can be found in {dobj.nearDuplicates.length} Known Location(s).
+                Near duplicates of this Content can be found in {dobj.nearDuplicates.length} Known Location(s).
 
                 {dobj.nearDuplicates.length > 0 &&
                 <Table>
@@ -178,8 +226,8 @@ const Byteset: React.FC<{dobj: BytesetProps}> = ({dobj}) => {
                 </Table.Head>
                 <Table.Body>                
                 {dobj.nearDuplicates.map(nd => (
-                  <Table.Row key={nd.fileid} isSelectable onSelect={() => Router.push(`/knownlocation/${nd.fileid}`)}>
-                    <Table.TextCell>{nd.filename} {nd.isLatest==1 ? '' :
+                  <Table.Row key={nd.fileid} isSelectable onSelect={() => Router.push(`/knownlocation/${nd.uuid}`)}>
+                    <Table.TextCell>{nd.filename} {nd.latest==1 ? '' :
                     '(Obsolete)'} </Table.TextCell>
                     <Table.TextCell>{nd.owner}</Table.TextCell>
                     <Table.TextCell>{nd.modified}</Table.TextCell>                                        

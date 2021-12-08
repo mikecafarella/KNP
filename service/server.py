@@ -211,8 +211,6 @@ def callback():
     access_token = exchange["access_token"]
     id_token = exchange["id_token"]
 
-    print(access_token)
-
     if not is_access_token_valid(access_token, config["issuer"], config["client_id"]):
         return "Access token is invalid", 403
 
@@ -330,7 +328,7 @@ class GraphDB:
         with self.driver.session() as session:
             resultPairs = session.run("MATCH (a:ObservedFile {latest: 1}) "
                                       "WHERE a.username = $username "
-                                      "RETURN a.id, a.filename, a.file_size, a.modified, a.sync_time",
+                                      "RETURN a.uuid, a.filename, a.file_size, a.modified, a.sync_time",
                                      username = username)
 
             for id, fn, fs, m, st in resultPairs:
@@ -345,24 +343,10 @@ class GraphDB:
         with self.driver.session() as session:
             results = session.run("MATCH (d:Dataset {latest: 1, owner: $username}) "
                                   "OPTIONAL MATCH (prev:Dataset)-[r:NextVersion]->(d) "
-                                  "RETURN d.id, d.title, d.desc, d.modified, prev.uuid",
+                                  "RETURN properties(d), prev.uuid as prevId",                                  
                                   username = username)
 
-            for id, title, desc, modified, prevUuid in results:
-                yield (id, title, desc, modified, prevUuid)
-
-            session.close()
-
-    #
-    #
-    #
-    def getDatasetInfoById(self, id):
-        with self.driver.session() as session:
-            results = session.run("MATCH (d:Dataset {latest: 1, id: $idnum})-[r:Contains]->(b:ByteSet) "
-                                  "OPTIONAL MATCH (prev:Dataset)-[r2:NextVersion]->(d) "
-                                  "RETURN d.id, d.title, d.desc, d.owner, d.modified, b.md5hash, prev.uuid",
-                                  idnum=int(id))
-            return tuple(results.single())
+            return [(x[0], x[1]) for x in results]
 
     #
     #
@@ -372,44 +356,82 @@ class GraphDB:
             results = session.run("MATCH (d:Dataset {uuid: $uuid})-[r:Contains]->(b:ByteSet) "
                                   "OPTIONAL MATCH (d)-[r2:NextVersion]->(next:Dataset) "
                                   "OPTIONAL MATCH (prev:Dataset)-[r3:NextVersion]->(d) "
-                                  "RETURN d.id, d.title, d.desc, d.owner, d.modified, b.md5hash, prev.uuid, next.uuid",
+                                  "RETURN properties(d), b.md5hash as md5hash, prev.uuid as prevId, next.uuid as nextId",
                                   uuid=uuid)
-            return tuple(results.single())
-            #session.close()
+            return results.single()
 
     #
     #
     #
-    def findOutgoingSharingPairsForUser(self, username):
+    def getDatasetInfoByContent(self, contentUuid):
         with self.driver.session() as session:
-            results = session.run("MATCH (f1:ObservedFile)-[r1:Contains]->(b1:ByteSet)<-[r2:Contains]-(f2:ObservedFile)  "
-                                  "WHERE f1.username = $username "
-                                  "AND f1.username <> f2.username "
+            results = session.run("MATCH (d:Dataset)-[r:Contains]->(b:ByteSet {md5hash: $md5hash}) "
+                                  "RETURN properties(d)",
+                                  md5hash=contentUuid)
+            return [x[0] for x in results]
+
+
+    def getDatasetDescendentGraphInfo(self, uuid):
+        with self.driver.session() as session:
+            results = session.run("MATCH (d1:Dataset {uuid: $uuid}) "
+                                  "OPTIONAL MATCH (d1)-[r:NextVersion]->(d2:Dataset) "
+                                  "OPTIONAL MATCH (d2)-[r2:NextVersion]->(d3:Dataset) "
+                                  "RETURN properties(d1), properties(d2), properties(d3)",
+                                  uuid=uuid)
+            graphInfo = {}
+            for d1Props, d2Props, d3Props in results:
+                graphInfo.setdefault("name", d1Props.get("title"))
+                graphInfo.setdefault("uuid", d1Props.get("uuid"))
+                graphInfo["kind"] = "Dataset"
+                rootChildren = graphInfo.setdefault("childrenD", {})
+                if d2Props:
+                    childDict = rootChildren.setdefault(d2Props.uuid, {})
+                    childDict.setdefault("name", d2Props.get("title"))
+                    childDict.setdefault("uuid", d2Props.get("uuid"))
+                    childDict["kind"] = "Dataset"                    
+                    rootGrandchildren = childDict.setdefault("childrenD", {})
+                    if d3Props:
+                        gcDict = rootGrandchildren.setdefault(d3Props.uuid, {})
+                        gcDict.setdefault("name", d3Props.get("title"))
+                        gcDict.setdefault("uuid", d3Props.get("uuid"))
+                        gcDict["kind"] = "Dataset"
+
+            
+            for childDict in graphInfo.get("childrenD", {}).values():
+                childDict["children"] = [gcDict for gcDict in childDict.setdefault("childrenD", {}).values()]
+                if "childrenD" in childDict:
+                    del childDict["childrenD"]
+                    
+            graphInfo["children"] = [cDict for cDict in graphInfo.get("childrenD", {}).values()]
+            if "childrenD" in graphInfo:
+                del graphInfo["childrenD"]
+            return graphInfo
+
+    #
+    #
+    #
+    def findCollaborationsForUser(self, username):
+        with self.driver.session() as session:
+            results = session.run("MATCH (f1:ObservedFile {username: $username})-[r1:Contains]->(b1:ByteSet)<-[r2:Contains]-(f2:ObservedFile)  "
+                                  "WHERE f1.username <> f2.username "
+                                  "OPTIONAL MATCH (d:Dataset)-[r3:Contains]->(b1) "
+                                  "RETURN properties(f1), properties(f2), properties(b1), properties(d) ",
+                                  username=username)
+
+            return [(x[0], x[1], x[2], x[3]) for x in results]
+
+    #
+    #
+    #
+    def findCollaborationsForByteset(self, md5hash):
+        with self.driver.session() as session:
+            results = session.run("MATCH (f1:ObservedFile)-[r1:Contains]->(b1:ByteSet {md5hash: $md5hash})<-[r2:Contains]-(f2:ObservedFile)  "
+                                  "WHERE f1.username <> f2.username "
                                   "AND f1.modified < f2.modified "
-                                  "RETURN f1.filename, f1.id, f1.username, f1.modified, f2.filename, f2.id, f2.username, f2.modified",
-                                  username=username)
+                                  "RETURN properties(f1), properties(f2) ",
+                                  md5hash=md5hash)
 
-            for srcFname, srcId, srcUser, srcTime, dstFname, dstId, dstUser, dstTime in results:
-                yield (srcFname, srcId, srcUser, srcTime, dstFname, dstId, dstUser, dstTime)
-
-            session.close()
-
-    #
-    #
-    #
-    def findIncomingSharingPairsForUser(self, username):
-        with self.driver.session() as session:
-            results = session.run("MATCH (f1:ObservedFile)-[r1:Contains]->(b1:ByteSet)<-[r2:Contains]-(f2:ObservedFile)  "
-                                  "WHERE f1.username = $username "
-                                  "AND f1.username <> f2.username "
-                                  "AND f1.modified > f2.modified "
-                                  "RETURN f1.filename, f1.id, f1.username, f1.modified, f2.filename, f2.id, f2.username, f2.modified",
-                                  username=username)
-
-            for srcFname, srcId, srcUser, srcTime, dstFname, dstId, dstUser, dstTime in results:
-                yield (srcFname, srcId, srcUser, srcTime, dstFname, dstId, dstUser, dstTime)
-
-            session.close()
+            return [(x[0], x[1]) for x in results]
 
     #
     #
@@ -418,19 +440,24 @@ class GraphDB:
         with self.driver.session() as session:
             results = session.run("MATCH (b1:ByteSet {md5hash: $md5hash})-[r1:JaccardMatch]->(b2:ByteSet)<-[r2:Contains]-(f1:ObservedFile) "
                                   "WHERE b1.md5hash <> b2.md5hash "
-                                  "RETURN f1.filename, f1.id, f1.username, f1.latest, f1.modified",
+                                  "RETURN properties(f1)",
                                   md5hash=md5)
-            for localFname, localId, owner, isLatest, modified in results:
-                yield (localFname, localId, owner, isLatest, modified)
+            return [x[0] for x in results]
 
     def getFileShinglePairs(self, shinglePairList):
         shingle_pairs = []
-        for i in shinglePairList:
+        isNew = 0
+        for i in range(len(shinglePairList)):
+            isNew += shinglePairList[i][2]
+            if i < len(shinglePairList)-1:
+                if shinglePairList[i][0] ==  shinglePairList[i+1][0]:
+                    continue
             used = set()
-            for shingle in i[1]:
+            for shingle in shinglePairList[i][1]:
                 if shingle not in used:
-                    shingle_pairs.append((shingle, i[0]))
+                    shingle_pairs.append((shingle, shinglePairList[i][0], isNew != 0))
                     used.add(shingle)
+            isNew = 0
 
         shingle_pairs.sort()
         return shingle_pairs
@@ -445,12 +472,14 @@ class GraphDB:
                 low_index = k
             else:
                 for i in range(low_index, k):
-                    document_document_shingle.append((shingle_pairs[i][1], shingle_pairs[k][1], current_shingle))
+                    if shingle_pairs[i][2] or shingle_pairs[k][2]:
+                        document_document_shingle.append((shingle_pairs[i][1], shingle_pairs[k][1], current_shingle))
 
         document_document_shingle.sort()
         return document_document_shingle
 
-    def getCloseMatches(self, document_document_shingle, cutoff = 0):
+    ## Cutoff is out of 10
+    def getCloseMatches(self, document_document_shingle, cutoff_percentage = 0.8, total = 10):
         total_similarity = {}
         for pair in document_document_shingle:
             docs = (pair[0], pair[1])
@@ -460,24 +489,29 @@ class GraphDB:
 
         close_documents = []
         for i in total_similarity.keys():
-            if total_similarity[i] > cutoff:
+            if total_similarity[i] > cutoff_percentage*total:
                 close_documents.append(i)
         return close_documents
 
     ##
     def createNearMatches(self):
         with self.driver.session() as session:
-            results = session.run("MATCH (a: ByteSet) WHERE EXISTS(a.optional_shingles) RETURN id(a), a.optional_shingles")
+            # start_time = time.time()
+            results = session.run("MATCH (a: ByteSet)<-[r:Contains]-(o:ObservedFile) WHERE EXISTS(a.optional_shingles) RETURN id(a), a.optional_shingles, o.latest")
+            # print(time.time()-start_time)
             fileShingleList = [tuple(x.values()) for x in results.data()]
             shingle_pairs = self.getFileShinglePairs(fileShingleList)
+            # print(time.time()-start_time)
             document_document_shingle = self.createDocumentDocumentList(shingle_pairs)
             close_matches = self.getCloseMatches(document_document_shingle)
-            print(close_matches)
+            # print(time.time()-start_time)
+            # print(close_matches)
             for i in close_matches:
                 results = session.run("MATCH (a: ByteSet), (b: ByteSet) WHERE id(a) = " + str(i[0]) + " AND id(b) = " + str(i[1]) +
                                         " MERGE (a)-[r1:JaccardMatch]->(b)"
                                         " MERGE (b)-[r2:JaccardMatch]->(a)"
                                         " RETURN id(a)")
+            # print(time.time()-start_time)
 
     #
     #
@@ -498,6 +532,105 @@ class GraphDB:
             results = session.run("MATCH (n:ByteSet)--(m:ObservedFile) WHERE EXISTS(m.optional_shingles) SET n.optional_shingles = m.optional_shingles")
 
 
+
+    def updateField(self, nodeId, field, fieldVal):
+        with self.driver.session() as session:
+            print("Looking for ", nodeId)
+            results = session.run("MATCH (a) "
+                                  "WHERE a.uuid = $uuid "
+                                  "SET a." + field + " = $fieldVal "
+                                  "RETURN properties(a)",
+                                  uuid=nodeId,
+                                  fieldVal=fieldVal)
+            return results.single()[0]
+
+
+
+    #
+    # Handle Schemas
+    #
+    def getAllSchemas(self):
+        with self.driver.session() as session:
+            results = session.run("MATCH (b:Schema) "
+                                  "RETURN properties(b) "
+                                  "ORDER BY b.modified DESC")
+            ret = [x[0] for x in results]
+            return ret
+    
+    def getSchemasForNode(self, nodeId):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a {uuid: $nodeId})-[r:HasSchema]->(b:Schema) "
+                                  "RETURN properties(b) "
+                                  "ORDER BY b.modified DESC",
+                                  nodeId=nodeId)
+
+            ret = [x[0] for x in results]
+            return ret
+
+    def addSchemaEdge(self, nodeId, schemaId):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a:Dataset {uuid: $nodeId}), (b:Schema {uuid:$schemaId}) "
+                                  "MERGE (a)-[r:HasSchema]->(b) "
+                                  "RETURN properties(b)",
+                                  nodeId=nodeId,
+                                  schemaId=schemaId)
+            return results
+
+    #
+    # Handle Quality Tests
+    #
+    def getAllQualityTests(self):
+        with self.driver.session() as session:
+            results = session.run("MATCH (b:QualityTest) "
+                                  "RETURN properties(b) "
+                                  "ORDER BY b.modified DESC")
+            ret = [x[0] for x in results]
+            return ret
+    
+    def getQualityTestsForNode(self, nodeId):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a {uuid: $nodeId})-[r:HasQualityTest]->(b:QualityTest) "
+                                  "RETURN properties(b) "
+                                  "ORDER BY b.modified DESC",
+                                  nodeId=nodeId)
+
+            ret = [x[0] for x in results]
+            return ret
+
+    def addQualityTestEdge(self, nodeId, qualityTestId):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a:Dataset {uuid: $nodeId}), (b:QualityTest {uuid:$qualityTestId}) "
+                                  "MERGE (a)-[r:HasQualityTest]->(b) "
+                                  "RETURN properties(b)",
+                                  nodeId=nodeId,
+                                  qualityTestId=qualityTestId)
+            return results
+
+
+    #
+    # Handle Comments
+    #
+    def getCommentsForNode(self, nodeId):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a {uuid: $nodeId})-[r:HasComment]->(b:Comment) "
+                                  "RETURN properties(b) "
+                                  "ORDER BY b.modified DESC",
+                                  nodeId=nodeId)
+
+            ret = [x[0] for x in results]
+            return ret
+
+    def addComment(self, nodeId, commentStr):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a {uuid: $nodeId}) "
+                                  "CREATE (a)-[r:HasComment]->(b:Comment {uuid: apoc.create.uuid(), comment: $commentStr, owner: $owner, modified: $modified}) "
+                                  "RETURN b",
+                                  nodeId=nodeId,
+                                  commentStr=commentStr,
+                                  owner="",
+                                  modified=time.time())
+            return results
+
     def createNearColumnMatches(self):
         with self.driver.session() as session:
             results = session.run("MATCH (a: ByteSet), (b: ByteSet) "
@@ -507,6 +640,7 @@ class GraphDB:
                                   "MERGE (a)-[r:ColumnJaccardMatch]->(b) "
                                   "RETURN id(a), id(b), columnjaccard")
 
+
     #
     #
     #
@@ -515,7 +649,7 @@ class GraphDB:
             resultPairs = session.run("MATCH (cur:ObservedFile)-[r:NextVersion]->(next:ObservedFile) "
                                       "WHERE cur.username = $username "
                                       "AND next.username = $username "
-                                      "RETURN cur.filename, cur.file_size, cur.modified, cur.id, next.file_size, next.modified, next.id "
+                                      "RETURN cur.filename, cur.file_size, cur.modified, cur.uuid, next.file_size, next.modified, next.uuid "
                                       "ORDER BY cur.filename, next.modified",
                                       username = username)
 
@@ -532,12 +666,53 @@ class GraphDB:
     #
     def getFileObservationDetails(self, id):
         with self.driver.session() as session:
-            result = session.run("MATCH (a: ObservedFile {id: $id})-[r:Contains]->(b:ByteSet) "
+            result = session.run("MATCH (a: ObservedFile {uuid: $id})-[r:Contains]->(b:ByteSet) "
                                  "OPTIONAL MATCH (previous:ObservedFile)-[r1:NextVersion]->(a) "
                                  "OPTIONAL MATCH (next:ObservedFile)<-[r2:NextVersion]-(a) "
-                                 "RETURN a.id, a.username, a.filename, a.modified, a.sync_time, previous.id, next.id, a.latest, b.md5hash",
+                                 "RETURN a.uuid, a.username, a.filename, a.modified, a.sync_time, previous.uuid, next.uuid, a.latest, b.md5hash",
                                  id=id)
             return result.single()
+
+    def getFileObservationDescendentGraphInfo(self, uuid):
+        with self.driver.session() as session:
+            results = session.run("MATCH (f1:ObservedFile {uuid: $uuid}) "
+                                  "OPTIONAL MATCH (f1:ObservedFile)-[r:NextVersion]->(f2) "
+                                  "RETURN properties(f1), properties(f2)",
+                                  uuid=uuid)
+
+            # Represent the returned subgraph with nested dictionaries
+            graphInfo = {}
+            for d1Props, d2Props in results:
+                graphInfo.setdefault("name", d1Props.get("filename"))
+                graphInfo.setdefault("uuid", d1Props.get("uuid"))
+                graphInfo["kind"] = "FileObservation"
+                rootChildren = graphInfo.setdefault("childrenD", {})
+                if d2Props:
+                    childDict = rootChildren.setdefault(d2Props.get("uuid"), {})
+                    childDict.setdefault("name", d2Props.get("filename"))
+                    childDict.setdefault("uuid", d2Props.get("uuid"))
+                    childDict["kind"] = "FileObservation"                    
+
+            # Get all the descendant dictionaries, convert the stored-by-uuid subdicts into an array of dicts.
+            # That is, remove the whole uuid-pointer business that we needed to build up the structure
+            graphInfo["children"] = [cDict for cDict in graphInfo.get("childrenD", {}).values()]
+            if "childrenD" in graphInfo:
+                del graphInfo["childrenD"]
+            return graphInfo
+
+
+    #
+    # Get details on a user's ObservedFiles
+    #
+    def getFileObservationDetailsByUser(self, username):
+        with self.driver.session() as session:
+            result = session.run("MATCH (a: ObservedFile {username: $username, latest: 1})-[r:Contains]->(b:ByteSet) "
+                                 "OPTIONAL MATCH (previous:ObservedFile)-[r1:NextVersion]->(a) "
+                                 "OPTIONAL MATCH (d:Dataset)-[r2:Contains]->(b) "
+                                 "RETURN properties(a), previous.uuid as prevId, properties(b), properties(d)",
+                                 username=username)
+            return [(x[0], x[1], x[2], x[3]) for x in result]
+
 
     #
     # Get details on a ByteSet
@@ -547,20 +722,32 @@ class GraphDB:
 
             # Find details on this ByteSet
             bytesetinfo = session.run("MATCH (b: ByteSet {md5hash: $md5hash}) "
-                                 "RETURN b.created, b.filetype",
+                                 "RETURN properties(b)",
                                 md5hash=md5hash)
 
             # Find the ObservedFiles that contain this ByteSet.
             files = session.run("MATCH (b: ByteSet {md5hash: $md5hash})<-[r:Contains]-(o:ObservedFile) "
-                                 "RETURN o.id, o.username, o.filename, o.latest, o.modified",
+                                 "RETURN properties(o)",                                
                                 md5hash=md5hash)
 
             # Find the Datasets that contain this ByteSet.
-            datasets = session.run("MATCH (b: ByteSet {md5hash: $md5hash})<-[r:Contains]-(d:Dataset) "
-                                   "RETURN d.id, d.uuid, d.title, d.desc, d.modified, d.latest, d.owner",
+            datasets = session.run("MATCH (b: ByteSet {md5hash: $md5hash})<-[r:Contains]-(d:Dataset {latest:1}) "
+                                   "RETURN properties(d)",
                                    md5hash=md5hash)
 
-            return (tuple(bytesetinfo.single()), [p for p in files], [d for d in datasets])
+            # Find Datasets for nearby data
+            #nearbyDatasets = session.run("MATCH (b: ByteSet {md5hash: $md5hash})-[r1:JaccardMatch]->(b2: ByteSet)<-[r2:Contains]-(d:Dataset) "
+            #                             "WHERE NOT exists((d)-[r3:Contains]->(b)) "
+            #                             "RETURN properties(d)",
+            #                             md5hash=md5hash)
+
+            # Find Datasets for ancestor data
+            #nearbyDatasets = session.run("MATCH (d: ByteSet {md5hash: $md5hash})<-[r1:Contains]-(f1: ObservedFile)-[r2:NextVersion]->(f2:ObservedFile)<-[r3:Contains]-(d: Dataset) "
+            #                             "WHERE NOT exists((d)-[r3:Contains]->(b)) "
+            #                             "RETURN properties(d)",
+            #                             md5hash=md5hash)
+
+            return (bytesetinfo.single()[0], [p[0] for p in files], [d[0] for d in datasets])
 
     #
     # Add new FileObservations to the store
@@ -568,14 +755,42 @@ class GraphDB:
     def addObservations(self, observations):
         with self.driver.session() as session:
             result = session.write_transaction(self._create_and_return_observations, observations)
+        #
+        # Handle optional content storage. In the future we could change this so
+        # that it aims at S3 or some other blob storage system. It should be kept
+        # as simple as possible: basically a key/val store (with very big vals). All the
+        # metadata should be maintained elsewhere.
+        #
+        for obs in observations:
+            optionalItems = obs["optionalItems"]
 
+            if "content" in optionalItems:
+                result = db.query(BlobObject).filter_by(id=obs['file_hash']).first()
+                if result is None:
+                    db.add(BlobObject(id=obs['file_hash'], contents=bytearray(optionalItems["content"])))
+                    db.commit()
+                    
 
     #
-    # Add new FileObservations to the store
+    # Add new ProcessObservations to the store
     #
     def addObservedProcess(self, process):
         with self.driver.session() as session:
             result = session.write_transaction(self._create_and_return_observed_process, process)
+        #
+        # Handle optional content storage. In the future we could change this so
+        # that it aims at S3 or some other blob storage system. It should be kept
+        # as simple as possible: basically a key/val store (with very big vals). All the
+        # metadata should be maintained elsewhere.
+        #
+        for obs in observations:
+            optionalItems = obs["optionalItems"]
+
+            if "content" in optionalItems:
+                result = db.query(BlobObject).filter_by(id=obs['file_hash']).first()
+                if result is None:
+                    db.add(BlobObject(id=obs['file_hash'], contents=bytearray(optionalItems["content"])))
+                    db.commit()
 
     #
     # Static helper method
@@ -608,6 +823,7 @@ class GraphDB:
                     "SET a.latest = 0, a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname")
             txStr += " CREATE (a)-[r3:NextVersion]->(a2) "
             txStr += "RETURN id(a2)"
+
 
             result = tx.run(txStr,
                             filename = obs["file_name"],
@@ -644,7 +860,7 @@ class GraphDB:
                         txStr += ", {}: \"{}\"".format("optional_" + k, v)
 
                 txStr += ("})-[r2:Contains]->(b2) "
-                        "ON CREATE SET a2.id = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname"
+                        "ON CREATE SET a2.uuid = apoc.create.uuid(), a2.modified = $modified, a2.sync_time = $sync_time, a2.file_size = $file_size, a2.knps_version = $knps_version, a2.install_id = $install_id, a2.hostname = $hostname"
                         " RETURN id(a2)")
 
                 #
@@ -662,6 +878,8 @@ class GraphDB:
                                 install_id = obs["install_id"],
                                 knps_version = obs["knps_version"],
                                 hostname = obs["hostname"])
+
+
 
     #
     # Static helper method
@@ -705,57 +923,35 @@ class GraphDB:
     #
     # Add a new Dataset object to the store
     #
-    def addDataset(self, datasetId, owner, title, desc, targetHash):
+    def addDatasetVersion(self, prevId, owner, title, desc, targetHash):
         with self.driver.session() as session:
-            result = session.run("MATCH (old:Dataset {id:$id, latest:1}), (b:ByteSet {md5hash: $targetHash}) "
-                                 "CREATE (new:Dataset {id:$id, uuid: apoc.create.uuid(), title:$title, owner:$owner, modified: $modified, desc:$desc, latest:1})-[r:Contains]->(b) "
+            result = session.run("MATCH (old:Dataset {uuid:$prevId, latest:1}), (b:ByteSet {md5hash: $targetHash}) "
+                                 "CREATE (new:Dataset {uuid: apoc.create.uuid(), title:$title, owner:$owner, modified: $modified, desc:$desc, latest:1})-[r:Contains]->(b) "
                                  "SET old.latest=0 "
                                  "CREATE (old)-[r2:NextVersion]->(new)"
-                                 "RETURN new.id",
-                                 id=datasetId,
+                                 "RETURN new.uuid",
+                                 prevId=prevId,
                                  title=title,
                                  owner=owner,
                                  desc=desc,
                                  modified=time.time(),
                                  targetHash=targetHash)
+            
+            return result.single()
 
-            result = result.single()
-            if result is None:
-                result = session.run("MATCH (b:ByteSet {md5hash: $targetHash}) "
-                                     "CREATE (new:Dataset {id:$id, uuid: apoc.create.uuid(), title:$title, owner:$owner, modified:$modified, desc:$desc, latest:1})-[r:Contains]->(b) "
-                                     "RETURN new.id",
-                                     id=datasetId,
-                                     title=title,
-                                     owner=owner,
-                                     desc=desc,
-                                     modified=time.time(),
-                                     targetHash=targetHash)
+    def addNewDataset(self, owner, title, desc, targetHash):
+        with self.driver.session() as session:        
+            result = session.run("MATCH (b:ByteSet {md5hash: $targetHash}) "
+                                 "CREATE (new:Dataset {uuid: apoc.create.uuid(), title:$title, owner:$owner, modified:$modified, desc:$desc, latest:1})-[r:Contains]->(b) "
+                                 "RETURN properties(new)",
+                                 title=title,
+                                 owner=owner,
+                                 desc=desc,
+                                 modified=time.time(),                                     
+                                 targetHash=targetHash)
 
-                return True
+            return result.single()[0]
 
-    #
-    # Add a Comment to a Dataset object (REMIND: currently broken)
-    #
-    def addComment(self, username, filename, comment):
-        with self.driver.session() as session:
-            versionPredecessor = session.run("MATCH (a:ObservedFile) "
-                                             "WHERE a.filename = $file_name "
-                                             "AND a.username = $username "
-                                             "RETURN a.id "
-                                             "ORDER BY a.modified DESC LIMIT 1 ",
-                                             file_name=filename,
-                                             username=username)
-
-            vpNode = versionPredecessor.single()
-            if vpNode is None:
-                return False
-            else:
-                commentResult = session.run("MATCH (a:ObservedFile {id:$curNodeId}) "
-                                            "CREATE (c:Comment) SET c.comment = $commentStr "
-                                            "CREATE (a)-[r:HasComment]->(c)",
-                                            curNodeId=vpNode[0],
-                                            commentStr=comment)
-                return True
 
 ###################################################
 # Manage data for front-end
@@ -866,36 +1062,44 @@ dobj_schema = DataObjectSchema()
 dobjs_schema = DataObjectSchema(many=True)
 
 
-class UserListResource(Resource):
-    def get(self):
-        users = db.query(User)
-        return users_schema.dump(users)
+class BlobObjectSchema(ma.Schema):
+    class Meta:
+        model = BlobObject
+        fields = ('id',
+                  'contents')
 
-    def post(self):
-        # todo: validation & integrate signup stuff
-        user = db.query(User).filter_by(email = request.json['email']).first()
+blob_schema = BlobObjectSchema()
 
-        if not user:
-            user = User(
-                name = request.json['name'],
-                email = request.json['email']
-            )
-            db.add(user)
-            db.commit()
-        return user_schema.dump(user)
+#class UserListResource(Resource):
+#    def get(self):
+#        users = db.query(User)
+#        return users_schema.dump(users)
+#
+#    def post(self):
+#        # todo: validation & integrate signup stuff
+#        user = db.query(User).filter_by(email = request.json['email']).first()
+#
+#        if not user:
+#            user = User(
+#                name = request.json['name'],
+#                email = request.json['email']
+#            )
+#            db.add(user)
+#            db.commit()
+#        return user_schema.dump(user)
+#
+#api.add_resource(UserListResource, '/users')
 
-api.add_resource(UserListResource, '/users')
+#class UserResource(Resource):
+#    def get(self, user_id):
+#        user = db.query(User).filter_by(id = user_id).first()
+#
+#        if not user:
+#            abort(404)
+#
+#        return user_schema.dump(user)
 
-class UserResource(Resource):
-    def get(self, user_id):
-        user = db.query(User).filter_by(id = user_id).first()
-
-        if not user:
-            abort(404)
-
-        return user_schema.dump(user)
-
-api.add_resource(UserResource, '/users/<int:user_id>')
+#api.add_resource(UserResource, '/users/<int:user_id>')
 
 class DataObjectsResource(Resource):
     def get(self):
@@ -953,7 +1157,7 @@ class DataObjectsResource(Resource):
 
         # Send it to Elasticsearch
         record =  {
-            'url': 'http://localhost:3000/dobj/X{}'.format(new_dobj.id),
+            'url': 'http://localhost:3000/dobj/X{}'.format(new_dobj.uuid),
             'owner': new_dobj.owner.name,
             'name': new_dobj.name,
             'description': new_dobj.description,
@@ -962,7 +1166,7 @@ class DataObjectsResource(Resource):
             'timestamp': new_version.created.isoformat()
         }
 
-        doc_id = 'X{}'.format(new_dobj.id)
+        doc_id = 'X{}'.format(new_dobj.uuid)
         es_store_record(ES_INDEX, doc_id, record)
 
         return jsonify(dobj_schema.dump(new_dobj))
@@ -1025,7 +1229,7 @@ class DataVersionsResource(Resource):
 
         # Send it to Elasticsearch
         record =  {
-            'url': 'http://localhost:3000/dobj/X{}'.format(dataobject.id),
+            'url': 'http://localhost:3000/dobj/X{}'.format(dataobject.uuid),
             'owner': dataobject.owner.name,
             'name': dataobject.name,
             'description': dataobject.description,
@@ -1033,7 +1237,7 @@ class DataVersionsResource(Resource):
             'pytype': new_version.datatype,
             'timestamp': new_version.created.isoformat()
         }
-        doc_id = 'X{}'.format(dataobject.id)
+        doc_id = 'X{}'.format(dataobject.uuid)
         es_store_record(ES_INDEX, doc_id, record)
 
         return jsonify(version_full_schema.dump(new_version))
@@ -1043,7 +1247,7 @@ api.add_resource(DataVersionsResource, '/versions')
 class DataVersionResource(Resource):
     def get(self, v_id):
         v = db.query(DataVersion).filter_by(id = v_id).first()
-        print(v.contents.id)
+        print(v.contents.uuid)
         if not v:
             abort(404)
 
@@ -1171,7 +1375,7 @@ class FunctionResource(Resource):
 
         # Send it to Elasticsearch
         record =  {
-            'url': 'http://localhost:3000/dobj/X{}'.format(new_dobj.id),
+            'url': 'http://localhost:3000/dobj/X{}'.format(new_dobj.uuid),
             'owner': new_dobj.owner.name,
             'name': new_dobj.name,
             'description': new_dobj.description,
@@ -1180,7 +1384,7 @@ class FunctionResource(Resource):
             'timestamp': new_version.created.isoformat()
         }
 
-        doc_id = 'X{}'.format(new_dobj.id)
+        doc_id = 'X{}'.format(new_dobj.uuid)
         es_store_record(ES_INDEX, doc_id, record)
 
         return jsonify(dobj_schema.dump(new_dobj))
@@ -1195,356 +1399,207 @@ class SearchIndexResource(Resource):
 api.add_resource(SearchIndexResource, '/searchindex')
 
 
-##########################################################
-# HTTP Access for the instrumentation client and debugging
-##########################################################
-#
-# Show a list of users and their high-level stats
-#
-@app.route("/")
-def hello():
-    out = "<table border=1 cellpadding=5>"
-    out += "<tr><td>Name</td><td># Files</td><td>Last Sync</td></tr>"
 
-    for username, numFiles, syncTime in GDB.getAllUsers():
-        sync_date = datetime.datetime.fromtimestamp(syncTime).strftime('%Y-%m-%d %H:%M:%S')
-        out += "<tr><td><a href='/user/{}'>{}</a></td><td>{}</td><td>{}</td></tr>".format(username, username, numFiles, sync_date)
-    out += "</table>"
-
-    return f'<h2>KNPS Users</h2></br>{out}'
+##########################################################
+# REST access for the KNPS Knowledge Graph
+##########################################################
 
 #
 # Show all the details for a particular user's files
 #
-@app.route('/user/<username>')
-def show_user_profile(username):
-    out = '<a href="/">Back to user listing</a>'
 
-    #
-    # Basic file listing
-    #
-    out += "<h2>All files</h2>"
-    out += "<table border=1 cellpadding=5>"
-    out += "<tr><td>Filename</td><td>Size</td><td>Last Modified</td><td>Last Sync</td><td># optional fields</td><td>Other Users</td></tr>"
-    maxItems = 10
-    count = 0
-    for fileId, fname, fsize, modified, synctime in GDB.getUserDetails(username):
-        mod_date = datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S')
-        sync_date = datetime.datetime.fromtimestamp(synctime).strftime('%Y-%m-%d %H:%M:%S')
+@app.route('/userdata/<username>')
+def show_userdata(username):
+    # Get the user's current ObservedFiles, Datasets, and likely collaborations
+    datasetInfo = GDB.getDatasetInfoByUser(username)
+    for ds, prevId in datasetInfo:
+        ds["prevId"] = str(prevId) if prevId else ""
 
-        out += '<tr><td><a href="/file/{}">{}</a></td><td>{} B</td><td>{}</td><td>{}</td><td></td><td></td></tr>'.format(fileId, fname, fsize, mod_date, sync_date)
+    fileInfo = GDB.getFileObservationDetailsByUser(username)
+    for of, prevId, bi, di in fileInfo:
+        of["prevId"] = str(prevId) if prevId else ""
+        of["bytesetInfo"] = bi
+        of["datasetInfo"] = di
 
-        count += 1
-        if count > maxItems:
-            out += "<tr><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td></tr>"
-            break
-    out += "</table>"
+    collaborations = GDB.findCollaborationsForUser(username)
 
-    #
-    # Basic Dataset listing
-    #
-    out += "<p>"
-    out += "<h2>All datasets</h2>"
-    out += "<table border=1 cellpadding=5>"
-    out += "<tr><td>Dataset</td><td>Last Modified</td></tr>"
-    for datasetId, datasetTitle, desc, datasetModified, prevUuid in GDB.getDatasetInfoByUser(username):
-        out += '<tr><td><a href="/datasetbyid/{}">{}</a></td>'.format(datasetId, datasetTitle)
-        out += '<td>{}</td></tr>'.format(datetime.datetime.fromtimestamp(datasetModified).strftime('%Y-%m-%d %H:%M:%S'))
-    out += "</table>"
+    
+    kl = {"ds": [x[0] for x in datasetInfo],
+          "of": [x[0] for x in fileInfo],
+          "collabs": [{"userfile": x[0], "remotefile": x[1], "bs": x[2], "ds": x[3]} for x in collaborations],
+          }
 
-    #
-    # Identify recent changes
-    #
-    out += "<p>"
-    out += "<h2>Recent changes</h2>"
-    out += "<table border=1 cellpadding=5>"
-    out += "<tr><td><b>Filename</b></td><td><b>Size 1</b></td><td><b>Last Modified 1</b></td><td><b>Size 2</b></td><td><b>Last Modified 2</b></td></tr>"
-    for fname, s1, lm1, oldId, s2, lm2, newId in GDB.getVersionedPairsForUser(username):
-        out += "<tr><td><a href='/file/{}'>{}</a></td>".format(newId, fname)
-        out += "<td>{}</td>".format(s1)
-        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(lm1).strftime('%Y-%m-%d %H:%M:%S'))
-        out += "<td>{}</td>".format(s2)
-        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(lm2).strftime('%Y-%m-%d %H:%M:%S'))
-        out += "</tr>"
-    out += "</table>"
 
-    #
-    # Identify outgoing sharing events
-    #
-    out += "<p>"
-    out += "<h2>Likely outgoing sharing events</h2>"
-    out += "<table border=1 cellpadding=5>"
-    out += "<tr><td><b>Local filename</b></td><td><b>Local modified</b></td><td><b>Partner filename</b></td><td><b>Partner user</b></td><td><b>Partner modified</b></td></tr>"
-    for srcFname, srcFileId, srcUser, srcTime, dstFname, dstFileId, dstUser, dstTime in GDB.findOutgoingSharingPairsForUser(username):
-        out += '<tr><td><a href="/file/{}">{}</a></td>'.format(srcFileId, srcFname)
-        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(srcTime).strftime('%Y-%m-%d %H:%M:%S'))
-        out += '<td><a href="/file/{}">{}</a></td>'.format(dstFileId, dstFname)
-        out += '<td><a href="/user/{}">{}</td>'.format(dstUser, dstUser)
-        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(dstTime).strftime('%Y-%m-%d %H:%M:%S'))
-        out += "</tr>"
-    out += "</table>"
+    return json.dumps(kl)
 
-    #
-    # Identify incoming sharing events
-    #
-    out += "<p>"
-    out += "<h2>Likely incoming sharing events</h2>"
-    out += "<table border=1 cellpadding=5>"
-    out += "<tr><td><b>Local filename</b></td><td><b>Local modified</b></td><td><b>Partner filename</b></td><td><b>Partner user</b></td><td><b>Partner modified</b></td></tr>"
-    for localFname, localFileId, localUser, localTime, shareFname, shareFileId, shareUser, shareTime in GDB.findIncomingSharingPairsForUser(username):
-        out += '<tr><td><a href="/file/{}">{}</a></td>'.format(localFileId, localFname)
-        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(localTime).strftime('%Y-%m-%d %H:%M:%S'))
-        out += '<td><a href="/file/{}">{}</a></td>'.format(shareFileId, shareFname)
-        out += '<td><a href="/user/{}">{}</td>'.format(shareUser, shareUser)
-        out += "<td>{}</td>".format(datetime.datetime.fromtimestamp(shareTime).strftime('%Y-%m-%d %H:%M:%S'))
-        out += "</tr>"
-    out += "</table>"
-
-    return f'User {escape(username)} <br> {out}'
 
 
 #
-# Show the details of a particular ByteSet
-#
-@app.route('/byteset/<md5>')
-def show_byteset(md5):
-    out = '<a href="/">Back to user listing</a>'
-    out += "<h1>ByteSet {}</h1>".format(md5)
-
-    bytesetInfo, fileinfo, datasetInfo = GDB.getBytesetDetails(md5)
-    bytesetCreated, bytesetFormat = bytesetInfo
-
-    out += "<p>"
-    out += "<h2>Created on: {}</h2>".format(datetime.datetime.fromtimestamp(bytesetCreated).strftime('%Y-%m-%d %H:%M:%S'))
-    out += "<p>"
-    out += "<h2>Data format: {}</h2>".format(bytesetFormat)
-    out += "<p>"
-    out += "<h2>Files that currently contain this ByteSet</h2>"
-    out += "<table border=1 cellpadding=5>"
-    out += "<tr><td><b>Filename</b></td><td><b>Owner</b></td></tr>"
-    for fileid, username, filename, isLatest, modified in fileinfo:
-        obsoleteComment = " (Obsolete)"
-        if isLatest:
-            obsoleteComment = ""
-        out += "<tr><td><a href='/file/{}'>{}</a>{}</td><td><a href='/user/{}'>{}</a></td></tr>".format(fileid, filename, obsoleteComment, username, username)
-    out += "</table>"
-
-    #
-    # Identify near-hit ByteSets
-    #
-    out += "<p>"
-    out += "<h2>Files that currently contain near-duplicates of this ByteSet</h2>"
-    out += "<table border=1 cellpadding=5>"
-    out += "<tr><td><b>Filename</b></td><td><b>Owner</b></td></tr>"
-    for localFname, localFileId, owner, isLatest, modified in GDB.findNearbyBytesetFiles(md5):
-        out += '<tr><td><a href="/file/{}">{}</a></td>'.format(localFileId, localFname)
-        out += '<td><a href="/user/{}">{}</a></td>'.format(owner, owner)
-        out += '</tr>'
-    out += "</table>"
-
-    #
-    # Identify relevant Datasets
-    #
-    out += "<p>"
-    out += "<h2>Datasets that currently contain these ByteSet</h2>"
-    out += "<table border=1 cellpadding=5>"
-    out += "<tr><td><b>Dataset title</b></td><td><b>Dataset desc</b></td></tr>"
-    for id, uuid, title, desc, modified, isLatest, owner in datasetInfo:
-        out += '<tr><td><a href="/datasetbyuuid/{}">{}</a></td><td>{}</td></tr>'.format(uuid, title, desc)
-    out += "</table>"
-
-    return f'<br> {out}'
-
-
-#
-# Show the details of a particular ByteSet
+# MANAGE BYTESETS
 #
 @app.route('/bytesetdata/<md5>')
 def show_bytesetdata(md5):
-    bytesetInfo, fileinfo, datasetInfo = GDB.getBytesetDetails(md5)
-    bytesetCreated, bytesetFormat = bytesetInfo
+    bytesetInfo, containingFiles, containingDatasets = GDB.getBytesetDetails(md5)
 
-    bytesetObj = {}
-    bytesetObj["id"] = md5
-    bytesetObj["created"] = datetime.datetime.fromtimestamp(bytesetCreated).strftime('%Y-%m-%d %H:%M:%S')
-    bytesetObj["format"] = bytesetFormat
+    nearbyFiles = GDB.findNearbyBytesetFiles(md5)
 
-    files = []
-    for fileid, owner, filename, isLatest, modified in fileinfo:
-        files.append({"fileid": fileid,
-                      "owner": owner,
-                      "filename": filename,
-                      "modified": datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S'),
-                      "isLatest": isLatest})
-    bytesetObj["files"] = files
+    likelyCollaborations = GDB.findCollaborationsForByteset(md5)
 
-    nearDuplicates = []
-    for localFname, localFileId, owner, isLatest, modified in GDB.findNearbyBytesetFiles(md5):
-        nearDuplicates.append({"fileid": localFileId,
-                               "owner": owner,
-                               "filename": localFname,
-                               "modified": datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S'),
-                               "isLatest": isLatest})
-    bytesetObj["nearDuplicates"] = nearDuplicates
+    bytesetInfo["files"] = containingFiles
+    bytesetInfo["datasets"] = containingDatasets    
+    bytesetInfo["nearDuplicates"] = nearbyFiles
+    bytesetInfo["likelyCollaborations"] = [{"user1": x[0], "user2": x[1]} for x in likelyCollaborations]
 
-    datasets = []
-    for id, uuid, title, desc, modified, isLatest, owner in datasetInfo:
-        datasets.append({"id": id,
-                         "uuid": uuid,
-                         "title": title,
-                         "owner": owner,
-                         "modified": datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S'),
-                         "isLatest": isLatest,
-                         "desc": desc})
-    bytesetObj["datasets"] = datasets
-
-    return json.dumps(bytesetObj)
+    return json.dumps(bytesetInfo)
 
 
 #
-# Show all the details for a particular Dataset
-#
-@app.route('/datasetbyid/<id>')
-def show_datasetbyid(id):
-    out = '<a href="/">Back to user listing</a>'
-
-    id, title, desc, owner, modified, bytesetMd5, prevUuid = GDB.getDatasetInfoById(id)
-
-    out += "<h1>{} (X{})</h1>".format(title, id)
-    out += "<p>"
-    out += "<h3>{}</h3>".format(desc)
-    out += "<p>"
-    out += '<h3>Owner: <a href="/user/{}">{}</a></h3>'.format(owner, owner)
-    out += "<p>"
-    out += "<h3>Modified: {}</h3>".format(datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S'))
-    out += "<p>"
-    out += '<h3>Contains ByteSet <a href="/byteset/{}">{}</a></h3>'.format(bytesetMd5, bytesetMd5)
-
-    if prevUuid:
-        out += '<a href="/datasetbyuuid/{}">Previous version.</a><p>'.format(prevUuid)
-    else:
-        out += 'This is the first version of the Dataset.<p>'
-
-    out += 'This is the most recent version of the Dataset.<p>'
-
-
-    return out
-
-#
-# Show all the details for a particular Dataset
-#
-@app.route('/datasetbyuuid/<uuid>')
-def show_datasetbyuuid(uuid):
-    out = '<a href="/">Back to user listing</a>'
-
-    id, title, desc, owner, modified, bytesetMd5, prevUuid, nextUuid = GDB.getDatasetInfoByUuid(uuid)
-
-    out += "<h1>{} (X{})</h1>".format(title, id)
-    out += "<p>"
-    out += "<h3>{}</h3>".format(desc)
-    out += "<p>"
-    out += '<h3>Owner: <a href="/user/{}">{}</a></h3>'.format(owner, owner)
-    out += "<p>"
-    out += "<h3>Modified: {}</h3>".format(datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S'))
-    out += "<p>"
-    out += '<h3>Contains ByteSet <a href="/byteset/{}">{}</a></h3>'.format(bytesetMd5, bytesetMd5)
-
-    if prevUuid:
-        out += '<a href="/datasetbyuuid/{}">Previous version.</a><p>'.format(prevUuid)
-    else:
-        out += 'This is the first version of the Dataset.<p>'
-
-    if nextUuid:
-        out += '<a href="/datasetbyuuid/{}">Next version.</a><p>'.format(nextUuid)
-    else:
-        out += 'This is the most recent version of the Dataset.<p>'
-
-    return out
-
-
-#
-# Show the details of a particular ObservedFile
-#
-@app.route('/file/<fileid>')
-def show_file(fileid):
-    out = ''
-
-    foundFile = GDB.getFileObservationDetails(fileid)
-    if foundFile is None:
-        out += '<h1>That file cannot be found</h1>'
-        return out
-
-    fileId, username, filename, modified, synctime, prevId, nextId, latest, md5hash = foundFile
-    out += '<a href="/user/{}">Back to user {}</a><p>'.format(username, username)
-
-    modified_str = datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S')
-    synctime_str = datetime.datetime.fromtimestamp(synctime).strftime('%Y-%m-%d %H:%M:%S')
-
-    out += "<h1>{}</h1>".format(filename)
-    out += "<h3>ID {}</h3>".format(fileId)
-    out += '<h3>Last modified on {}. First seen on {}</h3><p>'.format(modified_str, synctime_str)
-    out += '<p>'
-    out += '<h3>Contains ByteSet <a href="/byteset/{}">{}</a></h3>'.format(md5hash, md5hash)
-    out += '<p>'
-    out += '<h3>Owned by <a href="/user/{}">{}</a></h3>'.format(username, username)
-    out += '<p>'
-    if prevId:
-        out += '<a href="/file/{}">Previous version.</a> '.format(prevId)
-    else:
-        out += 'This is the first version of the file observed. '
-
-    if nextId:
-        out += '<a href="/file/{}">Next version</a><p>'.format(nextId)
-    else:
-        out += 'This is the most recent version of the file observed<p>'
-
-    out += "<p>"
-    out += "<h2>Files that are currently near-duplicates of this File</h2>"
-    out += "<table border=1 cellpadding=5>"
-    out += "<tr><td><b>Filename</b></td><td><b>Owner</b></td></tr>"
-    for localFname, localFileId, owner, isLatest, modified in GDB.findNearbyBytesetFiles(md5hash):
-        out += '<tr><td><a href="/file/{}">{}</a></td>'.format(localFileId, localFname)
-        out += '<td><a href="/user/{}">{}</a></td>'.format(owner, owner)
-        out += '</tr>'
-    out += "</table>"
-
-    return out
-
-#
-# Show the details of a particular ObservedFile
+# MANAGE OBSERVEDFILEs
 #
 @app.route('/knownlocationdata/<fileid>')
 def show_knownlocationdata(fileid):
     foundFile = GDB.getFileObservationDetails(fileid)
-
+    
     fileId, owner, filename, modified, synctime, prevId, nextId, isLatest, md5hash = foundFile
-
-    modified_str = datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S')
-    synctime_str = datetime.datetime.fromtimestamp(synctime).strftime('%Y-%m-%d %H:%M:%S')
 
     kl = {"id": fileid,
           "owner": owner,
           "filename": filename,
-          "modified": modified_str,
-          "synctime": synctime_str,
+          "modified": modified,
+          "synctime": synctime,
           "prevId": str(prevId) if prevId else "",
           "nextId": str(nextId) if nextId else "",
-          "isLatest": isLatest,
+          "latest": isLatest,
           "md5hash": md5hash}
 
-    nearDuplicates = []
-    for localFname, localFileId, owner, isLatest, modified in GDB.findNearbyBytesetFiles(md5hash):
-        nearDuplicates.append({"fileid": localFileId,
-                               "owner": owner,
-                               "filename": localFname,
-                               "modified": datetime.datetime.fromtimestamp(modified).strftime('%Y-%m-%d %H:%M:%S'),
-                               "isLatest": isLatest})
-    kl["nearDuplicates"] = nearDuplicates
+    nearbyFiles = GDB.findNearbyBytesetFiles(md5hash)
+
+    kl["nearDuplicates"] = nearbyFiles
+
+    kl["descendentData"] = GDB.getFileObservationDescendentGraphInfo(fileid)
+
+    kl["datasets"] = GDB.getDatasetInfoByContent(md5hash)
 
     return json.dumps(kl)
 
+
 #
-# Accept an upload of a set of file observations
+# MANAGE DATASETS
+#
+@app.route('/dataset/<id>')
+def show_datasetdata(id):
+    #uuid, title, desc, owner, modified, isLatest, md5hash, prevId, nextId = GDB.getDatasetInfoByUuid(id)
+    kl, md5hash, prevId, nextId = GDB.getDatasetInfoByUuid(id)
+    kl["md5hash"] = md5hash
+    kl["prevId"] = str(prevId) if prevId else ""
+    kl["nextId"] = str(nextId) if nextId else ""    
+
+    kl["descendentData"] = GDB.getDatasetDescendentGraphInfo(id)
+
+
+    return json.dumps(kl)
+
+@app.route('/nodeedit/<id>', methods=["POST"])
+def edit_nodedata(id):
+    incomingNode = json.loads(request.get_json())
+    result = GDB.updateField(incomingNode["uuid"], incomingNode["field"], incomingNode["value"])
+    return json.dumps(result)
+
+@app.route('/createdatasetfrombyteset/<md5>', methods=["POST"])
+def add_dataset(md5):
+    incomingData = json.loads(request.get_json())
+    kl  = GDB.addNewDataset(incomingData["user"], "Default Title", "Default Description", md5)
+
+    kl["md5hash"] = md5
+    kl["prevId"] = ""
+    kl["nextId"] = ""    
+
+    return json.dumps(kl)
+
+@app.route('/createdataset/<username>', methods=['POST'])
+def createDataset(username):
+    access_token = request.form.get('access_token')
+    username = request.form.get('username')
+
+    login_file = 'data/login_info.json'.format(username)
+    p = Path(login_file)
+    if p.exists():
+        with open(login_file, 'rt') as f:
+            login_data = json.load(f)
+    else:
+        login_data = {}
+
+    if 'INSECURE_TOKEN_' not in access_token: # TODO: fix this!
+        if (not access_token or
+            not username or
+            username not in login_data or
+            access_token != login_data[username].get('access_token', None) or
+            not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
+            return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
+
+    GDB.createNearMatches()
+    
+    id = json.load(request.files['id'])
+    title = json.load(request.files['title'])
+    desc = json.load(request.files['desc'])
+    targetHash = json.load(request.files['targetHash'])
+
+    return json.dumps(str(GDB.addDataset(id, username, title, desc, targetHash)))
+#
+# MANAGE SCHEMAS
+#
+@app.route('/schemas/<id>')
+def get_schemas(id):
+    kl = {"schemas": GDB.getSchemasForNode(id)}
+    return json.dumps(kl)
+
+@app.route('/allschemas')
+def get_all_schemas():
+    kl = {"schemas": GDB.getAllSchemas()}
+    return json.dumps(kl)
+
+@app.route('/addschemaedge/<id>', methods=["POST"])
+def add_schema_edge(id):
+    incomingReq = json.loads(request.get_json())
+    result = GDB.addSchemaEdge(id, incomingReq["targetSchema"])
+    return get_schemas(id)
+
+#
+# MANAGE QUALITY TESTS
+#
+@app.route('/qualitytests/<id>')
+def get_qualitytests(id):
+    kl = {"qualitytests": GDB.getQualityTestsForNode(id)}
+    return json.dumps(kl)
+
+@app.route('/allqualitytests')
+def get_all_qualitytests():
+    kl = {"qualitytests": GDB.getAllQualityTests()}
+    return json.dumps(kl)
+
+@app.route('/addqualitytestedge/<id>', methods=["POST"])
+def add_qualitytest_edge(id):
+    incomingReq = json.loads(request.get_json())
+    result = GDB.addQualityTestEdge(id, incomingReq["targetQualityTest"])
+    return get_qualitytests(id)
+
+
+#
+# MANAGE COMMENTS
+#
+@app.route('/comments/<id>')
+def get_comments(id):
+    kl = {"comments": GDB.getCommentsForNode(id)}
+    return json.dumps(kl)
+
+@app.route('/addcomment/<id>', methods=["POST"])
+def add_comment(id):
+    incomingReq = json.loads(request.get_json())
+    result = GDB.addComment(incomingReq["uuid"], incomingReq["value"])
+    return get_comments(incomingReq["uuid"])
+
+#
+# UPLOADS: Accept an upload of a set of file observations
 #
 @app.route('/synclist/<username>', methods=['POST'])
 def sync_filelist(username):
@@ -1577,15 +1632,18 @@ def sync_filelist(username):
 
     GDB.addObservations(observations)
 
+    #
+    # This call is currently quite bad, algorithmically.
+    # It will get too slow when the repository is large.
+    # We need to reimplement eventually
+
     ## NOTE: WE MAY NOT WANT LINE OR COLUMN MATCHES.
     # Commenting out these, since they are currently very slow.
     # These should probably happen elsewhere, anyway, since they are not
     # pertinant to the user's sync. cronjob, perhaps.
     # GDB.createNearLineMatches()
     # GDB.createNearColumnMatches()
-
-    # TODO: Move this out of the api call.
-    GDB.createNearMatches()
+    #GDB.createNearMatches()
 
     # show the user profile for that user
     return json.dumps(username)
@@ -1638,62 +1696,11 @@ def sync_process(username):
     return json.dumps(username)
 
 
-@app.route('/adorn/<username>', methods=['POST'])
-def adorn(username):
-    access_token = request.form.get('access_token')
-    username = request.form.get('username')
-
-    login_file = 'data/login_info.json'.format(username)
-    p = Path(login_file)
-    if p.exists():
-        with open(login_file, 'rt') as f:
-            login_data = json.load(f)
-    else:
-        login_data = {}
-
-    if (not access_token or
-        not username or
-        username not in login_data or
-        access_token != login_data[username].get('access_token', None) or
-        not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
-        return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
-
-    commentStr = json.load(request.files['comment'])
-    filename = json.load(request.files['filename'])
-
-    return json.dumps(str(GDB.addComment(username, filename, commentStr)))
-
-
-@app.route('/createdataset/<username>', methods=['POST'])
-def createDataset(username):
-    access_token = request.form.get('access_token')
-    username = request.form.get('username')
-
-    login_file = 'data/login_info.json'.format(username)
-    p = Path(login_file)
-    if p.exists():
-        with open(login_file, 'rt') as f:
-            login_data = json.load(f)
-    else:
-        login_data = {}
-
-    if (not access_token or
-        not username or
-        username not in login_data or
-        access_token != login_data[username].get('access_token', None) or
-        not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
-        return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
-
-    id = json.load(request.files['id'])
-    title = json.load(request.files['title'])
-    desc = json.load(request.files['desc'])
-    targetHash = json.load(request.files['targetHash'])
-
-    return json.dumps(str(GDB.addDataset(id, username, title, desc, targetHash)))
-
 
 if __name__ == '__main__':
-
     GDB = GraphDB("bolt://{}:{}".format(NEO4J_HOST, NEO4J_PORT), "neo4j", "password")
+    #db.create_all()
+    
+    app.run(debug=True, host='0.0.0.0', port=KNPS_SERVER_PORT)
 
-    app.run(debug=True, host=KNPS_SERVER_HOST, port=KNPS_SERVER_PORT)
+

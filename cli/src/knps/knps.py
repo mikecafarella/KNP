@@ -5,6 +5,7 @@ import configparser
 from datetime import datetime
 from datetime import timezone
 import json
+import distutils.util
 import os
 import requests
 import json
@@ -70,6 +71,8 @@ def hash_file_lines(fname, file_type):
     if file_type == "application/pdf":
         return hash_pdf_file_lines(fname)
 
+    if file_type == "text/csv":
+        return hash_csv_file_lines(fname)
 
     if not is_binary(fname):
         with open(fname, "rt") as f:
@@ -80,12 +83,39 @@ def hash_file_lines(fname, file_type):
 
     return hashes
 
-def getShinglesFname(fname):
+def getShinglesFname(fname, file_type):
     text = ""
-    with open(fname, "rt") as f:
-        for line in f:
-            text = text + " " + line
-    return getShingles(text)
+    if file_type != "text/csv":
+        with open(fname, "rt") as f:
+            for line in f:
+                text = text + " " + line
+    return getShingles(text, fname, file_type)
+
+def hash_csv_file_lines(fname):
+    data = pd.read_csv(fname)
+    hashes = []
+    for i in range(100):
+        if i >= data.shape[0]:
+            return hashes;
+        row = data.iloc[i]
+        hashes.append(hashlib.md5(row.__str__().strip().encode()).hexdigest())
+    for i in range(100, 1000, 5):
+        if i >= data.shape[0]:
+            return hashes;
+        row = data.iloc[i:(i+10)]
+        hashes.append(hashlib.md5(row.__str__().strip().encode()).hexdigest())
+    for i in range(1000, 10000, 50):
+        if i >= data.shape[0]:
+            return hashes;
+        row = data.iloc[i:(i+100)]
+        hashes.append(hashlib.md5(row.__str__().strip().encode()).hexdigest())
+    diff = data.shape[0] - 10000
+    jump = diff//100
+    for i in range(10000, data.shape[0], jump):
+        row = data.iloc[i:(i+jump)]
+        hashes.append(hashlib.md5(row.__str__().strip().encode()).hexdigest())
+
+    return hashes
 
 ## This is very slow
 ## near-miss detection (hash-shingling)
@@ -144,6 +174,7 @@ def send_synclist(user, observationList, file_loc, comment=None):
         obsList.append({'metadata': metadata})
 
     fDict = {'observations': json.dumps(obsList)}
+
     response = requests.post(url, files=fDict, data=login)
     obj_data = response.json()
 
@@ -219,9 +250,36 @@ def hash_image(fname):
     #Have this take in and hash an image through thing described earlier.
     return None
 
+def get_csv_file_shingles(fname, fingerprint_bytes):
+    data = pd.read_csv(fname)
+    hashes = []
+    for i in range(100):
+        if i >= data.shape[0]:
+            return hashes;
+        row = data.iloc[i]
+        hashes.append(int.from_bytes(hashlib.sha256(row.__str__().encode()).digest()[:fingerprint_bytes], 'little'))
+    for i in range(100, 1000, 5):
+        if i >= data.shape[0]:
+            return hashes;
+        row = data.iloc[i:(i+10)]
+        hashes.append(int.from_bytes(hashlib.sha256(row.__str__().encode()).digest()[:fingerprint_bytes], 'little'))
+    for i in range(1000, 10000, 50):
+        if i >= data.shape[0]:
+            return hashes;
+        row = data.iloc[i:(i+100)]
+        hashes.append(int.from_bytes(hashlib.sha256(row.__str__().encode()).digest()[:fingerprint_bytes], 'little'))
+    diff = data.shape[0] - 10000
+    jump = diff//100
+    for i in range(10000, data.shape[0], jump):
+        row = data.iloc[i:(i+jump)]
+        hashes.append(int.from_bytes(hashlib.sha256(row.__str__().encode()).digest()[:fingerprint_bytes], 'little'))
+    return hashes
+
 # This fucntion removes punctiation and whitespace.
 # The returns a list of tokens(words) and should not contain any lists or anything along those lines.
-def createShingleFingerprints(s, shingle_length = 5, fingerprint_bytes = 8):
+def createShingleFingerprints(s, fname, file_type, shingle_length = 5, fingerprint_bytes = 8):
+    if file_type == "text/csv":
+        return get_csv_file_shingles(fname, fingerprint_bytes)
     s = re.sub(r'[^\w\s]', '', s)
     words = s.lower().split()
     shingles = []
@@ -235,10 +293,10 @@ def createShingleFingerprints(s, shingle_length = 5, fingerprint_bytes = 8):
 
 ## So for each s
 ## This function should find shingles.
-def getShingles(s, shingle_length = 5, num_shingles = 10, fingerprint_bytes = 8):
+def getShingles(s, fname, file_type, shingle_length = 5, num_shingles = 10, fingerprint_bytes = 8):
     random.seed(0)
     shingles = []
-    all_shingles = createShingleFingerprints(s, shingle_length, fingerprint_bytes)
+    all_shingles = createShingleFingerprints(s, fname, file_type, shingle_length, fingerprint_bytes)
     for i in range(num_shingles):
         factor = int(random.random()*(256**fingerprint_bytes))
         shift = int(random.random()*(256**fingerprint_bytes))
@@ -343,6 +401,7 @@ class User:
 
     def load_db(self):
         p = Path(Path.home(), DB_FILE)
+        print(p)
         if p.exists():
             self.db = json.load(p.open())
         else:
@@ -372,6 +431,14 @@ class User:
             url = KNPS_SERVER_DEV
 
         return 'http://{}'.format(url)
+
+    def set_store(self, shouldStore):
+        # TODO: do some validation here
+        self.db['__STORE__'] = bool(distutils.util.strtobool(shouldStore))
+        self.save_db()
+
+    def get_store(self):
+        return self.db.get('__STORE__', False)
 
     def get_install_id(self):
         if not self.db:
@@ -440,7 +507,6 @@ class Watcher:
         # Make sure it's an absolute path
         dir = p.resolve()
         cfg = self.__get_cfg__(dir)
-
         # The target shouldn't already have a .knps config dir
         if cfg.exists():
             self.config = configparser.ConfigParser()
@@ -606,9 +672,7 @@ class Watcher:
                     print("*** Skipping: {}".format(e))
                     skipCount += 1
             print("Sending the synclist")
-
             response = send_synclist(self.user, observationList, file_loc)
-
             if 'error' in response:
                 print('ERROR: {}'.format(response['error']))
                 break
@@ -621,7 +685,6 @@ class Watcher:
 
                 # Get the next one if available
                 todoPair = self.user.getNextTodoList()
-
 
         # Now process the process
         if process and len(process['outputs']) + len(process['accesses']) > 0:
@@ -639,8 +702,6 @@ class Watcher:
             print(json.dumps(process, indent=2, default=str))
 
             send_process_sync(self.user, process, file_loc=file_loc)
-
-
 
     #
     # This is where we collect observation data.
@@ -665,13 +726,19 @@ class Watcher:
         line_hashes = hash_file_lines(f, file_type)
         optionalFields = {}
         optionalFields["filetype"] = file_type
-        ##CSV_Column_hashs
-        if "csv" in file_type:
-            column_hashes = hash_CSV_columns(f)
-            optionalFields["column_hashes"] = column_hashes
 
-        elif file_type.startswith("text/"):
-            shingles = getShinglesFname(f)
+        if self.user.get_store():
+            if os.stat(f).st_size < 10 * 1000 * 1000:
+                optionalFields["content"] = list(open(f, "rb").read())
+        
+        ##CSV_Column_hashs
+        # if "csv" in file_type:
+        #     column_hashes = hash_CSV_columns(f)
+        #     optionalFields["column_hashes"] = column_hashes
+
+        # if file_type.startswith("text/") and file_type != "text/csv":
+        if file_type.startswith("text/"):
+            shingles = getShinglesFname(f, file_type)
             optionalFields["shingles"] = shingles
         return (f, file_hash, file_type, line_hashes, optionalFields)
 
@@ -824,6 +891,7 @@ if __name__ == "__main__":
     parser.add_argument("--sync", action="store_true", help="Sync observations to service")
     parser.add_argument("--server", help="Set KNPS server. Options: dev, prod, or address:port")
     parser.add_argument("--monitor", action="store_true", help="Run KNPS as a process and file system monitor.")
+    parser.add_argument("--store", help="Upload bytes in addition to metadata. Options: True or False (default)")    
     parser.add_argument("--version", action="store_true", help="Display version information")
     parser.add_argument('args', type=str, help="KNPS command arguments", nargs='*' )
 
@@ -868,6 +936,7 @@ if __name__ == "__main__":
             print("Not logged in; please run: knps --login")
         else:
             print("User: {}    Server: {}".format(u.username, u.get_server()))
+            print("Upload bytes? {}".format(u.get_store()))
             print()
             dirs = u.get_dirs()
             files = u.get_files()
@@ -891,14 +960,18 @@ if __name__ == "__main__":
         if not u.username:
             print("Not logged in.")
         else:
-            # Watcher(u).observeAndSync()
-            thread = threading.Thread(target = observeAndSyncThread, args = (Watcher(u), __file__))
-            thread.start()
+            Watcher(u).observeAndSync()
+            # thread = threading.Thread(target = observeAndSyncThread, args = (Watcher(u), __file__))
+            # thread.start()
 
 
     elif args.server:
         print("Setting KNPS server to: {}".format(args.server))
         u.set_server(args.server)
+
+    elif args.store:
+        print("Setting KNPS byte storage flag to: {}".format(args.store))
+        u.set_store(args.store)
 
     elif args.version:
         print(f'KNPS Version: {get_version()}')
