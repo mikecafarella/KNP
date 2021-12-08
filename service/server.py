@@ -1565,9 +1565,8 @@ def sync_filelist(username):
         if (not access_token or
             not username or
             username not in login_data or
-            access_token != login_data[username].get('access_token', None)):
-             # or
-            # not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
+            access_token != login_data[username].get('access_token', None)) or
+            not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
             return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
 
     observations = json.load(request.files['observations'])
