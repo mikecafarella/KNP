@@ -343,7 +343,7 @@ class GraphDB:
         with self.driver.session() as session:
             results = session.run("MATCH (d:Dataset {latest: 1, owner: $username}) "
                                   "OPTIONAL MATCH (prev:Dataset)-[r:NextVersion]->(d) "
-                                  "RETURN properties(d), prev.uuid as prevId",                                  
+                                  "RETURN properties(d), prev.uuid as prevId",
                                   username = username)
 
             return [(x[0], x[1]) for x in results]
@@ -388,7 +388,7 @@ class GraphDB:
                     childDict = rootChildren.setdefault(d2Props.uuid, {})
                     childDict.setdefault("name", d2Props.get("title"))
                     childDict.setdefault("uuid", d2Props.get("uuid"))
-                    childDict["kind"] = "Dataset"                    
+                    childDict["kind"] = "Dataset"
                     rootGrandchildren = childDict.setdefault("childrenD", {})
                     if d3Props:
                         gcDict = rootGrandchildren.setdefault(d3Props.uuid, {})
@@ -396,12 +396,12 @@ class GraphDB:
                         gcDict.setdefault("uuid", d3Props.get("uuid"))
                         gcDict["kind"] = "Dataset"
 
-            
+
             for childDict in graphInfo.get("childrenD", {}).values():
                 childDict["children"] = [gcDict for gcDict in childDict.setdefault("childrenD", {}).values()]
                 if "childrenD" in childDict:
                     del childDict["childrenD"]
-                    
+
             graphInfo["children"] = [cDict for cDict in graphInfo.get("childrenD", {}).values()]
             if "childrenD" in graphInfo:
                 del graphInfo["childrenD"]
@@ -556,7 +556,7 @@ class GraphDB:
                                   "ORDER BY b.modified DESC")
             ret = [x[0] for x in results]
             return ret
-    
+
     def getSchemasForNode(self, nodeId):
         with self.driver.session() as session:
             results = session.run("MATCH (a {uuid: $nodeId})-[r:HasSchema]->(b:Schema) "
@@ -586,7 +586,7 @@ class GraphDB:
                                   "ORDER BY b.modified DESC")
             ret = [x[0] for x in results]
             return ret
-    
+
     def getQualityTestsForNode(self, nodeId):
         with self.driver.session() as session:
             results = session.run("MATCH (a {uuid: $nodeId})-[r:HasQualityTest]->(b:QualityTest) "
@@ -691,7 +691,7 @@ class GraphDB:
                     childDict = rootChildren.setdefault(d2Props.get("uuid"), {})
                     childDict.setdefault("name", d2Props.get("filename"))
                     childDict.setdefault("uuid", d2Props.get("uuid"))
-                    childDict["kind"] = "FileObservation"                    
+                    childDict["kind"] = "FileObservation"
 
             # Get all the descendant dictionaries, convert the stored-by-uuid subdicts into an array of dicts.
             # That is, remove the whole uuid-pointer business that we needed to build up the structure
@@ -727,7 +727,7 @@ class GraphDB:
 
             # Find the ObservedFiles that contain this ByteSet.
             files = session.run("MATCH (b: ByteSet {md5hash: $md5hash})<-[r:Contains]-(o:ObservedFile) "
-                                 "RETURN properties(o)",                                
+                                 "RETURN properties(o)",
                                 md5hash=md5hash)
 
             # Find the Datasets that contain this ByteSet.
@@ -769,7 +769,7 @@ class GraphDB:
                 if result is None:
                     db.add(BlobObject(id=obs['file_hash'], contents=bytearray(optionalItems["content"])))
                     db.commit()
-                    
+
 
     #
     # Add new ProcessObservations to the store
@@ -777,20 +777,7 @@ class GraphDB:
     def addObservedProcess(self, process):
         with self.driver.session() as session:
             result = session.write_transaction(self._create_and_return_observed_process, process)
-        #
-        # Handle optional content storage. In the future we could change this so
-        # that it aims at S3 or some other blob storage system. It should be kept
-        # as simple as possible: basically a key/val store (with very big vals). All the
-        # metadata should be maintained elsewhere.
-        #
-        for obs in observations:
-            optionalItems = obs["optionalItems"]
 
-            if "content" in optionalItems:
-                result = db.query(BlobObject).filter_by(id=obs['file_hash']).first()
-                if result is None:
-                    db.add(BlobObject(id=obs['file_hash'], contents=bytearray(optionalItems["content"])))
-                    db.commit()
 
     #
     # Static helper method
@@ -936,18 +923,18 @@ class GraphDB:
                                  desc=desc,
                                  modified=time.time(),
                                  targetHash=targetHash)
-            
+
             return result.single()
 
     def addNewDataset(self, owner, title, desc, targetHash):
-        with self.driver.session() as session:        
+        with self.driver.session() as session:
             result = session.run("MATCH (b:ByteSet {md5hash: $targetHash}) "
                                  "CREATE (new:Dataset {uuid: apoc.create.uuid(), title:$title, owner:$owner, modified:$modified, desc:$desc, latest:1})-[r:Contains]->(b) "
                                  "RETURN properties(new)",
                                  title=title,
                                  owner=owner,
                                  desc=desc,
-                                 modified=time.time(),                                     
+                                 modified=time.time(),
                                  targetHash=targetHash)
 
             return result.single()[0]
@@ -1423,7 +1410,7 @@ def show_userdata(username):
 
     collaborations = GDB.findCollaborationsForUser(username)
 
-    
+
     kl = {"ds": [x[0] for x in datasetInfo],
           "of": [x[0] for x in fileInfo],
           "collabs": [{"userfile": x[0], "remotefile": x[1], "bs": x[2], "ds": x[3]} for x in collaborations],
@@ -1446,7 +1433,7 @@ def show_bytesetdata(md5):
     likelyCollaborations = GDB.findCollaborationsForByteset(md5)
 
     bytesetInfo["files"] = containingFiles
-    bytesetInfo["datasets"] = containingDatasets    
+    bytesetInfo["datasets"] = containingDatasets
     bytesetInfo["nearDuplicates"] = nearbyFiles
     bytesetInfo["likelyCollaborations"] = [{"user1": x[0], "user2": x[1]} for x in likelyCollaborations]
 
@@ -1459,7 +1446,7 @@ def show_bytesetdata(md5):
 @app.route('/knownlocationdata/<fileid>')
 def show_knownlocationdata(fileid):
     foundFile = GDB.getFileObservationDetails(fileid)
-    
+
     fileId, owner, filename, modified, synctime, prevId, nextId, isLatest, md5hash = foundFile
 
     kl = {"id": fileid,
@@ -1492,7 +1479,7 @@ def show_datasetdata(id):
     kl, md5hash, prevId, nextId = GDB.getDatasetInfoByUuid(id)
     kl["md5hash"] = md5hash
     kl["prevId"] = str(prevId) if prevId else ""
-    kl["nextId"] = str(nextId) if nextId else ""    
+    kl["nextId"] = str(nextId) if nextId else ""
 
     kl["descendentData"] = GDB.getDatasetDescendentGraphInfo(id)
 
@@ -1512,7 +1499,7 @@ def add_dataset(md5):
 
     kl["md5hash"] = md5
     kl["prevId"] = ""
-    kl["nextId"] = ""    
+    kl["nextId"] = ""
 
     return json.dumps(kl)
 
@@ -1538,7 +1525,7 @@ def createDataset(username):
             return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
 
     GDB.createNearMatches()
-    
+
     id = json.load(request.files['id'])
     title = json.load(request.files['title'])
     desc = json.load(request.files['desc'])
@@ -1620,7 +1607,7 @@ def sync_filelist(username):
         if (not access_token or
             not username or
             username not in login_data or
-            access_token != login_data[username].get('access_token', None)) or
+            access_token != login_data[username].get('access_token', None) or
             not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
             return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
 
@@ -1671,9 +1658,9 @@ def sync_process(username):
         if (not access_token or
             not username or
             username not in login_data or
-            access_token != login_data[username].get('access_token', None)):
-            #  or
-            # not is_access_token_valid(access_token, config["issuer"], config["client_id"])
+            access_token != login_data[username].get('access_token', None) or
+            not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
+
             return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
 
     process_data = json.load(request.files['process'])
@@ -1700,7 +1687,5 @@ def sync_process(username):
 if __name__ == '__main__':
     GDB = GraphDB("bolt://{}:{}".format(NEO4J_HOST, NEO4J_PORT), "neo4j", "password")
     #db.create_all()
-    
-    app.run(debug=True, host='0.0.0.0', port=KNPS_SERVER_PORT)
 
-
+    app.run(debug=True, host='localhost', port=KNPS_SERVER_PORT)
