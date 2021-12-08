@@ -1632,7 +1632,7 @@ def sync_process(username):
     # # GDB.createNearColumnMatches()
     #
     # # TODO: Move this out of the api call.
-    # GDB.createNearMatches()
+    GDB.createNearMatches()
 
     # show the user profile for that user
     return json.dumps(username)
