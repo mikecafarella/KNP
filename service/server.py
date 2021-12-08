@@ -755,12 +755,12 @@ class GraphDB:
     # Get a content profile object
     #
     def getBytecontentStruct(self, md5):
-        result = db.query(BlobObject).filter_by(id=md5).first()        
-        if result is None:
-            return {"hasContent": False}
-        else:
-            return {"hasContent": True,
-                    "content": result}
+        #result = db.query(BlobObject).filter_by(id=md5).first()        
+        #if result is None:
+        return {"hasContent": False}
+        #else:
+        #    return {"hasContent": True,
+        #            "content": result}
 
     #
     # Add new FileObservations to the store
