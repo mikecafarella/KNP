@@ -123,14 +123,19 @@ def hash_pdf_file_lines(fname):
     hashes = []
     pdfFileObj = open(fname, 'rb')
     pdfReader = PyPDF2.PdfFileReader(pdfFileObj, strict=False)
-    for pageNumber in range(pdfReader.getNumPages()):
-        pageObj = pdfReader.getPage(pageNumber)
-        # hashes.append(hashlib.md5(pageObj.extractText().strip().encode()).hexdigest())
-        lines = pageObj.extractText().splitlines()
-        for line in lines:
-            line = line.strip().encode()
-            hashes.append(hashlib.md5(line).hexdigest())
-    pdfFileObj.close()
+    try:
+        for pageNumber in range(pdfReader.getNumPages()):
+            pageObj = pdfReader.getPage(pageNumber)
+            # hashes.append(hashlib.md5(pageObj.extractText().strip().encode()).hexdigest())
+            lines = pageObj.extractText().splitlines()
+            for line in lines:
+                line = line.strip().encode()
+                hashes.append(hashlib.md5(line).hexdigest())
+        pdfFileObj.close()
+    except PyPDF2.utils.PdfReadError as e:
+        # PyPDF2 has trouble with some PDFs
+        print("Problem hashing PDF lines: ", e)
+
     return hashes
 
 # def send_synclist_thread(user, observationList, comment=None):
@@ -297,14 +302,16 @@ def getShingles(s, fname, file_type, shingle_length = 5, num_shingles = 10, fing
     random.seed(0)
     shingles = []
     all_shingles = createShingleFingerprints(s, fname, file_type, shingle_length, fingerprint_bytes)
-    for i in range(num_shingles):
-        factor = int(random.random()*(256**fingerprint_bytes))
-        shift = int(random.random()*(256**fingerprint_bytes))
-        new_shingles = {}
-        for shingle in all_shingles:
-            new_shingles[(factor*shingle+shift)%(256**fingerprint_bytes)] = shingle
-        minimum = min(new_shingles.keys())
-        shingles.append(str(new_shingles[minimum]))
+
+    if all_shingles:
+        for i in range(num_shingles):
+            factor = int(random.random()*(256**fingerprint_bytes))
+            shift = int(random.random()*(256**fingerprint_bytes))
+            new_shingles = {}
+            for shingle in all_shingles:
+                new_shingles[(factor*shingle+shift)%(256**fingerprint_bytes)] = shingle
+            minimum = min(new_shingles.keys())
+            shingles.append(str(new_shingles[minimum]))
     return shingles
 
 ## use the mimetype
@@ -627,8 +634,7 @@ class Watcher:
             file_list = self.user.get_files()
 
             if process and len(process['outputs']) + len(process['accesses']) > 0:
-                process_files = process['inputs'] + process['outputs'] + process['accesses']
-                file_list = set(file_list)
+                process_files = set.union(process['inputs'], process['outputs'], process['accesses'])
                 file_list = [value for value in process_files if value in file_list]
 
 
@@ -671,6 +677,7 @@ class Watcher:
                 except Exception as e:
                     print("*** Skipping: {}".format(e))
                     skipCount += 1
+
             print("Sending the synclist")
             response = send_synclist(self.user, observationList, file_loc)
             if 'error' in response:
@@ -730,7 +737,7 @@ class Watcher:
         if self.user.get_store():
             if os.stat(f).st_size < 10 * 1000 * 1000:
                 optionalFields["content"] = list(open(f, "rb").read())
-        
+
         ##CSV_Column_hashs
         # if "csv" in file_type:
         #     column_hashes = hash_CSV_columns(f)
@@ -791,6 +798,7 @@ class Monitor:
 
             for key, p in procs.items():
                 if 'last_update' in p and 'synced' not in p and len(p['outputs']) > 0:
+
                     diff = dt - p['last_update']
                     if diff.seconds >= PROCESS_SYNC_AGE_SECONDS:
                         print(f'Syncing {p["name"]}')
@@ -817,6 +825,12 @@ class Monitor:
                 pathname = [x for x in data if re.search(dir_regex, x)]
                 if len(pathname):
                     pathname = pathname[0]
+                    path_obj = Path(pathname)
+
+                    if (os.path.isdir(pathname) or
+                        path_obj.name.startswith('~$') or
+                        path_obj.name.endswith('.swp$')):
+                        continue
                 else:
                     pathname = None
                     continue
@@ -835,43 +849,49 @@ class Monitor:
 
                 if proc_key not in procs:
                     procs[proc_key] = {'name': process_name,
+                                        'key': proc_key,
                                         'timestamp': dt,
-                                        'inputs': [],
-                                        'outputs': [],
-                                        'accesses': [],
+                                        'inputs': set([]),
+                                        'outputs': set([]),
+                                        'accesses': set([]),
                                         'cmdline': [],
                                         'pid': ''}
 
-                if not re.search(r'.swp$', pathname):
-                    proc = self.__get_process__(process_name, thread_id, pathname)
-                    if proc:
-                        procs[proc_key]['cmdline'] = proc['cmdline']
-                        procs[proc_key]['pid'] = proc['pid']
-                        procs[proc_key]['last_update'] = dt
 
-                    # see if the 'accessed' files were modified, if so, they're outputs
-                    modified_flag = False
-                    try:
-                        last_modified = Path(pathname).stat().st_mtime
-                        if last_modified >= procs[proc_key]['timestamp'].timestamp():
-                            modified_flag = True
-                    except:
-                        pass
+                proc = self.__get_process__(process_name, thread_id, pathname)
+                if proc:
+                    procs[proc_key]['cmdline'] = proc['cmdline']
+                    procs[proc_key]['pid'] = proc['pid']
+                    procs[proc_key]['last_update'] = dt
 
-                    if ('WrData' in action or open_type == 'write' or modified_flag) and pathname not in procs[proc_key]['outputs']:
-                        procs[proc_key]['outputs'].append(pathname)
-                        procs[proc_key]['last_update'] = dt
-                    elif ('RdData' in action or open_type == 'read' or not modified_flag) and pathname not in procs[proc_key]['inputs']:
-                        procs[proc_key]['inputs'].append(pathname)
-                        procs[proc_key]['last_update'] = dt
-                    elif pathname not in procs[proc_key]['accesses'] and pathname not in procs[proc_key]['inputs'] and pathname not in procs[proc_key]['outputs']:
-                        procs[proc_key]['accesses'].append(pathname)
-                        procs[proc_key]['last_update'] = dt
+                # see if the 'accessed' files were modified, if so, they're outputs
+                modified_flag = False
+                try:
+                    last_modified = Path(pathname).stat().st_mtime
+                    if last_modified >= procs[proc_key]['timestamp'].timestamp():
+                        modified_flag = True
+                except:
+                    pass
+
+                print(proc_key, action, open_type, pathname not in procs[proc_key]['outputs'])
+
+                if ('WrData' in action or open_type == 'write' or (modified_flag and not ('RdData' in action or open_type == 'read'))):
+                    procs[proc_key]['outputs'].add(pathname)
+                    procs[proc_key]['last_update'] = dt
+                    procs[proc_key].pop('synced', None) # Need to sync again
+                elif ('RdData' in action or open_type == 'read' or not modified_flag):
+                    procs[proc_key]['inputs'].add(pathname)
+                    procs[proc_key]['last_update'] = dt
+                    procs[proc_key].pop('synced', None) # Need to sync again
+                elif pathname not in procs[proc_key]['accesses'] and pathname not in procs[proc_key]['inputs'] and pathname not in procs[proc_key]['outputs']:
+                    procs[proc_key]['accesses'].add(pathname)
+                    procs[proc_key]['last_update'] = dt
+                    procs[proc_key].pop('synced', None) # Need to sync again
 
 
-                    # print(f'{timestamp} - {action} - {pathname} - {process_name} - Thread: {thread_id}')
-                    # print(line)
-                    # print(json.dumps(procs, indent=2, default=str))
+                # print(f'{timestamp} - {action} - {pathname} - {process_name} - Thread: {thread_id}')
+                # print(line)
+                # print(json.dumps(procs, indent=2, default=str))
 
 
 #
@@ -891,7 +911,7 @@ if __name__ == "__main__":
     parser.add_argument("--sync", action="store_true", help="Sync observations to service")
     parser.add_argument("--server", help="Set KNPS server. Options: dev, prod, or address:port")
     parser.add_argument("--monitor", action="store_true", help="Run KNPS as a process and file system monitor.")
-    parser.add_argument("--store", help="Upload bytes in addition to metadata. Options: True or False (default)")    
+    parser.add_argument("--store", help="Upload bytes in addition to metadata. Options: True or False (default)")
     parser.add_argument("--version", action="store_true", help="Display version information")
     parser.add_argument('args', type=str, help="KNPS command arguments", nargs='*' )
 
