@@ -499,6 +499,8 @@ class GraphDB:
             # start_time = time.time()
             results = session.run("MATCH (a: ByteSet)<-[r:Contains]-(o:ObservedFile) WHERE EXISTS(a.optional_shingles) RETURN id(a), a.optional_shingles, o.latest")
             # print(time.time()-start_time)
+
+            # This line below calls a method 'data()' that doesn't exist in neo4j.work.result.Result
             fileShingleList = [tuple(x.values()) for x in results.data()]
             shingle_pairs = self.getFileShinglePairs(fileShingleList)
             # print(time.time()-start_time)
@@ -884,19 +886,32 @@ class GraphDB:
     #
     @staticmethod
     def _create_and_return_observed_process(tx, process):
+        key = process["key"]
+        threadid = key[key.rfind("."):]
+        tStr = process["last_update"]
+        updateTime = datetime.datetime.strptime(tStr[0:tStr.rfind(".")], "%Y-%m-%d %H:%M:%S")
+        threadHourIdentifier = updateTime.strftime("%Y-%m-%d %H")
+
+        
         txStr = """MATCH (f_out: ObservedFile {username: $username})-[r_out:Contains]->(b_out:ByteSet)
             WHERE b_out.md5hash IN $out_md5s AND f_out.filename IN $out_filenames
-            MERGE (p:ObservedProcess {name: $name, username: $username, start_time: $start_time, last_update: $last_update,
-                                      cmdline: $cmdline, uuid: apoc.create.uuid(),
-                                      install_id: $install_id, knps_version: $knps_version, hostname: $hostname})
-            CREATE (p)-[rp_out:HasOutput]->(f_out)
-
+            MERGE (p:ObservedProcess {username: $username, threadid: $threadid, threadhour: $threadhour, hostname: $hostname})
+            ON CREATE SET p.last_update = $last_update,
+                          p.name = $name,
+                          p.key = $key,
+                          p.start_time = $start_time,
+                          p.cmdline = $cmdline,
+                          p.uuid =  apoc.create.uuid(),
+                          p.install_id = $install_id,
+                          p.knps_version = $knps_version
+            ON MATCH SET p.last_update = $last_update
+            MERGE (p)-[rp_out:HasOutput]->(f_out)
             WITH p
             OPTIONAL MATCH (f_in: ObservedFile {username: $username})-[r_in:Contains]->(b_in:ByteSet)
             WHERE b_in.md5hash IN $in_md5s  AND f_in.filename IN $in_filenames
             CALL apoc.do.when(
                 f_in IS NOT NULL,
-                'CREATE (p)-[rp_in:HasInput]->(f_in)',
+                'MERGE (p)-[rp_in:HasInput]->(f_in)',
                 '',
                 {f_in: f_in, p: p}) YIELD value
 
@@ -906,6 +921,9 @@ class GraphDB:
         #
         result = tx.run(txStr,
                         username = process["username"],
+                        key = key,
+                        threadhour = threadHourIdentifier,
+                        threadid = threadid,
                         out_md5s = [x[1] for x in process['output_files']],
                         out_filenames = [x[0] for x in process['output_files']],
                         in_md5s = [x[1] for x in process['input_files']],
@@ -1538,7 +1556,7 @@ def createDataset(username):
             not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
             return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
 
-    GDB.createNearMatches()
+    #GDB.createNearMatches()
 
     id = json.load(request.files['id'])
     title = json.load(request.files['title'])
@@ -1691,7 +1709,7 @@ def sync_process(username):
     # # GDB.createNearColumnMatches()
     #
     # # TODO: Move this out of the api call.
-    GDB.createNearMatches()
+    #GDB.createNearMatches()
 
     # show the user profile for that user
     return json.dumps(username)
