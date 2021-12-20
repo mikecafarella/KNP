@@ -704,6 +704,125 @@ class GraphDB:
 
 
     #
+    # Construct a backwards-looking provenance tree out of graph information rooted at 'path' node
+    #
+    def getFileObservationHistoryGraphByPath(self, path, username, stepsBack=3):
+        pass
+    
+    def getFileObservationHistoryGraphByUuid(self, rootUuid, stepsBack=3):
+        def getQueryNode(u):
+            with self.driver.session() as session:
+                result = session.run("""match (parent:ObservedFile {uuid:$uuid})
+                return properties(parent)
+                """, uuid=u)
+                return result.single()[0]
+
+        def getChildrenFromUuid(uuid):
+            with self.driver.session() as session:
+                result = session.run("""
+                WITH "process" as kind
+                MATCH (parent:ObservedFile {uuid: $uuid})<-[rout1:HasOutput]-(child:ObservedProcess)-[rin1:HasInput]->(gchild:ObservedFile)
+                WHERE parent <> gchild
+                return properties(parent) as parent, properties(child) as child, properties(gchild) as gchild, kind
+                UNION
+                WITH null as gchild, "share" as kind
+                match (parent:ObservedFile {uuid: $uuid})-[:LikelySource]->(child:ObservedFile)
+                return properties(parent) as parent, properties(child) as child, properties(gchild) as gchild, kind""",
+                                     uuid=uuid)
+                return [(x[0], x[1], x[2], x[3]) for x in result]
+
+        rawTree = {}
+        root = getQueryNode(rootUuid)
+        rawTree[root["uuid"]] = {"name": "This File",
+                           "kind": "CurFileObservation",
+                           "owner": root["username"],
+                           "uuid": root["uuid"],
+                           "longName": root['filename'],
+                           "shortName": root["filename"][root["filename"].rfind("/")+1:],
+                           "childrenPointers": set()}
+
+        def expandNode(uuid, tree):
+            fringe = set()
+            for node, child, gchild, kind in getChildrenFromUuid(uuid):
+                if kind is "share":
+                    shareId = node["uuid"] + "/" + child["uuid"]
+                    tree[node["uuid"]]["childrenPointers"].append(shareId)
+                    
+                    tree.setdefault(shareId, {
+                        "name": "Likely sharing event",
+                        "kind": "SharingEvent",
+                        "receiver": root["username"],
+                        "source": child["username"],
+                        "receivedOnOrBefore": child["sync_time"],
+                        "childrenPointers": set()
+                        })
+                    
+                    tree.setdefault(child["uuid"], {
+                        "name": "Data File",
+                        "kind": "FileObservation",
+                        "owner": child["username"],
+                        "uuid": child["uuid"],
+                        "longName": child["filename"],
+                        "shortName": child["filename"][child["filename"].rfind("/")+1:],
+                        "childrenPointers": set(),
+                        })
+
+                    tree.get(shareId)["childrenPointers"].add(child["uuid"])
+                    fringe.add(child["uuid"])
+                    
+                elif kind == "process":
+                    tree.setdefault(child["uuid"], {
+                        "name": child["name"],
+                        "kind": "ProcessObservation",
+                        "owner": child["username"],
+                        "startedOn": child["start_time"],
+                        "childrenPointers":set()
+                        })
+                    
+                    tree.setdefault(gchild["uuid"], {
+                        "name": "Data File",
+                        "kind": "FileObservation",
+                        "owner": gchild["username"],
+                        "uuid": gchild["uuid"],
+                        "longName": gchild["filename"],
+                        "shortName": gchild["filename"][gchild["filename"].rfind("/")+1:],
+                        "childrenPointers": set()
+                        })
+
+                    tree[node["uuid"]]["childrenPointers"].add(child["uuid"])
+                    tree[child["uuid"]]["childrenPointers"].add(gchild["uuid"])
+                    fringe.add(gchild["uuid"])
+            return fringe
+
+        #
+        # Now query for each layer in the history
+        #
+        prevFringe = set()
+        prevFringe.add(root["uuid"])
+        for i in range(1, stepsBack):
+            nextFringe = set()
+            for uuid in prevFringe:
+                nextFringe.union(expandNode(uuid, rawTree))
+            prevFringe = nextFringe
+
+        #
+        # Now convert raw tree to tree of dicts for transmission and display.
+        #
+        def cookRawNode(nodeId, rawTree):
+            curNode = rawTree[nodeId]
+            if "childrenPointers" in curNode:
+                curNode["children"] = [cookRawNode(cPtr, rawTree) for cPtr in curNode["childrenPointers"]]
+                del curNode["childrenPointers"]
+            return curNode
+
+        r = cookRawNode(root["uuid"], rawTree)
+        return r
+        
+
+    def getByteSetHistoryGraph(self, md5):
+        pass
+
+    #
     # Get details on a user's ObservedFiles
     #
     def getFileObservationDetailsByUser(self, username):
@@ -812,7 +931,7 @@ class GraphDB:
 
             txStr += ("}) "
                             "ON CREATE SET b2.created = $sync_time, b.filetype = $filetype, b2.line_hashes = $line_hashes "
-                            "CREATE (a2:ObservedFile {id: apoc.create.uuid(), filename: $filename, username: $username, latest: 1")
+                            "CREATE (a2:ObservedFile {uuid: apoc.create.uuid(), filename: $filename, username: $username, latest: 1")
             for k, v in obs.get("optionalItems", {}).items():
                 if k in ["column_hashes", "shingles"]:
                     txStr += ", {}: {}".format("optional_" + k, json.dumps(v))
@@ -887,7 +1006,7 @@ class GraphDB:
     @staticmethod
     def _create_and_return_observed_process(tx, process):
         key = process["key"]
-        threadid = key[key.rfind("."):]
+        threadid = key[key.rfind(".")+1:]
         tStr = process["last_update"]
         updateTime = datetime.datetime.strptime(tStr[0:tStr.rfind(".")], "%Y-%m-%d %H:%M:%S")
         threadHourIdentifier = updateTime.strftime("%Y-%m-%d %H")
@@ -1495,9 +1614,11 @@ def show_knownlocationdata(fileid):
 
     kl["nearDuplicates"] = nearbyFiles
 
-    kl["descendentData"] = GDB.getFileObservationDescendentGraphInfo(fileid)
-
+    kl["descendentData"] = GDB.getFileObservationHistoryGraphByUuid(fileid)
+          
     kl["datasets"] = GDB.getDatasetInfoByContent(md5hash)
+
+    #x = GDB.getFileObservationHistoryGraph(filename, owner)
 
     return json.dumps(kl)
 

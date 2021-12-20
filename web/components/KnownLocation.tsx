@@ -38,7 +38,7 @@ const useCenteredTree = (defaultTranslate = { x: 0, y: 0 }) => {
   const containerRef = useCallback((containerElem) => {
     if (containerElem !== null) {
       const { width, height } = containerElem.getBoundingClientRect();
-      setTranslate({ x: width * 0.2, y: height * 0.43 });
+      setTranslate({ x: width * 0.8, y: height * 0.43 });
     }
   }, []);
   return [translate, containerRef];
@@ -53,17 +53,86 @@ const renderForeignObjectNode = ({
   foreignObjectProps
 }) => (
       <g>
-    {(nodeDatum.kind == 'FileObservation') &&
-       <rect fill="green" width="40" height="40" y="-20"
-       x="-10"></rect>
+    {(nodeDatum.kind == 'ProcessObservation') &&
+       <g>
+       <svg height="50" y="-25" x="-10" width="50">
+         <polygon points="0,0 0,50 50,25" fill="lightgrey" stroke="black" stroke-width="1"></polygon>
+       </svg>
+
+       <text font-family="Arial, Helvetica, sans-serif" 
+        strokeWidth="1" y="40" x="-20" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
+          Program 
+        </text>
+        <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller" x="-20" dy="60">        
+          <tspan x="-20" dy="60+.6em">Name: {nodeDatum.name}</tspan>
+          <tspan x="-20" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
+          <tspan x="-20" dy="1.2em">Started on: {nodeDatum.startedOn}</tspan>          
+        </text>
+
+       </g> 
     }
-    <text font-family="Arial, Helvetica, sans-serif" 
-    strokeWidth="1" y="40" x="-20" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
-      {nodeDatum.uuid == dobj.id ? nodeDatum.name : "Previous version"}
-    </text>
-    <text font-family="Arial, Helvetica, sans-serif" fill="black" strokeWidth="1" font-size="smaller" x="-20" dy="60">
-      {nodeDatum.kind}
-    </text>
+    {(nodeDatum.kind == 'SharingEvent') &&
+      <g>
+      <svg height="50" width="100" x="-25" y="-25">
+         <ellipse cx="50" cy="25" rx="45" ry="20" fill="yellow" stroke="black" stroke-width="1">
+         </ellipse>
+      </svg>
+       <text font-family="Arial, Helvetica, sans-serif" 
+        strokeWidth="1" y="40" x="-20" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
+          Likely sharing event
+        </text>
+        <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller" x="-20" dy="60">        
+          <tspan x="-20" dy="60+.6em">Received on/before: 13-Dec-2021 10:55:23</tspan>
+          <tspan x="-20" dy="1.2em">Receiver: michjc@csail.mit.edu</tspan>
+          <tspan x="-20" dy="1.2em">Observed potential sources: 1</tspan>          
+          <tspan x="-20" dy="1.2em">Likeliest source: mrander@gmail.com</tspan>          
+       </text>
+      </g>
+    }
+    {(nodeDatum.kind == 'FileObservation') &&
+      <g>
+       <rect fill="green" width="40" height="40" y="-20" stroke-width="1"
+       x="-10"></rect>
+       <text font-family="Arial, Helvetica, sans-serif" 
+        strokeWidth="1" y="40" x="-20" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
+          Data file
+        </text>
+        <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller" x="-20" dy="60">        
+          <tspan x="-20" dy="60+.6em">Filename: {nodeDatum.shortName} </tspan>
+          <tspan x="-20" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
+        </text>
+     </g>
+    }
+    {(nodeDatum.kind == 'FileObservationWithCuratedContent') &&
+      <g>    
+       <rect fill="lightgreen" width="40" height="40" y="-20" stroke-width="1"
+       x="-10"></rect>
+       <text font-family="Arial, Helvetica, sans-serif" 
+        strokeWidth="1" y="40" x="-20" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
+          Curated data file
+        </text>
+        <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller" x="-20" dy="60">        
+          <tspan x="-20" dy="60+.6em">Filename: {nodeDatum.shortName}</tspan>
+          <tspan x="-20" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
+          <tspan fill="blue" x="-20" dy="1.2em"><a href={nodeDatum.curatedId}>Curated dataset: {nodeDatum.curatedName}</a></tspan>          
+       </text>
+       
+     </g>       
+    }
+    {(nodeDatum.kind == 'CurFileObservation') &&
+      <g>
+       <rect fill="red" width="40" height="40" y="-20" stroke="black" stroke-width="7"
+       x="-10"></rect>
+       <text font-family="Arial, Helvetica, sans-serif" 
+        strokeWidth="1" y="40" x="-20" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
+          Data file
+        </text>
+        <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller" x="-20" dy="60">        
+          <tspan x="-20" dy="60+.6em">Filename: {nodeDatum.shortName} </tspan>
+          <tspan x="-20" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
+        </text>
+     </g>              
+    }
    </g>    
 );
 
@@ -126,13 +195,15 @@ const renderRectSvgNode = ({ nodeDatum, toggleNode }) => (
         <Pane display="flex" padding={majorScale(1)} border>
           <Pane flex={1} >
             <Heading size={600}>Provenance</Heading>
-           <div style={{ width: '100%', height:'25em' }} ref={containerRef}>
+           <div style={{ width: '100%', height:'40em' }} ref={containerRef}>
             
          <Tree
           data={dobj.descendentData}
-          separation={{nonSiblings: 1, siblings: 1}} 
+          separation={{nonSiblings: 1, siblings: 1.3}} 
           orientation="horizontal"
           translate={translate}
+          depthFactor={-250}
+          zoom="1"
           renderCustomNodeElement={(rd3tProps) =>renderForeignObjectNode({ ...rd3tProps })}
         />
         </div>
