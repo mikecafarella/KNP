@@ -712,38 +712,46 @@ class GraphDB:
     def getFileObservationHistoryGraphByUuid(self, rootUuid, stepsBack=3):
         def getQueryNode(u):
             with self.driver.session() as session:
-                result = session.run("""match (parent:ObservedFile {uuid:$uuid})
-                return properties(parent)
+                result = session.run("""MATCH (parent:ObservedFile {uuid:$uuid})
+                OPTIONAL MATCH (parent)-[r1:Contains]->(b:ByteSet)<-[r2:Contains]-(d:Dataset)
+                return properties(parent), collect(properties(d))
                 """, uuid=u)
-                return result.single()[0]
+                r = result.single()
+                return (r[0], r[1])
 
         def getChildrenFromUuid(uuid):
             with self.driver.session() as session:
                 result = session.run("""
                 WITH "process" as kind
                 MATCH (parent:ObservedFile {uuid: $uuid})<-[rout1:HasOutput]-(child:ObservedProcess)-[rin1:HasInput]->(gchild:ObservedFile)
-                WHERE parent <> gchild
-                return properties(parent) as parent, properties(child) as child, properties(gchild) as gchild, kind
+                WHERE parent <> gchild                
+                OPTIONAL MATCH (gchild)-[r1:Contains]->(b:ByteSet)<-[r2:Contains]-(gchildDataSet:Dataset)
+                return properties(parent) as parent, properties(child) as child, properties(gchild) as gchild, kind, collect(properties(gchildDataSet)) as fileDataSets
                 UNION
                 WITH null as gchild, "share" as kind
                 match (parent:ObservedFile {uuid: $uuid})-[:LikelySource]->(child:ObservedFile)
-                return properties(parent) as parent, properties(child) as child, properties(gchild) as gchild, kind""",
+                OPTIONAL MATCH (child)-[r3:Contains]->(b:ByteSet)<-[r4:Contains]-(childDataSet:Dataset)                
+                return properties(parent) as parent, properties(child) as child, properties(gchild) as gchild, kind, collect(properties(childDataSet)) as fileDataSets""",
                                      uuid=uuid)
-                return [(x[0], x[1], x[2], x[3]) for x in result]
+                return [(x[0], x[1], x[2], x[3], x[4]) for x in result]
 
         rawTree = {}
-        root = getQueryNode(rootUuid)
+        root, rootDatasets = getQueryNode(rootUuid)
+        
         rawTree[root["uuid"]] = {"name": "This File",
                            "kind": "CurFileObservation",
                            "owner": root["username"],
                            "uuid": root["uuid"],
                            "longName": root['filename'],
                            "shortName": root["filename"][root["filename"].rfind("/")+1:],
+                           "curatedSets": [{"title":x["title"],
+                                            "uuid":x["uuid"]} for x in rootDatasets],
                            "childrenPointers": set()}
+        
 
         def expandNode(uuid, tree):
             fringe = set()
-            for node, child, gchild, kind in getChildrenFromUuid(uuid):
+            for node, child, gchild, kind, dataSets in getChildrenFromUuid(uuid):
                 if kind is "share":
                     shareId = node["uuid"] + "/" + child["uuid"]
                     tree[node["uuid"]]["childrenPointers"].append(shareId)
@@ -756,7 +764,7 @@ class GraphDB:
                         "receivedOnOrBefore": child["sync_time"],
                         "childrenPointers": set()
                         })
-                    
+
                     tree.setdefault(child["uuid"], {
                         "name": "Data File",
                         "kind": "FileObservation",
@@ -764,6 +772,8 @@ class GraphDB:
                         "uuid": child["uuid"],
                         "longName": child["filename"],
                         "shortName": child["filename"][child["filename"].rfind("/")+1:],
+                        "curatedSets": [{"title":x["title"],
+                                         "uuid":x["uuid"]} for x in dataSets],                        
                         "childrenPointers": set(),
                         })
 
@@ -778,7 +788,7 @@ class GraphDB:
                         "startedOn": child["start_time"],
                         "childrenPointers":set()
                         })
-                    
+
                     tree.setdefault(gchild["uuid"], {
                         "name": "Data File",
                         "kind": "FileObservation",
@@ -786,6 +796,8 @@ class GraphDB:
                         "uuid": gchild["uuid"],
                         "longName": gchild["filename"],
                         "shortName": gchild["filename"][gchild["filename"].rfind("/")+1:],
+                        "curatedSets": [{"title":x["title"],
+                                         "uuid":x["uuid"]} for x in dataSets],
                         "childrenPointers": set()
                         })
 
@@ -815,6 +827,9 @@ class GraphDB:
                 del curNode["childrenPointers"]
             return curNode
 
+        #print("TREE")
+        #for k,v in rawTree.items():
+        #    print("K", k, "V", v)
         r = cookRawNode(root["uuid"], rawTree)
         return r
         

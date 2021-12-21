@@ -71,6 +71,7 @@ const renderForeignObjectNode = ({
 
        </g> 
     }
+    
     {(nodeDatum.kind == 'SharingEvent') &&
       <g>
       <svg height="50" width="100" x="-25" y="-25">
@@ -89,47 +90,67 @@ const renderForeignObjectNode = ({
        </text>
       </g>
     }
+    
     {(nodeDatum.kind == 'FileObservation') &&
       <g>
+       {(nodeDatum.curatedSets.length === 0) &&
+       <g>
        <rect fill="green" width="40" height="40" y="-20" stroke-width="1"
        x="-10"></rect>
        <text font-family="Arial, Helvetica, sans-serif" 
         strokeWidth="1" y="40" x="-20" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
-          Data file
+          Raw data file
         </text>
-        <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller" x="-20" dy="60">        
-          <tspan x="-20" dy="60+.6em">Filename: {nodeDatum.shortName} </tspan>
-          <tspan x="-20" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
-        </text>
-     </g>
-    }
-    {(nodeDatum.kind == 'FileObservationWithCuratedContent') &&
-      <g>    
+       </g>        
+       }
+       {(nodeDatum.curatedSets.length > 0) &&
+       <g>
        <rect fill="lightgreen" width="40" height="40" y="-20" stroke-width="1"
        x="-10"></rect>
        <text font-family="Arial, Helvetica, sans-serif" 
         strokeWidth="1" y="40" x="-20" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
           Curated data file
         </text>
-        <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller" x="-20" dy="60">        
-          <tspan x="-20" dy="60+.6em">Filename: {nodeDatum.shortName}</tspan>
-          <tspan x="-20" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
-          <tspan fill="blue" x="-20" dy="1.2em"><a href={nodeDatum.curatedId}>Curated dataset: {nodeDatum.curatedName}</a></tspan>          
-       </text>
-       
-     </g>       
-    }
-    {(nodeDatum.kind == 'CurFileObservation') &&
-      <g>
-       <rect fill="red" width="40" height="40" y="-20" stroke="black" stroke-width="7"
-       x="-10"></rect>
-       <text font-family="Arial, Helvetica, sans-serif" 
-        strokeWidth="1" y="40" x="-20" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
-          Data file
-        </text>
+        </g>
+       }
         <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller" x="-20" dy="60">        
           <tspan x="-20" dy="60+.6em">Filename: {nodeDatum.shortName} </tspan>
           <tspan x="-20" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
+          {(nodeDatum.curatedSets.length > 0) &&
+            <tspan x="-20" dy="1.2em"><a href={nodeDatum.curatedSets[0].uuid}>Curated data: {nodeDatum.curatedSets[0].title}</a></tspan>
+          }
+        </text>
+     </g>
+    }
+    
+    {(nodeDatum.kind == 'CurFileObservation') &&
+      <g>
+        {(nodeDatum.curatedSets.length === 0) &&
+        <g>
+       <rect fill="red" width="40" height="40" y="-20" stroke="black" stroke-width="7"
+          x="-10"></rect>
+       <text font-family="Arial, Helvetica, sans-serif" 
+        strokeWidth="1" y="40" x="-20" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
+         Raw data file
+        </text>
+        </g>
+        }
+        {(nodeDatum.curatedSets.length > 0) &&
+       <g>
+       <rect fill="pink" width="40" height="40" y="-20" stroke="black" stroke-width="7"
+         x="-10"></rect>
+       <text font-family="Arial, Helvetica, sans-serif" 
+        strokeWidth="1" y="40" x="-20" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
+         Curated data file
+        </text>
+        </g>        
+        }
+        <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller" x="-20" dy="60">        
+          <tspan x="-20" dy="60+.6em">Filename: {nodeDatum.shortName} </tspan>
+          <tspan x="-20" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
+          {(nodeDatum.curatedSets.length > 0) &&
+            <tspan x="-20" dy="1.2em"><a href={nodeDatum.curatedSets[0].uuid}>Curated data: {nodeDatum.curatedSets[0].title}</a></tspan>
+          }
         </text>
      </g>              
     }
