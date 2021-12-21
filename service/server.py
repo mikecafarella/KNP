@@ -714,10 +714,13 @@ class GraphDB:
             with self.driver.session() as session:
                 result = session.run("""MATCH (parent:ObservedFile {uuid:$uuid})
                 OPTIONAL MATCH (parent)-[r1:Contains]->(b:ByteSet)<-[r2:Contains]-(d:Dataset)
-                return properties(parent), collect(properties(d))
+                OPTIONAL MATCH (parent)<-[rIn:HasInput]-(p:ObservedProcess)
+                OPTIONAL MATCH (parent)-[rC1:Contains]->(bClone:ByteSet)<-[rC2:Contains]-(clone:ObservedFile)
+                WHERE parent <> clone
+                return properties(parent), collect(properties(d)), count(p), count(clone)
                 """, uuid=u)
                 r = result.single()
-                return (r[0], r[1])
+                return (r[0], r[1], r[2], r[3])
 
         def getChildrenFromUuid(uuid):
             with self.driver.session() as session:
@@ -726,17 +729,23 @@ class GraphDB:
                 MATCH (parent:ObservedFile {uuid: $uuid})<-[rout1:HasOutput]-(child:ObservedProcess)-[rin1:HasInput]->(gchild:ObservedFile)
                 WHERE parent <> gchild                
                 OPTIONAL MATCH (gchild)-[r1:Contains]->(b:ByteSet)<-[r2:Contains]-(gchildDataSet:Dataset)
-                return properties(parent) as parent, properties(child) as child, properties(gchild) as gchild, kind, collect(properties(gchildDataSet)) as fileDataSets
+                OPTIONAL MATCH (gchild)<-[rIn:HasInput]-(p:ObservedProcess)
+                OPTIONAL MATCH (gchild)-[rC1:Contains]->(bClone:ByteSet)<-[rC2:Contains]-(clone:ObservedFile)
+                WHERE gchild <> clone              
+                return properties(parent) as parent, properties(child) as child, properties(gchild) as gchild, kind, collect(properties(gchildDataSet)) as fileDataSets, count(p) as fileInputCount, count(clone) as cloneCount
                 UNION
                 WITH null as gchild, "share" as kind
                 match (parent:ObservedFile {uuid: $uuid})-[:LikelySource]->(child:ObservedFile)
-                OPTIONAL MATCH (child)-[r3:Contains]->(b:ByteSet)<-[r4:Contains]-(childDataSet:Dataset)                
-                return properties(parent) as parent, properties(child) as child, properties(gchild) as gchild, kind, collect(properties(childDataSet)) as fileDataSets""",
+                OPTIONAL MATCH (child)-[r3:Contains]->(b:ByteSet)<-[r4:Contains]-(childDataSet:Dataset)
+                OPTIONAL MATCH (child)<-[rIn:HasInput]-(p:ObservedProcess)                                
+                OPTIONAL MATCH (child)-[rC1:Contains]->(bClone:ByteSet)<-[rC2:Contains]-(clone:ObservedFile)
+                WHERE child <> clone              
+                return properties(parent) as parent, properties(child) as child, properties(gchild) as gchild, kind, collect(properties(childDataSet)) as fileDataSets, count(p) as fileInputCount, count(clone) as cloneCount""",
                                      uuid=uuid)
-                return [(x[0], x[1], x[2], x[3], x[4]) for x in result]
+                return [(x[0], x[1], x[2], x[3], x[4], x[5], x[6]) for x in result]
 
         rawTree = {}
-        root, rootDatasets = getQueryNode(rootUuid)
+        root, rootDatasets, fileInputCount, cloneCount = getQueryNode(rootUuid)
         
         rawTree[root["uuid"]] = {"name": "This File",
                            "kind": "CurFileObservation",
@@ -746,12 +755,14 @@ class GraphDB:
                            "shortName": root["filename"][root["filename"].rfind("/")+1:],
                            "curatedSets": [{"title":x["title"],
                                             "uuid":x["uuid"]} for x in rootDatasets],
+                           "fileInputCount": fileInputCount,
+                           "cloneCount": cloneCount,
                            "childrenPointers": set()}
         
 
         def expandNode(uuid, tree):
             fringe = set()
-            for node, child, gchild, kind, dataSets in getChildrenFromUuid(uuid):
+            for node, child, gchild, kind, dataSets, fileInputCount, cloneCount in getChildrenFromUuid(uuid):
                 if kind is "share":
                     shareId = node["uuid"] + "/" + child["uuid"]
                     tree[node["uuid"]]["childrenPointers"].append(shareId)
@@ -773,7 +784,9 @@ class GraphDB:
                         "longName": child["filename"],
                         "shortName": child["filename"][child["filename"].rfind("/")+1:],
                         "curatedSets": [{"title":x["title"],
-                                         "uuid":x["uuid"]} for x in dataSets],                        
+                                         "uuid":x["uuid"]} for x in dataSets],
+                        "fileInputCount": fileInputCount,
+                        "cloneCount": cloneCount,
                         "childrenPointers": set(),
                         })
 
@@ -798,6 +811,8 @@ class GraphDB:
                         "shortName": gchild["filename"][gchild["filename"].rfind("/")+1:],
                         "curatedSets": [{"title":x["title"],
                                          "uuid":x["uuid"]} for x in dataSets],
+                        "cloneCount": cloneCount,                        
+                        "fileInputCount": fileInputCount,
                         "childrenPointers": set()
                         })
 

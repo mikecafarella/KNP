@@ -116,6 +116,8 @@ const renderForeignObjectNode = ({
         <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller" x="-20" dy="60">        
           <tspan x="-20" dy="60+.6em">Filename: {nodeDatum.shortName} </tspan>
           <tspan x="-20" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
+          <tspan x="-20" dy="1.2em">File used {nodeDatum.fileInputCount} times</tspan>
+          <tspan x="-20" dy="1.2em">Contents seen  {nodeDatum.cloneCount} other times</tspan> 
           {(nodeDatum.curatedSets.length > 0) &&
             <tspan x="-20" dy="1.2em"><a href={nodeDatum.curatedSets[0].uuid}>Curated data: {nodeDatum.curatedSets[0].title}</a></tspan>
           }
@@ -148,6 +150,8 @@ const renderForeignObjectNode = ({
         <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller" x="-20" dy="60">        
           <tspan x="-20" dy="60+.6em">Filename: {nodeDatum.shortName} </tspan>
           <tspan x="-20" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
+          <tspan x="-20" dy="1.2em">File used {nodeDatum.fileInputCount} times</tspan>
+          <tspan x="-20" dy="1.2em">Contents seen {nodeDatum.cloneCount} other times</tspan>           
           {(nodeDatum.curatedSets.length > 0) &&
             <tspan x="-20" dy="1.2em"><a href={nodeDatum.curatedSets[0].uuid}>Curated data: {nodeDatum.curatedSets[0].title}</a></tspan>
           }
