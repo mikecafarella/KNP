@@ -94,6 +94,30 @@ const renderForeignObjectNode = ({
     {(nodeDatum.kind == 'FileObservation') &&
       <g>
        {(nodeDatum.curatedSets.length === 0) &&
+        (nodeDatum.rootNode == "True") &&
+       <g>
+       <rect fill="red" width="40" height="40" y="-20" stroke-width="1"
+       x="-10"></rect>
+       <text font-family="Arial, Helvetica, sans-serif" 
+        strokeWidth="1" y="40" x="-20" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
+          Raw data file
+        </text>
+       </g>        
+       }
+       {(nodeDatum.curatedSets.length > 0) &&
+        (nodeDatum.rootNode == "True") &&
+       <g>
+       <rect fill="pink" width="40" height="40" y="-20" stroke-width="1"
+       x="-10"></rect>
+       <text font-family="Arial, Helvetica, sans-serif" 
+        strokeWidth="1" y="40" x="-20" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
+          Curated data file
+        </text>
+        </g>
+       }
+
+       {(nodeDatum.curatedSets.length === 0) &&
+        (nodeDatum.rootNode == "False") &&
        <g>
        <rect fill="green" width="40" height="40" y="-20" stroke-width="1"
        x="-10"></rect>
@@ -104,6 +128,7 @@ const renderForeignObjectNode = ({
        </g>        
        }
        {(nodeDatum.curatedSets.length > 0) &&
+        (nodeDatum.rootNode == "False") &&
        <g>
        <rect fill="lightgreen" width="40" height="40" y="-20" stroke-width="1"
        x="-10"></rect>
@@ -113,6 +138,7 @@ const renderForeignObjectNode = ({
         </text>
         </g>
        }
+
         <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller" x="-20" dy="60">        
           <tspan x="-20" dy="60+.6em">Filename: {nodeDatum.shortName} </tspan>
           <tspan x="-20" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
@@ -123,40 +149,6 @@ const renderForeignObjectNode = ({
           }
         </text>
      </g>
-    }
-    
-    {(nodeDatum.kind == 'CurFileObservation') &&
-      <g>
-        {(nodeDatum.curatedSets.length === 0) &&
-        <g>
-       <rect fill="red" width="40" height="40" y="-20" stroke="black" stroke-width="7"
-          x="-10"></rect>
-       <text font-family="Arial, Helvetica, sans-serif" 
-        strokeWidth="1" y="40" x="-20" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
-         Raw data file
-        </text>
-        </g>
-        }
-        {(nodeDatum.curatedSets.length > 0) &&
-       <g>
-       <rect fill="pink" width="40" height="40" y="-20" stroke="black" stroke-width="7"
-         x="-10"></rect>
-       <text font-family="Arial, Helvetica, sans-serif" 
-        strokeWidth="1" y="40" x="-20" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
-         Curated data file
-        </text>
-        </g>        
-        }
-        <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller" x="-20" dy="60">        
-          <tspan x="-20" dy="60+.6em">Filename: {nodeDatum.shortName} </tspan>
-          <tspan x="-20" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
-          <tspan x="-20" dy="1.2em">File used {nodeDatum.fileInputCount} times</tspan>
-          <tspan x="-20" dy="1.2em">Contents seen {nodeDatum.cloneCount} other times</tspan>           
-          {(nodeDatum.curatedSets.length > 0) &&
-            <tspan x="-20" dy="1.2em"><a href={nodeDatum.curatedSets[0].uuid}>Curated data: {nodeDatum.curatedSets[0].title}</a></tspan>
-          }
-        </text>
-     </g>              
     }
    </g>    
 );

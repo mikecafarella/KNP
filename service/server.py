@@ -748,7 +748,8 @@ class GraphDB:
         root, rootDatasets, fileInputCount, cloneCount = getQueryNode(rootUuid)
         
         rawTree[root["uuid"]] = {"name": "This File",
-                           "kind": "CurFileObservation",
+                           "kind": "FileObservation",
+                           "rootNode": "True",                                 
                            "owner": root["username"],
                            "uuid": root["uuid"],
                            "longName": root['filename'],
@@ -770,6 +771,7 @@ class GraphDB:
                     tree.setdefault(shareId, {
                         "name": "Likely sharing event",
                         "kind": "SharingEvent",
+                        "rootNode": "False",                        
                         "receiver": root["username"],
                         "source": child["username"],
                         "receivedOnOrBefore": child["sync_time"],
@@ -779,6 +781,7 @@ class GraphDB:
                     tree.setdefault(child["uuid"], {
                         "name": "Data File",
                         "kind": "FileObservation",
+                        "rootNode": "False",                                                                        
                         "owner": child["username"],
                         "uuid": child["uuid"],
                         "longName": child["filename"],
@@ -797,6 +800,7 @@ class GraphDB:
                     tree.setdefault(child["uuid"], {
                         "name": child["name"],
                         "kind": "ProcessObservation",
+                        "rootNode": "False",                                                
                         "owner": child["username"],
                         "startedOn": child["start_time"],
                         "childrenPointers":set()
@@ -805,6 +809,7 @@ class GraphDB:
                     tree.setdefault(gchild["uuid"], {
                         "name": "Data File",
                         "kind": "FileObservation",
+                        "rootNode": "False",
                         "owner": gchild["username"],
                         "uuid": gchild["uuid"],
                         "longName": gchild["filename"],
