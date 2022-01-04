@@ -25,6 +25,7 @@ from database import SessionLocal, engine
 from markupsafe import escape
 from neo4j import GraphDatabase
 
+import codecs
 import base64
 import json
 import datetime
@@ -915,12 +916,13 @@ class GraphDB:
     # Get a content profile object
     #
     def getBytecontentStruct(self, md5):
-        #result = db.query(BlobObject).filter_by(id=md5).first()        
-        #if result is None:
-        return {"hasContent": False}
-        #else:
-        #    return {"hasContent": True,
-        #            "content": result}
+        result = db.query(BlobObject).filter_by(id=md5).first()        
+        if result is None:
+            return {"hasContent": False}
+        else:
+            return {"hasContent": True,
+                    "content": result.contents.decode("utf-8")}
+
 
     #
     # Add new FileObservations to the store
@@ -940,7 +942,7 @@ class GraphDB:
             if "content" in optionalItems:
                 result = db.query(BlobObject).filter_by(id=obs['file_hash']).first()
                 if result is None:
-                    db.add(BlobObject(id=obs['file_hash'], contents=bytearray(optionalItems["content"])))
+                    db.add(BlobObject(id=obs['file_hash'], contents=codecs.encode(optionalItems["content"], "utf-8")))
                     db.commit()
 
 
@@ -965,6 +967,9 @@ class GraphDB:
                             "WHERE b.md5hash <> $newHash "
                             "MERGE (b2: ByteSet {md5hash: $newHash")
             for k, v in obs.get("optionalItems", {}).items():
+                if k == "content":
+                    continue
+                
                 if k in ["column_hashes", "shingles"]:
                     txStr += ", {}: {}".format("optional_" + k, json.dumps(v))
                 else:
@@ -974,6 +979,9 @@ class GraphDB:
                             "ON CREATE SET b2.created = $sync_time, b.filetype = $filetype, b2.line_hashes = $line_hashes "
                             "CREATE (a2:ObservedFile {uuid: apoc.create.uuid(), filename: $filename, username: $username, latest: 1")
             for k, v in obs.get("optionalItems", {}).items():
+                if k == "content":
+                    continue
+                
                 if k in ["column_hashes", "shingles"]:
                     txStr += ", {}: {}".format("optional_" + k, json.dumps(v))
                 else:
@@ -1004,6 +1012,9 @@ class GraphDB:
                 txStr = "MERGE (b2: ByteSet {md5hash: $newHash"
 
                 for k, v in obs.get("optionalItems", {}).items():
+                    if k == "content":
+                        continue
+                    
                     if k in ["column_hashes", "shingles"]:
                         txStr += ", {}: {}".format("optional_" + k, json.dumps(v))
                     else:
@@ -1014,6 +1025,9 @@ class GraphDB:
                         "MERGE (a2:ObservedFile {filename: $filename, username: $username, latest: 1")
 
                 for k, v in obs.get("optionalItems", {}).items():
+                    if k == "content":
+                        continue
+                    
                     if k in ["column_hashes", "shingles"]:
                         txStr += ", {}: {}".format("optional_" + k, json.dumps(v))
                     else:
