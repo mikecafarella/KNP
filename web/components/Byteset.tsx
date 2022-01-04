@@ -22,10 +22,16 @@ export type DatasetProps = {
   owner: string;
 }
 
+export type ContentProps = {
+  hasContent: boolean;
+
+}
+
 export type BytesetProps = {
   id: string;
   created: string;
   format: string;
+  content: ContentProps;
 
   files: FileProps[];
   nearDuplicates: FileProps[];  
@@ -63,9 +69,17 @@ const Byteset: React.FC<{dobj: BytesetProps}> = ({dobj}) => {
             <Heading size={600}>Content</Heading>
             
             <Pane marginLeft={majorScale(1)}>
-            <Paragraph size={300} color="muted">            
+            { ! dobj.hasContent &&
+              <Paragraph size={300} color="muted">            
                 This data cannot be examined.
-            </Paragraph>
+              </Paragraph>
+            }
+
+            { dobj.hasContent &&
+              <Paragraph size={300} color="muted">            
+                This data cannot be examined.
+              </Paragraph>
+              }
             </Pane>
           </Pane>
         </Pane>      
