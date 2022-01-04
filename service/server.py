@@ -1417,7 +1417,7 @@ api.add_resource(DataVersionsResource, '/versions')
 class DataVersionResource(Resource):
     def get(self, v_id):
         v = db.query(DataVersion).filter_by(id = v_id).first()
-        print(v.contents.uuid)
+        # print(v.contents.uuid)
         if not v:
             abort(404)
 
