@@ -15,7 +15,6 @@
   "dependencies": {
     "@dagrejs/graphlib": "^2.1.4",
     "@prisma/client": "2.11.0",
-    "d3": "^5.16.0",
     "elasticsearch": "^16.7.2",
     "evergreen": "^0.3.2",
     "evergreen-ui": "^5.1.2",
@@ -28,7 +27,6 @@
     "prismjs": "^1.23.0",
     "react": "^17.0.1",
     "react-csv-reader": "^3.3.0",
-    "react-d3-graph": "^2.6.0",
     "react-d3-tree": "^3.1.1",
     "react-dom": "^17.0.0",
     "react-markdown": "^5.0.0",
