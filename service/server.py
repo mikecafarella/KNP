@@ -713,44 +713,48 @@ class GraphDB:
         def getQueryNode(u):
             with self.driver.session() as session:
                 result = session.run("""MATCH (parent:ObservedFile {uuid:$uuid})
+                OPTIONAL MATCH (parent)-[rBytes:Contains]->(rawBytes:ByteSet)
                 OPTIONAL MATCH (parent)-[r1:Contains]->(b:ByteSet)<-[r2:Contains]-(d:Dataset)
                 OPTIONAL MATCH (parent)<-[rIn:HasInput]-(p:ObservedProcess)
                 OPTIONAL MATCH (parent)-[rC1:Contains]->(bClone:ByteSet)<-[rC2:Contains]-(clone:ObservedFile)
                 WHERE parent <> clone
-                return properties(parent), collect(properties(d)), count(p), count(clone)
+                return properties(parent), collect(properties(d)), count(p), count(clone), properties(rawBytes)
                 """, uuid=u)
                 r = result.single()
-                return (r[0], r[1], r[2], r[3])
+                return (r[0], r[1], r[2], r[3], r[4])
 
         def getChildrenFromUuid(uuid):
             with self.driver.session() as session:
                 result = session.run("""
                 WITH "process" as kind
                 MATCH (parent:ObservedFile {uuid: $uuid})<-[rout1:HasOutput]-(child:ObservedProcess)-[rin1:HasInput]->(gchild:ObservedFile)
-                WHERE parent <> gchild                
+                WHERE parent <> gchild
+                OPTIONAL MATCH (gchild)-[rBytes:Contains]->(rawBytes:ByteSet)                
                 OPTIONAL MATCH (gchild)-[r1:Contains]->(b:ByteSet)<-[r2:Contains]-(gchildDataSet:Dataset)
                 OPTIONAL MATCH (gchild)<-[rIn:HasInput]-(p:ObservedProcess)
                 OPTIONAL MATCH (gchild)-[rC1:Contains]->(bClone:ByteSet)<-[rC2:Contains]-(clone:ObservedFile)
                 WHERE gchild <> clone              
-                return properties(parent) as parent, properties(child) as child, properties(gchild) as gchild, kind, collect(properties(gchildDataSet)) as fileDataSets, count(p) as fileInputCount, count(clone) as cloneCount
+                return properties(parent) as parent, properties(child) as child, properties(gchild) as gchild, kind, collect(properties(gchildDataSet)) as fileDataSets, count(p) as fileInputCount, count(clone) as cloneCount, properties(rawBytes) as rawBytes
                 UNION
                 WITH null as gchild, "share" as kind
                 match (parent:ObservedFile {uuid: $uuid})-[:LikelySource]->(child:ObservedFile)
+                OPTIONAL MATCH (child)-[rBytes2:Contains]->(rawBytes2:ByteSet)                
                 OPTIONAL MATCH (child)-[r3:Contains]->(b:ByteSet)<-[r4:Contains]-(childDataSet:Dataset)
                 OPTIONAL MATCH (child)<-[rIn:HasInput]-(p:ObservedProcess)                                
                 OPTIONAL MATCH (child)-[rC1:Contains]->(bClone:ByteSet)<-[rC2:Contains]-(clone:ObservedFile)
                 WHERE child <> clone              
-                return properties(parent) as parent, properties(child) as child, properties(gchild) as gchild, kind, collect(properties(childDataSet)) as fileDataSets, count(p) as fileInputCount, count(clone) as cloneCount""",
+                return properties(parent) as parent, properties(child) as child, properties(gchild) as gchild, kind, collect(properties(childDataSet)) as fileDataSets, count(p) as fileInputCount, count(clone) as cloneCount, properties(rawBytes2) as rawBytes""",
                                      uuid=uuid)
-                return [(x[0], x[1], x[2], x[3], x[4], x[5], x[6]) for x in result]
+                return [(x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7]) for x in result]
 
         rawTree = {}
-        root, rootDatasets, fileInputCount, cloneCount = getQueryNode(rootUuid)
+        root, rootDatasets, fileInputCount, cloneCount, rawBytes = getQueryNode(rootUuid)
         
         rawTree[root["uuid"]] = {"name": "This File",
                            "kind": "FileObservation",
                            "rootNode": "True",                                 
                            "owner": root["username"],
+                           "md5hash": rawBytes["md5hash"],
                            "uuid": root["uuid"],
                            "longName": root['filename'],
                            "shortName": root["filename"][root["filename"].rfind("/")+1:],
@@ -763,7 +767,7 @@ class GraphDB:
 
         def expandNode(uuid, tree):
             fringe = set()
-            for node, child, gchild, kind, dataSets, fileInputCount, cloneCount in getChildrenFromUuid(uuid):
+            for node, child, gchild, kind, dataSets, fileInputCount, cloneCount, rawBytes in getChildrenFromUuid(uuid):
                 if kind is "share":
                     shareId = node["uuid"] + "/" + child["uuid"]
                     tree[node["uuid"]]["childrenPointers"].append(shareId)
@@ -783,6 +787,7 @@ class GraphDB:
                         "kind": "FileObservation",
                         "rootNode": "False",                                                                        
                         "owner": child["username"],
+                        "md5hash": rawBytes["md5hash"],
                         "uuid": child["uuid"],
                         "longName": child["filename"],
                         "shortName": child["filename"][child["filename"].rfind("/")+1:],
@@ -812,6 +817,7 @@ class GraphDB:
                         "rootNode": "False",
                         "owner": gchild["username"],
                         "uuid": gchild["uuid"],
+                        "md5hash": rawBytes["md5hash"],                        
                         "longName": gchild["filename"],
                         "shortName": gchild["filename"][gchild["filename"].rfind("/")+1:],
                         "curatedSets": [{"title":x["title"],
