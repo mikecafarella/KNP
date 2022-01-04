@@ -750,12 +750,15 @@ class GraphDB:
 
         rawTree = {}
         root, rootDatasets, fileInputCount, cloneCount, rawBytes = getQueryNode(rootUuid)
+        rootContentStruct = self.getBytecontentStruct(rawBytes["md5hash"])
         
         rawTree[root["uuid"]] = {"name": "This File",
                            "kind": "FileObservation",
                            "rootNode": "True",                                 
                            "owner": root["username"],
+                           "filetype": root["optional_filetype"],
                            "md5hash": rawBytes["md5hash"],
+                           "content": rootContentStruct,
                            "uuid": root["uuid"],
                            "longName": root['filename'],
                            "shortName": root["filename"][root["filename"].rfind("/")+1:],
@@ -783,12 +786,15 @@ class GraphDB:
                         "childrenPointers": set()
                         })
 
+                    childContentStruct = self.getBytecontentStruct(rawBytes["md5hash"])
                     tree.setdefault(child["uuid"], {
                         "name": "Data File",
                         "kind": "FileObservation",
                         "rootNode": "False",                                                                        
                         "owner": child["username"],
+                        "filetype": child["optional_filetype"],                        
                         "md5hash": rawBytes["md5hash"],
+                        "content": childContentStruct,
                         "uuid": child["uuid"],
                         "longName": child["filename"],
                         "shortName": child["filename"][child["filename"].rfind("/")+1:],
@@ -812,11 +818,14 @@ class GraphDB:
                         "childrenPointers":set()
                         })
 
+                    gchildContentStruct = self.getBytecontentStruct(rawBytes["md5hash"])
                     tree.setdefault(gchild["uuid"], {
                         "name": "Data File",
                         "kind": "FileObservation",
                         "rootNode": "False",
                         "owner": gchild["username"],
+                        "filetype": gchild["optional_filetype"],
+                        "content": gchildContentStruct,                        
                         "uuid": gchild["uuid"],
                         "md5hash": rawBytes["md5hash"],                        
                         "longName": gchild["filename"],

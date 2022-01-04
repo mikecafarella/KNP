@@ -2,7 +2,8 @@
 import React, { useState, useCallback} from 'react'
 import Router from 'next/router'
 import ReactMarkdown from 'react-markdown'
-import { majorScale, Popover, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table } from 'evergreen-ui'
+import { readString } from 'react-papaparse';
+import { majorScale, Pre, Popover, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table } from 'evergreen-ui'
 import Tree from 'react-d3-tree'
 
 
@@ -286,7 +287,64 @@ const renderForeignObjectNode = ({
             <Pane margin={majorScale(1)}>
             <Heading>
               Content
-            </Heading>                
+            </Heading>
+
+            <Pane marginLeft={majorScale(1)}>
+            { ! selectedNode.content.hasContent &&
+              <Paragraph size={300} color="muted">            
+                You do not have access to this content.
+              </Paragraph>
+            }
+            { selectedNode.content.hasContent &&
+              <Pane>
+              <Paragraph size={300} color="muted">            
+                A copy of this content has been cached.
+              </Paragraph>
+
+              { selectedNode.filetype == "text/plain" &&
+              <Pane display="flex" border>
+              <Pre>
+                {Buffer.from(selectedNode.content.content).toString()}
+              </Pre>
+              </Pane>
+              }
+
+              { selectedNode.filetype == "image/png" &&
+              <Pane display="flex" border>
+                <img src={"data:image/png;base64," + selectedNode.content.content}/>
+              </Pane>
+              }
+
+              { selectedNode.filetype == "application/pdf" &&
+                 <Pane display="flex" >
+                     <embed src={"data:application/pdf;base64," + selectedNode.content.content} width="600" height="300"/>
+                 </Pane>
+              }
+
+              { selectedNode.filetype == "text/csv" &&
+             <Pane display="flex" border>
+               <Table border background="tint1">
+                   <Table.Body>
+                       {readString(Buffer.from(selectedNode.content.content).toString().trim(), {preview: 10}).data.map((row, idx) => (
+                           <Table.Row key={row + idx}>
+                               {row.map((cell, cellidx) => (
+                                   <Table.TextCell key={cell + cellidx}>{cell}</Table.TextCell>
+                               ))}
+                           </Table.Row>
+                       ))}
+                   </Table.Body>
+               </Table>
+             </Pane>
+             }
+
+              </Pane>
+             }
+
+
+
+
+            </Pane>
+            
             </Pane>
             </Pane>
 
@@ -298,8 +356,6 @@ const renderForeignObjectNode = ({
               No node is selected
             </Heading>
             }
-
-
 
             </Pane>
             </Pane>
