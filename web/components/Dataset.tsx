@@ -155,7 +155,7 @@ const orgChart = {
         <Pane display="flex" padding={majorScale(1)} border>
           <Pane flex={1} >
 
-            <Heading size={800}>Dataset '{data.title}'
+            <Heading size={800}>Curated Dataset '{data.title}'
             <Popover display="flex"
             alignItems="center" justifyContent="center"
             flexDirection="column" 
@@ -334,7 +334,7 @@ const orgChart = {
           <Pane flex={1} >
             <Heading size={600}>Content</Heading>
             <Paragraph size={300} color="muted">
-                This Dataset contains Content <a href={bytesetLink}>{dobj.md5hash}</a> 
+                This Curated Dataset contains Content <a href={bytesetLink}>{dobj.md5hash}</a> 
                 <Popover width={240} height={240} display="flex"
                 alignItems="center" justifyContent="center"
                 flexDirection="column" content={

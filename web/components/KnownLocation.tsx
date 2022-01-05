@@ -85,18 +85,16 @@ const renderForeignObjectNode = ({
     {(nodeDatum.kind == 'SharingEvent') &&
       <g>
       <svg height="50" width="100" x="-25" y="-25">
-         <ellipse cx="50" cy="25" rx="45" ry="20" fill="yellow" stroke="black" stroke-width="1">
+         <ellipse cx="50" cy="25" rx="45" ry="20" fill="purple" stroke="black" stroke-width="1">
          </ellipse>
       </svg>
        <text font-family="Arial, Helvetica, sans-serif" 
-        fill="blue" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)} strokeWidth="1" y="-20" x="40">
+        fill="blue" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)} strokeWidth="1" y="-20" x="70">
           Likely sharing event
         </text>
-        <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller" x="-20" dy="60">        
-          <tspan x="-20" dy="60+.6em">Received on/before: 13-Dec-2021 10:55:23</tspan>
-          <tspan x="-20" dy="1.2em">Receiver: michjc@csail.mit.edu</tspan>
-          <tspan x="-20" dy="1.2em">Observed potential sources: 1</tspan>          
-          <tspan x="-20" dy="1.2em">Likeliest source: mrander@gmail.com</tspan>          
+        <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller">
+          <tspan x="70" dy="60+.6em">Source: {nodeDatum.source}</tspan>
+          <tspan x="70" dy="1.2em">Received on/before: {new Date(nodeDatum.receivedOnOrBefore * 1000).toLocaleString()}</tspan>
        </text>
       </g>
     }
@@ -113,7 +111,7 @@ const renderForeignObjectNode = ({
        onMouseOver={()=>setHighlightedNode(nodeDatum.uuid)} onClick={()=>setSelectedNode(nodeDatum)}></rect>
        <text font-family="Arial, Helvetica, sans-serif" 
         strokeWidth="1" y="-20" x="40" fill="blue" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
-          Raw data file
+          Uncurated data file
         </text>
        </g>        
        }
@@ -140,7 +138,7 @@ const renderForeignObjectNode = ({
        onMouseOver={()=>setHighlightedNode(nodeDatum.uuid)} onClick={()=>setSelectedNode(nodeDatum)}></rect>
        <text font-family="Arial, Helvetica, sans-serif" 
         strokeWidth="1" y="-20" x="40" fill="blue" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
-          Raw data file
+          Uncurated data file
         </text>
        </g>        
        }
@@ -264,7 +262,7 @@ const renderForeignObjectNode = ({
             {(selectedNode.curatedSets && selectedNode.curatedSets.length > 0) &&
             <Pane>
             <Heading>
-              This is a Curated data file.
+              This is a copy of a Curated Dataset.
             </Heading>
             <Pane marginLeft={majorScale(1)} marginRight={majorScale(1)}>
               {selectedNode.curatedSets.map(x => (
@@ -282,6 +280,21 @@ const renderForeignObjectNode = ({
             }
             </Pane>
             </Pane>
+
+
+            <Pane flex={1} border>
+            <Pane margin={majorScale(1)}>
+            <Heading>Usage</Heading>
+            <Pane marginLeft={majorScale(1)}>
+              <Paragraph size={300} color="muted"> Known uses anywhere on Earth:
+              0 (<a href="/uses">Click for more details</a>)</Paragraph>
+              <Paragraph size={300} color="muted"> Known copies
+              anywhere on Earth: 3 (<a href="/uses">Click for more details</a>)</Paragraph>              
+            </Pane>
+            </Pane>
+            </Pane>
+
+
 
             <Pane flex={1} border>
             <Pane margin={majorScale(1)}>
@@ -311,7 +324,7 @@ const renderForeignObjectNode = ({
 
               { selectedNode.filetype == "image/png" &&
               <Pane display="flex" border>
-                <img src={"data:image/png;base64," + selectedNode.content.content}/>
+                <img width="600px" src={"data:image/png;base64," + selectedNode.content.content}/>
               </Pane>
               }
 

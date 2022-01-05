@@ -93,7 +93,7 @@ const Byteset: React.FC<{dobj: BytesetProps}> = ({dobj}) => {
 
               { dobj.filetype == "image/png" &&
               <Pane display="flex" border>
-                <img src={"data:image/png;base64," + dobj.content.content}/>
+                <img width="600px" src={"data:image/png;base64," + dobj.content.content}/>
               </Pane>
               }
 

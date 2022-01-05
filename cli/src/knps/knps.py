@@ -667,9 +667,9 @@ class Watcher:
                 try:
                     file_hashes[f] = hash_file(f)
 
-                    if self.file_already_processed(f):
-                        print(" -- Already processed")
-                        continue
+                    #if self.file_already_processed(f):
+                    #    print(" -- Already processed")
+                    #    continue
 
 
                     observationList.append(self._observeFile_(f))

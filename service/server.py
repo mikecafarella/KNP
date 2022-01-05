@@ -710,7 +710,7 @@ class GraphDB:
     def getFileObservationHistoryGraphByPath(self, path, username, stepsBack=3):
         pass
     
-    def getFileObservationHistoryGraphByUuid(self, rootUuid, stepsBack=3):
+    def getFileObservationHistoryGraphByUuid(self, rootUuid, stepsBack=5):
         def getQueryNode(u):
             with self.driver.session() as session:
                 result = session.run("""MATCH (parent:ObservedFile {uuid:$uuid})
@@ -719,6 +719,8 @@ class GraphDB:
                 OPTIONAL MATCH (parent)<-[rIn:HasInput]-(p:ObservedProcess)
                 OPTIONAL MATCH (parent)-[rC1:Contains]->(bClone:ByteSet)<-[rC2:Contains]-(clone:ObservedFile)
                 WHERE parent <> clone
+                OPTIONAL MATCH (parent)-[rC3:Contains]->(shareBytes:ByteSet)<-[rC4:Contains]-(shareSource:ObservedFile)
+                WHERE parent.username <> shareSource.username
                 return properties(parent), collect(properties(d)), count(p), count(clone), properties(rawBytes)
                 """, uuid=u)
                 r = result.single()
@@ -751,7 +753,7 @@ class GraphDB:
         rawTree = {}
         root, rootDatasets, fileInputCount, cloneCount, rawBytes = getQueryNode(rootUuid)
         rootContentStruct = self.getBytecontentStruct(rawBytes["md5hash"])
-        
+
         rawTree[root["uuid"]] = {"name": "This File",
                            "kind": "FileObservation",
                            "rootNode": "True",                                 
@@ -771,10 +773,12 @@ class GraphDB:
 
         def expandNode(uuid, tree):
             fringe = set()
+
             for node, child, gchild, kind, dataSets, fileInputCount, cloneCount, rawBytes in getChildrenFromUuid(uuid):
-                if kind is "share":
+                if kind == "share":
+                    print("Detected share!")
                     shareId = node["uuid"] + "/" + child["uuid"]
-                    tree[node["uuid"]]["childrenPointers"].append(shareId)
+                    tree[node["uuid"]]["childrenPointers"].add(shareId)
                     
                     tree.setdefault(shareId, {
                         "name": "Likely sharing event",
@@ -850,7 +854,7 @@ class GraphDB:
         for i in range(1, stepsBack):
             nextFringe = set()
             for uuid in prevFringe:
-                nextFringe.union(expandNode(uuid, rawTree))
+                nextFringe = nextFringe.union(expandNode(uuid, rawTree))
             prevFringe = nextFringe
 
         #
@@ -1679,6 +1683,7 @@ def show_knownlocationdata(fileid):
     kl["nearDuplicates"] = nearbyFiles
 
     kl["descendentData"] = GDB.getFileObservationHistoryGraphByUuid(fileid)
+    print("Descendenats", len(kl["descendentData"]))
           
     kl["datasets"] = GDB.getDatasetInfoByContent(md5hash)
 

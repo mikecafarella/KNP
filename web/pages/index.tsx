@@ -103,11 +103,11 @@ const Blog : React.FC<{dobj: UserProps}> = ({dobj}) => {
 
          <Pane display="flex" padding={majorScale(1)} border>
           <Pane flex={1} >
-            <Heading size={600}>Datasets</Heading>
+            <Heading size={600}>Curated Datasets</Heading>
             
             <Pane marginLeft={majorScale(1)}>
             <Paragraph size={300} color="muted">            
-                You are maintaining {data.ds.length} Datasets.
+                You are maintaining {data.ds.length} Curated Datasets.
                 
                 {data.ds.length > 0 &&
                 <Table>
