@@ -29,6 +29,8 @@ BUCKET_NAME = 'knps-data'
 s3 = boto3.resource('s3')
 
 OUTPUT_FOLDER = 'output'
+LAST_PROCESSED_INDEX_FILE = 'last_processed_index.json'
+
 
 def get_series_ids():
     # get all the ids of the series we want to scrape ultimately 
@@ -59,25 +61,42 @@ def get_series_ids():
         pickle.dump(list(series_ids), f)
     print("done")
 
-def insert_data_into_knps(logged_in=False):
+def upload_series_to_s3():
     # upload csvs to aws s3 bucket
-    batch_size = 60
+    starting_point = 0
+    if os.path.isfile(LAST_PROCESSED_INDEX_FILE):
+        with open(LAST_PROCESSED_INDEX_FILE, 'r') as lpi:
+            starting_point = json.load(lpi)['index']
+
+    # respect API rate limits
+    batch_size = 110
     with open(SERIES_PICKLE_FILE, 'rb') as f:
         series_ids = pickle.load(f)
-    csv_titles = []
-    for i, (series_id, series_title) in enumerate(series_ids):
-        series_df = fred.get_series_df(series_id)
-        csv_name = "{title}.csv".format(title=series_title)
-        csv_titles.append(csv_name)
-        csv_buffer = StringIO()
-        series_df.to_csv(csv_buffer)
-        s3.Object(BUCKET_NAME, csv_name).put(Body=csv_buffer.getvalue())
-        if (i+1)%batch_size == 0:
-            download_series_from_s3(csv_titles, logged_in)
-            time.sleep(60)
-            csv_titles = []
+    for i, (series_id, series_title) in enumerate(series_ids[starting_point:]):
+
+        try:
+            series_df = fred.get_series_df(series_id)
+            csv_name = "{title}.csv".format(title=series_title)
+            csv_buffer = StringIO()
+            series_df.to_csv(csv_buffer)
+            s3.Object(BUCKET_NAME, csv_name).put(Body=csv_buffer.getvalue())
+            if (i+1)%batch_size == 0:
+                print('nap time!')
+                time.sleep(60)
+                break
+        # if I want to stop, this will let me know where the program needs to pick up again
+        except KeyboardInterrupt:
+            save_last_good_query_index(i+starting_point)
             break
-        
+        # handle any other exception, namely API limit reached 
+        except:
+            save_last_good_query_index(i+starting_point)
+            break
+    print('done {}'.format(i+starting_point))
+
+def save_last_good_query_index(index):
+    with open(LAST_PROCESSED_INDEX_FILE, 'w') as lpi:
+        json.dump({"index": index}, lpi)
 
 def download_series_from_s3(series_titles, logged_in=False):
     if not logged_in:
@@ -100,9 +119,9 @@ if __name__ == "__main__":
     if not os.path.isfile(SERIES_PICKLE_FILE):
         get_series_ids()
     else:
-        # upload_series_to_s3()
-        if testing:
-            os.system("rm -r {}".format(OUTPUT_FOLDER))
-        test = "Income Inequality in Tunica County, MS.csv"
-        download_series_from_s3([test])
+        upload_series_to_s3()
+        # if testing:
+        #     os.system("rm -r {}".format(OUTPUT_FOLDER))
+        # test = "Income Inequality in Tunica County, MS.csv"
+        # download_series_from_s3([test])
         # insert_data_into_knps()
