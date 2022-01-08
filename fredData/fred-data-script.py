@@ -3,49 +3,106 @@ from full_fred.fred import Fred
 import os
 import pandas as pd
 import time
-# for later for performance boost 
+import pickle
 import json
+import boto3
+import sys
+sys.path.append("../cli/src/knps")
+from io import StringIO
+
 key_file = open('api_key.txt', 'r')
 API_KEY = key_file.readline()
 key_file.close()
-SERIES_JSON_FILE = "series_ids.json"
+SERIES_PICKLE_FILE = "series_ids.pickle"
 os.environ['FRED_API_KEY'] = API_KEY.strip()
-# ideally we just use the constructor and pass in the file name, 
-# but that wasn't working so had to use this hack
 fred = Fred()
-# 0 is the root category
-if not os.path.isfile(SERIES_JSON_FILE):
-    # this exists to get all the ids of the series we want to scrape ultimately 
+
+aws_credentials = open("aws_keys.json", 'r')
+aws_keys = json.load(aws_credentials)
+ACCESS_KEY_ID = aws_keys['access_key_id']
+SECRET_ACCESS_KEY = aws_keys['secret_access_key']
+aws_credentials.close()
+os.environ["AWS_DEFAULT_REGION"] = 'us-east-1'
+os.environ["AWS_ACCESS_KEY_ID"] = ACCESS_KEY_ID
+os.environ["AWS_SECRET_ACCESS_KEY"] = SECRET_ACCESS_KEY
+BUCKET_NAME = 'knps-data'
+s3 = boto3.resource('s3')
+
+OUTPUT_FOLDER = 'output'
+
+def get_series_ids():
+    # get all the ids of the series we want to scrape ultimately 
     categories = fred.get_child_categories(0)
     top_level_category_ids = [(cat['id'], cat['name']) for cat in categories['categories']]
     category_queue = top_level_category_ids[:]
     series_ids = set()
-    #this is kind of close to the API rate limit, which appears to around 40ish calls/minute 
+    # this is to respect the api rate limit
     batch_size = 21
     count = 0
     while category_queue:
         new_category_queue = []
-        for category_id, category_name in category_queue:
+        for category_id, _ in category_queue:
             children_categories = fred.get_child_categories(category_id)
             series_metadata = fred.get_series_in_a_category(category_id)
             if (children_categories['categories']):
                 new_category_queue.extend([(cat['id'], cat['name']) for cat in children_categories['categories']])
             if (series_metadata['seriess']):
                 for series in series_metadata['seriess']:
-                    series_ids.add(series['id'])
+                    series_ids.add((series['id'], series['title']))
             count += 1
             if (count % batch_size) == 0:
                 print("taking a nap!")
-                time.sleep(60)
+                time.sleep(60) 
         category_queue = new_category_queue
 
-    print(len(series_ids))
-    with open(SERIES_JSON_FILE, 'w') as f:
-        json.dump(list(series_ids), f)
+    with open(SERIES_PICKLE_FILE, 'wb') as f:
+        pickle.dump(list(series_ids), f)
     print("done")
-else:
-    with open(SERIES_JSON_FILE, 'r') as f:
-        series_ids = json.load(f)
+
+def insert_data_into_knps(logged_in=False):
+    # upload csvs to aws s3 bucket
+    batch_size = 60
+    with open(SERIES_PICKLE_FILE, 'rb') as f:
+        series_ids = pickle.load(f)
+    csv_titles = []
+    for i, (series_id, series_title) in enumerate(series_ids):
+        series_df = fred.get_series_df(series_id)
+        csv_name = "{title}.csv".format(title=series_title)
+        csv_titles.append(csv_name)
+        csv_buffer = StringIO()
+        series_df.to_csv(csv_buffer)
+        s3.Object(BUCKET_NAME, csv_name).put(Body=csv_buffer.getvalue())
+        if (i+1)%batch_size == 0:
+            download_series_from_s3(csv_titles, logged_in)
+            time.sleep(60)
+            csv_titles = []
+            break
+        
+
+def download_series_from_s3(series_titles, logged_in=False):
+    if not logged_in:
+        os.system("python3 ../cli/src/knps/knps.py --login_temp Steve")
+
+    if not os.path.isdir(OUTPUT_FOLDER):
+        os.system("mkdir {dir}".format(dir=OUTPUT_FOLDER))
+        os.system("python3 ../cli/src/knps/knps.py --watch {dir}".format(dir=OUTPUT_FOLDER))
+
+    for series_title in series_titles:
+        s3.Bucket(BUCKET_NAME).download_file(series_title, "{dir}/{csv}".format(dir=OUTPUT_FOLDER, csv=series_title))
+        os.system('python3 ../cli/src/knps/knps.py --sync') 
+
     
 
 
+if __name__ == "__main__":
+    testing = True
+    os.system("rm ~/.knpsdb") ##NEED TO DO THIS SO IT DOES NOT THINK THINGS R INACCURATELY PROCCESSED
+    if not os.path.isfile(SERIES_PICKLE_FILE):
+        get_series_ids()
+    else:
+        # upload_series_to_s3()
+        if testing:
+            os.system("rm -r {}".format(OUTPUT_FOLDER))
+        test = "Income Inequality in Tunica County, MS.csv"
+        download_series_from_s3([test])
+        # insert_data_into_knps()
