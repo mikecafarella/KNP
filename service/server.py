@@ -623,14 +623,14 @@ class GraphDB:
             ret = [x[0] for x in results]
             return ret
 
-    def addComment(self, nodeId, commentStr):
+    def addComment(self, nodeId, commentStr, username):
         with self.driver.session() as session:
             results = session.run("MATCH (a {uuid: $nodeId}) "
                                   "CREATE (a)-[r:HasComment]->(b:Comment {uuid: apoc.create.uuid(), comment: $commentStr, owner: $owner, modified: $modified}) "
                                   "RETURN b",
                                   nodeId=nodeId,
                                   commentStr=commentStr,
-                                  owner="",
+                                  owner=username,
                                   modified=time.time())
             return results
 
@@ -1803,8 +1803,9 @@ def get_comments(id):
 
 @app.route('/addcomment/<id>', methods=["POST"])
 def add_comment(id):
+    print("ADDING", "")
     incomingReq = json.loads(request.get_json())
-    result = GDB.addComment(incomingReq["uuid"], incomingReq["value"])
+    result = GDB.addComment(incomingReq["uuid"], incomingReq["value"], "")
     return get_comments(incomingReq["uuid"])
 
 #

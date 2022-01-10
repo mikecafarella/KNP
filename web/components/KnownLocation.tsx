@@ -43,7 +43,7 @@ const useCenteredTree = (defaultTranslate = { x: 0, y: 0 }) => {
   const containerRef = useCallback((containerElem) => {
     if (containerElem !== null) {
       const { width, height } = containerElem.getBoundingClientRect();
-      setTranslate({ x: width * 0.8, y: height * 0.43 });
+      setTranslate({ x: width * 0.5, y: height * 0.43 });
     }
   }, []);
   return [translate, containerRef];
@@ -287,9 +287,9 @@ const renderForeignObjectNode = ({
             <Heading>Usage</Heading>
             <Pane marginLeft={majorScale(1)}>
               <Paragraph size={300} color="muted"> Known uses anywhere on Earth:
-              0 (<a href="/uses">Click for more details</a>)</Paragraph>
+               {selectedNode.fileInputCount} (<a href="/uses">Click for more details</a>)</Paragraph>
               <Paragraph size={300} color="muted"> Known copies
-              anywhere on Earth: 3 (<a href="/uses">Click for more details</a>)</Paragraph>              
+              anywhere on Earth: {selectedNode.cloneCount} (<a href="/uses">Click for more details</a>)</Paragraph>              
             </Pane>
             </Pane>
             </Pane>
@@ -376,6 +376,7 @@ const renderForeignObjectNode = ({
             shouldCloseOnExternalClick={false}>
             <Button>Selection details</Button>
             </Popover>
+            
            <div style={{ width: '100%', height:'40em' }} ref={containerRef}>
             
          <Tree
@@ -384,8 +385,8 @@ const renderForeignObjectNode = ({
           orientation="horizontal"
           translate={translate}
           depthFactor={-400}
-          zoom="0.8"
-          zoomable="True"
+          zoom="2"
+          scaleExtent={{max:5,min:0.1}}
           renderCustomNodeElement={(rd3tProps) =>renderForeignObjectNode({ ...rd3tProps })}
         />
         </div>
