@@ -31,7 +31,6 @@ s3 = boto3.resource('s3')
 OUTPUT_FOLDER = 'output'
 LAST_PROCESSED_INDEX_FILE = 'last_processed_index.json'
 
-
 def get_series_ids():
     # get all the ids of the series we want to scrape ultimately 
     categories = fred.get_child_categories(0)
@@ -63,17 +62,17 @@ def get_series_ids():
 
 def upload_series_to_s3():
     # upload csvs to aws s3 bucket
-    starting_point = 0
+    starting_point = 110
     if os.path.isfile(LAST_PROCESSED_INDEX_FILE):
         with open(LAST_PROCESSED_INDEX_FILE, 'r') as lpi:
             starting_point = json.load(lpi)['index']
 
     # respect API rate limits
-    batch_size = 110
+    batch_size = 120
     with open(SERIES_PICKLE_FILE, 'rb') as f:
         series_ids = pickle.load(f)
+    print("{}/{} index start {}".format(starting_point+1, len(series_ids), starting_point))
     for i, (series_id, series_title) in enumerate(series_ids[starting_point:]):
-
         try:
             series_df = fred.get_series_df(series_id)
             csv_name = "{title}.csv".format(title=series_title)
@@ -83,7 +82,6 @@ def upload_series_to_s3():
             if (i+1)%batch_size == 0:
                 print('nap time!')
                 time.sleep(60)
-                break
         # if I want to stop, this will let me know where the program needs to pick up again
         except KeyboardInterrupt:
             save_last_good_query_index(i+starting_point)
@@ -92,7 +90,7 @@ def upload_series_to_s3():
         except:
             save_last_good_query_index(i+starting_point)
             break
-    print('done {}'.format(i+starting_point))
+    print('done {}/{} index : {}'.format(i+starting_point+1, len(series_ids), i+starting_point))
 
 def save_last_good_query_index(index):
     with open(LAST_PROCESSED_INDEX_FILE, 'w') as lpi:
@@ -110,15 +108,16 @@ def download_series_from_s3(series_titles, logged_in=False):
         s3.Bucket(BUCKET_NAME).download_file(series_title, "{dir}/{csv}".format(dir=OUTPUT_FOLDER, csv=series_title))
         os.system('python3 ../cli/src/knps/knps.py --sync') 
 
-    
-
-
 if __name__ == "__main__":
     testing = True
-    os.system("rm ~/.knpsdb") ##NEED TO DO THIS SO IT DOES NOT THINK THINGS R INACCURATELY PROCCESSED
+    # os.system("rm ~/.knpsdb") ##NEED TO DO THIS SO IT DOES NOT THINK THINGS R INACCURATELY PROCCESSED
     if not os.path.isfile(SERIES_PICKLE_FILE):
         get_series_ids()
     else:
+        # count = 0
+        # for i in s3.Bucket(BUCKET_NAME).objects.all():
+        #     count += 1
+        # print(count)
         upload_series_to_s3()
         # if testing:
         #     os.system("rm -r {}".format(OUTPUT_FOLDER))
