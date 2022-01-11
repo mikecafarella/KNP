@@ -4,18 +4,20 @@ import { Graph } from "react-d3-graph";
 import Router from 'next/router'
 import ReactMarkdown from 'react-markdown'
 import DataobjectSummary from "./DataobjectSummary"
-import DataContentProps from "./DataContent.tsx"
-import DataobjProps from "./Dataobject.tsx"
-import { majorScale, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table, Tooltip, IconButton } from 'evergreen-ui'
+import DataContentProps from "./DataContent"
+import DataobjProps from "./Dataobject"
+import { Badge, majorScale, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table, Tooltip, IconButton } from 'evergreen-ui'
 import { callbackify } from 'util';
-import { flex } from 'ui-box';
+// import { flex } from 'ui-box';
 import { isValidSubgraph } from './Utils'
+import SubgraphLabel from './SubgraphLabel';
 
 
 const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
 
     const [mouseIndex, setMouseIndex] = useState(-1)
     const [selectedNodes, setSelectedNodes] = useState([])
+    const [label, setLabel] = useState('');
     const predecessors = dobj.displayVersion.predecessors
     // const successors = dobj.successors
 
@@ -25,6 +27,7 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
             setSelectedNodes(
                 selectedNodes.filter(id => id !== nodeId)
             );
+            setLabel('');
         } else {
             setSelectedNodes(
                 [...selectedNodes, nodeId]
@@ -35,6 +38,7 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
     // const deselect
     const resetSelections = function() {
         setSelectedNodes([]);
+        setLabel('')
     }
 
     const onClickNodeFn = function(nodeId) {
@@ -224,7 +228,25 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
     };
     // a little confusing, should change this so more readable, but valid subgraph returns true if the button should be
     // disabled, ie not a valid subgraph
-    let validSubgraph = isValidSubgraph(graph, nodes, rootId, selectedNodes);
+    let inValidSubgraph = isValidSubgraph(graph, nodes, rootId, selectedNodes);
+    let subgraphLabelChooser = inValidSubgraph ? 
+        <></> : 
+        <SubgraphLabel 
+            subgraphNodeIds={selectedNodes} 
+            label={label} 
+            setLabel={setLabel}
+        />;
+    let labelBadge = (label) ? <Badge color='blue'>{label}</Badge> : '';
+    
+    let subgraphLabel = (!inValidSubgraph) 
+        ? 
+        <Pane>
+            <Paragraph>
+                Subgraph Label for your selected subgraph: {labelBadge}
+            </Paragraph>
+        </Pane>: 
+        <></>
+
 
     return (
         <Card
@@ -232,25 +254,18 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         elevation={0}
         display="flex"
       >
-        <Pane background="tint1" flexDirection='column-reverse'>
+        <Pane background="tint1" display='flex' flexDirection='column'>
             <Button 
                 disabled={selectedNodes.length === 0}
-                onClick={() =>setSelectedNodes([])}
+                onClick={resetSelections}
             >Reset Subgraph Selection
             </Button>
-            <Tooltip 
-                isShown={validSubgraph && selectedNodes.length > 0 && !((selectedNodes.length === 1) && (1=== nodes.length))} 
-                content="please select a valid subgraph"
-            >
-                <Button 
-                    disabled={validSubgraph}
-                    onClick={() =>setSelectedNodes([])}
-                >Label Subgraph
-                </Button>
-            </Tooltip>
+            {subgraphLabelChooser}
+            
         </Pane>
         
-        <Pane flex={1} background="tint1" padding={majorScale(1)}>
+        <Pane flex={1} background="tint1" padding={majorScale(1)} display='flex' flexDirection='column'>
+            {subgraphLabel}
             <Graph
                 id="graph-id" // id is mandatory, if no id is defined rd3g will throw an error
                 data={data}
