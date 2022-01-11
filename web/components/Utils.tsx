@@ -40,7 +40,7 @@ export const isValidSubgraph = (
     //     x     or        x   x
     //      \               \ /
     //       x               x
-    if (selectedNodes.length <= 1 && nodes.length > 1 ) {
+    if (selectedNodes.length <= 1) {
         return true;
     }
     let depths = {}
