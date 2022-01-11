@@ -13,12 +13,31 @@ import { callbackify } from 'util';
 const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
 
     const [mouseIndex, setMouseIndex] = useState(-1)
-
+    const [selectedNodes, setSelectedNodes] = useState([])
     const predecessors = dobj.displayVersion.predecessors
     // const successors = dobj.successors
 
+    const toggleNode = function(nodeId) {
+        // deselect
+        if (selectedNodes.includes(nodeId)) {
+            setSelectedNodes(
+                selectedNodes.filter(id => id !== nodeId)
+            );
+        } else {
+            setSelectedNodes(
+                [...selectedNodes, nodeId]
+            );
+        }  
+    }
+
+    // const deselect
+    const resetSelections = function() {
+        setSelectedNodes([]);
+    }
+
     const onClickNodeFn = function(nodeId) {
         setMouseIndex(nodeId)
+        toggleNode(nodeId)
     }
     const onMouseOverNodeFn = function(nodeId) {
         console.log(nodeId)
@@ -43,14 +62,15 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         return labelMap[node.id]
     }
     idToNodeMap[dobj.displayVersion.dataobject.id] = dobj.displayVersion
+    const color = (selectedNodes.includes(dobj.displayVersion.dataobject.id.toString())) ? "purple" : "red"
     let nodes = [{ id: dobj.displayVersion.dataobject.id,
-                   color: "red",
+                   color: color,
                    x: 300,
                    y: 500,
                     labelPosition: "bottom",
                 }]
     labelMap[dobj.displayVersion.dataobject.id] = dobj.name
-    console.log(dobj.displayVersion.dataobject.id)
+    // console.log(dobj.displayVersion.dataobject.id)
 
     let px = (600 - ((predecessors.length-1) * 150))/2
     let py = 350
@@ -59,11 +79,12 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
     for (var p of predecessors) {
         if (py > maxy) maxy = py
         if (py < miny) miny = py
+        const color = (selectedNodes.includes(p.dataobject.id.toString())) ? "purple" : "green"
         nodes.push({id: p.dataobject.id,
-                        color: "green",
+                        color: color,
                         x: px,
                         y: py
-                    })
+                    });
 
         labelMap[p.dataobject.id] = p.dataobject.name
         const generator = dobj.displayVersion.generators.length ? dobj.displayVersion.generators[0] : null
@@ -77,7 +98,7 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
                   })
         idToNodeMap[p.dataobject.id] = p
         // idToNodeMap[generator.dataobject.id] = generator
-        console.log(links)
+        // console.log(links)
         let qx = (px - 75 * (p.predecessors.length - 1))
         let qy = 200
         for (var q of p.predecessors) {
@@ -86,11 +107,12 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
           const generator = p.generators.length ? p.generators[0] : null
           const linkLabel = generator ? generator.dataobject.name : null
           const linkColor = linkLabel ? 'blue' : 'lightgray'
+          const color = (selectedNodes.includes(q.dataobject.id.toString())) ? "purple" : "green"
           nodes.push({id: q.dataobject.id,
-                          color: "green",
+                          color: color,
                           x: qx,
                           y: qy
-                      })
+                      });
 
           labelMap[q.dataobject.id] = q.dataobject.name
           links.push({source: q.dataobject.id ,
@@ -107,11 +129,12 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
             const generator = q.generators.length ? q.generators[0] : null
             const linkLabel = generator ? generator.dataobject.name : null
             const linkColor = linkLabel ? 'blue' : 'lightgray'
+            const color = (selectedNodes.includes(r.dataobject.id.toString())) ? "purple" : "green"
             nodes.push({id: r.dataobject.id,
-                            color: "green",
+                            color: color,
                             x: rx,
                             y: ry
-                        })
+                        });
             labelMap[r.dataobject.id] = r.dataobject.name
             links.push({source: r.dataobject.id ,
                         target: q.dataobject.id,
@@ -136,7 +159,7 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
       nodes[n].y -= adjust
     }
 
-    console.log('idToNodeMap', idToNodeMap)
+    // console.log('idToNodeMap', idToNodeMap)
 
     // for (var q of successors) {
     //   let objname = q.NameAssignment[0].objname
@@ -190,6 +213,11 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         elevation={0}
         display="flex"
       >
+        <Button 
+            disabled={selectedNodes.length === 0}
+            onClick={() =>setSelectedNodes([])}
+        >Reset Subgraph Selection
+        </Button>
         <Pane flex={1} background="tint1" padding={majorScale(1)}>
             <Graph
                 id="graph-id" // id is mandatory, if no id is defined rd3g will throw an error
@@ -201,6 +229,7 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
                 // onMouseOutLink={onMouseOverLinkFn}
                 config={myConfig}/>
         </Pane>
+
         <Pane padding={majorScale(1)} flex={2}>
           <DataobjectSummary dobj={mouseIndex >= 0 ? idToNodeMap[mouseIndex] : null}/>
         </Pane>

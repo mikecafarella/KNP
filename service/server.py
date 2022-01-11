@@ -303,6 +303,7 @@ def es_delete_index():
 ##################################################
 class GraphDB:
     def __init__(self, uri, user, password):
+        print(user, password)
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
 
     def close(self):
@@ -1273,36 +1274,36 @@ class BlobObjectSchema(ma.Schema):
 
 blob_schema = BlobObjectSchema()
 
-#class UserListResource(Resource):
-#    def get(self):
-#        users = db.query(User)
-#        return users_schema.dump(users)
-#
-#    def post(self):
-#        # todo: validation & integrate signup stuff
-#        user = db.query(User).filter_by(email = request.json['email']).first()
-#
-#        if not user:
-#            user = User(
-#                name = request.json['name'],
-#                email = request.json['email']
-#            )
-#            db.add(user)
-#            db.commit()
-#        return user_schema.dump(user)
-#
-#api.add_resource(UserListResource, '/users')
+class UserListResource(Resource):
+   def get(self):
+       users = db.query(User)
+       return users_schema.dump(users)
 
-#class UserResource(Resource):
-#    def get(self, user_id):
-#        user = db.query(User).filter_by(id = user_id).first()
-#
-#        if not user:
-#            abort(404)
-#
-#        return user_schema.dump(user)
+   def post(self):
+       # todo: validation & integrate signup stuff
+       user = db.query(User).filter_by(email = request.json['email']).first()
 
-#api.add_resource(UserResource, '/users/<int:user_id>')
+       if not user:
+           user = User(
+               name = request.json['name'],
+               email = request.json['email']
+           )
+           db.add(user)
+           db.commit()
+       return user_schema.dump(user)
+
+api.add_resource(UserListResource, '/users')
+
+class UserResource(Resource):
+   def get(self, user_id):
+       user = db.query(User).filter_by(id = user_id).first()
+
+       if not user:
+           abort(404)
+
+       return user_schema.dump(user)
+
+api.add_resource(UserResource, '/users/<int:user_id>')
 
 class DataObjectsResource(Resource):
     def get(self):
@@ -1357,10 +1358,11 @@ class DataObjectsResource(Resource):
         db.add(new_contents)
 
         db.commit()
+        print("Id ", new_dobj.id)
 
         # Send it to Elasticsearch
         record =  {
-            'url': 'http://localhost:3000/dobj/X{}'.format(new_dobj.uuid),
+            'url': 'http://localhost:3000/dobj/X{}'.format(new_dobj.id),
             'owner': new_dobj.owner.name,
             'name': new_dobj.name,
             'description': new_dobj.description,
@@ -1369,7 +1371,7 @@ class DataObjectsResource(Resource):
             'timestamp': new_version.created.isoformat()
         }
 
-        doc_id = 'X{}'.format(new_dobj.uuid)
+        doc_id = 'X{}'.format(new_dobj.id)
         es_store_record(ES_INDEX, doc_id, record)
 
         return jsonify(dobj_schema.dump(new_dobj))
@@ -1432,7 +1434,7 @@ class DataVersionsResource(Resource):
 
         # Send it to Elasticsearch
         record =  {
-            'url': 'http://localhost:3000/dobj/X{}'.format(dataobject.uuid),
+            'url': 'http://localhost:3000/dobj/X{}'.format(dataobject.id),
             'owner': dataobject.owner.name,
             'name': dataobject.name,
             'description': dataobject.description,
@@ -1440,7 +1442,7 @@ class DataVersionsResource(Resource):
             'pytype': new_version.datatype,
             'timestamp': new_version.created.isoformat()
         }
-        doc_id = 'X{}'.format(dataobject.uuid)
+        doc_id = 'X{}'.format(dataobject.id)
         es_store_record(ES_INDEX, doc_id, record)
 
         return jsonify(version_full_schema.dump(new_version))
@@ -1578,7 +1580,7 @@ class FunctionResource(Resource):
 
         # Send it to Elasticsearch
         record =  {
-            'url': 'http://localhost:3000/dobj/X{}'.format(new_dobj.uuid),
+            'url': 'http://localhost:3000/dobj/X{}'.format(new_dobj.id),
             'owner': new_dobj.owner.name,
             'name': new_dobj.name,
             'description': new_dobj.description,
@@ -1587,7 +1589,7 @@ class FunctionResource(Resource):
             'timestamp': new_version.created.isoformat()
         }
 
-        doc_id = 'X{}'.format(new_dobj.uuid)
+        doc_id = 'X{}'.format(new_dobj.id)
         es_store_record(ES_INDEX, doc_id, record)
 
         return jsonify(dobj_schema.dump(new_dobj))
