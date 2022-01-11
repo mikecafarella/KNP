@@ -222,6 +222,8 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
 
         },
     };
+    // a little confusing, should change this so more readable, but valid subgraph returns true if the button should be
+    // disabled, ie not a valid subgraph
     let validSubgraph = isValidSubgraph(graph, nodes, rootId, selectedNodes);
 
     return (
@@ -237,7 +239,7 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
             >Reset Subgraph Selection
             </Button>
             <Tooltip 
-                isShown={validSubgraph && selectedNodes.length > 0} 
+                isShown={validSubgraph && selectedNodes.length > 0 && !((selectedNodes.length === 1) && (1=== nodes.length))} 
                 content="please select a valid subgraph"
             >
                 <Button 

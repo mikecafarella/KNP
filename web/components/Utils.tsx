@@ -9,10 +9,38 @@ export const isValidSubgraph = (
         }[],
     rootId: any, 
     selectedNodes: any[], ) => {
-    // Valid Subgraph is defined as: being
-    // return true only if the subgraph is connected
-    // and has to be a tree 
-    if (selectedNodes.length <= 1 ) {
+    // Valid Subgraph is defined as: being a graph where there is a single root and it is a complete sub tree
+    // compelete subtree means that it contains all the nodes in the original tree starting from the subtree root
+    // visually: 
+    //  x   x
+    //   \ /
+    //    x   x
+    //     \ /
+    //      x       
+    //   this is a validSubgraph (doing a dataset join) if the original graph looks like:
+    //  x   x             x   x
+    //   \ /               \  /
+    //    x   x              x   x
+    //     \ /       or       \ /
+    //      x                  x   x   
+    //       \                  \ /
+    //        X                  x
+    // 
+    
+    // x
+    //  \
+    //   x
+    //    \
+    //     x
+    //  this is a validSubgraph (applying a function to a single dataset) if the original graph looks like:
+    // x               x
+    //  \               \
+    //   x               x
+    //    \               \
+    //     x     or        x   x
+    //      \               \ /
+    //       x               x
+    if (selectedNodes.length <= 1 && nodes.length > 1 ) {
         return true;
     }
     let depths = {}
@@ -37,10 +65,8 @@ export const isValidSubgraph = (
     }
     // console.log(depths);
     let src = [];
-    let visited = {};
     let lowestDepth = depth+1;
     for (let id of selectedNodes) {
-        visited[id] = false;
         if (depths[id] < lowestDepth) {
             src = [id];
             lowestDepth = depths[id];
@@ -57,19 +83,18 @@ export const isValidSubgraph = (
     while (queue.length > 0) {
         let newQueue = [];
         for (let id of queue) {
+            if (!selectedNodes.includes(id)) {
+                return true;
+            }
             if (graph.hasOwnProperty(id)) {
                 for (let childId of graph[id]) {
-                    if (!selectedNodes.includes(childId)) {
-                        return true;
-                    } else {
-                        newQueue.push(childId);
-                    }
+                    newQueue.push(childId);
                 }
             }
         }
         queue = newQueue;
         numIterations++;
-    }
-    return !(numIterations > 1);
+    }    
+    return (numIterations <= 1);
 }
 
