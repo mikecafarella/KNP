@@ -6,8 +6,10 @@ import ReactMarkdown from 'react-markdown'
 import DataobjectSummary from "./DataobjectSummary"
 import DataContentProps from "./DataContent.tsx"
 import DataobjProps from "./Dataobject.tsx"
-import { majorScale, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table, Tooltip } from 'evergreen-ui'
+import { majorScale, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table, Tooltip, IconButton } from 'evergreen-ui'
 import { callbackify } from 'util';
+import { flex } from 'ui-box';
+import { isValidSubgraph } from './Utils'
 
 
 const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
@@ -63,6 +65,7 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
     }
     idToNodeMap[dobj.displayVersion.dataobject.id] = dobj.displayVersion
     const color = (selectedNodes.includes(dobj.displayVersion.dataobject.id.toString())) ? "purple" : "red"
+    let rootId = dobj.displayVersion.dataobject.id;
     let nodes = [{ id: dobj.displayVersion.dataobject.id,
                    color: color,
                    x: 300,
@@ -171,7 +174,21 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
     //   idToNodeMap[q.id] = q
     // }
 
+    // console.log(links);
 
+    const graph = {}
+    
+
+    for (let edge of links) {
+        let src = edge.source.toString();
+        let dest = edge.target.toString();
+        if (!graph.hasOwnProperty(dest)) {
+            graph[dest] = [src];
+        } else {
+            graph[dest] = [...graph[dest], src];
+        }
+    }
+    
     const data = {
         nodes: nodes,
         links: links,
@@ -205,7 +222,7 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
 
         },
     };
-
+    let validSubgraph = isValidSubgraph(graph, nodes, rootId, selectedNodes);
 
     return (
         <Card
@@ -213,11 +230,24 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
         elevation={0}
         display="flex"
       >
-        <Button 
-            disabled={selectedNodes.length === 0}
-            onClick={() =>setSelectedNodes([])}
-        >Reset Subgraph Selection
-        </Button>
+        <Pane background="tint1" flexDirection='column-reverse'>
+            <Button 
+                disabled={selectedNodes.length === 0}
+                onClick={() =>setSelectedNodes([])}
+            >Reset Subgraph Selection
+            </Button>
+            <Tooltip 
+                isShown={validSubgraph && selectedNodes.length > 0} 
+                content="please select a valid subgraph"
+            >
+                <Button 
+                    disabled={validSubgraph}
+                    onClick={() =>setSelectedNodes([])}
+                >Label Subgraph
+                </Button>
+            </Tooltip>
+        </Pane>
+        
         <Pane flex={1} background="tint1" padding={majorScale(1)}>
             <Graph
                 id="graph-id" // id is mandatory, if no id is defined rd3g will throw an error
