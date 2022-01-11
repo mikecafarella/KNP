@@ -11,7 +11,7 @@ export const isValidSubgraph = (
     selectedNodes: any[],
     ) => {
     // Valid Subgraph is defined as: being a graph where there is a single root and it is a complete sub tree
-    // compelete subtree means that it contains all the nodes in the original tree starting from the subtree root
+    // complete subtree means that it contains all the nodes in the original tree starting from the subtree root
     // visually: 
     //  x   x
     //   \ /
