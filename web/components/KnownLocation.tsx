@@ -325,7 +325,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
             <Heading size={600}>Provenance</Heading>
             <Paragraph>{subgraphSelectionInfoString}</Paragraph>
             <Popover display="flex" alignItems="center" justifyContent="center" flexDirection="column" 
-            content={({close}) => (
+            shouldCloseOnExternalClick='True' content={({close}) => (
             <Pane width="100%" elevation="4" height="40em" display="flex" padding={majorScale(1)} border>
             <Pane flex={1}>
             
@@ -480,7 +480,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
             </Pane>
             )}
             shouldCloseOnExternalClick={false}>
-            <Button>Selection details</Button>
+            <Button disabled={subgraphSelection}>Selection details</Button>
             </Popover>
             <Button onClick={toggleSubgraphSelection}>{getSelectSubgraphButtonText()}</Button>
             
