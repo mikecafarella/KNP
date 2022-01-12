@@ -30,6 +30,7 @@ s3 = boto3.resource('s3')
 
 OUTPUT_FOLDER = 'output'
 LAST_PROCESSED_INDEX_FILE = 'last_processed_index.json'
+LAST_PROCESSED_DOWNLOAD_FILE = 'last_processed_download.json'
 
 def get_series_ids():
     # get all the ids of the series we want to scrape ultimately 
@@ -75,7 +76,7 @@ def upload_series_to_s3():
     for i, (series_id, series_title) in enumerate(series_ids[starting_point:]):
         try:
             series_df = fred.get_series_df(series_id)
-            csv_name = "{title}.csv".format(title=series_title)
+            csv_name = "FRED/{title}.csv".format(title=series_title)
             csv_buffer = StringIO()
             series_df.to_csv(csv_buffer)
             s3.Object(BUCKET_NAME, csv_name).put(Body=csv_buffer.getvalue())
@@ -96,17 +97,36 @@ def save_last_good_query_index(index):
     with open(LAST_PROCESSED_INDEX_FILE, 'w') as lpi:
         json.dump({"index": index}, lpi)
 
-def download_series_from_s3(series_titles, logged_in=False):
+def download_series_from_s3(logged_in=False, local_dir=None):
     if not logged_in:
-        os.system("python3 ../cli/src/knps/knps.py --login_temp Steve")
+        os.system("python3 ../cli/src/knps/knps.py --login_temp syang199@gmail.com")
+        os.system("python3 ../cli/src/knps/knps.py --store True")
+
 
     if not os.path.isdir(OUTPUT_FOLDER):
         os.system("mkdir {dir}".format(dir=OUTPUT_FOLDER))
         os.system("python3 ../cli/src/knps/knps.py --watch {dir}".format(dir=OUTPUT_FOLDER))
 
-    for series_title in series_titles:
-        s3.Bucket(BUCKET_NAME).download_file(series_title, "{dir}/{csv}".format(dir=OUTPUT_FOLDER, csv=series_title))
-        os.system('python3 ../cli/src/knps/knps.py --sync') 
+    # can make this more granular, but would need a more significant refactor 
+    # credit here:  https://stackoverflow.com/questions/49772151/download-a-folder-from-s3-using-boto3
+
+    s3_folder = 'FRED'
+    bucket = s3.Bucket(BUCKET_NAME)
+    for obj in bucket.objects.filter(Prefix=s3_folder):
+        target = obj.key if local_dir is None \
+            else os.path.join(local_dir, os.path.relpath(obj.key, s3_folder))
+        if not os.path.exists(os.path.dirname(target)):
+            os.makedirs(os.path.dirname(target))
+        if obj.key[-1] == '/':
+            continue
+        bucket.download_file(obj.key, target)  
+        break  
+
+    # for series_title in series_titles:
+
+    #     # s3_key = "FRED/{}".format(series_title)
+    #     s3.Bucket(BUCKET_NAME).download_file(series_title, "{dir}/{csv}".format(dir=OUTPUT_FOLDER, csv=series_title))
+    #     # os.system('python3 ../cli/src/knps/knps.py --sync') 
 
 if __name__ == "__main__":
     testing = True
@@ -121,6 +141,7 @@ if __name__ == "__main__":
         upload_series_to_s3()
         # if testing:
         #     os.system("rm -r {}".format(OUTPUT_FOLDER))
-        # test = "Income Inequality in Tunica County, MS.csv"
-        # download_series_from_s3([test])
+        # test = "21-Year Expected Inflation.csv"
+        # download_series_from_s3(False, OUTPUT_FOLDER)
+
         # insert_data_into_knps()
