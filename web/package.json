@@ -15,6 +15,7 @@
   "dependencies": {
     "@dagrejs/graphlib": "^2.1.4",
     "@prisma/client": "2.11.0",
+    "crypto-js": "^4.1.1",
     "d3": "^5.16.0",
     "elasticsearch": "^16.7.2",
     "evergreen": "^0.3.2",

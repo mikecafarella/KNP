@@ -1,3 +1,6 @@
+import KnownLocation, { KnownLocationProps } from "./KnownLocation";
+import MD5 from "crypto-js/md5";
+
 export const isValidSubgraph = (
     graph, 
     nodes:  {
@@ -99,4 +102,47 @@ export const isValidSubgraph = (
     }    
     return (numIterations <= 1);
 }
+
+export const isValidSubgraphKnownLocations = (
+    selectedSubgraphNodes: any[],
+    dobj: KnownLocationProps
+) => {
+    // returns true if every node after once we begin to check for connectivity is selected
+    if (selectedSubgraphNodes.length === 0 ) {
+        return false;
+    }
+    let descendentData = dobj.descendentData;
+    let visited = {}
+    for (let node of selectedSubgraphNodes) {
+        visited[node] = false;
+    }
+    let beginConnectivityCheck = false;
+    let nodeCount = 1;
+
+    let queue = [descendentData];
+    while (queue.length > 0) {
+        if (beginConnectivityCheck) {
+            nodeCount++;
+        }
+        let node  = queue.shift();
+        let identifier = (node.md5hash) ? node.md5hash : MD5(node.startedOn).toString();
+        // checking to see if we have a valid start
+        // TODO: I am unsure if we also want to include Sharing events as valid starts as well
+        if (selectedSubgraphNodes.includes(identifier) 
+            && !beginConnectivityCheck 
+            && (node.kind === 'FileObservation' || node.kind === 'SharingEvent')
+            ) {
+            beginConnectivityCheck = true;
+        }
+        if (beginConnectivityCheck && !selectedSubgraphNodes.includes(identifier)) {
+            return false;
+        }
+        for (let child of node.children) {
+            queue.push(child)
+        }
+
+    }
+    return beginConnectivityCheck && nodeCount > 1;
+}
+
 
