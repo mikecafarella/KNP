@@ -6,7 +6,7 @@ import { readString } from 'react-papaparse';
 import { majorScale, Pre, Popover, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table, Badge } from 'evergreen-ui'
 import Tree from 'react-d3-tree'
 import MD5 from "crypto-js/md5";
-import { isValidSubgraphKnownLocations } from './Utils';
+import { isValidSubgraphKnownLocations, getMD5} from './Utils';
 import SubgraphLabel from './SubgraphLabel';
 
 
@@ -43,17 +43,18 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   const [selectedSubgraphNodes, setSelectedSubgraphNodes] = useState([]);
   const [label, setLabel] = useState("");
 
-  const getMD5 = (nodeDatum) => {
-    let md5;
-    if (nodeDatum.md5hash) {
-      md5 = nodeDatum.md5hash;
-    } else if (nodeDatum.startedOn) {
-      md5 = MD5(nodeDatum.startedOn).toString();
-    } else {
-      md5 = MD5(nodeDatum.receivedOnOrBefore).toString();
-    }
-    return md5;
-  }
+
+  // const getMD5 = (nodeDatum) => {
+  //   let md5;
+  //   if (nodeDatum.md5hash) {
+  //     md5 = nodeDatum.md5hash;
+  //   } else if (nodeDatum.startedOn) {
+  //     md5 = MD5(nodeDatum.startedOn).toString();
+  //   } else {
+  //     md5 = MD5(nodeDatum.receivedOnOrBefore).toString();
+  //   }
+  //   return md5;
+  // }
 
   const selectNode = (nodeDatum) => {
     if (!subgraphSelection) {

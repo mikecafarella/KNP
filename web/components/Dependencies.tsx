@@ -228,7 +228,8 @@ const Dependencies: React.FC<{dobj: DataobjProps}> = ({dobj}) => {
     };
     // a little confusing, should change this so more readable, but valid subgraph returns true if the button should be
     // disabled, ie not a valid subgraph
-    let inValidSubgraph = isValidSubgraph(graph, nodes, rootId, selectedNodes);
+    let nodeIds = nodes.map(node => node.id);
+    let inValidSubgraph = isValidSubgraph(graph, nodeIds, rootId, selectedNodes);
     let subgraphLabelChooser = inValidSubgraph ? 
         <></> : 
         <SubgraphLabel 
