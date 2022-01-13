@@ -31,6 +31,8 @@ s3 = boto3.resource('s3')
 OUTPUT_FOLDER = 'output'
 LAST_PROCESSED_INDEX_FILE = 'last_processed_index.json'
 LAST_PROCESSED_DOWNLOAD_FILE = 'last_processed_download.json'
+LAST_PROCESSED_METADATA_INDEX_FILE = 'last_processed_metadata_index.json'
+FRED_URL_PREFIX_PATH = 'https://fred.stlouisfed.org/series'
 
 def get_series_ids():
     # get all the ids of the series we want to scrape ultimately 
@@ -61,13 +63,11 @@ def get_series_ids():
         pickle.dump(list(series_ids), f)
     print("done")
 
+# upload csv of series to s3 bucket
 def upload_series_to_s3():
     # upload csvs to aws s3 bucket
-    starting_point = 110
-    if os.path.isfile(LAST_PROCESSED_INDEX_FILE):
-        with open(LAST_PROCESSED_INDEX_FILE, 'r') as lpi:
-            starting_point = json.load(lpi)['index']
-
+    
+    starting_point = get_starting_point(LAST_PROCESSED_INDEX_FILE)
     # respect API rate limits
     batch_size = 120
     with open(SERIES_PICKLE_FILE, 'rb') as f:
@@ -85,17 +85,61 @@ def upload_series_to_s3():
                 time.sleep(60)
         # if I want to stop, this will let me know where the program needs to pick up again
         except KeyboardInterrupt:
-            save_last_good_query_index(i+starting_point)
+            save_last_good_query_index(i+starting_point, LAST_PROCESSED_INDEX_FILE)
             break
         # handle any other exception, namely API limit reached 
         except:
-            save_last_good_query_index(i+starting_point)
+            save_last_good_query_index(i+starting_point, LAST_PROCESSED_INDEX_FILE)
             break
     print('done {}/{} index : {}'.format(i+starting_point+1, len(series_ids), i+starting_point))
 
-def save_last_good_query_index(index):
-    with open(LAST_PROCESSED_INDEX_FILE, 'w') as lpi:
+
+# upload series metadat to s3 bucket
+def upload_series_metadata_to_s3():
+    with open(LAST_PROCESSED_INDEX_FILE, 'r') as epi:
+        ending_point = json.load(epi)['index']
+    starting_point = get_starting_point(LAST_PROCESSED_METADATA_INDEX_FILE)     
+    # respect API rate limits
+    batch_size = 120
+    with open(SERIES_PICKLE_FILE, 'rb') as f:
+        series_ids = pickle.load(f)
+    print("{}/{} index start {}".format(starting_point+1, len(series_ids), starting_point))
+    for i, (series_id, series_title) in enumerate(series_ids[starting_point:]):
+        try:
+            series_metadata = fred.get_a_series(series_id)
+            series_url = "{}/{}".format(FRED_URL_PREFIX_PATH, series_id)
+            series_metadata.setdefault('url', series_url)
+            s3_key = "FRED-METADATA/{}.json".format(series_title)
+            s3_body = json.dumps(series_metadata)
+            s3.Object(BUCKET_NAME, s3_key).put(Body=s3_body)
+            if (i+1)%batch_size == 0:
+                print('nap time!')
+                time.sleep(60)
+            if i == ending_point:
+                print("We caught up")
+                break
+        # if I want to stop, this will let me know where the program needs to pick up again
+        except KeyboardInterrupt:
+            save_last_good_query_index(i+starting_point, LAST_PROCESSED_METADATA_INDEX_FILE)
+            break
+        # handle any other exception, namely API limit reached 
+        except:
+            save_last_good_query_index(i+starting_point, LAST_PROCESSED_METADATA_INDEX_FILE)
+            break
+        
+    print('done {}/{} index : {}'.format(i+starting_point+1, len(series_ids), i+starting_point))
+
+def save_last_good_query_index(index, file_name):
+    with open(file_name, 'w') as lpi:
         json.dump({"index": index}, lpi)
+
+def get_starting_point(index_file):
+    starting_point = 0
+    if os.path.isfile(index_file):
+        with open(index_file, 'r') as lpi:
+            starting_point = json.load(lpi)['index']
+    return starting_point
+
 
 def download_series_from_s3(logged_in=False, local_dir=None):
     if not logged_in:
@@ -138,7 +182,8 @@ if __name__ == "__main__":
         # for i in s3.Bucket(BUCKET_NAME).objects.all():
         #     count += 1
         # print(count)
-        upload_series_to_s3()
+        # upload_series_to_s3()
+        upload_series_metadata_to_s3()
         # if testing:
         #     os.system("rm -r {}".format(OUTPUT_FOLDER))
         # test = "21-Year Expected Inflation.csv"
