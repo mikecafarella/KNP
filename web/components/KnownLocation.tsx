@@ -42,19 +42,8 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   const [subgraphSelection, setSubgraphSelection] = useState(false);
   const [selectedSubgraphNodes, setSelectedSubgraphNodes] = useState([]);
   const [label, setLabel] = useState("");
-
-
-  // const getMD5 = (nodeDatum) => {
-  //   let md5;
-  //   if (nodeDatum.md5hash) {
-  //     md5 = nodeDatum.md5hash;
-  //   } else if (nodeDatum.startedOn) {
-  //     md5 = MD5(nodeDatum.startedOn).toString();
-  //   } else {
-  //     md5 = MD5(nodeDatum.receivedOnOrBefore).toString();
-  //   }
-  //   return md5;
-  // }
+  const [makeOwnLabel, setMakeOwnLabel] = useState(false);
+  const [customLabel, setCustomLabel] = useState('');
 
   const selectNode = (nodeDatum) => {
     if (!subgraphSelection) {
@@ -156,7 +145,11 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
       <SubgraphLabel 
         subgraphNodeIds={selectedSubgraphNodes}
         label={label}
-        setLabel={setLabel}/>
+        setLabel={setLabel}
+        customLabel={customLabel}
+        setCustomLabel={setCustomLabel}
+        makeOwnLabel={makeOwnLabel}
+        setMakeOwnLabel={setMakeOwnLabel}/>
       <Paragraph>
           Subgraph Label for your selected subgraph: {labelBadge}
       </Paragraph>
