@@ -158,6 +158,10 @@ export const isValidSubgraphKnownLocations = (
         let node  = queue.shift();
         let identifier = getMD5(node);
         if (identifier === srcID) {
+            //found the start, it must be a file observation
+            if (node.kind !== 'FileObservation') {
+                return false
+            }
             foundSrc = true;
         }
         if (!selectedSubgraphNodes.includes(identifier) && foundSrc) {
