@@ -182,7 +182,6 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
           <svg height="50" y="-25" x="-10" width="50">
               {/* <rect width="40" height="40" y="-20"
                 fill='purple'>
-
               </rect> */}
               <polygon points="0,0 0,50 50,25"
               fill={isSelected(nodeDatum) ? 'yellow' : 'lightgrey'}
@@ -200,7 +199,6 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
             <tspan x="40" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
             <tspan x="40" dy="1.2em">Started on: {nodeDatum.startedOn}</tspan>          
           </text>
-          <Button>Test</Button>
         </g> 
       }
       
