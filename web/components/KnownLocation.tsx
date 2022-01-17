@@ -6,7 +6,7 @@ import { readString } from 'react-papaparse';
 import { majorScale, Pre, Popover, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table, Badge } from 'evergreen-ui'
 import Tree from 'react-d3-tree'
 import MD5 from "crypto-js/md5";
-import { isValidSubgraphKnownLocations, getMD5} from './Utils';
+import { isValidSubgraphKnownLocations, getMD5 } from './Utils';
 import SubgraphLabel from './SubgraphLabel';
 
 
@@ -16,6 +16,15 @@ export type FileProps = {
   modified: string;
   owner: string;
   isLatest: number;
+}
+
+export type SubgraphProps = {
+  uuid: string;
+  label: string;
+  subgraphRootMD5: string;
+  owner: string;
+  subgraphNodeMD5s: string[];
+  modified: string;
 }
 
 export type KnownLocationProps = {
@@ -29,6 +38,7 @@ export type KnownLocationProps = {
   isLatest: number;
   md5hash: string;
   nearDuplicates: FileProps[];
+  subgraphs: SubgraphProps[];
 }
 
 const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
@@ -36,7 +46,6 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   const datasetLink = "/dataset/" + (dobj.datasets.length > 0 ? dobj.datasets[0].uuid : "")
   const previousLink = "/knownlocation/" + dobj.prevId
   const nextLink = "/knownlocation/" + dobj.nextId
-
   const [highlightedNode, setHighlightedNode] = useState("")
   const [selectedNode, setSelectedNode] = useState("")  
   const [subgraphSelection, setSubgraphSelection] = useState(false);
@@ -137,19 +146,24 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
 
   const subgraphSelectionInfoString = (subgraphSelection) ? 'You are now in subgraph selection mode' : '';
 
-  let isValidSubgraph = isValidSubgraphKnownLocations(selectedSubgraphNodes, dobj);
+  let isValidSubgraphObj = isValidSubgraphKnownLocations(selectedSubgraphNodes, dobj);
+  let validSubgraph = isValidSubgraphObj.validSubgraph;
+  let rootNodeName = isValidSubgraphObj.rootNode;
   let labelBadge = (label) ? <Badge color='blue'>{label}</Badge> : '';
 
-  const subGraphLabeling = (isValidSubgraph) ? 
+  const subGraphLabeling = (validSubgraph) ? 
     <Pane>
       <SubgraphLabel 
-        subgraphNodeIds={selectedSubgraphNodes}
+        selectedSubgraphNodes={selectedSubgraphNodes}
+        setSelectedSubgraphNodes={setSelectedSubgraphNodes}
         label={label}
         setLabel={setLabel}
         customLabel={customLabel}
         setCustomLabel={setCustomLabel}
         makeOwnLabel={makeOwnLabel}
-        setMakeOwnLabel={setMakeOwnLabel}/>
+        setMakeOwnLabel={setMakeOwnLabel}
+        dobjID={dobj.id}
+        rootNodeName={rootNodeName}/>
       <Paragraph>
           Subgraph Label for your selected subgraph: {labelBadge}
       </Paragraph>
@@ -164,13 +178,18 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
         <g>
       {(nodeDatum.kind == 'ProcessObservation') &&
         <g>
-        <svg height="50" y="-25" x="-10" width="50">
-          <polygon points="0,0 0,50 50,25"
-          fill={isSelected(nodeDatum) ? 'yellow' : 'lightgrey'}
-          stroke="black" stroke-width={(shouldHighlight(nodeDatum)) ? "4" : "1"}
-          onMouseOut={()=>setHighlightedNode("")}
-          onMouseOver={()=>highLightNode(nodeDatum)} onClick={()=>selectNode(nodeDatum)}></polygon>
-        </svg>
+
+          <svg height="50" y="-25" x="-10" width="50">
+              {/* <rect width="40" height="40" y="-20"
+                fill='purple'>
+
+              </rect> */}
+              <polygon points="0,0 0,50 50,25"
+              fill={isSelected(nodeDatum) ? 'yellow' : 'lightgrey'}
+              stroke="black" stroke-width={(shouldHighlight(nodeDatum)) ? "4" : "1"}
+              onMouseOut={()=>setHighlightedNode("")}
+              onMouseOver={()=>highLightNode(nodeDatum)} onClick={()=>selectNode(nodeDatum)}></polygon>
+            </svg>
 
         <text font-family="Arial, Helvetica, sans-serif" 
           fill="blue" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)} strokeWidth="1" y="-20" x="40">
@@ -181,7 +200,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
             <tspan x="40" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
             <tspan x="40" dy="1.2em">Started on: {nodeDatum.startedOn}</tspan>          
           </text>
-
+          <Button>Test</Button>
         </g> 
       }
       

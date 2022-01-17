@@ -118,7 +118,7 @@ export const isValidSubgraphKnownLocations = (
     dobj: KnownLocationProps
 ) => {
     if (selectedSubgraphNodes.length <= 1 ) {
-        return false;
+        return {validSubgraph: false, rootNode: 'invalid'};
     }
     let descendentData = dobj.descendentData;
     let visited = {}
@@ -149,29 +149,31 @@ export const isValidSubgraphKnownLocations = (
         }
     }
     if (src.length > 1) {
-        return false;
+        return {validSubgraph: false, rootNode: src[0]};
     }
     let foundSrc = false;
     queue = [descendentData];
     let srcID = src[0];
+    let rootNodeName;
     while (queue.length > 0) {        
         let node  = queue.shift();
         let identifier = getMD5(node);
         if (identifier === srcID) {
             //found the start, it must be a file observation
             if (node.kind !== 'FileObservation') {
-                return false
+                return {validSubgraph: false, rootNode: 'invalid'}
             }
             foundSrc = true;
+            rootNodeName = node.shortName;
         }
         if (!selectedSubgraphNodes.includes(identifier) && foundSrc) {
-            return false;
+            return {validSubgraph: false, rootNode: 'invalid'};
         }
         if (visited.hasOwnProperty(identifier)) {
             visited[identifier] = true;
             // if we have visited all nodes in our subgraph 
-            if (node.kind === 'FileObservation' && Object.values(visited).reduce((ans, cur) => cur && ans, true)) {
-                return true;
+            if (node.kind === 'FileObservation' && Object.values(visited).reduce((ans, cur) => cur && ans, true) && foundSrc) {
+                return {validSubgraph: true, rootNode: rootNodeName}
             }
         }
         for (let child of node.children) {
@@ -179,7 +181,7 @@ export const isValidSubgraphKnownLocations = (
         }
 
     }
-    return true;
+    return {validSubgraph: true, rootNode: rootNodeName};
 }
 
 

@@ -634,6 +634,45 @@ class GraphDB:
                                   owner=username,
                                   modified=time.time())
             return results
+    
+    def addSubgraph(self, nodeId, username, subgraphNodeMD5s, subgraphRootName, label):
+        with self.driver.session() as session:
+            result = session.run("MATCH (a {uuid: $nodeId}) "
+                                 "WHERE NOT EXISTS {MATCH (a)-[:HasSubgraph]->(b:Subgraph{subgraphNodeMD5s: apoc.convert.toJson($subgraphNodes)})} "
+                                 "CREATE (a)-[r:HasSubgraph]->(b:Subgraph {uuid: apoc.create.uuid(), label: $label, subgraphRootName: $subgraphRootName, subgraphNodeMD5s: apoc.convert.toJson($subgraphNodeMD5s), owner: $owner, modified: $modified}) "
+                                 "RETURN b",
+                                 nodeId=nodeId,
+                                 label=label,
+                                 subgraphRootName=subgraphRootName,
+                                 subgraphNodes = subgraphNodeMD5s,
+                                 owner=username,
+                                 subgraphNodeMD5s=subgraphNodeMD5s,
+                                 modified=time.time())
+            return result.value()
+    
+    def updateSubgraph(self, nodeId, label, newLabel, username, subgraphNodeMD5s):
+        with self.driver.session() as session:
+            result = session.run("MATCH (a {uuid: $nodeId})-[r:HasSubgraph]->(b:Subgraph{label: $label, subgraphNodeMD5s: apoc.convert.toJson($subgraphNodeMD5s)}) "
+                                 "SET b.label = $newLabel "
+                                 "SET b.owner = $owner "
+                                 "SET b.modified = $modified "
+                                 "RETURN b",
+                                 nodeId=nodeId,
+                                 label=label,
+                                 owner=username,
+                                 newLabel=newLabel,
+                                 subgraphNodeMD5s=subgraphNodeMD5s,
+                                 modified=time.time())
+            return result
+    
+    def getSubgraphsForNode(self, nodeId):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a {uuid: $nodeId})-[r:HasSubgraph]->(b:Subgraph) "
+                                  "RETURN properties(b) "
+                                  "ORDER BY b.modified DESC",
+                                  nodeId=nodeId)
+            ret = [x[0] for x in results]
+            return ret
 
     def createNearColumnMatches(self):
         with self.driver.session() as session:
@@ -1688,6 +1727,7 @@ def show_knownlocationdata(fileid):
     print("Descendenats", len(kl["descendentData"]))
           
     kl["datasets"] = GDB.getDatasetInfoByContent(md5hash)
+    kl['subgraphs'] = GDB.getSubgraphsForNode(fileid)
 
     #x = GDB.getFileObservationHistoryGraph(filename, owner)
 
@@ -1809,6 +1849,22 @@ def add_comment(id):
     incomingReq = json.loads(request.get_json())
     result = GDB.addComment(incomingReq["uuid"], incomingReq["value"], "")
     return get_comments(incomingReq["uuid"])
+
+#
+# MANAGE SUBGRAPHS (subgraph selection for provenance graph)
+#
+@app.route('/subgraphs<id>')
+def get_subgraphs(id):
+    kl = {"subgraphs": GDB.getSubgraphsForNode(id)}
+    return json.dumps(kl)
+
+@app.route('/addsubgraph/<id>', methods=["POST"])
+def add_subgraph(id):
+    print("ADDING subgraph", "")
+    incomingReq = json.loads(request.get_json())
+    print(type(incomingReq['subgraphNodeMD5s']))
+    result = GDB.addSubgraph(incomingReq['uuid'], "", incomingReq['subgraphNodeMD5s'], incomingReq['subgraphRootName'], incomingReq['label'])
+    return get_subgraphs(incomingReq['uuid'])
 
 #
 # UPLOADS: Accept an upload of a set of file observations
