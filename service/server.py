@@ -1860,9 +1860,7 @@ def get_subgraphs(id):
 
 @app.route('/addsubgraph/<id>', methods=["POST"])
 def add_subgraph(id):
-    print("ADDING subgraph", "")
     incomingReq = json.loads(request.get_json())
-    print(type(incomingReq['subgraphNodeMD5s']))
     result = GDB.addSubgraph(incomingReq['uuid'], "", incomingReq['subgraphNodeMD5s'], incomingReq['subgraphRootName'], incomingReq['label'])
     return get_subgraphs(incomingReq['uuid'])
 
