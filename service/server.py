@@ -638,8 +638,8 @@ class GraphDB:
     def addSubgraph(self, nodeId, username, subgraphNodeMD5s, subgraphRootName, label):
         with self.driver.session() as session:
             result = session.run("MATCH (a {uuid: $nodeId}) "
-                                 "WHERE NOT EXISTS {MATCH (a)-[:HasSubgraph]->(b:Subgraph{subgraphNodeMD5s: apoc.convert.toJson($subgraphNodes)})} "
-                                 "CREATE (a)-[r:HasSubgraph]->(b:Subgraph {uuid: apoc.create.uuid(), label: $label, subgraphRootName: $subgraphRootName, subgraphNodeMD5s: apoc.convert.toJson($subgraphNodeMD5s), owner: $owner, modified: $modified}) "
+                                 "WHERE NOT EXISTS {MATCH (a)-[:HasSubgraph]->(b:Subgraph{subgraphNodeMD5s: $subgraphNodes})} "
+                                 "CREATE (a)-[r:HasSubgraph]->(b:Subgraph {uuid: apoc.create.uuid(), label: $label, subgraphRootName: $subgraphRootName, subgraphNodeMD5s: $subgraphNodeMD5s, owner: $owner, modified: $modified}) "
                                  "RETURN b",
                                  nodeId=nodeId,
                                  label=label,
@@ -652,7 +652,7 @@ class GraphDB:
     
     def updateSubgraph(self, nodeId, label, newLabel, username, subgraphNodeMD5s):
         with self.driver.session() as session:
-            result = session.run("MATCH (a {uuid: $nodeId})-[r:HasSubgraph]->(b:Subgraph{label: $label, subgraphNodeMD5s: apoc.convert.toJson($subgraphNodeMD5s)}) "
+            result = session.run("MATCH (a {uuid: $nodeId})-[r:HasSubgraph]->(b:Subgraph{label: $label, subgraphNodeMD5s: $subgraphNodeMD5s}) "
                                  "SET b.label = $newLabel "
                                  "SET b.owner = $owner "
                                  "SET b.modified = $modified "
@@ -672,7 +672,12 @@ class GraphDB:
                                   "ORDER BY b.modified DESC",
                                   nodeId=nodeId)
             ret = [x[0] for x in results]
-            return ret
+            final = {}
+            for node in ret:
+                final.setdefault(node['subgraphRootName'], {})
+                final[node['subgraphRootName']].setdefault(node['label'], [])
+                final[node['subgraphRootName']][node['label']].append(node)
+            return final
 
     def createNearColumnMatches(self):
         with self.driver.session() as session:
@@ -1855,13 +1860,16 @@ def add_comment(id):
 #
 @app.route('/subgraphs<id>')
 def get_subgraphs(id):
-    kl = {"subgraphs": GDB.getSubgraphsForNode(id)}
-    return json.dumps(kl)
+    kl = GDB.getSubgraphsForNode(id)
+    return json.dumps({"subgraphs":kl})
 
-@app.route('/addsubgraph/<id>', methods=["POST"])
+@app.route('/addsubgraph/<id>', methods=["POST", "PUT"])
 def add_subgraph(id):
     incomingReq = json.loads(request.get_json())
-    result = GDB.addSubgraph(incomingReq['uuid'], "", incomingReq['subgraphNodeMD5s'], incomingReq['subgraphRootName'], incomingReq['label'])
+    if (request.method == 'POST'):
+        result = GDB.addSubgraph(incomingReq['uuid'], "", incomingReq['subgraphNodeMD5s'], incomingReq['subgraphRootName'], incomingReq['label'])
+    elif (request.method == "PUT"):
+        result = GDB.updateSubgraph(incomingReq['uuid'], incomingReq["oldLabel"], incomingReq["newLabel"], "", incomingReq['subgraphNodeMD5s'])
     return get_subgraphs(incomingReq['uuid'])
 
 #

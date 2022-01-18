@@ -1,9 +1,16 @@
 import React, { useState, useEffect} from 'react'
-import { Autocomplete, TextInput, Combobox, Button, Tooltip, Dialog, Popover, Overlay, Pane} from 'evergreen-ui'
+import { Autocomplete, TextInput, Button, Dialog, SelectMenu} from 'evergreen-ui'
+import { SubgraphProps, SelectedLabeledGraph, SubgraphNodeProps } from './KnownLocation';
+import { arrayEquals } from './Utils';
 // import { flex } from 'ui-box';
 const SubgraphLabel: React.FC<{
+    validSubgraph: boolean,
     selectedSubgraphNodes: any[], 
     setSelectedSubgraphNodes: (selectedSubgraphNodes: any[]) => void,
+    selectedLabeledSubgraph: SelectedLabeledGraph,
+    setSelectedLabeledSubgraph: (selectedLabeledSubgraph: SelectedLabeledGraph) => void,
+    labeledSubgraphs: SubgraphProps,
+    setLabeledSubgraphs: (labeledSubgraphs: SubgraphProps) => void,
     label: string, 
     setLabel: (label: string)=>void,
     makeOwnLabel: boolean,
@@ -12,36 +19,102 @@ const SubgraphLabel: React.FC<{
     setCustomLabel: (customLabel: string) => void,
     dobjID: string,
     rootNodeName: string,
-
-}> = ({selectedSubgraphNodes, setSelectedSubgraphNodes, label, setLabel, makeOwnLabel, setMakeOwnLabel, customLabel, setCustomLabel, dobjID, rootNodeName}) => {
-    // we would replace this with an API call to get a good set of labels to autocomplete
-    // should be put in knownlocation[id].tsx in get serverside props potentially as well
+    selectedLabeledSubgraphRootNode: string,
+    setSelectedLabeledSubgraphRootNode: (selectedLabeledSubgraphRootNode: string) => void,
+    selectedLabeledSubgraphLabel: string,
+    setSelectedLabeledSubgraphLabel: (selectedLabeledSubgraphLabel: string) => void,
+    selectedLabeledSubgraphIndexNum: string, 
+    setSelectedLabeledSubgraphIndexNum: (selectedLabeledSubgraphIndexNum: string) => void,
+}> = ({validSubgraph, 
+       selectedSubgraphNodes, setSelectedSubgraphNodes, 
+       labeledSubgraphs, setLabeledSubgraphs, 
+       label, setLabel, 
+       makeOwnLabel, setMakeOwnLabel, 
+       customLabel, setCustomLabel, 
+       dobjID, 
+       rootNodeName,
+       selectedLabeledSubgraph, setSelectedLabeledSubgraph,
+       selectedLabeledSubgraphRootNode, setSelectedLabeledSubgraphRootNode,
+       selectedLabeledSubgraphLabel, setSelectedLabeledSubgraphLabel,
+       selectedLabeledSubgraphIndexNum, setSelectedLabeledSubgraphIndexNum,
+    }) => {
     const subgraphsUrl = '/api/subgraphs/' + dobjID;
+
+    const handleResetLabeledSelection = () => {
+        setSelectedLabeledSubgraphRootNode('');
+        setSelectedLabeledSubgraphLabel('');
+        setSelectedLabeledSubgraphIndexNum('');
+        setSelectedLabeledSubgraph(null);
+    }
+
+    const haveLabeledInThePast = () => {
+        let selectedNodes = [...selectedSubgraphNodes].sort();
+        for (let rootNodeName of Object.keys(labeledSubgraphs)) {
+            for (let labelName of Object.keys(labeledSubgraphs[rootNodeName])) {
+                let subgraphInfos: SubgraphNodeProps[] = labeledSubgraphs[rootNodeName][labelName]
+                for (let subgraphInfo of subgraphInfos) {
+                    if (arrayEquals(subgraphInfo.subgraphNodeMD5s, selectedNodes)) {
+                        return {labeledInPast: true, oldLabel: subgraphInfo.label};
+                    }
+                }
+            }
+        }
+        return {labeledInPast: false, oldLabel: 'invalid'};
+    }
+    const labeledInThePastObj = haveLabeledInThePast();
     const submitSubgraph = async () => {
         let subgraphLabel = (customLabel) ? customLabel: label;
         let selectedNodes = [...selectedSubgraphNodes].sort();
-        await fetch(subgraphsUrl, {
-            method: "POST",
-            body: JSON.stringify({
-                "uuid": dobjID,
-                'subgraphNodeMD5s': selectedNodes,
-                'label': subgraphLabel,
-                'subgraphRootName': rootNodeName,
-            }),
-        });
+        let res; 
+        if (labeledInThePastObj.labeledInPast || selectedLabeledSubgraph) {
+            if (selectedLabeledSubgraph) {
+                selectedNodes = selectedLabeledSubgraph.subgraphNodeMD5s;
+            }
+            let oldLabel = (selectedLabeledSubgraph) ? selectedLabeledSubgraphLabel: labeledInThePastObj.oldLabel
+            res = await fetch(subgraphsUrl, {
+                method: "PUT",
+                body: JSON.stringify({
+                    "uuid": dobjID,
+                    "subgraphNodeMD5s": selectedNodes,
+                    "oldLabel": oldLabel,
+                    "newLabel": subgraphLabel,
+                }),
+            }).then(res=>res.json());
+        } else {
+            res = await fetch(subgraphsUrl, {
+                method: "POST",
+                body: JSON.stringify({
+                    "uuid": dobjID,
+                    'subgraphNodeMD5s': selectedNodes,
+                    'label': subgraphLabel,
+                    'subgraphRootName': rootNodeName,
+                }),
+            }).then(res => res.json());
+        }
+        setLabeledSubgraphs(res.subgraphs);
+        if (selectedLabeledSubgraph && Object.keys(selectedLabeledSubgraph).length > 0) {
+            handleResetLabeledSelection();
+        }
         setLabel('');
         setSelectedSubgraphNodes([]);
         if (customLabel) {
             exitDialog();
         }
     }
+    //TODO: replaced with API call to recommended labels
     let items = ['Test', 'Jest', 'Rest', 'Teests', 'Jeeps'];
-    const submitLabelButton = (label) ? <Button onClick={submitSubgraph} >Submit Subgraph Label</Button> : <></>
+
+    const submitLabelButton = (label) ? <Button onClick={submitSubgraph} >{(labeledInThePastObj.labeledInPast || selectedLabeledSubgraph) ? "Update Subgraph Label " : "Submit Subgraph Label"}</Button> : <></>
     const exitDialog = () => {
         setMakeOwnLabel(false);
         setCustomLabel('');
     }
-    return (
+
+    const handleResetUserSelection = () => {
+        setSelectedSubgraphNodes([]);
+        setLabel('');
+    }        
+    const labelComponent = (validSubgraph || selectedLabeledSubgraph) ? 
         <>
             <Autocomplete
                 title="Label"
@@ -51,16 +124,19 @@ const SubgraphLabel: React.FC<{
                 {props => {
                     const { getInputProps, getRef, inputValue, openMenu } = props
                     return (
-                        <TextInput
-                        placeholder="Label"
-                        value={inputValue}
-                        ref={getRef}
-                        {...getInputProps({
-                            onFocus: () => {
-                            openMenu()
-                            }
-                        })}
-                        />
+                        <>
+                            <TextInput
+                            placeholder="Label"
+                            value={inputValue}
+                            ref={getRef}
+                            {...getInputProps({
+                                onFocus: () => {
+                                openMenu()
+                                }
+                            })}
+                            />
+                            <Button onClick={handleResetUserSelection} disabled={selectedSubgraphNodes.length === 0}>Clear your Current Subgraph Selection</Button>
+                        </>
                     )
                 }}
             </Autocomplete>
@@ -75,8 +151,99 @@ const SubgraphLabel: React.FC<{
             >
                 <TextInput onChange={e => setCustomLabel(e.target.value)}/>
             </Dialog>
-            <Button appearance='minimal' onClick={()=>setMakeOwnLabel(true)}>Submit Your Own Label </Button>
-            {/* We can use this button later on to generate code for a specific label */}
+            <Button appearance='minimal' onClick={()=>setMakeOwnLabel(true)}>{(labeledInThePastObj.labeledInPast || selectedLabeledSubgraph)? "Update Label with Your Own Label" : "Submit Your Own Label" }</Button>
+
+        </>
+        :
+        <> </>;
+
+
+    // const viewLabeledSubgraphs = (labeledSubgraphs) ? 
+    const handleSelectedLabelSelection = (item) => {
+        setSelectedLabeledSubgraphLabel(item.value);
+        if (labeledSubgraphs[selectedLabeledSubgraphRootNode][item.value].length === 1) {
+            const selected = {
+                "subgraphNodeMD5s":labeledSubgraphs[selectedLabeledSubgraphRootNode][item.value][0].subgraphNodeMD5s,
+                "rootNode":labeledSubgraphs[selectedLabeledSubgraphRootNode][item.value][0].subgraphRootName
+            }
+            setSelectedLabeledSubgraph(selected);
+        }
+    }
+
+    const handleSelectedIndexNumSelection = (item) => {
+        setSelectedLabeledSubgraphIndexNum(item.value);
+        let indexNum = parseInt(item.value);
+        const selected = {
+            "subgraphNodeMD5s":labeledSubgraphs[selectedLabeledSubgraphRootNode][selectedLabeledSubgraphLabel][indexNum].subgraphNodeMD5s,
+            "rootNode":labeledSubgraphs[selectedLabeledSubgraphRootNode][selectedLabeledSubgraphLabel][indexNum].subgraphRootName
+        }
+        setSelectedLabeledSubgraph(selected);
+    }
+
+    const subgraphRootMenu = (Object.keys(labeledSubgraphs).length > 0 && selectedSubgraphNodes.length === 0) ? 
+    <SelectMenu 
+        title="Subgraph Root Node"
+        options={Object.keys(labeledSubgraphs).map((label) => ({ label, value: label }))}
+        selected={selectedLabeledSubgraphRootNode}
+        onSelect={(item) => setSelectedLabeledSubgraphRootNode(item.value)}>
+            <Button >{selectedLabeledSubgraphRootNode || "Select Root Node for Subgraph..."}</Button>
+    </SelectMenu> :
+    <></>;
+    
+    const subgraphLabelMenu = (selectedLabeledSubgraphRootNode) ?
+    <SelectMenu 
+        title="Subgraph Label"
+        options={Object.keys(labeledSubgraphs[selectedLabeledSubgraphRootNode]).map((label) => ({ label, value: label }))}
+        selected={selectedLabeledSubgraphLabel}
+        onSelect={handleSelectedLabelSelection}
+    >
+        <Button>{selectedLabeledSubgraphLabel || "Select Label For Subgraph..."}</Button>
+    </SelectMenu> :
+    <> </>;
+
+    let length = 0;
+    if (selectedLabeledSubgraphLabel && selectedLabeledSubgraphRootNode) {
+        try {
+            length = labeledSubgraphs[selectedLabeledSubgraphRootNode][selectedLabeledSubgraphLabel].length;
+            // this is admittedly very hacky, there's an issue with the state being reset after submitting a label
+        }  catch (TypeError) {
+            length = 0;
+            handleResetLabeledSelection();
+        }      
+
+    }
+    // if there are more than one set of nodes for a root, we need to choose which index number to use 
+    const subgraphLabelIndexNum = (selectedLabeledSubgraphLabel && selectedLabeledSubgraphRootNode && length > 1) ? 
+    <SelectMenu 
+        title="Subgraph Label Graph Num"
+        options={Array.from(Array(length).keys()).map((num)=> {
+            let label = num.toString();
+            return {label, value: label};
+        })}
+        selected={selectedLabeledSubgraphIndexNum}
+        onSelect={handleSelectedIndexNumSelection}
+    >
+        <Button>{selectedLabeledSubgraphIndexNum || "Select Number For Subgraph..."}</Button>
+    </SelectMenu> :
+    <> </>;
+
+
+    return (
+        <>
+        {subgraphRootMenu}
+        {subgraphLabelMenu}
+        {subgraphLabelIndexNum}
+        {/* This condition is there so we can clear early in the selection process */}
+        {(selectedSubgraphNodes.length === 0 && Object.keys(labeledSubgraphs).length > 0) ?
+            <Button 
+                onClick={handleResetLabeledSelection} 
+                disabled={!selectedLabeledSubgraphRootNode}
+            >
+                Clear Current Labeled Subgraph Selection
+            </Button> :
+            <></>}
+        {labelComponent}
+          {/* We can use this button later on to generate code for a specific label */}
             {/* <Button 
                 onClick={() => console.log('clicked')}
                 disabled={!label}

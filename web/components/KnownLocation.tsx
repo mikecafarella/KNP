@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback} from 'react'
+import React, { useState, useCallback, useEffect} from 'react'
 import Router from 'next/router'
 import ReactMarkdown from 'react-markdown'
 import { readString } from 'react-papaparse';
@@ -18,13 +18,27 @@ export type FileProps = {
   isLatest: number;
 }
 
+export type SelectedLabeledGraph = {
+  rootNode: string;
+  subgraphNodeMD5s: string[];
+}
+
+// TODO: types for more granular selection if that's what we want
 export type SubgraphProps = {
+  rootNodeName: SubgraphLabelProps,
+}
+
+export type SubgraphLabelProps = {
+  graphLabelName: SubgraphNodeProps,
+}
+
+export type SubgraphNodeProps = {
   uuid: string;
   label: string;
   subgraphRootMD5: string;
   owner: string;
   subgraphNodeMD5s: string[];
-  modified: string;
+  modified: number;
 }
 
 export type KnownLocationProps = {
@@ -38,7 +52,7 @@ export type KnownLocationProps = {
   isLatest: number;
   md5hash: string;
   nearDuplicates: FileProps[];
-  subgraphs: SubgraphProps[];
+  subgraphs: SubgraphProps;
 }
 
 const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
@@ -53,6 +67,12 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   const [label, setLabel] = useState("");
   const [makeOwnLabel, setMakeOwnLabel] = useState(false);
   const [customLabel, setCustomLabel] = useState('');
+  const [labeledSubgraphs, setLabeledSubgraphs] = useState<SubgraphProps>(null);
+  const [selectedLabeledSubgraph, setSelectedLabeledSubgraph] = useState<SelectedLabeledGraph>(null);
+  const [selectedLabeledSubgraphRootNode, setSelectedLabeledSubgraphRootNode] = useState('');
+  const [selectedLabeledSubgraphLabel, setSelectedLabeledSubgraphLabel] = useState('');
+  const [selectedLabeledSubgraphIndexNum, setSelectedLabeledSubgraphIndexNum] = useState('')
+  const [updateExistingLabel, setUpdateExistingLabel] = useState(false);
 
   const selectNode = (nodeDatum) => {
     if (!subgraphSelection) {
@@ -61,7 +81,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
       } else {
         setSelectedNode(nodeDatum)
       }
-    } else {
+    } else if (subgraphSelection && !selectedLabeledSubgraphRootNode) {
       let md5 = getMD5(nodeDatum);
       if (selectedSubgraphNodes.includes(md5)) {
         setSelectedSubgraphNodes(
@@ -75,6 +95,14 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
     }
   }
 
+  useEffect(() => {
+    if (dobj.subgraphs) {
+      setLabeledSubgraphs(dobj.subgraphs);
+    }
+  }, []);
+
+
+
   const toggleSubgraphSelection = () => {
     let currentValue = subgraphSelection;
     setSubgraphSelection(!currentValue);
@@ -85,6 +113,10 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
       //exiting subgraph selection mode
       setSelectedSubgraphNodes([]);
       setLabel('');
+      setSelectedLabeledSubgraphLabel('');
+      setSelectedLabeledSubgraphRootNode('');
+      setSelectedLabeledSubgraphIndexNum('');
+      setSelectedLabeledSubgraph(null);
     }
   }
 
@@ -122,7 +154,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
     } else {
       //other check to see is the md5 is contained in selected subgraph nodes
       let md5 = getMD5(nodeDatum);
-      return selectedSubgraphNodes.includes(md5);
+      return (selectedLabeledSubgraph) ? selectedLabeledSubgraph.subgraphNodeMD5s.includes(md5) : selectedSubgraphNodes.includes(md5);
     }
   }
   
@@ -149,13 +181,18 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   let isValidSubgraphObj = isValidSubgraphKnownLocations(selectedSubgraphNodes, dobj);
   let validSubgraph = isValidSubgraphObj.validSubgraph;
   let rootNodeName = isValidSubgraphObj.rootNode;
-  let labelBadge = (label) ? <Badge color='blue'>{label}</Badge> : '';
+  let labelBadge = (customLabel || label) ? <Badge color='blue'>{customLabel || label}</Badge> : '';
 
-  const subGraphLabeling = (validSubgraph) ? 
+  const subGraphLabeling = (subgraphSelection) ? 
     <Pane>
       <SubgraphLabel 
+        validSubgraph={validSubgraph}
         selectedSubgraphNodes={selectedSubgraphNodes}
         setSelectedSubgraphNodes={setSelectedSubgraphNodes}
+        selectedLabeledSubgraph={selectedLabeledSubgraph}
+        setSelectedLabeledSubgraph={setSelectedLabeledSubgraph}
+        labeledSubgraphs={labeledSubgraphs}
+        setLabeledSubgraphs={setLabeledSubgraphs}
         label={label}
         setLabel={setLabel}
         customLabel={customLabel}
@@ -163,12 +200,18 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
         makeOwnLabel={makeOwnLabel}
         setMakeOwnLabel={setMakeOwnLabel}
         dobjID={dobj.id}
-        rootNodeName={rootNodeName}/>
+        rootNodeName={rootNodeName}
+        selectedLabeledSubgraphIndexNum={selectedLabeledSubgraphIndexNum}
+        setSelectedLabeledSubgraphIndexNum={setSelectedLabeledSubgraphIndexNum}
+        selectedLabeledSubgraphLabel={selectedLabeledSubgraphLabel}
+        setSelectedLabeledSubgraphLabel={setSelectedLabeledSubgraphLabel}
+        selectedLabeledSubgraphRootNode={selectedLabeledSubgraphRootNode}
+        setSelectedLabeledSubgraphRootNode={setSelectedLabeledSubgraphRootNode}/>
       <Paragraph>
-          Subgraph Label for your selected subgraph: {labelBadge}
+          Your Proposed Label for your selected subgraph: {labelBadge}
       </Paragraph>
     </Pane> :
-    <></>
+    <> </>;
 
   const renderForeignObjectNode = ({
     nodeDatum,
@@ -185,7 +228,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
               </rect> */}
               <polygon points="0,0 0,50 50,25"
               fill={isSelected(nodeDatum) ? 'yellow' : 'lightgrey'}
-              stroke="black" stroke-width={(shouldHighlight(nodeDatum)) ? "4" : "1"}
+              stroke="black" stroke-width={(shouldHighlight(nodeDatum)) ? "5" : "1"}
               onMouseOut={()=>setHighlightedNode("")}
               onMouseOver={()=>highLightNode(nodeDatum)} onClick={()=>selectNode(nodeDatum)}></polygon>
             </svg>
@@ -225,7 +268,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
           (nodeDatum.rootNode == "True") &&
         <g>
         <rect fill={isSelected(nodeDatum) ? 'yellow' : 'red'}
-        width="40" height="40" y="-20" stroke-width={(shouldHighlight(nodeDatum)) ? "4" : "1"}
+        width="40" height="40" y="-20" stroke-width={(shouldHighlight(nodeDatum)) ? "5" : "1"}
         x="-10" onMouseOut={()=>setHighlightedNode("")}
         onMouseOver={()=>highLightNode(nodeDatum)} onClick={()=>selectNode(nodeDatum)}></rect>
         <text font-family="Arial, Helvetica, sans-serif" 
@@ -237,7 +280,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
         {(nodeDatum.curatedSets.length > 0) &&
           (nodeDatum.rootNode == "True") &&
         <g>
-        <rect fill={isSelected(nodeDatum) ? 'yellow' : 'pink'} width="40" height="40" y="-20" stroke-width={(shouldHighlight(nodeDatum)) ? "4" : "1"}
+        <rect fill={isSelected(nodeDatum) ? 'yellow' : 'pink'} width="40" height="40" y="-20" stroke-width={(shouldHighlight(nodeDatum)) ? "5" : "1"}
         x="-10" onMouseOut={()=>setHighlightedNode("")}
         onMouseOver={()=>highLightNode(nodeDatum)} onClick={()=>selectNode(nodeDatum)}></rect>
         <text font-family="Arial, Helvetica, sans-serif" 
@@ -246,11 +289,22 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
           </text>
           </g>
         }
+        {
+          (nodeDatum.shortName === selectedLabeledSubgraphRootNode) &&
+          (selectedLabeledSubgraph) &&
+          <g>
+          <text font-family="Arial, Helvetica, sans-serif" 
+            strokeWidth="1" y="-40" x="-20" fill="black">
+              Subgraph End File with Label: {selectedLabeledSubgraphLabel}
+          </text>
+          </g>
+        }
+
 
         {(nodeDatum.curatedSets.length === 0) &&
           (nodeDatum.rootNode == "False") &&
         <g>
-        <rect fill={isSelected(nodeDatum) ? 'yellow' : 'green'} width="40" height="40" y="-20" stroke-width={(shouldHighlight(nodeDatum)) ? "4" : "1"}
+        <rect fill={isSelected(nodeDatum) ? 'yellow' : 'green'} width="40" height="40" y="-20" stroke-width={(shouldHighlight(nodeDatum)) ? "5" : "1"}
         x="-10" onMouseOut={()=>setHighlightedNode("")}
         onMouseOver={()=>highLightNode(nodeDatum)} onClick={()=>selectNode(nodeDatum)}></rect>
         <text font-family="Arial, Helvetica, sans-serif" 
@@ -259,11 +313,12 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
           </text>
         </g>        
         }
+
         {(nodeDatum.curatedSets.length > 0) &&
           (nodeDatum.rootNode == "False") &&
         <g>
         <rect fill={isSelected(nodeDatum) ? 'yellow' :
-        'lightgreen'} width="40" height="40" y="-20" stroke-width={(shouldHighlight(nodeDatum)) ? "4" : "1"}
+        'lightgreen'} width="40" height="40" y="-20" stroke-width={(shouldHighlight(nodeDatum)) ? "5" : "1"}
         x="-10" onMouseOut={()=>setHighlightedNode("")}
         onMouseOver={()=>highLightNode(nodeDatum)} onClick={()=>selectNode(nodeDatum)}></rect>
         <text font-family="Arial, Helvetica, sans-serif" 
