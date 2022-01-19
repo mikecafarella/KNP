@@ -1,8 +1,8 @@
-import React, { useState, useEffect} from 'react'
+import React from 'react'
 import { Autocomplete, TextInput, Button, Dialog, SelectMenu} from 'evergreen-ui'
 import { SubgraphProps, SelectedLabeledGraph, SubgraphNodeProps } from './KnownLocation';
 import { arrayEquals } from './Utils';
-// import { flex } from 'ui-box';
+// see the knownlocations component for explanation of state props
 const SubgraphLabel: React.FC<{
     validSubgraph: boolean,
     selectedSubgraphNodes: any[], 
@@ -46,7 +46,8 @@ const SubgraphLabel: React.FC<{
         setSelectedLabeledSubgraphIndexNum('');
         setSelectedLabeledSubgraph(null);
     }
-
+    // we currently check thru all possible labeled subgraphs and do an array equality check to see if we have previously 
+    // labeled a set of nodes
     const haveLabeledInThePast = () => {
         let selectedNodes = [...selectedSubgraphNodes].sort();
         for (let rootNodeName of Object.keys(labeledSubgraphs)) {
@@ -64,6 +65,7 @@ const SubgraphLabel: React.FC<{
     const labeledInThePastObj = haveLabeledInThePast();
     const submitSubgraph = async () => {
         let subgraphLabel = (customLabel) ? customLabel: label;
+        // this sort call is important, but we can just as easily do this in the backend
         let selectedNodes = [...selectedSubgraphNodes].sort();
         let res; 
         if (labeledInThePastObj.labeledInPast || selectedLabeledSubgraph) {
@@ -104,7 +106,12 @@ const SubgraphLabel: React.FC<{
     //TODO: replaced with API call to recommended labels
     let items = ['Test', 'Jest', 'Rest', 'Teests', 'Jeeps'];
 
-    const submitLabelButton = (label) ? <Button onClick={submitSubgraph} >{(labeledInThePastObj.labeledInPast || selectedLabeledSubgraph) ? "Update Subgraph Label " : "Submit Subgraph Label"}</Button> : <></>
+    const submitLabelButton = (label) ? 
+        <Button 
+            onClick={submitSubgraph}>
+            {(labeledInThePastObj.labeledInPast || selectedLabeledSubgraph) ? "Update Subgraph Label " : "Submit Subgraph Label"}
+        </Button> : 
+        <></>;
     const exitDialog = () => {
         setMakeOwnLabel(false);
         setCustomLabel('');
@@ -158,7 +165,6 @@ const SubgraphLabel: React.FC<{
         <> </>;
 
 
-    // const viewLabeledSubgraphs = (labeledSubgraphs) ? 
     const handleSelectedLabelSelection = (item) => {
         setSelectedLabeledSubgraphLabel(item.value);
         if (labeledSubgraphs[selectedLabeledSubgraphRootNode][item.value].length === 1) {
@@ -180,6 +186,7 @@ const SubgraphLabel: React.FC<{
         setSelectedLabeledSubgraph(selected);
     }
 
+    //we show this if there are previously labeled subgraphs and the user is not attempting to select a subgraph
     const subgraphRootMenu = (Object.keys(labeledSubgraphs).length > 0 && selectedSubgraphNodes.length === 0) ? 
     <SelectMenu 
         title="Subgraph Root Node"
@@ -190,6 +197,7 @@ const SubgraphLabel: React.FC<{
     </SelectMenu> :
     <></>;
     
+    // only show this is the user chose which root node to view subgraphs for
     const subgraphLabelMenu = (selectedLabeledSubgraphRootNode) ?
     <SelectMenu 
         title="Subgraph Label"

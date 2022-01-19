@@ -62,17 +62,22 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   const nextLink = "/knownlocation/" + dobj.nextId
   const [highlightedNode, setHighlightedNode] = useState("")
   const [selectedNode, setSelectedNode] = useState("")  
+  // this is to let us know if in subgraph selection mode or not
   const [subgraphSelection, setSubgraphSelection] = useState(false);
+  // these are the nodes selected by the user
   const [selectedSubgraphNodes, setSelectedSubgraphNodes] = useState([]);
+  // these are label state components, one for suggested label and the other for user submitted label
   const [label, setLabel] = useState("");
   const [makeOwnLabel, setMakeOwnLabel] = useState(false);
   const [customLabel, setCustomLabel] = useState('');
+  // this state is for previously labeled subgraphs
   const [labeledSubgraphs, setLabeledSubgraphs] = useState<SubgraphProps>(null);
+  // this state is for the selected subgraph a user wants to see or update (previously labeled graphs)
   const [selectedLabeledSubgraph, setSelectedLabeledSubgraph] = useState<SelectedLabeledGraph>(null);
+  // the state here is for the select menus so the component knows which previously labeled subgraph a user wants to see
   const [selectedLabeledSubgraphRootNode, setSelectedLabeledSubgraphRootNode] = useState('');
   const [selectedLabeledSubgraphLabel, setSelectedLabeledSubgraphLabel] = useState('');
   const [selectedLabeledSubgraphIndexNum, setSelectedLabeledSubgraphIndexNum] = useState('')
-  const [updateExistingLabel, setUpdateExistingLabel] = useState(false);
 
   const selectNode = (nodeDatum) => {
     if (!subgraphSelection) {
@@ -82,6 +87,8 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
         setSelectedNode(nodeDatum)
       }
     } else if (subgraphSelection && !selectedLabeledSubgraphRootNode) {
+      // we want to make the view previous graph and select an new subgraph independent operations
+      // so we only high light if the user does not want to view a previously labeled subgraph
       let md5 = getMD5(nodeDatum);
       if (selectedSubgraphNodes.includes(md5)) {
         setSelectedSubgraphNodes(
@@ -101,7 +108,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
     }
   }, []);
 
-
+  console.log(labeledSubgraphs);
 
   const toggleSubgraphSelection = () => {
     let currentValue = subgraphSelection;
