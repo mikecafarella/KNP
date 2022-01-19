@@ -108,8 +108,6 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
     }
   }, []);
 
-  console.log(labeledSubgraphs);
-
   const toggleSubgraphSelection = () => {
     let currentValue = subgraphSelection;
     setSubgraphSelection(!currentValue);
