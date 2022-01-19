@@ -45,6 +45,8 @@ const SubgraphLabel: React.FC<{
         setSelectedLabeledSubgraphLabel('');
         setSelectedLabeledSubgraphIndexNum('');
         setSelectedLabeledSubgraph(null);
+        setLabel('');
+        // Don't need to reset the custom label because closing the dialog component does that for us
     }
     // we currently check thru all possible labeled subgraphs and do an array equality check to see if we have previously 
     // labeled a set of nodes
