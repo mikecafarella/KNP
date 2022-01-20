@@ -115,7 +115,7 @@ def upload_series_metadata_to_s3():
             if (i+1)%batch_size == 0:
                 print('nap time!')
                 time.sleep(60)
-            if i == ending_point:
+            if (i+starting_point) == ending_point:
                 print("We caught up")
                 break
         # if I want to stop, this will let me know where the program needs to pick up again
@@ -143,6 +143,8 @@ def get_starting_point(index_file):
 def download_series_from_s3(username, local_dir=None):
     os.system("python3 ../cli/src/knps/knps.py --login_temp {}".format(username))
     os.system("python3 ../cli/src/knps/knps.py --store True")
+    with open(LAST_PROCESSED_INDEX_FILE, 'r') as epi:
+        ending_point = json.load(epi)['index']
 
     if not os.path.isdir(OUTPUT_FOLDER):
         os.system("mkdir {dir}".format(dir=OUTPUT_FOLDER))
@@ -152,7 +154,7 @@ def download_series_from_s3(username, local_dir=None):
     s3_metadata_folder = 'FRED-METADATA'
     bucket = s3.Bucket(BUCKET_NAME)
     starting_point = get_starting_point(LAST_PROCESSED_AWS_INDEX_FILE)
-
+    batch_size = 100
     with open(SERIES_PICKLE_FILE, 'rb') as f:
         series_ids = pickle.load(f)
     print("{}/{} index start {}".format(starting_point+1, len(series_ids), starting_point))
@@ -161,6 +163,11 @@ def download_series_from_s3(username, local_dir=None):
         try:
             bucket.download_file("{}/{}.csv".format(s3_series_folder, series_title), "{}/{}.csv".format(local_dir, series_title))
             bucket.download_file("{}/{}.json".format(s3_metadata_folder, series_title), "{}/{}.json".format(local_dir, series_title))
+            if (i+1) % batch_size == 0:
+                os.system("python3 ../cli/src/knps/knps.py --sync")
+            if (i+starting_point) == ending_point:
+                print("caught up")
+                break
         except Exception as e:
             print(repr(e))
             save_last_good_query_index(i+starting_point, LAST_PROCESSED_AWS_INDEX_FILE)
