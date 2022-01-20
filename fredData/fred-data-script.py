@@ -182,7 +182,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='KNPS fred-data-script command line')
     parser.add_argument("--ids", action='store_true', help="scrape series_ids and titles into local pickle file")
     parser.add_argument("--series", action="store_true", help="scrape series csvs into s3 bucket")
-    parser.add_argument("--metadata", action="store_true" help="scrape series metadata into s3 bucket")
+    parser.add_argument("--metadata", action="store_true", help="scrape series metadata into s3 bucket")
     parser.add_argument("--download",  help="download data from s3 and insert into KNPS db by supplying a username")
     
     args = parser.parse_args()
