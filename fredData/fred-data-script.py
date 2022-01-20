@@ -9,6 +9,8 @@ import boto3
 import sys
 sys.path.append("../cli/src/knps")
 from io import StringIO
+import argparse
+
 
 key_file = open('api_key.txt', 'r')
 API_KEY = key_file.readline()
@@ -73,7 +75,7 @@ def upload_series_to_s3():
     batch_size = 120
     with open(SERIES_PICKLE_FILE, 'rb') as f:
         series_ids = pickle.load(f)
-    print("{}/{} index start {}".format(starting_point+1, len(series_ids), starting_point))
+    print("{}/{} index start series scrape {}".format(starting_point+1, len(series_ids), starting_point))
     for i, (series_id, series_title) in enumerate(series_ids[starting_point:]):
         try:
             series_df = fred.get_series_df(series_id)
@@ -103,7 +105,7 @@ def upload_series_metadata_to_s3():
     batch_size = 120
     with open(SERIES_PICKLE_FILE, 'rb') as f:
         series_ids = pickle.load(f)
-    print("{}/{} index start {}".format(starting_point+1, len(series_ids), starting_point))
+    print("{}/{} index start metadata scrape {}".format(starting_point+1, len(series_ids), starting_point))
     for i, (series_id, series_title) in enumerate(series_ids[starting_point:]):
         try:
             series_metadata = fred.get_a_series(series_id)
@@ -140,7 +142,7 @@ def get_starting_point(index_file):
             starting_point = json.load(lpi)['index']
     return starting_point
 
-def download_series_from_s3(username, local_dir=None):
+def download_series_from_s3(username):
     os.system("python3 ../cli/src/knps/knps.py --login_temp {}".format(username))
     os.system("python3 ../cli/src/knps/knps.py --store True")
     with open(LAST_PROCESSED_INDEX_FILE, 'r') as epi:
@@ -161,8 +163,8 @@ def download_series_from_s3(username, local_dir=None):
     for i, (_, series_title) in enumerate(series_ids[starting_point:]):
         print(series_title)
         try:
-            bucket.download_file("{}/{}.csv".format(s3_series_folder, series_title), "{}/{}.csv".format(local_dir, series_title))
-            bucket.download_file("{}/{}.json".format(s3_metadata_folder, series_title), "{}/{}.json".format(local_dir, series_title))
+            bucket.download_file("{}/{}.csv".format(s3_series_folder, series_title), "{}/{}.csv".format(OUTPUT_FOLDER, series_title))
+            bucket.download_file("{}/{}.json".format(s3_metadata_folder, series_title), "{}/{}.json".format(OUTPUT_FOLDER, series_title))
             if (i+1) % batch_size == 0:
                 os.system("python3 ../cli/src/knps/knps.py --sync")
             if (i+starting_point) == ending_point:
@@ -176,20 +178,23 @@ def download_series_from_s3(username, local_dir=None):
 
 if __name__ == "__main__":
     testing = True
-    # os.system("rm ~/.knpsdb") ##NEED TO DO THIS SO IT DOES NOT THINK THINGS R INACCURATELY PROCCESSED
-    if not os.path.isfile(SERIES_PICKLE_FILE):
+    
+    parser = argparse.ArgumentParser(description='KNPS fred-data-script command line')
+    parser.add_argument("--ids", action='store_true', help="scrape series_ids and titles into local pickle file")
+    parser.add_argument("--series", action="store_true", help="scrape series csvs into s3 bucket")
+    parser.add_argument("--metadata", help="scrape series metadata into s3 bucket")
+    parser.add_argument("--download",  help="download data from s3 and insert into KNPS db by supplying a username")
+    
+    args = parser.parse_args()
+
+    if args.ids:
         get_series_ids()
+    elif args.series:
+        upload_series_to_s3()
+    elif args.metadata:
+        upload_series_metadata_to_s3()
     else:
-        # count = 0
-        # for i in s3.Bucket(BUCKET_NAME).objects.all():
-        #     count += 1
-        # print(count)
-        # upload_series_to_s3()
-        # upload_series_metadata_to_s3()
-
-        # if testing:
-        #     os.system("rm -r {}".format(OUTPUT_FOLDER))
-        # test = "21-Year Expected Inflation.csv"
-        download_series_from_s3("syang199@gmail.com", OUTPUT_FOLDER)
-
-        # insert_data_into_knps()
+        os.system("rm ~/.knpsdb") ##NEED TO DO THIS SO IT DOES NOT THINK THINGS R INACCURATELY PROCCESSED
+        # print(args.download)
+        download_series_from_s3(args.download, OUTPUT_FOLDER)
+    
