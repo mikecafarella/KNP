@@ -27,9 +27,11 @@ os.environ["AWS_ACCESS_KEY_ID"] = ACCESS_KEY_ID
 os.environ["AWS_SECRET_ACCESS_KEY"] = SECRET_ACCESS_KEY
 BUCKET_NAME = 'knps-data'
 s3 = boto3.resource('s3')
+# s3_client = boto3.client('s3')
 
 OUTPUT_FOLDER = 'output'
 LAST_PROCESSED_INDEX_FILE = 'last_processed_index.json'
+LAST_PROCESSED_AWS_INDEX_FILE = 'last_processed_aws_index.json'
 LAST_PROCESSED_DOWNLOAD_FILE = 'last_processed_download.json'
 LAST_PROCESSED_METADATA_INDEX_FILE = 'last_processed_metadata_index.json'
 FRED_URL_PREFIX_PATH = 'https://fred.stlouisfed.org/series'
@@ -66,7 +68,6 @@ def get_series_ids():
 # upload csv of series to s3 bucket
 def upload_series_to_s3():
     # upload csvs to aws s3 bucket
-    
     starting_point = get_starting_point(LAST_PROCESSED_INDEX_FILE)
     # respect API rate limits
     batch_size = 120
@@ -93,8 +94,7 @@ def upload_series_to_s3():
             break
     print('done {}/{} index : {}'.format(i+starting_point+1, len(series_ids), i+starting_point))
 
-
-# upload series metadat to s3 bucket
+# upload series metadata to s3 bucket
 def upload_series_metadata_to_s3():
     with open(LAST_PROCESSED_INDEX_FILE, 'r') as epi:
         ending_point = json.load(epi)['index']
@@ -123,10 +123,10 @@ def upload_series_metadata_to_s3():
             save_last_good_query_index(i+starting_point, LAST_PROCESSED_METADATA_INDEX_FILE)
             break
         # handle any other exception, namely API limit reached 
-        except:
+        except Exception as e:
+            print(repr(e))
             save_last_good_query_index(i+starting_point, LAST_PROCESSED_METADATA_INDEX_FILE)
             break
-        
     print('done {}/{} index : {}'.format(i+starting_point+1, len(series_ids), i+starting_point))
 
 def save_last_good_query_index(index, file_name):
@@ -140,37 +140,32 @@ def get_starting_point(index_file):
             starting_point = json.load(lpi)['index']
     return starting_point
 
-
-def download_series_from_s3(logged_in=False, local_dir=None):
-    if not logged_in:
-        os.system("python3 ../cli/src/knps/knps.py --login_temp syang199@gmail.com")
-        os.system("python3 ../cli/src/knps/knps.py --store True")
-
+def download_series_from_s3(username, local_dir=None):
+    os.system("python3 ../cli/src/knps/knps.py --login_temp {}".format(username))
+    os.system("python3 ../cli/src/knps/knps.py --store True")
 
     if not os.path.isdir(OUTPUT_FOLDER):
         os.system("mkdir {dir}".format(dir=OUTPUT_FOLDER))
         os.system("python3 ../cli/src/knps/knps.py --watch {dir}".format(dir=OUTPUT_FOLDER))
 
-    # can make this more granular, but would need a more significant refactor 
-    # credit here:  https://stackoverflow.com/questions/49772151/download-a-folder-from-s3-using-boto3
-
-    s3_folder = 'FRED'
+    s3_series_folder = 'FRED'
+    s3_metadata_folder = 'FRED-METADATA'
     bucket = s3.Bucket(BUCKET_NAME)
-    for obj in bucket.objects.filter(Prefix=s3_folder):
-        target = obj.key if local_dir is None \
-            else os.path.join(local_dir, os.path.relpath(obj.key, s3_folder))
-        if not os.path.exists(os.path.dirname(target)):
-            os.makedirs(os.path.dirname(target))
-        if obj.key[-1] == '/':
-            continue
-        bucket.download_file(obj.key, target)  
-        break  
+    starting_point = get_starting_point(LAST_PROCESSED_AWS_INDEX_FILE)
 
-    # for series_title in series_titles:
-
-    #     # s3_key = "FRED/{}".format(series_title)
-    #     s3.Bucket(BUCKET_NAME).download_file(series_title, "{dir}/{csv}".format(dir=OUTPUT_FOLDER, csv=series_title))
-    #     # os.system('python3 ../cli/src/knps/knps.py --sync') 
+    with open(SERIES_PICKLE_FILE, 'rb') as f:
+        series_ids = pickle.load(f)
+    print("{}/{} index start {}".format(starting_point+1, len(series_ids), starting_point))
+    for i, (_, series_title) in enumerate(series_ids[starting_point:]):
+        print(series_title)
+        try:
+            bucket.download_file("{}/{}.csv".format(s3_series_folder, series_title), "{}/{}.csv".format(local_dir, series_title))
+            bucket.download_file("{}/{}.json".format(s3_metadata_folder, series_title), "{}/{}.json".format(local_dir, series_title))
+        except Exception as e:
+            print(repr(e))
+            save_last_good_query_index(i+starting_point, LAST_PROCESSED_AWS_INDEX_FILE)
+            break
+    print('done {}/{} index : {}'.format(i+starting_point+1, len(series_ids), i+starting_point))
 
 if __name__ == "__main__":
     testing = True
@@ -183,10 +178,11 @@ if __name__ == "__main__":
         #     count += 1
         # print(count)
         # upload_series_to_s3()
-        upload_series_metadata_to_s3()
+        # upload_series_metadata_to_s3()
+
         # if testing:
         #     os.system("rm -r {}".format(OUTPUT_FOLDER))
         # test = "21-Year Expected Inflation.csv"
-        # download_series_from_s3(False, OUTPUT_FOLDER)
+        download_series_from_s3("syang199@gmail.com", OUTPUT_FOLDER)
 
         # insert_data_into_knps()
