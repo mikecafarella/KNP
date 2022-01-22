@@ -111,10 +111,19 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
     if (dobj.subgraphs) {
       setLabeledSubgraphs(dobj.subgraphs);
     }
-    if (query.root && query.label) {
+    if (query.root && query.label && query.indexNum) {
       setSubgraphSelection(true);
+      if (query.indexNum && query.label && query.root) {
+        const selected = {
+            "subgraphNodeMD5s":dobj.subgraphs[query.root][query.label][query.indexNum].subgraphNodeMD5s,
+            "rootNode":dobj.subgraphs[query.root][query.label][query.indexNum].subgraphRootName,
+        }
+        setSelectedLabeledSubgraph(selected);
+        setSelectedLabeledSubgraphRootNode(query.root);
+        setSelectedLabeledSubgraphLabel(query.label);
+        setSelectedLabeledSubgraphIndexNum(query.indexNum.toString());
+      }
     }
-
   }, []);
 
 

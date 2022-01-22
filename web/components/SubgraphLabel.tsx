@@ -76,20 +76,6 @@ const SubgraphLabel: React.FC<{
         return {labeledInPast: false, oldLabel: 'invalid'};
     }
 
-    useEffect(() => {
-        if (predefinedIndexNum && predefinedLabel && predefinedRoot) {
-            const selected = {
-                "subgraphNodeMD5s":labeledSubgraphs[predefinedRoot][predefinedLabel][predefinedIndexNum].subgraphNodeMD5s,
-                "rootNode":labeledSubgraphs[predefinedRoot][predefinedLabel][predefinedIndexNum].subgraphRootName,
-            }
-            setSelectedLabeledSubgraph(selected);
-            setSelectedLabeledSubgraphRootNode(predefinedRoot);
-            setSelectedLabeledSubgraphLabel(predefinedLabel);
-            setSelectedLabeledSubgraphIndexNum(predefinedIndexNum.toString());
-
-        }
-    }, []);
-
     const labeledInThePastObj = haveLabeledInThePast();
 
     const submitSubgraph = async () => {
