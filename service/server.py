@@ -659,7 +659,7 @@ class GraphDB:
                                  "SET b.label = $newLabel "
                                  "SET b.owner = $owner "
                                  "SET b.modified = $modified "
-                                 "SET b.ownerEmail = $ownerEmail"
+                                 "SET b.ownerEmail = $ownerEmail "
                                  "RETURN b",
                                  nodeId=nodeId,
                                  label=label,
@@ -678,12 +678,18 @@ class GraphDB:
                                   "ORDER BY b.modified DESC")
             ret = [x[0] for x in results]
             final = {}
+            labels = set()
+            emails = set()
             for node in ret:
                 final.setdefault(node['subgraphRootName'], {})
                 final[node['subgraphRootName']].setdefault(node['label'], [])
                 final[node['subgraphRootName']][node['label']].append(node)
                 node['indexNum'] = len(final[node['subgraphRootName']][node['label']])-1
-            return ret 
+                labels.add(node['label'])
+                emails.add(node['ownerEmail'])
+                node['modified'] = str(datetime.datetime.fromtimestamp(node['modified']))
+            
+            return {"subgraphs": ret, "labels": list(labels), "emails": list(emails)}
 
 
     def getSubgraphsForNode(self, nodeId):

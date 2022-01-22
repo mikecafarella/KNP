@@ -209,6 +209,9 @@ const SubgraphLabel: React.FC<{
             }
             setSelectedLabeledSubgraph(selected);
         }
+        if (selectedLabeledSubgraphIndexNum) {
+            setSelectedLabeledSubgraphIndexNum('');
+        }
     }
 
     const handleSelectedIndexNumSelection = (item) => {
@@ -228,7 +231,15 @@ const SubgraphLabel: React.FC<{
         title="Subgraph Root Node"
         options={Object.keys(labeledSubgraphs).map((label) => ({ label, value: label }))}
         selected={selectedLabeledSubgraphRootNode}
-        onSelect={(item) => setSelectedLabeledSubgraphRootNode(item.value)}>
+        onSelect={(item) => {
+            setSelectedLabeledSubgraphRootNode(item.value);
+            if (selectedLabeledSubgraphLabel) {
+                setSelectedLabeledSubgraphLabel('');
+            }
+            if (selectedLabeledSubgraphIndexNum) {
+                setSelectedLabeledSubgraphIndexNum('');
+            }
+        }}>
             <Button >{selectedLabeledSubgraphRootNode || "Select Root Node for Subgraph..."}</Button>
     </SelectMenu> :
     <></>;
@@ -257,7 +268,7 @@ const SubgraphLabel: React.FC<{
 
     }
     // if there are more than one set of nodes for a root, we need to choose which index number to use 
-    const subgraphLabelIndexNum = (selectedLabeledSubgraphLabel && selectedLabeledSubgraphRootNode && length > 1) ? 
+    const subgraphLabelIndexNum = (selectedLabeledSubgraphLabel && selectedLabeledSubgraphRootNode && (length > 1)) ? 
     <SelectMenu 
         title="Subgraph Label Graph Num"
         options={Array.from(Array(length).keys()).map((num)=> {
