@@ -2,6 +2,8 @@ import React from 'react'
 import { Autocomplete, TextInput, Button, Dialog, SelectMenu} from 'evergreen-ui'
 import { SubgraphProps, SelectedLabeledGraph, SubgraphNodeProps } from './KnownLocation';
 import { arrayEquals } from './Utils';
+import { useSession } from 'next-auth/client'
+
 // see the knownlocations component for explanation of state props
 const SubgraphLabel: React.FC<{
     validSubgraph: boolean,
@@ -39,7 +41,7 @@ const SubgraphLabel: React.FC<{
        selectedLabeledSubgraphIndexNum, setSelectedLabeledSubgraphIndexNum,
     }) => {
     const subgraphsUrl = '/api/subgraphs/' + dobjID;
-
+    const [session, loading] = useSession();
     const handleResetLabeledSelection = () => {
         setSelectedLabeledSubgraphRootNode('');
         setSelectedLabeledSubgraphLabel('');
@@ -82,6 +84,8 @@ const SubgraphLabel: React.FC<{
                     "subgraphNodeMD5s": selectedNodes,
                     "oldLabel": oldLabel,
                     "newLabel": subgraphLabel,
+                    "username": session.user.name,
+                    "email": session.user.email,
                 }),
             }).then(res=>res.json());
         } else {
@@ -92,6 +96,8 @@ const SubgraphLabel: React.FC<{
                     'subgraphNodeMD5s': selectedNodes,
                     'label': subgraphLabel,
                     'subgraphRootName': rootNodeName,
+                    'username': session.user.name,
+                    'email': session.user.email,
                 }),
             }).then(res => res.json());
         }

@@ -635,11 +635,12 @@ class GraphDB:
                                   modified=time.time())
             return results
     
-    def addSubgraph(self, nodeId, username, subgraphNodeMD5s, subgraphRootName, label):
+    def addSubgraph(self, nodeId, username, email, subgraphNodeMD5s, subgraphRootName, label):
         with self.driver.session() as session:
+            print("FUCK: ", email)
             result = session.run("MATCH (a {uuid: $nodeId}) "
                                  "WHERE NOT EXISTS {MATCH (a)-[:HasSubgraph]->(b:Subgraph{subgraphNodeMD5s: $subgraphNodes})} "
-                                 "CREATE (a)-[r:HasSubgraph]->(b:Subgraph {uuid: apoc.create.uuid(), label: $label, subgraphRootName: $subgraphRootName, subgraphNodeMD5s: $subgraphNodeMD5s, owner: $owner, modified: $modified}) "
+                                 "CREATE (a)-[r:HasSubgraph]->(b:Subgraph {uuid: apoc.create.uuid(), label: $label, subgraphRootName: $subgraphRootName, subgraphNodeMD5s: $subgraphNodeMD5s, owner: $owner, modified: $modified, subgrapRootId: $subgraphRootId, ownerEmail: $ownerEmail}) "
                                  "RETURN b",
                                  nodeId=nodeId,
                                  label=label,
@@ -647,21 +648,25 @@ class GraphDB:
                                  subgraphNodes = subgraphNodeMD5s,
                                  owner=username,
                                  subgraphNodeMD5s=subgraphNodeMD5s,
+                                 subgraphRootId=nodeId,
+                                 ownerEmail=email,
                                  modified=time.time())
             return result.value()
     
-    def updateSubgraph(self, nodeId, label, newLabel, username, subgraphNodeMD5s):
+    def updateSubgraph(self, nodeId, label, newLabel, username, email, subgraphNodeMD5s):
         with self.driver.session() as session:
             result = session.run("MATCH (a {uuid: $nodeId})-[r:HasSubgraph]->(b:Subgraph{label: $label, subgraphNodeMD5s: $subgraphNodeMD5s}) "
                                  "SET b.label = $newLabel "
                                  "SET b.owner = $owner "
                                  "SET b.modified = $modified "
+                                 "SET b.ownerEmail = $ownerEmail"
                                  "RETURN b",
                                  nodeId=nodeId,
                                  label=label,
                                  owner=username,
                                  newLabel=newLabel,
                                  subgraphNodeMD5s=subgraphNodeMD5s,
+                                 ownerEmail = email,
                                  modified=time.time())
             return result
     
@@ -1867,9 +1872,9 @@ def get_subgraphs(id):
 def add_subgraph(id):
     incomingReq = json.loads(request.get_json())
     if (request.method == 'POST'):
-        result = GDB.addSubgraph(incomingReq['uuid'], "", incomingReq['subgraphNodeMD5s'], incomingReq['subgraphRootName'], incomingReq['label'])
+        result = GDB.addSubgraph(incomingReq['uuid'], incomingReq['username'], incomingReq['email'], incomingReq['subgraphNodeMD5s'], incomingReq['subgraphRootName'], incomingReq['label'])
     elif (request.method == "PUT"):
-        result = GDB.updateSubgraph(incomingReq['uuid'], incomingReq["oldLabel"], incomingReq["newLabel"], "", incomingReq['subgraphNodeMD5s'])
+        result = GDB.updateSubgraph(incomingReq['uuid'], incomingReq["oldLabel"], incomingReq["newLabel"], incomingReq['username'], incomingReq['email'], incomingReq['subgraphNodeMD5s'])
     return get_subgraphs(incomingReq['uuid'])
 
 #
