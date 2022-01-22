@@ -635,12 +635,11 @@ class GraphDB:
                                   modified=time.time())
             return results
     
-    def addSubgraph(self, nodeId, username, email, subgraphNodeMD5s, subgraphRootName, label):
+    def addSubgraph(self, nodeId, username, email, subgraphNodeMD5s, subgraphRootName, label, fullRootFileName):
         with self.driver.session() as session:
-            print("FUCK: ", email)
             result = session.run("MATCH (a {uuid: $nodeId}) "
                                  "WHERE NOT EXISTS {MATCH (a)-[:HasSubgraph]->(b:Subgraph{subgraphNodeMD5s: $subgraphNodes})} "
-                                 "CREATE (a)-[r:HasSubgraph]->(b:Subgraph {uuid: apoc.create.uuid(), label: $label, subgraphRootName: $subgraphRootName, subgraphNodeMD5s: $subgraphNodeMD5s, owner: $owner, modified: $modified, subgrapRootId: $subgraphRootId, ownerEmail: $ownerEmail}) "
+                                 "CREATE (a)-[r:HasSubgraph]->(b:Subgraph {uuid: apoc.create.uuid(), label: $label, subgraphRootName: $subgraphRootName, subgraphNodeMD5s: $subgraphNodeMD5s, owner: $owner, modified: $modified, subgraphRootId: $subgraphRootId, ownerEmail: $ownerEmail, fullRootFileName: $fullRootFileName}) "
                                  "RETURN b",
                                  nodeId=nodeId,
                                  label=label,
@@ -650,6 +649,7 @@ class GraphDB:
                                  subgraphNodeMD5s=subgraphNodeMD5s,
                                  subgraphRootId=nodeId,
                                  ownerEmail=email,
+                                 fullRootFileName=fullRootFileName,
                                  modified=time.time())
             return result.value()
     
@@ -670,6 +670,22 @@ class GraphDB:
                                  modified=time.time())
             return result
     
+    
+    def getAllSubgraphs(self):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a:ObservedFile)-[r:HasSubgraph]->(b:Subgraph) "
+                                  "RETURN properties(b) "
+                                  "ORDER BY b.modified DESC")
+            ret = [x[0] for x in results]
+            final = {}
+            for node in ret:
+                final.setdefault(node['subgraphRootName'], {})
+                final[node['subgraphRootName']].setdefault(node['label'], [])
+                final[node['subgraphRootName']][node['label']].append(node)
+                node['indexNum'] = len(final[node['subgraphRootName']][node['label']])-1
+            return ret 
+
+
     def getSubgraphsForNode(self, nodeId):
         with self.driver.session() as session:
             results = session.run("MATCH (a {uuid: $nodeId})-[r:HasSubgraph]->(b:Subgraph) "
@@ -682,6 +698,7 @@ class GraphDB:
                 final.setdefault(node['subgraphRootName'], {})
                 final[node['subgraphRootName']].setdefault(node['label'], [])
                 final[node['subgraphRootName']][node['label']].append(node)
+                node['indexNum'] = len(final[node['subgraphRootName']][node['label']])-1
             return final
 
     def createNearColumnMatches(self):
@@ -1868,11 +1885,16 @@ def get_subgraphs(id):
     kl = GDB.getSubgraphsForNode(id)
     return json.dumps({"subgraphs":kl})
 
+@app.route('/subgraphs')
+def all_subgraphs():
+    kl = GDB.getAllSubgraphs()
+    return json.dumps(kl)
+
 @app.route('/addsubgraph/<id>', methods=["POST", "PUT"])
 def add_subgraph(id):
     incomingReq = json.loads(request.get_json())
     if (request.method == 'POST'):
-        result = GDB.addSubgraph(incomingReq['uuid'], incomingReq['username'], incomingReq['email'], incomingReq['subgraphNodeMD5s'], incomingReq['subgraphRootName'], incomingReq['label'])
+        result = GDB.addSubgraph(incomingReq['uuid'], incomingReq['username'], incomingReq['email'], incomingReq['subgraphNodeMD5s'], incomingReq['subgraphRootName'], incomingReq['label'], incomingReq['rootNodeFileName'])
     elif (request.method == "PUT"):
         result = GDB.updateSubgraph(incomingReq['uuid'], incomingReq["oldLabel"], incomingReq["newLabel"], incomingReq['username'], incomingReq['email'], incomingReq['subgraphNodeMD5s'])
     return get_subgraphs(incomingReq['uuid'])

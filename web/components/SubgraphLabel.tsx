@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useEffect} from 'react'
 import { Autocomplete, TextInput, Button, Dialog, SelectMenu} from 'evergreen-ui'
 import { SubgraphProps, SelectedLabeledGraph, SubgraphNodeProps } from './KnownLocation';
 import { arrayEquals } from './Utils';
@@ -27,6 +27,10 @@ const SubgraphLabel: React.FC<{
     setSelectedLabeledSubgraphLabel: (selectedLabeledSubgraphLabel: string) => void,
     selectedLabeledSubgraphIndexNum: string, 
     setSelectedLabeledSubgraphIndexNum: (selectedLabeledSubgraphIndexNum: string) => void,
+    rootNodeFileName: string,
+    predefinedRoot?: string,
+    predefinedLabel?: string,
+    predefinedIndexNum? : number,
 }> = ({validSubgraph, 
        selectedSubgraphNodes, setSelectedSubgraphNodes, 
        labeledSubgraphs, setLabeledSubgraphs, 
@@ -39,13 +43,17 @@ const SubgraphLabel: React.FC<{
        selectedLabeledSubgraphRootNode, setSelectedLabeledSubgraphRootNode,
        selectedLabeledSubgraphLabel, setSelectedLabeledSubgraphLabel,
        selectedLabeledSubgraphIndexNum, setSelectedLabeledSubgraphIndexNum,
+       rootNodeFileName,
+       predefinedRoot,
+       predefinedLabel,
+       predefinedIndexNum,
     }) => {
     const subgraphsUrl = '/api/subgraphs/' + dobjID;
     const [session, loading] = useSession();
     const handleResetLabeledSelection = () => {
         setSelectedLabeledSubgraphRootNode('');
         setSelectedLabeledSubgraphLabel('');
-        setSelectedLabeledSubgraphIndexNum('');
+        setSelectedLabeledSubgraphIndexNum(null);
         setSelectedLabeledSubgraph(null);
         setLabel('');
         // Don't need to reset the custom label because closing the dialog component does that for us
@@ -53,6 +61,7 @@ const SubgraphLabel: React.FC<{
     // we currently check thru all possible labeled subgraphs and do an array equality check to see if we have previously 
     // labeled a set of nodes
     const haveLabeledInThePast = () => {
+        // refactor to just being a list filter potentially, but this is a full stack change
         let selectedNodes = [...selectedSubgraphNodes].sort();
         for (let rootNodeName of Object.keys(labeledSubgraphs)) {
             for (let labelName of Object.keys(labeledSubgraphs[rootNodeName])) {
@@ -66,7 +75,23 @@ const SubgraphLabel: React.FC<{
         }
         return {labeledInPast: false, oldLabel: 'invalid'};
     }
+
+    useEffect(() => {
+        if (predefinedIndexNum && predefinedLabel && predefinedRoot) {
+            const selected = {
+                "subgraphNodeMD5s":labeledSubgraphs[predefinedRoot][predefinedLabel][predefinedIndexNum].subgraphNodeMD5s,
+                "rootNode":labeledSubgraphs[predefinedRoot][predefinedLabel][predefinedIndexNum].subgraphRootName,
+            }
+            setSelectedLabeledSubgraph(selected);
+            setSelectedLabeledSubgraphRootNode(predefinedRoot);
+            setSelectedLabeledSubgraphLabel(predefinedLabel);
+            setSelectedLabeledSubgraphIndexNum(predefinedIndexNum.toString());
+
+        }
+    }, []);
+
     const labeledInThePastObj = haveLabeledInThePast();
+
     const submitSubgraph = async () => {
         let subgraphLabel = (customLabel) ? customLabel: label;
         // this sort call is important, but we can just as easily do this in the backend
@@ -98,6 +123,7 @@ const SubgraphLabel: React.FC<{
                     'subgraphRootName': rootNodeName,
                     'username': session.user.name,
                     'email': session.user.email,
+                    'rootNodeFileName': rootNodeFileName,
                 }),
             }).then(res => res.json());
         }
@@ -174,6 +200,7 @@ const SubgraphLabel: React.FC<{
 
 
     const handleSelectedLabelSelection = (item) => {
+        //refactor potentially for more performance, full stack change
         setSelectedLabeledSubgraphLabel(item.value);
         if (labeledSubgraphs[selectedLabeledSubgraphRootNode][item.value].length === 1) {
             const selected = {
@@ -186,6 +213,7 @@ const SubgraphLabel: React.FC<{
 
     const handleSelectedIndexNumSelection = (item) => {
         setSelectedLabeledSubgraphIndexNum(item.value);
+        //refactor potentially for more performance, full stack change
         let indexNum = parseInt(item.value);
         const selected = {
             "subgraphNodeMD5s":labeledSubgraphs[selectedLabeledSubgraphRootNode][selectedLabeledSubgraphLabel][indexNum].subgraphNodeMD5s,

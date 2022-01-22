@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useEffect} from 'react'
-import Router from 'next/router'
+import Router, {useRouter} from 'next/router'
 import ReactMarkdown from 'react-markdown'
 import { readString } from 'react-papaparse';
 import { majorScale, Pre, Popover, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table, Badge } from 'evergreen-ui'
@@ -35,10 +35,14 @@ export type SubgraphLabelProps = {
 export type SubgraphNodeProps = {
   uuid: string;
   label: string;
-  subgraphRootMD5: string;
+  subgraphRootName: string;
   owner: string;
   subgraphNodeMD5s: string[];
   modified: number;
+  subgraphRootId: number;
+  ownerEmail: string;
+  fullRootFileName: string;
+  indexNum: number;
 }
 
 export type KnownLocationProps = {
@@ -78,6 +82,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   const [selectedLabeledSubgraphRootNode, setSelectedLabeledSubgraphRootNode] = useState('');
   const [selectedLabeledSubgraphLabel, setSelectedLabeledSubgraphLabel] = useState('');
   const [selectedLabeledSubgraphIndexNum, setSelectedLabeledSubgraphIndexNum] = useState('')
+  const {query} = useRouter();
 
   const selectNode = (nodeDatum) => {
     if (!subgraphSelection) {
@@ -106,7 +111,13 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
     if (dobj.subgraphs) {
       setLabeledSubgraphs(dobj.subgraphs);
     }
+    if (query.root && query.label) {
+      setSubgraphSelection(true);
+    }
+
   }, []);
+
+
 
   const toggleSubgraphSelection = () => {
     let currentValue = subgraphSelection;
@@ -186,6 +197,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   let isValidSubgraphObj = isValidSubgraphKnownLocations(selectedSubgraphNodes, dobj);
   let validSubgraph = isValidSubgraphObj.validSubgraph;
   let rootNodeName = isValidSubgraphObj.rootNode;
+  let rootNodeLongName = isValidSubgraphObj.rootNodeLongName;
   let labelBadge = (customLabel || label) ? <Badge color='blue'>{customLabel || label}</Badge> : '';
 
   const subGraphLabeling = (subgraphSelection) ? 
@@ -211,7 +223,11 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
         selectedLabeledSubgraphLabel={selectedLabeledSubgraphLabel}
         setSelectedLabeledSubgraphLabel={setSelectedLabeledSubgraphLabel}
         selectedLabeledSubgraphRootNode={selectedLabeledSubgraphRootNode}
-        setSelectedLabeledSubgraphRootNode={setSelectedLabeledSubgraphRootNode}/>
+        setSelectedLabeledSubgraphRootNode={setSelectedLabeledSubgraphRootNode}
+        rootNodeFileName={rootNodeLongName}
+        predefinedLabel={query.label}
+        predefinedRoot={query.root}
+        predefinedIndexNum={query.indexNum}/>
       <Paragraph>
           Your Proposed Label for your selected subgraph: {labelBadge}
       </Paragraph>

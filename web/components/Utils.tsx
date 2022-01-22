@@ -118,7 +118,7 @@ export const isValidSubgraphKnownLocations = (
     dobj: KnownLocationProps
 ) => {
     if (selectedSubgraphNodes.length <= 1 ) {
-        return {validSubgraph: false, rootNode: 'invalid'};
+        return {validSubgraph: false, rootNode: 'invalid', rootNodeLongName: 'invalid'};
     }
     let descendentData = dobj.descendentData;
     let visited = {}
@@ -149,31 +149,33 @@ export const isValidSubgraphKnownLocations = (
         }
     }
     if (src.length > 1) {
-        return {validSubgraph: false, rootNode: src[0]};
+        return {validSubgraph: false, rootNode: 'invalid', rootNodeLongName: 'invalid'};
     }
     let foundSrc = false;
     queue = [descendentData];
     let srcID = src[0];
     let rootNodeName;
+    let rootNodeLongName;
     while (queue.length > 0) {        
         let node  = queue.shift();
         let identifier = getMD5(node);
         if (identifier === srcID) {
             //found the start, it must be a file observation
             if (node.kind !== 'FileObservation') {
-                return {validSubgraph: false, rootNode: 'invalid'}
+                return {validSubgraph: false, rootNode: 'invalid', rootNodeLongName: 'invalid'}
             }
             foundSrc = true;
             rootNodeName = node.shortName;
+            rootNodeLongName = node.longName;
         }
         if (!selectedSubgraphNodes.includes(identifier) && foundSrc) {
-            return {validSubgraph: false, rootNode: 'invalid'};
+            return {validSubgraph: false, rootNode: 'invalid', rootNodeLongName: 'invalid'};
         }
         if (visited.hasOwnProperty(identifier)) {
             visited[identifier] = true;
             // if we have visited all nodes in our subgraph 
             if (node.kind === 'FileObservation' && Object.values(visited).reduce((ans, cur) => cur && ans, true) && foundSrc) {
-                return {validSubgraph: true, rootNode: rootNodeName}
+                return {validSubgraph: true, rootNode: rootNodeName, rootNodeLongName: rootNodeLongName}
             }
         }
         for (let child of node.children) {
@@ -181,7 +183,7 @@ export const isValidSubgraphKnownLocations = (
         }
 
     }
-    return {validSubgraph: true, rootNode: rootNodeName};
+    return {validSubgraph: true, rootNode: rootNodeName, rootNodeLongName: rootNodeLongName};
 }
 
 // credit to here: https://flexiple.com/javascript-array-equality/
