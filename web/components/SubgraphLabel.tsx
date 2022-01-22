@@ -209,6 +209,7 @@ const SubgraphLabel: React.FC<{
             }
             setSelectedLabeledSubgraph(selected);
         }
+        // reset state dependency, more detailed comment on line 237
         if (selectedLabeledSubgraphIndexNum) {
             setSelectedLabeledSubgraphIndexNum('');
         }
@@ -233,6 +234,7 @@ const SubgraphLabel: React.FC<{
         selected={selectedLabeledSubgraphRootNode}
         onSelect={(item) => {
             setSelectedLabeledSubgraphRootNode(item.value);
+            //if we choose a new root, we must update the two dependencies after for a selection component
             if (selectedLabeledSubgraphLabel) {
                 setSelectedLabeledSubgraphLabel('');
             }
