@@ -21,6 +21,7 @@ export type FileProps = {
 export type SelectedLabeledGraph = {
   rootNode: string;
   subgraphNodeMD5s: string[];
+  labelerEmail: string;
 }
 
 // TODO: types for more granular selection if that's what we want
@@ -42,7 +43,6 @@ export type SubgraphNodeProps = {
   subgraphRootId: number;
   ownerEmail: string;
   fullRootFileName: string;
-  indexNum: number;
 }
 
 export type KnownLocationProps = {
@@ -77,11 +77,11 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   // this state is for previously labeled subgraphs
   const [labeledSubgraphs, setLabeledSubgraphs] = useState<SubgraphProps>(null);
   // this state is for the selected subgraph a user wants to see or update (previously labeled graphs)
-  const [selectedLabeledSubgraph, setSelectedLabeledSubgraph] = useState<SelectedLabeledGraph>(null);
+  const [selectedLabeledSubgraph, setSelectedLabeledSubgraph] = useState<SubgraphNodeProps>(null);
   // the state here is for the select menus so the component knows which previously labeled subgraph a user wants to see
   const [selectedLabeledSubgraphRootNode, setSelectedLabeledSubgraphRootNode] = useState('');
   const [selectedLabeledSubgraphLabel, setSelectedLabeledSubgraphLabel] = useState('');
-  const [selectedLabeledSubgraphIndexNum, setSelectedLabeledSubgraphIndexNum] = useState('')
+  const [selectedLabeledSubgraphId, setSelectedLabeledSubgraphId] = useState('')
   const {query} = useRouter();
 
   const selectNode = (nodeDatum) => {
@@ -111,17 +111,13 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
     if (dobj.subgraphs) {
       setLabeledSubgraphs(dobj.subgraphs);
     }
-    if (query.root && query.label && query.indexNum) {
+    if (query.root && query.label && query.uuid) {
       setSubgraphSelection(true);
-      if (query.indexNum && query.label && query.root) {
-        const selected = {
-            "subgraphNodeMD5s":dobj.subgraphs[query.root][query.label][query.indexNum].subgraphNodeMD5s,
-            "rootNode":dobj.subgraphs[query.root][query.label][query.indexNum].subgraphRootName,
-        }
-        setSelectedLabeledSubgraph(selected);
+      if (query.uuid && query.label && query.root) {
+        setSelectedLabeledSubgraph(dobj.subgraphs[query.root][query.label][query.uuid]);
         setSelectedLabeledSubgraphRootNode(query.root);
         setSelectedLabeledSubgraphLabel(query.label);
-        setSelectedLabeledSubgraphIndexNum(query.indexNum.toString());
+        setSelectedLabeledSubgraphId(query.uuid.toString());
       }
     }
   }, []);
@@ -140,7 +136,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
       setLabel('');
       setSelectedLabeledSubgraphLabel('');
       setSelectedLabeledSubgraphRootNode('');
-      setSelectedLabeledSubgraphIndexNum('');
+      setSelectedLabeledSubgraphId('');
       setSelectedLabeledSubgraph(null);
     }
   }
@@ -227,16 +223,13 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
         setMakeOwnLabel={setMakeOwnLabel}
         dobjID={dobj.id}
         rootNodeName={rootNodeName}
-        selectedLabeledSubgraphIndexNum={selectedLabeledSubgraphIndexNum}
-        setSelectedLabeledSubgraphIndexNum={setSelectedLabeledSubgraphIndexNum}
+        selectedLabeledSubgraphId={selectedLabeledSubgraphId}
+        setSelectedLabeledSubgraphId={setSelectedLabeledSubgraphId}
         selectedLabeledSubgraphLabel={selectedLabeledSubgraphLabel}
         setSelectedLabeledSubgraphLabel={setSelectedLabeledSubgraphLabel}
         selectedLabeledSubgraphRootNode={selectedLabeledSubgraphRootNode}
         setSelectedLabeledSubgraphRootNode={setSelectedLabeledSubgraphRootNode}
-        rootNodeFileName={rootNodeLongName}
-        predefinedLabel={query.label}
-        predefinedRoot={query.root}
-        predefinedIndexNum={query.indexNum}/>
+        rootNodeFileName={rootNodeLongName}/>
       <Paragraph>
           Your Proposed Label for your selected subgraph: {labelBadge}
       </Paragraph>
@@ -324,8 +317,12 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
           (selectedLabeledSubgraph) &&
           <g>
           <text font-family="Arial, Helvetica, sans-serif" 
-            strokeWidth="1" y="-40" x="-20" fill="black">
-              Subgraph End File with Label: {selectedLabeledSubgraphLabel}
+            strokeWidth="1" y="-60" x="-20" fill="black">
+              Subgraph End File with Label: {selectedLabeledSubgraph.label} 
+          </text>
+          <text font-family="Arial, Helvetica, sans-serif" 
+            strokeWidth="1" y="-40" x="-20" fill="black" fontSize='smaller'>
+              Labeled By: {selectedLabeledSubgraph.ownerEmail} 
           </text>
           </g>
         }

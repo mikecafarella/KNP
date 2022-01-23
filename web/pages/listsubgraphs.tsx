@@ -68,7 +68,7 @@ const SubGraphs: React.FC<Props> = (props) => {
             </Table.Head>
             <Table.Body>
                {displayedSubgraphs.map(obj => (
-               <Table.Row key={obj.uuid} isSelectable onSelect={() => Router.push({pathname: `/knownlocation/${obj.subgraphRootId}`, query: {root: obj.subgraphRootName, label: obj.label, indexNum: obj.indexNum}})}>
+               <Table.Row key={obj.uuid} isSelectable onSelect={() => Router.push({pathname: `/knownlocation/${obj.subgraphRootId}`, query: {root: obj.subgraphRootName, label: obj.label, uuid: obj.uuid}})}>
                   <Table.TextCell>{obj.fullRootFileName}</Table.TextCell>
                   <Table.TextCell>{obj.subgraphRootName}</Table.TextCell>
                   <Table.TextCell>{obj.label}</Table.TextCell>

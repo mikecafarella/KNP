@@ -677,14 +677,9 @@ class GraphDB:
                                   "RETURN properties(b) "
                                   "ORDER BY b.modified DESC")
             ret = [x[0] for x in results]
-            final = {}
             labels = set()
             emails = set()
             for node in ret:
-                final.setdefault(node['subgraphRootName'], {})
-                final[node['subgraphRootName']].setdefault(node['label'], [])
-                final[node['subgraphRootName']][node['label']].append(node)
-                node['indexNum'] = len(final[node['subgraphRootName']][node['label']])-1
                 labels.add(node['label'])
                 emails.add(node['ownerEmail'])
                 node['modified'] = str(datetime.datetime.fromtimestamp(node['modified']))
@@ -702,9 +697,8 @@ class GraphDB:
             final = {}
             for node in ret:
                 final.setdefault(node['subgraphRootName'], {})
-                final[node['subgraphRootName']].setdefault(node['label'], [])
-                final[node['subgraphRootName']][node['label']].append(node)
-                node['indexNum'] = len(final[node['subgraphRootName']][node['label']])-1
+                final[node['subgraphRootName']].setdefault(node['label'], {})
+                final[node['subgraphRootName']][node['label']][node['uuid']] = node
             return final
 
     def createNearColumnMatches(self):
