@@ -18,12 +18,6 @@ export type FileProps = {
   isLatest: number;
 }
 
-export type SelectedLabeledGraph = {
-  rootNode: string;
-  subgraphNodeMD5s: string[];
-  labelerEmail: string;
-}
-
 // TODO: types for more granular selection if that's what we want
 export type SubgraphProps = {
   rootNodeName: SubgraphLabelProps,

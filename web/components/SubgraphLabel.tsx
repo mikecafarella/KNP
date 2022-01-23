@@ -1,6 +1,6 @@
 import React from 'react'
 import { Autocomplete, TextInput, Button, Dialog, SelectMenu} from 'evergreen-ui'
-import { SubgraphProps, SelectedLabeledGraph, SubgraphNodeProps } from './KnownLocation';
+import { SubgraphProps, SubgraphNodeProps } from './KnownLocation';
 import { arrayEquals } from './Utils';
 import { useSession } from 'next-auth/client'
 
