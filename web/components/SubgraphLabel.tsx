@@ -159,8 +159,6 @@ const SubgraphLabel: React.FC<{
             exitDialog();
         }
     }
-    //TODO: replaced with API call to recommended labels
-    let items = ['Test', 'Jest', 'Rest', 'Teests', 'Jeeps'];
 
     const submitLabelButton = (label) ? 
         <Button 

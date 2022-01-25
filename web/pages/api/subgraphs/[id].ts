@@ -5,7 +5,6 @@ export default async function handle(req, res) {
       const { id } = req.query;
       url = `http://localhost:5000/addsubgraph/${id}`
    } else if (req.method === 'PATCH') {
-     console.log("FUCK THIS");
       url = 'http://localhost:5000/subgraph'
    }
    
