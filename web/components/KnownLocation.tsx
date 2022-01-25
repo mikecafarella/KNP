@@ -196,7 +196,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
 
   const [translate, containerRef] = useCenteredTree();
 
-  const subgraphSelectionInfoString = (subgraphSelection) ? 'You are now in subgraph selection mode' : '';
+  const subgraphSelectionInfoString = (subgraphSelection) ? 'You are now in subgraph selection mode: click on nodes to select a subgraph or view previously labeled subgraphs' : '';
 
   let isValidSubgraphObj = isValidSubgraphKnownLocations(selectedSubgraphNodes, dobj);
   let validSubgraph = isValidSubgraphObj.validSubgraph;
