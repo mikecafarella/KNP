@@ -1,12 +1,11 @@
 
 import React, { useState, useCallback, useEffect} from 'react'
 import Router, {useRouter} from 'next/router'
-import ReactMarkdown from 'react-markdown'
 import { readString } from 'react-papaparse';
 import { majorScale, Pre, Popover, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table, Badge } from 'evergreen-ui'
 import Tree from 'react-d3-tree'
 import MD5 from "crypto-js/md5";
-import { isValidSubgraphKnownLocations, getMD5 } from './Utils';
+import { isValidSubgraphKnownLocations, getUUID, getUUIDsandKinds } from './Utils';
 import SubgraphLabel from './SubgraphLabel';
 
 
@@ -32,11 +31,13 @@ export type SubgraphNodeProps = {
   label: string;
   subgraphRootName: string;
   owner: string;
-  subgraphNodeMD5s: string[];
+  subgraphNodeUUIDs: string[];
   modified: number;
   subgraphRootId: number;
   ownerEmail: string;
   fullRootFileName: string;
+  subgraphNodeKinds: string[];
+  provenanceGraphRootId: string;
 }
 
 export type KnownLocationProps = {
@@ -75,11 +76,17 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   // the state here is for the select menus so the component knows which previously labeled subgraph a user wants to see
   const [selectedLabeledSubgraphRootNode, setSelectedLabeledSubgraphRootNode] = useState('');
   const [selectedLabeledSubgraphLabel, setSelectedLabeledSubgraphLabel] = useState('');
-  const [selectedLabeledSubgraphId, setSelectedLabeledSubgraphId] = useState('')
+  const [selectedLabeledSubgraphId, setSelectedLabeledSubgraphId] = useState('');
+  // this state is the result of an API call to the classifier
+  const [autocompleteItems, setAutocompleteItems] = useState([]);
+  
   const {query} = useRouter();
 
   const selectNode = (nodeDatum) => {
     if (!subgraphSelection) {
+      if (nodeDatum.kind === 'SharingEvent') {
+        return;
+      }
       if (nodeDatum === selectedNode) {
         setSelectedNode('');
       } else {
@@ -88,15 +95,17 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
     } else if (subgraphSelection && !selectedLabeledSubgraphRootNode) {
       // we want to make the view previous graph and select an new subgraph independent operations
       // so we only high light if the user does not want to view a previously labeled subgraph
-      let md5 = getMD5(nodeDatum);
-      if (selectedSubgraphNodes.includes(md5)) {
+      let uuid = getUUID(nodeDatum);
+      let kind = nodeDatum.kind;
+      let node = selectedSubgraphNodes.filter(nd => nd.uuid == uuid)[0];
+      if (node) {
         setSelectedSubgraphNodes(
-          selectedSubgraphNodes.filter(hash => hash !== md5)
+          selectedSubgraphNodes.filter(nd => nd.uuid !== uuid)
         );
       } else {
         setSelectedSubgraphNodes(
-          [...selectedSubgraphNodes, md5]
-        );
+          [...selectedSubgraphNodes, {kind, uuid}]
+        )
       }
     }
   }
@@ -108,10 +117,12 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
     if (query.root && query.label && query.uuid) {
       setSubgraphSelection(true);
       if (query.uuid && query.label && query.root) {
-        setSelectedLabeledSubgraph(dobj.subgraphs[query.root][query.label][query.uuid]);
+        let node: SubgraphNodeProps = dobj.subgraphs[query.root][query.label][query.uuid];
+        setSelectedLabeledSubgraph(node);
         setSelectedLabeledSubgraphRootNode(query.root);
         setSelectedLabeledSubgraphLabel(query.label);
         setSelectedLabeledSubgraphId(query.uuid.toString());
+        setSelectedSubgraphNodes(getUUIDsandKinds(node));
       }
     }
   }, []);
@@ -138,8 +149,6 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   const isSelected = (nodeDatum) => {
     if (nodeDatum.uuid) {
       return selectedNode.uuid === nodeDatum.uuid;
-    } else if (nodeDatum.startedOn) {
-      return MD5(selectedNode.startedOn).toString() === MD5(nodeDatum.startedOn).toString();
     } else {
       return MD5(nodeDatum.receivedOnOrBefore).toString() === MD5(selectedNode.receivedOnOrBefore).toString()
     }
@@ -161,15 +170,13 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
       // check to see if nodeDatum is equal to highlightedNode
       if (nodeDatum.uuid) {
         return highlightedNode === nodeDatum.uuid;
-      } else if (nodeDatum.startedOn) {
-        return highlightedNode === MD5(nodeDatum.startedOn).toString();
       } else {
         return highlightedNode === MD5(nodeDatum.receivedOnOrBefore).toString();
       }
     } else {
       //other check to see is the md5 is contained in selected subgraph nodes
-      let md5 = getMD5(nodeDatum);
-      return (selectedLabeledSubgraph) ? selectedLabeledSubgraph.subgraphNodeMD5s.includes(md5) : selectedSubgraphNodes.includes(md5);
+      let uuid = getUUID(nodeDatum);
+      return (selectedLabeledSubgraph) ? selectedLabeledSubgraph.subgraphNodeUUIDs.includes(uuid) : selectedSubgraphNodes.filter(nd => nd.uuid === uuid)[0];
     }
   }
   
@@ -181,8 +188,6 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
     if (!subgraphSelection) {
       if (nodeDatum.uuid) {
         setHighlightedNode(nodeDatum.uuid);
-      } else if (nodeDatum.startedOn) {
-        setHighlightedNode(MD5(nodeDatum.startedOn).toString())
       } else {
         setHighlightedNode(MD5(nodeDatum.receivedOnOrBefore).toString());
       }
@@ -197,6 +202,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   let validSubgraph = isValidSubgraphObj.validSubgraph;
   let rootNodeName = isValidSubgraphObj.rootNode;
   let rootNodeLongName = isValidSubgraphObj.rootNodeLongName;
+  let rootNodeId = isValidSubgraphObj.rootId;
   let labelBadge = (customLabel || label) ? <Badge color='blue'>{customLabel || label}</Badge> : '';
 
   const subGraphLabeling = (subgraphSelection) ? 
@@ -223,7 +229,10 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
         setSelectedLabeledSubgraphLabel={setSelectedLabeledSubgraphLabel}
         selectedLabeledSubgraphRootNode={selectedLabeledSubgraphRootNode}
         setSelectedLabeledSubgraphRootNode={setSelectedLabeledSubgraphRootNode}
-        rootNodeFileName={rootNodeLongName}/>
+        rootNodeFileName={rootNodeLongName}
+        autompleteItems={autocompleteItems}
+        setAutocompleteItems={setAutocompleteItems}
+        subgraphRootId={rootNodeId}/>
       <Paragraph>
           Your Proposed Label for your selected subgraph: {labelBadge}
       </Paragraph>
@@ -265,8 +274,10 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
       {(nodeDatum.kind == 'SharingEvent') &&
         <g>
         <svg height="50" width="100" x="-25" y="-25">
-          <ellipse cx="50" cy="25" rx="45" ry="20" fill="purple" stroke="black" stroke-width="1">
-          </ellipse>
+          <ellipse cx="50" cy="25" rx="45" ry="20" fill="purple" stroke="black" stroke-width={(shouldHighlight(nodeDatum)) ? "5" : "1"} 
+          onMouseOut={()=>setHighlightedNode("")}
+          onMouseOver={()=>highLightNode(nodeDatum)} onClick={()=>selectNode(nodeDatum)}>
+          </ellipse >
         </svg>
         <text font-family="Arial, Helvetica, sans-serif" 
           fill="blue" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)} strokeWidth="1" y="-20" x="70">
@@ -306,9 +317,9 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
           </text>
           </g>
         }
-        {
-          (nodeDatum.shortName === selectedLabeledSubgraphRootNode) &&
+        {   
           (selectedLabeledSubgraph) &&
+          (nodeDatum.longName === selectedLabeledSubgraph.fullRootFileName) &&
           <g>
           <text font-family="Arial, Helvetica, sans-serif" 
             strokeWidth="1" y="-60" x="-20" fill="black">

@@ -1,4 +1,4 @@
-import KnownLocation, { KnownLocationProps } from "./KnownLocation";
+import KnownLocation, { KnownLocationProps, SubgraphNodeProps } from "./KnownLocation";
 import MD5 from "crypto-js/md5";
 
 export const isValidSubgraph = (
@@ -99,26 +99,25 @@ export const isValidSubgraph = (
     return false;
 }
 
-export const getMD5 = (nodeDatum) => {
-    let md5;
-    if (nodeDatum.md5hash) {
-      md5 = nodeDatum.md5hash;
-    } else if (nodeDatum.startedOn) {
-      md5 = MD5(nodeDatum.startedOn).toString();
+export const getUUID = (nodeDatum) => {
+    let uuid;
+    if (nodeDatum.uuid) {
+      uuid = nodeDatum.uuid;
     } else {
-      md5 = MD5(nodeDatum.receivedOnOrBefore).toString();
+      uuid = MD5(nodeDatum.receivedOnOrBefore).toString();
     }
-    return md5;
+    return uuid;
   }
 
 //can clean this up if we need to, might give a slight performance boost also if the provenance graphs get a lot bigger,
 //but would also be better to make this a backend call if it comes down to it 
 export const isValidSubgraphKnownLocations = (
-    selectedSubgraphNodes: any[],
+    selectedSubgraphNodesObj: any[],
     dobj: KnownLocationProps
 ) => {
+    let selectedSubgraphNodes = selectedSubgraphNodesObj.map(nd => nd.uuid);
     if (selectedSubgraphNodes.length <= 1 ) {
-        return {validSubgraph: false, rootNode: 'invalid', rootNodeLongName: 'invalid'};
+        return {validSubgraph: false, rootNode: 'invalid', rootNodeLongName: 'invalid', rootId: 'invalid'};
     }
     let descendentData = dobj.descendentData;
     let visited = {}
@@ -128,8 +127,8 @@ export const isValidSubgraphKnownLocations = (
     while (queue.length > 0) {
         let newQueue = [];
         for (let node of queue) {
-            let nodeMD5 = getMD5(node);
-            depths[nodeMD5] = depth;
+            let nodeUUID = getUUID(node);
+            depths[nodeUUID] = depth;
             for (let child of node.children) {
                 newQueue.push(child);
             }
@@ -149,33 +148,35 @@ export const isValidSubgraphKnownLocations = (
         }
     }
     if (src.length > 1) {
-        return {validSubgraph: false, rootNode: 'invalid', rootNodeLongName: 'invalid'};
+        return {validSubgraph: false, rootNode: 'invalid', rootNodeLongName: 'invalid', rootId: 'invalid'};
     }
     let foundSrc = false;
     queue = [descendentData];
     let srcID = src[0];
     let rootNodeName;
     let rootNodeLongName;
+    let rootId;
     while (queue.length > 0) {        
         let node  = queue.shift();
-        let identifier = getMD5(node);
+        let identifier = getUUID(node);
         if (identifier === srcID) {
             //found the start, it must be a file observation
             if (node.kind !== 'FileObservation') {
-                return {validSubgraph: false, rootNode: 'invalid', rootNodeLongName: 'invalid'}
+                return {validSubgraph: false, rootNode: 'invalid', rootNodeLongName: 'invalid', rootId: 'invalid'}
             }
             foundSrc = true;
             rootNodeName = node.shortName;
             rootNodeLongName = node.longName;
+            rootId = node.uuid;
         }
         if (!selectedSubgraphNodes.includes(identifier) && foundSrc) {
-            return {validSubgraph: false, rootNode: 'invalid', rootNodeLongName: 'invalid'};
+            return {validSubgraph: false, rootNode: 'invalid', rootNodeLongName: 'invalid', rootId: 'invalid'};
         }
         if (visited.hasOwnProperty(identifier)) {
             visited[identifier] = true;
             // if we have visited all nodes in our subgraph 
             if (node.kind === 'FileObservation' && Object.values(visited).reduce((ans, cur) => cur && ans, true) && foundSrc) {
-                return {validSubgraph: true, rootNode: rootNodeName, rootNodeLongName: rootNodeLongName}
+                return {validSubgraph: true, rootNode: rootNodeName, rootNodeLongName: rootNodeLongName, rootId}
             }
         }
         for (let child of node.children) {
@@ -183,7 +184,7 @@ export const isValidSubgraphKnownLocations = (
         }
 
     }
-    return {validSubgraph: true, rootNode: rootNodeName, rootNodeLongName: rootNodeLongName};
+    return {validSubgraph: true, rootNode: rootNodeName, rootNodeLongName: rootNodeLongName, rootId};
 }
 
 // credit to here: https://flexiple.com/javascript-array-equality/
@@ -192,6 +193,16 @@ export function arrayEquals(a: any[], b: any[]) {
         Array.isArray(b) &&
         a.length === b.length &&
         a.every((val, index) => val === b[index]);
+}
+
+export function getUUIDsandKinds(node: SubgraphNodeProps) {
+    let selectedNodes = [];
+    for (let i in node.subgraphNodeUUIDs) {
+      let kind = node.subgraphNodeKinds[i];
+      let uuid = node.subgraphNodeUUIDs[i];
+      selectedNodes.push({kind, uuid})
+    }
+    return selectedNodes;
 }
 
 

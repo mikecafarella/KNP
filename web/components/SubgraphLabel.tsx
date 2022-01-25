@@ -1,7 +1,7 @@
-import React from 'react'
+import React, {useEffect , useState} from 'react'
 import { Autocomplete, TextInput, Button, Dialog, SelectMenu} from 'evergreen-ui'
 import { SubgraphProps, SubgraphNodeProps } from './KnownLocation';
-import { arrayEquals } from './Utils';
+import { arrayEquals, getUUIDsandKinds } from './Utils';
 import { useSession } from 'next-auth/client'
 
 // see the knownlocations component for explanation of state props
@@ -28,6 +28,9 @@ const SubgraphLabel: React.FC<{
     selectedLabeledSubgraphId: string, 
     setSelectedLabeledSubgraphId: (selectedLabeledSubgraphId: string) => void,
     rootNodeFileName: string,
+    autompleteItems: any[],
+    setAutocompleteItems: (autocompleteItems: any[]) => void,
+    subgraphRootId: string,
 }> = ({validSubgraph, 
        selectedSubgraphNodes, setSelectedSubgraphNodes, 
        labeledSubgraphs, setLabeledSubgraphs, 
@@ -41,8 +44,10 @@ const SubgraphLabel: React.FC<{
        selectedLabeledSubgraphLabel, setSelectedLabeledSubgraphLabel,
        selectedLabeledSubgraphId, setSelectedLabeledSubgraphId,
        rootNodeFileName,
+       autompleteItems, setAutocompleteItems,
+       subgraphRootId,
     }) => {
-    const subgraphsUrl = '/api/subgraphs/' + dobjID;
+    const subgraphsUrl = '/api/subgraphs';
     const [session, loading] = useSession();
     const handleResetLabeledSelection = () => {
         setSelectedLabeledSubgraphRootNode('');
@@ -50,20 +55,23 @@ const SubgraphLabel: React.FC<{
         setSelectedLabeledSubgraphId('');
         setSelectedLabeledSubgraph(null);
         setLabel('');
+        setAutocompleteItems([]);
+        if (selectedSubgraphNodes) {
+            setSelectedSubgraphNodes([]);
+        }
         // Don't need to reset the custom label because closing the dialog component does that for us
     }
     // we currently check thru all possible labeled subgraphs and do an array equality check to see if we have previously 
     // labeled a set of nodes
     const haveLabeledInThePast = () => {
         // refactor to just being a list filter potentially, but this is a full stack change
-        let selectedNodes = [...selectedSubgraphNodes].sort();
-        
+        let selectedNodes = selectedSubgraphNodes.map(nd=>nd.uuid).sort();
         for (let rootNodeName of Object.keys(labeledSubgraphs)) {
             for (let labelName of Object.keys(labeledSubgraphs[rootNodeName])) {
                 // let subgraphInfos: SubgraphNodeProps[] = labeledSubgraphs[rootNodeName][labelName]
                 for (let uuid of Object.keys(labeledSubgraphs[rootNodeName][labelName])) {
                     let subgraphNode : SubgraphNodeProps = labeledSubgraphs[rootNodeName][labelName][uuid];
-                    if (arrayEquals(subgraphNode.subgraphNodeMD5s, selectedNodes)) {
+                    if (arrayEquals(subgraphNode.subgraphNodeUUIDs, selectedNodes)) {
                         return {labeledInPast: true, oldLabel: subgraphNode.label};
                     }
                 }
@@ -72,23 +80,53 @@ const SubgraphLabel: React.FC<{
         return {labeledInPast: false, oldLabel: 'invalid'};
     }
 
+    const fetcher = async (url) => {
+        let selectedNodes = selectedSubgraphNodes.filter(nd => nd.kind !== "SharingEvent");
+        let data = await fetch(url, {
+            method: "PATCH",
+            body: JSON.stringify({selectedNodes, subgraphRootId})
+        }).then(res=>res.json())
+        setAutocompleteItems(data);
+        return data;   
+    }
+
+
+    useEffect(() => {
+        if (validSubgraph) {
+            fetcher(`${subgraphsUrl}/${dobjID}`)
+        } else {
+            setAutocompleteItems([]);
+        }
+    }, [selectedSubgraphNodes]);
+
     const labeledInThePastObj = haveLabeledInThePast();
 
     const submitSubgraph = async () => {
         let subgraphLabel = (customLabel) ? customLabel: label;
         // this sort call is important, but we can just as easily do this in the backend
-        let selectedNodes = [...selectedSubgraphNodes].sort();
+
+        let sorted = selectedSubgraphNodes.sort((a, b) => {
+            if (a.uuid < b.uuid) {
+                return -1
+            } else if (a.uuid > b.uuid) {
+                return 1;
+            }
+            return 0;
+        });
+
+        let selectedNodes = sorted.map(nd=>nd.uuid);
+        let selectedNodeKinds = sorted.map(nd=>nd.kind);
         let res; 
         if (labeledInThePastObj.labeledInPast || selectedLabeledSubgraph) {
             if (selectedLabeledSubgraph) {
-                selectedNodes = selectedLabeledSubgraph.subgraphNodeMD5s;
+                selectedNodes = selectedLabeledSubgraph.subgraphNodeUUIDs;
             }
             let oldLabel = (selectedLabeledSubgraph) ? selectedLabeledSubgraphLabel: labeledInThePastObj.oldLabel
-            res = await fetch(subgraphsUrl, {
+            res = await fetch(`${subgraphsUrl}/${dobjID}`, {
                 method: "PUT",
                 body: JSON.stringify({
                     "uuid": dobjID,
-                    "subgraphNodeMD5s": selectedNodes,
+                    "subgraphNodeUUIDs": selectedNodes,
                     "oldLabel": oldLabel,
                     "newLabel": subgraphLabel,
                     "username": session.user.name,
@@ -96,16 +134,18 @@ const SubgraphLabel: React.FC<{
                 }),
             }).then(res=>res.json());
         } else {
-            res = await fetch(subgraphsUrl, {
+            res = await fetch(`${subgraphsUrl}/${dobjID}`, {
                 method: "POST",
                 body: JSON.stringify({
-                    "uuid": dobjID,
-                    'subgraphNodeMD5s': selectedNodes,
+                    "subgraphRootId": subgraphRootId,
+                    'subgraphNodeUUIDs': selectedNodes,
                     'label': subgraphLabel,
                     'subgraphRootName': rootNodeName,
                     'username': session.user.name,
                     'email': session.user.email,
                     'rootNodeFileName': rootNodeFileName,
+                    "subgraphNodeKinds": selectedNodeKinds,
+                    'uuid': dobjID,
                 }),
             }).then(res => res.json());
         }
@@ -136,13 +176,14 @@ const SubgraphLabel: React.FC<{
     const handleResetUserSelection = () => {
         setSelectedSubgraphNodes([]);
         setLabel('');
+        setAutocompleteItems([]);
     }        
     const labelComponent = (validSubgraph || selectedLabeledSubgraph) ? 
         <>
             <Autocomplete
                 title="Label"
                 onChange={changedItem => setLabel(changedItem)}
-                items={items}
+                items={autompleteItems}
                 >
                 {props => {
                     const { getInputProps, getRef, inputValue, openMenu } = props
@@ -158,7 +199,7 @@ const SubgraphLabel: React.FC<{
                                 }
                             })}
                             />
-                            <Button onClick={handleResetUserSelection} disabled={selectedSubgraphNodes.length === 0}>Clear your Current Subgraph Selection</Button>
+                            <Button onClick={handleResetUserSelection} disabled={selectedSubgraphNodes.length === 0 || selectedLabeledSubgraph}>Clear your Current Subgraph Selection</Button>
                         </>
                     )
                 }}
@@ -186,7 +227,10 @@ const SubgraphLabel: React.FC<{
         setSelectedLabeledSubgraphLabel(item.value);
         if (Object.keys(labeledSubgraphs[selectedLabeledSubgraphRootNode][item.value]).length === 1) {
             let uuid = Object.keys(labeledSubgraphs[selectedLabeledSubgraphRootNode][item.value])[0]
-            setSelectedLabeledSubgraph(labeledSubgraphs[selectedLabeledSubgraphRootNode][item.value][uuid]);
+            let node: SubgraphNodeProps = labeledSubgraphs[selectedLabeledSubgraphRootNode][item.value][uuid];
+            setSelectedLabeledSubgraph(node);
+            setSelectedSubgraphNodes(getUUIDsandKinds(node));
+
         }
         // reset state dependency, more detailed comment on line 237
         if (selectedLabeledSubgraphId) {
@@ -196,11 +240,13 @@ const SubgraphLabel: React.FC<{
 
     const handleSelectedIdSelection = (item) => {
         setSelectedLabeledSubgraphId(item.value);
-        setSelectedLabeledSubgraph(labeledSubgraphs[selectedLabeledSubgraphRootNode][selectedLabeledSubgraphLabel][item.value]);
+        let node: SubgraphNodeProps = labeledSubgraphs[selectedLabeledSubgraphRootNode][selectedLabeledSubgraphLabel][item.value];
+        setSelectedLabeledSubgraph(node);
+        setSelectedSubgraphNodes(getUUIDsandKinds(node));
     }
 
     //we show this if there are previously labeled subgraphs and the user is not attempting to select a subgraph
-    const subgraphRootMenu = (Object.keys(labeledSubgraphs).length > 0 && selectedSubgraphNodes.length === 0) ? 
+    const subgraphRootMenu = (Object.keys(labeledSubgraphs).length > 0) ? 
     <SelectMenu 
         title="Subgraph Root Node"
         options={Object.keys(labeledSubgraphs).map((label) => ({ label, value: label }))}
@@ -235,7 +281,6 @@ const SubgraphLabel: React.FC<{
     if (selectedLabeledSubgraphLabel && selectedLabeledSubgraphRootNode) {
         try {
             length = Object.keys(labeledSubgraphs[selectedLabeledSubgraphRootNode][selectedLabeledSubgraphLabel]).length;
-            console.log(labeledSubgraphs[selectedLabeledSubgraphRootNode][selectedLabeledSubgraphLabel]);
             // this is admittedly very hacky, there's an issue with the state being reset after submitting a label
         }  catch (TypeError) {
             length = 0;
@@ -266,7 +311,7 @@ const SubgraphLabel: React.FC<{
         {subgraphLabelMenu}
         {subgraphLabelId}
         {/* This condition is there so we can clear early in the selection process */}
-        {(selectedSubgraphNodes.length === 0 && Object.keys(labeledSubgraphs).length > 0) ?
+        {(Object.keys(labeledSubgraphs).length > 0) ?
             <Button 
                 onClick={handleResetLabeledSelection} 
                 disabled={!selectedLabeledSubgraphRootNode}
