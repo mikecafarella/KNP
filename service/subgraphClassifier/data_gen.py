@@ -19,9 +19,7 @@ def change_title(csv_path):
 def drop_column(csv_path):
     df = pd.read_csv(csv_path)
     cols = [col for col in df.columns if "Unnamed" not in col]
-    col = 'test3'
-    while col == 'test3':
-        col = random.choice(cols)
+    col = random.choice(cols)
     del df[col]
     cols = df.columns
     df = df.rename(lambda x: x if "Unnamed" not in x else "", axis='columns')
@@ -37,10 +35,9 @@ def make_viz(csv_path):
             x_cols.append(col)
             if 'date' not in col and 'realtime' not in col:
                 y_cols.append(col)
-    x_col = y_col = None
-    while (x_col == y_col):
-        x_col = random.choice(x_cols)
-        y_col = random.choice(y_cols)
+   
+    x_col = random.choice(x_cols)
+    y_col = random.choice(y_cols)
     x_s = [i for i in df[x_col]]
     y_s = [i for i in df[y_col]]
     plt.plot(x_s, y_s)
@@ -49,7 +46,7 @@ def make_viz(csv_path):
   
 
 if __name__ == "__main__":
-    drop_column('Book1.csv')
-    # make_viz('Book1.csv')
+    # drop_column('Book1.csv')
+    make_viz('Book1.csv')
     # change_title('Book1.csv')
     pass
