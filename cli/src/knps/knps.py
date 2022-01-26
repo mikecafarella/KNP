@@ -53,14 +53,32 @@ def get_version(file_loc = __file__):
 
 
 HASH_CACHE = {}
-def hash_file(fname):
-    if fname not in HASH_CACHE:
+def hash_file(fname, stats=None):
+    if not stats:
+        p = Path(fname)
+        stats = p.stat()
+    key = f'{fname}-{stats.st_mtime}'
+    if key not in HASH_CACHE:
         hash_md5 = hashlib.md5()
         with open(fname, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 hash_md5.update(chunk)
-        HASH_CACHE[fname] = hash_md5.hexdigest()
-    return HASH_CACHE[fname]
+        HASH_CACHE[key] = hash_md5.hexdigest()
+    return HASH_CACHE[key]
+
+def get_file_data(fname):
+    p = Path(fname)
+    if not p.exists():
+        return {}
+
+    stats = p.stat()
+    file_data = {
+        'file_name': fname,
+        'file_hash': hash_file(fname, stats),
+        'file_size': stats.st_size,
+        'modified': stats.st_mtime,
+    }
+    return file_data
 
 #
 # Hash all the lines of a file. Should only be applied to a text file
@@ -791,7 +809,7 @@ class Monitor:
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         dir_regex = r'{}'.format('|'.join([x.lstrip('/') for x in self.dirs]))
 
-        blacklist = ['stat64', 'filecoordinationd', 'getattrlist', 'fsgetpath', 'getxattr', 'fsctl', 'statfs64']
+        blacklist = ['asdf']#'stat64', 'filecoordinationd', 'getattrlist', 'fsgetpath', 'getxattr', 'fsctl', 'statfs64']
         blacklist_regex = r'{}'.format('|'.join(blacklist))
 
         procs = {}
@@ -819,7 +837,9 @@ class Monitor:
                 line_breakdown = line.split(maxsplit = 6)
                 if any(substring in line_breakdown[-1] for substring in ["Sublime Text", "bird", "quicklookd"]):
                     continue
+
                 print(line_breakdown)
+
                 data = re.split(r'\s+', line)
                 timestamp = data[0]
                 action = data[1]
@@ -840,7 +860,7 @@ class Monitor:
 
                 open_type = None
 
-                if action == 'open':
+                if action == 'open' or action == 'access':
                     open_flags = [x for x in data if re.search(r'^\(.+\)$', x)]
                     if len(open_flags):
                         open_flags = open_flags[0]
@@ -858,10 +878,12 @@ class Monitor:
                                         'outputs': set([]),
                                         'accesses': set([]),
                                         'cmdline': [],
-                                        'pid': ''}
+                                        'pid': '',
+                                        'file_data': {}}
 
 
                 proc = self.__get_process__(process_name, thread_id, pathname)
+
                 if proc:
                     procs[proc_key]['cmdline'] = proc['cmdline']
                     procs[proc_key]['pid'] = proc['pid']
@@ -878,23 +900,31 @@ class Monitor:
 
                 print(proc_key, action, open_type, pathname not in procs[proc_key]['outputs'])
 
+                file_data = get_file_data(pathname)
+
+                if not file_data:
+                    continue
+                file_hash = file_data['file_hash']
+
+                procs[proc_key]['file_data'][file_hash] = file_data
+
                 if ('WrData' in action or open_type == 'write' or (modified_flag and not ('RdData' in action or open_type == 'read'))):
-                    procs[proc_key]['outputs'].add(pathname)
+                    procs[proc_key]['outputs'].add(file_hash)
                     procs[proc_key]['last_update'] = dt
                     procs[proc_key].pop('synced', None) # Need to sync again
                 elif ('RdData' in action or open_type == 'read' or not modified_flag):
-                    procs[proc_key]['inputs'].add(pathname)
+                    procs[proc_key]['inputs'].add(file_hash)
                     procs[proc_key]['last_update'] = dt
                     procs[proc_key].pop('synced', None) # Need to sync again
-                elif pathname not in procs[proc_key]['accesses'] and pathname not in procs[proc_key]['inputs'] and pathname not in procs[proc_key]['outputs']:
-                    procs[proc_key]['accesses'].add(pathname)
+                elif pathname not in procs[proc_key]['accesses'] and file_hash not in procs[proc_key]['inputs'] and file_hash not in procs[proc_key]['outputs']:
+                    procs[proc_key]['accesses'].add(file_hash)
                     procs[proc_key]['last_update'] = dt
                     procs[proc_key].pop('synced', None) # Need to sync again
 
 
                 # print(f'{timestamp} - {action} - {pathname} - {process_name} - Thread: {thread_id}')
                 # print(line)
-                # print(json.dumps(procs, indent=2, default=str))
+                print(json.dumps(procs, indent=2, default=str))
 
 
 #
