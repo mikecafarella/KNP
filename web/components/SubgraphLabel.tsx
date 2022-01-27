@@ -81,7 +81,7 @@ const SubgraphLabel: React.FC<{
     }
 
     const fetcher = async (url) => {
-        let selectedNodes = selectedSubgraphNodes.filter(nd => nd.kind !== "SharingEvent");
+        let selectedNodes = selectedSubgraphNodes.filter(nd => nd.kind === "FileObservation");
         let data = await fetch(url, {
             method: "PATCH",
             body: JSON.stringify({selectedNodes, subgraphRootId})

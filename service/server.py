@@ -35,7 +35,7 @@ import os
 from pathlib import Path
 import requests
 import uuid
-from subgraphClassifier.subgraph_classifier import get_label
+from subgraph_classifier import apply_classifier
 
 from elasticsearch import Elasticsearch
 
@@ -1734,6 +1734,8 @@ def show_bytesetdata(md5):
     likelyCollaborations = GDB.findCollaborationsForByteset(md5)
 
     content = GDB.getBytecontentStruct(md5)
+    if 'csv' in (bytesetInfo['filetype']):
+        content['content'] = base64.b64decode(content['content']).decode(encoding='utf-8')
 
     bytesetInfo["files"] = containingFiles
     bytesetInfo["datasets"] = containingDatasets
@@ -1920,8 +1922,25 @@ def add_subgraph(id):
 def get_subgraph_label():
     incomingReq = json.loads(request.get_json())
     arguments = [GDB.getSubgraphNode(obs['uuid'], obs['kind']) for obs in incomingReq['selectedNodes']]
+    # send to the classifier in addition to list of props for observed files and bytesets, 
+    # we also want the content of each file in there as well
+    for node in arguments:
+        # we can only do classification tasks for those the upload bytes, can do local files as well by using the full paths
+        # but getting the contents from db is preferred 
+        md5 = node['ByteSet']['md5hash']
+        content_struct = GDB.getBytecontentStruct(md5)
+        if not content_struct['hasContent']:
+            full_path = node['ObservedFile']['filename']
+            if not Path(full_path).is_file():
+                #TODO: have some better error handling, unlikely to run into this when doing independent research
+                return []
+            content = codecs.encode(open(full_path, "rb").read(), "base64").decode("utf-8")
+        else:
+            content = content_struct['content']
+        node['content'] = content
+        
     subgraph_root_id = incomingReq['subgraphRootId']
-    labels = get_label(arguments, subgraph_root_id)
+    labels = apply_classifier(arguments, subgraph_root_id)
     return json.dumps(labels)
 
 #

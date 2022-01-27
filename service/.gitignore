@@ -1,3 +1,7 @@
 *.db
 client_secrets.json
-data/*
+data
+aws_keys.json
+*.npz
+series_ids.pickle
+last_processed_index.json
