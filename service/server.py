@@ -836,6 +836,8 @@ class GraphDB:
         rawTree = {}
         root, rootDatasets, fileInputCount, cloneCount, rawBytes = getQueryNode(rootUuid)
         rootContentStruct = self.getBytecontentStruct(rawBytes["md5hash"])
+        if root['optional_filetype'] == 'text/csv':
+            rootContentStruct['content'] = base64.b64decode(rootContentStruct['content']).decode(encoding='utf-8')
 
         rawTree[root["uuid"]] = {"name": "This File",
                            "kind": "FileObservation",
@@ -874,6 +876,9 @@ class GraphDB:
                         })
 
                     childContentStruct = self.getBytecontentStruct(rawBytes["md5hash"])
+                    if child['optional_filetype'] == 'text/csv':
+                        childContentStruct['content'] = base64.b64decode(childContentStruct['content']).decode(encoding='utf-8')
+
                     tree.setdefault(child["uuid"], {
                         "name": "Data File",
                         "kind": "FileObservation",
@@ -907,6 +912,9 @@ class GraphDB:
                         })
 
                     gchildContentStruct = self.getBytecontentStruct(rawBytes["md5hash"])
+                    if gchild['optional_filetype'] == 'text/csv':
+                        gchildContentStruct['content'] = base64.b64decode(gchildContentStruct['content']).decode(encoding='utf-8')
+                        
                     tree.setdefault(gchild["uuid"], {
                         "name": "Data File",
                         "kind": "FileObservation",
@@ -1734,7 +1742,7 @@ def show_bytesetdata(md5):
     likelyCollaborations = GDB.findCollaborationsForByteset(md5)
 
     content = GDB.getBytecontentStruct(md5)
-    if 'csv' in (bytesetInfo['filetype']):
+    if 'text/csv' == (bytesetInfo['filetype']):
         content['content'] = base64.b64decode(content['content']).decode(encoding='utf-8')
 
     bytesetInfo["files"] = containingFiles
