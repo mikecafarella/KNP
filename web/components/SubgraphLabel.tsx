@@ -196,7 +196,7 @@ const SubgraphLabel: React.FC<{
                                 }
                             })}
                             />
-                            <Button onClick={handleResetUserSelection} disabled={selectedSubgraphNodes.length === 0 || selectedLabeledSubgraph}>Clear your Current Subgraph Selection</Button>
+                            {(selectedLabeledSubgraph) ? <></> : <Button onClick={handleResetUserSelection} disabled={selectedSubgraphNodes.length === 0 || selectedLabeledSubgraph}>Clear your Current Subgraph Selection</Button>}
                         </>
                     )
                 }}
@@ -313,7 +313,7 @@ const SubgraphLabel: React.FC<{
                 {subgraphRootMenu}
                 {subgraphLabelMenu}
                 {subgraphLabelId}
-                {(Object.keys(labeledSubgraphs).length > 0) ?
+                {(Object.keys(labeledSubgraphs).length > 0 && selectedLabeledSubgraphRootNode) ?
                     <Button 
                         onClick={handleResetLabeledSelection} 
                         disabled={!selectedLabeledSubgraphRootNode}

@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useEffect} from 'react'
 import Router, {useRouter} from 'next/router'
 import { readString } from 'react-papaparse';
-import { majorScale, Pre, Popover, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table, Badge } from 'evergreen-ui'
+import { majorScale, Pre, Popover, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table, Badge, Small } from 'evergreen-ui'
 import Tree from 'react-d3-tree'
 import MD5 from "crypto-js/md5";
 import { isValidSubgraphKnownLocations, getUUID, getSelectedSubgraphInfo } from './Utils';
@@ -232,9 +232,13 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
         autompleteItems={autocompleteItems}
         setAutocompleteItems={setAutocompleteItems}
         subgraphRootId={rootNodeId}/>
-      <Paragraph>
-          Your Proposed Operator for your selected subgraph: {labelBadge}
+  
+      <Paragraph size={400}>
+        Your Proposed Operator for your selected subgraph: {labelBadge}
       </Paragraph>
+      <Paragraph marginY="0.5em">
+        <Small>Click on Nodes to Select a Subgraph and label the subgraph with an Operator</Small>
+      </Paragraph> 
     </Pane> :
     <> </>;
 
