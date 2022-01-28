@@ -1,5 +1,5 @@
 import React, {useEffect , useState} from 'react'
-import { Autocomplete, TextInput, Button, Dialog, SelectMenu} from 'evergreen-ui'
+import { Autocomplete, TextInput, Button, Dialog, SelectMenu, Strong, Pane} from 'evergreen-ui'
 import { SubgraphProps, SubgraphNodeProps } from './KnownLocation';
 import { arrayEquals, getSelectedSubgraphInfo } from './Utils';
 import { useSession } from 'next-auth/client'
@@ -256,10 +256,12 @@ const SubgraphLabel: React.FC<{
             if (selectedLabeledSubgraphId) {
                 setSelectedLabeledSubgraphId('');
             }
-        }}>
-            <Button >{selectedLabeledSubgraphRootNode || "Select Root Node for Subgraph..."}</Button>
+        }}
+        >
+            <Button >{selectedLabeledSubgraphRootNode || "Select Output File Node for Subgraph..."}</Button>
     </SelectMenu> :
     <></>;
+
     
     // only show this is the user chose which root node to view subgraphs for
     const subgraphLabelMenu = (selectedLabeledSubgraphRootNode) ?
@@ -300,21 +302,30 @@ const SubgraphLabel: React.FC<{
     </SelectMenu> :
     <> </>;
 
+    const subgraphLabelHelpText = (Object.keys(labeledSubgraphs).length > 0) ? "View previously labeled operators and the corresponding subgraph" : '';
+
 
     return (
         <>
-        {subgraphRootMenu}
-        {subgraphLabelMenu}
-        {subgraphLabelId}
+        <Pane marginY="0.5em">
+            <Strong color="black">{subgraphLabelHelpText}</Strong>
+            <Pane>
+                {subgraphRootMenu}
+                {subgraphLabelMenu}
+                {subgraphLabelId}
+                {(Object.keys(labeledSubgraphs).length > 0) ?
+                    <Button 
+                        onClick={handleResetLabeledSelection} 
+                        disabled={!selectedLabeledSubgraphRootNode}
+                    >
+                        Clear Current Labeled Subgraph Selection
+                    </Button> :
+                    <></>
+                }
+            </Pane>
+        </Pane>
         {/* This condition is there so we can clear early in the selection process */}
-        {(Object.keys(labeledSubgraphs).length > 0) ?
-            <Button 
-                onClick={handleResetLabeledSelection} 
-                disabled={!selectedLabeledSubgraphRootNode}
-            >
-                Clear Current Labeled Subgraph Selection
-            </Button> :
-            <></>}
+  
         {labelComponent}
           {/* We can use this button later on to generate code for a specific label */}
             {/* <Button 

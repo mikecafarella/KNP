@@ -197,8 +197,6 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
 
   const [translate, containerRef] = useCenteredTree();
 
-  const subgraphSelectionInfoString = (subgraphSelection) ? 'You are now in subgraph selection mode: click on nodes to select a subgraph or view previously labeled subgraphs' : '';
-
   let isValidSubgraphObj = isValidSubgraphKnownLocations(selectedSubgraphNodes, dobj);
   let validSubgraph = isValidSubgraphObj.validSubgraph;
   let rootNodeName = isValidSubgraphObj.rootNode;
@@ -426,7 +424,6 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
         <Pane display="flex" padding={majorScale(1)} border>
           <Pane flex={1} >
             <Heading size={600}>Provenance</Heading>
-            <Paragraph>{subgraphSelectionInfoString}</Paragraph>
             <Popover display="flex" alignItems="center" justifyContent="center" flexDirection="column" 
             shouldCloseOnExternalClick='True' content={({close}) => (
             <Pane width="100%" elevation="4" height="40em" display="flex" padding={majorScale(1)} border>
@@ -583,11 +580,11 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
             </Pane>
             )}
             shouldCloseOnExternalClick={false}>
-            <Button disabled={subgraphSelection}>Selection details</Button>
+            <Button disabled={subgraphSelection}>Current Selected Node details</Button>
             </Popover>
-            <Button onClick={toggleSubgraphSelection}>{getSelectSubgraphButtonText()}</Button>
             
            <div style={{ width: '100%', height:'40em' }} ref={containerRef}>
+           <Button onClick={toggleSubgraphSelection} marginTop="1em">{getSelectSubgraphButtonText()}</Button>
             {subGraphLabeling}
          <Tree
           data={dobj.descendentData}
