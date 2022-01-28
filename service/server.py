@@ -694,6 +694,27 @@ class GraphDB:
                 node['modified'] = str(datetime.datetime.fromtimestamp(node['modified']))
             
             return {"subgraphs": ret, "labels": list(labels), "emails": list(emails)}
+    
+    def getAllOperators(self):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a:Operator) "
+                                  "RETURN properties(a) "
+                                  "ORDER BY a.label DESC ")
+            ret = [x[0]['label'] for x in results]
+            return {"labels": ret}
+    
+    def getSubgraphsForOperator(self, operator):
+        with self.driver.session() as session:
+            results = session.run("MATCH (a:Operator {label: $label})-[:OperatorLabel]-(b:Subgraph) "
+                                  "RETURN properties(b) "
+                                  "ORDER BY b.modified DESC",
+                                  label=operator)
+            ret = [x[0] for x in results]
+            emails = set()
+            for node in ret:
+                emails.add(node['ownerEmail'])
+                node['modified'] = str(datetime.datetime.fromtimestamp(node['modified']))
+            return {"subgraphs": ret, "emails": list(emails)}
 
 
     def getSubgraphsForNode(self, nodeId):
@@ -1925,12 +1946,19 @@ def get_subgraphs(id):
     kl = GDB.getSubgraphsForNode(id)
     return json.dumps({"subgraphs":kl})
 
-@app.route('/subgraphs')
+@app.route('/operator')
 def all_subgraphs():
-    kl = GDB.getAllSubgraphs()
+    kl = GDB.getAllOperators()
     return json.dumps(kl)
 
-@app.route('/subgraph', methods=["POST", "PATCH", "PUT"])
+@app.route('/subgraphs/<id>', methods=["GET"])
+def get_subgraphs(id):
+    print("FUCK FUCK FUCK")
+    print(id)
+    kl = GDB.getSubgraphsForOperator(id)
+    return json.dumps(kl)
+
+@app.route('/subgraph', methods=["POST", "PATCH", "PUT", "GET"])
 def add_subgraph():
     incomingReq = json.loads(request.get_json())
     if request.method == 'PUT':

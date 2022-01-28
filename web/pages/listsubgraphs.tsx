@@ -2,56 +2,87 @@ import React, {useState, useEffect} from "react"
 import { GetServerSideProps } from "next"
 import Layout from "../components/Layout"
 import Router from 'next/router'
-import { Table, Heading, Combobox, Pane } from 'evergreen-ui'
+import { Table, Heading, Combobox, Pane, Paragraph, Strong } from 'evergreen-ui'
 import {SubgraphNodeProps} from '../components/KnownLocation'
 
 type Props = {
-    subgraphs: SubgraphNodeProps[]
-    emails: string[],
     labels: string[]
 }
 
 const SubGraphs: React.FC<Props> = (props) => {
-    let displayedSubgraphs = [...props.subgraphs];
+    const subgraphsUrl = '/api/subgraphs';
     const [label, setLabel] = useState('');
     const [email, setEmail] = useState('');
+    const [emails, setEmails] = useState([]);
 
-    if (label) {
-        displayedSubgraphs = displayedSubgraphs.filter(node => node.label === label);
+    const [displayedSubgraphs, setDisplayedSubgraphs] = useState<SubgraphNodeProps[]>([]);
+
+    const fetcher = async (url) => {
+      let data = await fetch(url, {
+          method: "GET",
+      }).then(res=>res.json());
+      setDisplayedSubgraphs(data.subgraphs);   
+      setEmails(data.emails);   
+      return data;   
     }
+
+    useEffect(()=> {
+      if (label) {
+        fetcher(`${subgraphsUrl}/${label}`);
+      } 
+    }, [label])
+
+    const handleEmailSelection = (selected) => {
+      setEmail(selected);
+    }
+
+    let displayed = [];
+
     if (email) {
-        displayedSubgraphs = displayedSubgraphs.filter(node => node.ownerEmail === email);
+        displayed = displayedSubgraphs.filter(node => node.ownerEmail === email);
+    } else {
+        displayed = displayedSubgraphs;
     }
 
     return (
       <Layout>
-          <Heading size={800}>Labeled KNPS Provenance Subgraphs</Heading>
-          <Pane display='flex' flexDirection='row' width='19%'>
+          <Heading size={800}>Labeled Operator KNPS Provenance Subgraphs</Heading>
+          <Pane display='flex' flexDirection='column'>
+            <Paragraph marginY="0.5em"> <Strong>Select an Operator to View Labeled Subgraphs Of</Strong></Paragraph>
             <Combobox
                 items={props.labels}
                 onChange={selected => setLabel(selected)}
-                placeholder="choose a label to filter by"
+                placeholder="Choose a Operator to View Subgraphs of"
                 autocompleteProps={{
                     // Used for the title in the autocomplete.
                     title: 'label'
-                }}/>
+                }}
+                marginBottom="0.5em"/>
 
-            <Combobox
-                items={props.emails}
-                onChange={selected => setEmail(selected)}
-                placeholder="choose email to filter by"
-                autocompleteProps={{
-                    // Used for the title in the autocomplete.
-                    title: 'email'
-                }}/>
+            {(label) ? 
+              (displayedSubgraphs.length > 0) ?
+              <Pane>
+                <Paragraph marginY="0.5em"> Select an Email to View Operators Labeled by Specific Users</Paragraph>
+                  <Combobox
+                    items={emails}
+                    onChange={handleEmailSelection}
+                    placeholder="Choose a user to View Subgraphs of"
+                    autocompleteProps={{
+                        // Used for the title in the autocomplete.
+                        title: 'email'
+                    }}
+                    marginBottom="0.5em"/> 
+                </Pane>
+                : <Paragraph marginY="0.5em">There are no labeled subgraphs for Operator: {label}</Paragraph>
+              : <></>}
           </Pane>
           <Table>
             <Table.Head>
               <Table.TextHeaderCell>
-                Root Node Full Name
+                Output File Full Name
               </Table.TextHeaderCell>
               <Table.TextHeaderCell>
-                Root Node Short Name
+                Output File Short Name
               </Table.TextHeaderCell>
               <Table.TextHeaderCell>
                 Label
@@ -67,7 +98,7 @@ const SubGraphs: React.FC<Props> = (props) => {
               </Table.TextHeaderCell>
             </Table.Head>
             <Table.Body>
-               {displayedSubgraphs.map(obj => (
+               {displayed.map(obj => (
                <Table.Row key={obj.uuid} isSelectable onSelect={() => Router.push({pathname: `/knownlocation/${obj.provenanceGraphRootId}`, query: {root: obj.subgraphRootName, label: obj.label, uuid: obj.uuid}})}>
                   <Table.TextCell>{obj.fullRootFileName}</Table.TextCell>
                   <Table.TextCell>{obj.subgraphRootName}</Table.TextCell>
@@ -84,10 +115,10 @@ const SubGraphs: React.FC<Props> = (props) => {
   }
   
   export const getServerSideProps: GetServerSideProps = async () => {
-    const res = await fetch("http://localhost:5000/subgraphs")
+    const res = await fetch("http://localhost:5000/operator")
     const data = await res.json()
     return {
-      props: { subgraphs: data.subgraphs, emails: data.emails, labels: data.labels },
+      props: { labels: data.labels },
     }
   }
   

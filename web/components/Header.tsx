@@ -31,7 +31,7 @@ const Header: React.FC = () => {
               Data Objects
           </Link> */}
           <Link href="/listsubgraphs" marginLeft={12} color={isActive('/listsubgraphs') ? "neutral" : "blue"}>
-              Labeled Subgraphs
+              Labeled Operators
           </Link>
           {/* <Link href="/listfunctions" marginLeft={12} color={isActive('/listfunctions') ? "neutral" : "blue"}>
               Functions
