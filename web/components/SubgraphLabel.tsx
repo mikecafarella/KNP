@@ -244,7 +244,7 @@ const SubgraphLabel: React.FC<{
     //we show this if there are previously labeled subgraphs and the user is not attempting to select a subgraph
     const subgraphRootMenu = (Object.keys(labeledSubgraphs).length > 0) ? 
     <SelectMenu 
-        title="Subgraph Root Node"
+        title="Subgraph Output File"
         options={Object.keys(labeledSubgraphs).map((label) => ({ label, value: label }))}
         selected={selectedLabeledSubgraphRootNode}
         onSelect={(item) => {
