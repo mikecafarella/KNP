@@ -3,7 +3,7 @@ from sklearn.tree import DecisionTreeClassifier
 import numpy as np
 from io import StringIO
 import base64
-from data_gen import FILE_TYPE_NUMERICAL_MAP, get_data_set, LABEL_OPERATION_MAP 
+from data_gen import FILE_TYPE_NUMERICAL_MAP, get_data_set, LABEL_OPERATION_MAP, DATASET_NPZ_FILE 
 from joblib import dump, load
 
 CLF_NAME = 'knps_classifier.joblib'
@@ -33,7 +33,7 @@ def extract_features(node):
 def apply_classifier(arguments, subgraph_root_id, dump=False, load=False):
     individual_node_features = np.empty((0,2), int)
     output_node_features = np.empty((0,2), int)
-    for node in arguments:
+    for node, depth in arguments:
         if node['ObservedFile']['uuid'] == subgraph_root_id:
             output_node_features = np.append(output_node_features, extract_features(node), axis=0)
         else:

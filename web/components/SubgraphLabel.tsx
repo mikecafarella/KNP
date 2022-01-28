@@ -1,7 +1,7 @@
 import React, {useEffect , useState} from 'react'
 import { Autocomplete, TextInput, Button, Dialog, SelectMenu} from 'evergreen-ui'
 import { SubgraphProps, SubgraphNodeProps } from './KnownLocation';
-import { arrayEquals, getUUIDsandKinds } from './Utils';
+import { arrayEquals, getSelectedSubgraphInfo } from './Utils';
 import { useSession } from 'next-auth/client'
 
 // see the knownlocations component for explanation of state props
@@ -83,7 +83,7 @@ const SubgraphLabel: React.FC<{
     const fetcher = async (url) => {
         let selectedNodes = selectedSubgraphNodes.filter(nd => nd.kind === "FileObservation");
         let data = await fetch(url, {
-            method: "PATCH",
+            method: "PUT",
             body: JSON.stringify({selectedNodes, subgraphRootId})
         }).then(res=>res.json())
         setAutocompleteItems(data);
@@ -115,7 +115,6 @@ const SubgraphLabel: React.FC<{
         });
 
         let selectedNodes = sorted.map(nd=>nd.uuid);
-        let selectedNodeKinds = sorted.map(nd=>nd.kind);
         let res; 
         if (labeledInThePastObj.labeledInPast || selectedLabeledSubgraph) {
             if (selectedLabeledSubgraph) {
@@ -123,7 +122,7 @@ const SubgraphLabel: React.FC<{
             }
             let oldLabel = (selectedLabeledSubgraph) ? selectedLabeledSubgraphLabel: labeledInThePastObj.oldLabel
             res = await fetch(`${subgraphsUrl}/${dobjID}`, {
-                method: "PUT",
+                method: "PATCH",
                 body: JSON.stringify({
                     "uuid": dobjID,
                     "subgraphNodeUUIDs": selectedNodes,
@@ -144,8 +143,8 @@ const SubgraphLabel: React.FC<{
                     'username': session.user.name,
                     'email': session.user.email,
                     'rootNodeFileName': rootNodeFileName,
-                    "subgraphNodeKinds": selectedNodeKinds,
                     'uuid': dobjID,
+                    'subgraphNodesInfo': sorted,
                 }),
             }).then(res => res.json());
         }
@@ -227,8 +226,7 @@ const SubgraphLabel: React.FC<{
             let uuid = Object.keys(labeledSubgraphs[selectedLabeledSubgraphRootNode][item.value])[0]
             let node: SubgraphNodeProps = labeledSubgraphs[selectedLabeledSubgraphRootNode][item.value][uuid];
             setSelectedLabeledSubgraph(node);
-            setSelectedSubgraphNodes(getUUIDsandKinds(node));
-
+            setSelectedSubgraphNodes(getSelectedSubgraphInfo(node));
         }
         // reset state dependency, more detailed comment on line 237
         if (selectedLabeledSubgraphId) {
@@ -240,7 +238,7 @@ const SubgraphLabel: React.FC<{
         setSelectedLabeledSubgraphId(item.value);
         let node: SubgraphNodeProps = labeledSubgraphs[selectedLabeledSubgraphRootNode][selectedLabeledSubgraphLabel][item.value];
         setSelectedLabeledSubgraph(node);
-        setSelectedSubgraphNodes(getUUIDsandKinds(node));
+        setSelectedSubgraphNodes(getSelectedSubgraphInfo(node));
     }
 
     //we show this if there are previously labeled subgraphs and the user is not attempting to select a subgraph

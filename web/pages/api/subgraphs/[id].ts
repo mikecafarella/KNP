@@ -1,13 +1,6 @@
 export default async function handle(req, res) {
    let statusSuccess = (req.method === 'POST') ? 201: 200;
-   let url;
-   if ((req.method === 'POST') ||(req.method === 'PUT')) {
-      const { id } = req.query;
-      url = `http://localhost:5000/addsubgraph/${id}`
-   } else if (req.method === 'PATCH') {
-      url = 'http://localhost:5000/subgraph'
-   }
-   
+   let url = `http://localhost:5000/subgraph`;
     const res2 = await fetch(url,
     { method: req.method,
       body: JSON.stringify(req.body),

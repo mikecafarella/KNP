@@ -635,12 +635,14 @@ class GraphDB:
                                   modified=time.time())
             return results
     
-    def addSubgraph(self, nodeId, username, email, subgraphNodeUUIDs, subgraphRootName, label, fullRootFileName, nodeKinds, subgraphRootId):
+    def addSubgraph(self, nodeId, username, email, subgraphNodeUUIDs, subgraphRootName, label, fullRootFileName, subgraphRootId, subgraphNodesInfo):
         with self.driver.session() as session:
             result = session.run("MATCH (a {uuid: $nodeId}) "
                                  "WHERE NOT EXISTS {MATCH (a)-[:HasSubgraph]->(b:Subgraph{subgraphNodeUUIDs: $subgraphNodes})} "
-                                 "CREATE (a)-[r:HasSubgraph]->(b:Subgraph {uuid: apoc.create.uuid(), label: $label, subgraphRootName: $subgraphRootName, subgraphNodeUUIDs: $subgraphNodeUUIDs, owner: $owner, modified: $modified, subgraphRootId: $subgraphRootId, ownerEmail: $ownerEmail, fullRootFileName: $fullRootFileName, subgraphNodeKinds: $nodeKinds, provenanceGraphRootId: $provenanceGraphRootId}) "
-                                 "RETURN b",
+                                 "CREATE (a)-[r:HasSubgraph]->(b:Subgraph {uuid: apoc.create.uuid(), subgraphRootName: $subgraphRootName, subgraphNodeUUIDs: $subgraphNodeUUIDs, owner: $owner, modified: $modified, subgraphRootId: $subgraphRootId, ownerEmail: $ownerEmail, fullRootFileName: $fullRootFileName, provenanceGraphRootId: $provenanceGraphRootId, subgraphNodesInfo: apoc.convert.toJson($subgraphNodesInfo), label: $label}) "
+                                 "MERGE (c: Operator{label:$label})"
+                                 "MERGE (c)-[:OperatorLabel]->(b) "
+                                 "RETURN properties(a), properties(c)",
                                  nodeId=nodeId,
                                  label=label,
                                  subgraphRootName=subgraphRootName,
@@ -651,17 +653,22 @@ class GraphDB:
                                  ownerEmail=email,
                                  fullRootFileName=fullRootFileName,
                                  modified=time.time(),
-                                 nodeKinds = nodeKinds,
-                                 provenanceGraphRootId = nodeId)
-            return result.value()
+                                 provenanceGraphRootId = nodeId,
+                                 subgraphNodesInfo=subgraphNodesInfo
+                                 )
+            return [(x[0],x[1]) for x in result]
     
     def updateSubgraph(self, nodeId, label, newLabel, username, email, subgraphNodeUUIDs):
         with self.driver.session() as session:
-            result = session.run("MATCH (a {uuid: $nodeId})-[r:HasSubgraph]->(b:Subgraph{label: $label, subgraphNodeUUIDs: $subgraphNodeUUIDs}) "
-                                 "SET b.label = $newLabel "
+            result = session.run("MATCH (a {uuid: $nodeId})-[:HasSubgraph]->(b:Subgraph{subgraphNodeUUIDs: $subgraphNodeUUIDs}) "
+                                 "MATCH (:Operator {label: $label})-[r:OperatorLabel]->(b) "
                                  "SET b.owner = $owner "
                                  "SET b.modified = $modified "
                                  "SET b.ownerEmail = $ownerEmail "
+                                 "SET b.label = $newLabel "
+                                 "DELETE r "
+                                 "MERGE (c:Operator {label: $newLabel}) "
+                                 "MERGE (c)-[:OperatorLabel]->(b) "
                                  "RETURN b",
                                  nodeId=nodeId,
                                  label=label,
@@ -853,12 +860,12 @@ class GraphDB:
                                             "uuid":x["uuid"]} for x in rootDatasets],
                            "fileInputCount": fileInputCount,
                            "cloneCount": cloneCount,
-                           "childrenPointers": set()}
+                           "childrenPointers": set(),
+                           "depth": 0}
         
 
-        def expandNode(uuid, tree):
+        def expandNode(uuid, tree, depth):
             fringe = set()
-
             for node, child, gchild, kind, dataSets, fileInputCount, cloneCount, rawBytes in getChildrenFromUuid(uuid):
                 if kind == "share":
                     print("Detected share!")
@@ -872,7 +879,8 @@ class GraphDB:
                         "receiver": root["username"],
                         "source": child["username"],
                         "receivedOnOrBefore": child["sync_time"],
-                        "childrenPointers": set()
+                        "childrenPointers": set(),
+                        "depth": depth
                         })
 
                     childContentStruct = self.getBytecontentStruct(rawBytes["md5hash"])
@@ -895,6 +903,7 @@ class GraphDB:
                         "fileInputCount": fileInputCount,
                         "cloneCount": cloneCount,
                         "childrenPointers": set(),
+                        "depth": depth+1
                         })
 
                     tree.get(shareId)["childrenPointers"].add(child["uuid"])
@@ -908,7 +917,8 @@ class GraphDB:
                         "owner": child["username"],
                         "startedOn": child["start_time"],
                         "childrenPointers":set(),
-                        "uuid": child["uuid"]
+                        "uuid": child["uuid"],
+                        "depth": depth
                         })
 
                     gchildContentStruct = self.getBytecontentStruct(rawBytes["md5hash"])
@@ -930,7 +940,8 @@ class GraphDB:
                                          "uuid":x["uuid"]} for x in dataSets],
                         "cloneCount": cloneCount,                        
                         "fileInputCount": fileInputCount,
-                        "childrenPointers": set()
+                        "childrenPointers": set(),
+                        "depth": depth+1
                         })
 
                     tree[node["uuid"]]["childrenPointers"].add(child["uuid"])
@@ -941,12 +952,14 @@ class GraphDB:
         #
         # Now query for each layer in the history
         #
+        depth = 1
         prevFringe = set()
         prevFringe.add(root["uuid"])
         for i in range(1, stepsBack):
             nextFringe = set()
             for uuid in prevFringe:
-                nextFringe = nextFringe.union(expandNode(uuid, rawTree))
+                nextFringe = nextFringe.union(expandNode(uuid, rawTree, depth))
+            depth += 2
             prevFringe = nextFringe
 
         #
@@ -1907,7 +1920,7 @@ def add_comment(id):
 #
 # MANAGE SUBGRAPHS (subgraph selection for provenance graph)
 #
-@app.route('/subgraphs<id>')
+# @app.route('/subgraphs/<id>')
 def get_subgraphs(id):
     kl = GDB.getSubgraphsForNode(id)
     return json.dumps({"subgraphs":kl})
@@ -1917,39 +1930,37 @@ def all_subgraphs():
     kl = GDB.getAllSubgraphs()
     return json.dumps(kl)
 
-@app.route('/addsubgraph/<id>', methods=["POST", "PUT"])
-def add_subgraph(id):
+@app.route('/subgraph', methods=["POST", "PATCH", "PUT"])
+def add_subgraph():
     incomingReq = json.loads(request.get_json())
-    if (request.method == 'POST'):
-        result = GDB.addSubgraph(incomingReq['uuid'], incomingReq['username'], incomingReq['email'], incomingReq['subgraphNodeUUIDs'], incomingReq['subgraphRootName'], incomingReq['label'], incomingReq['rootNodeFileName'], incomingReq["subgraphNodeKinds"], incomingReq['subgraphRootId'])
-    elif (request.method == "PUT"):
+    if request.method == 'PUT':
+        arguments = [(GDB.getSubgraphNode(obs['uuid'], obs['kind']), obs['depth']) for obs in incomingReq['selectedNodes']]
+        # send to the classifier in addition to list of props for observed files and bytesets, 
+        # we also want the content of each file in there as well
+        for node, _ in arguments:
+            # we can only do classification tasks for those the upload bytes, can do local files as well by using the full paths
+            # but getting the contents from db is preferred 
+            md5 = node['ByteSet']['md5hash']
+            content_struct = GDB.getBytecontentStruct(md5)
+            if not content_struct['hasContent']:
+                full_path = node['ObservedFile']['filename']
+                if not Path(full_path).is_file():
+                    #TODO: have some better error handling, unlikely to run into this when doing independent research
+                    return []
+                content = codecs.encode(open(full_path, "rb").read(), "base64").decode("utf-8")
+            else:
+                content = content_struct['content']
+            node['content'] = content
+            
+        subgraph_root_id = incomingReq['subgraphRootId']
+        labels = apply_classifier(arguments, subgraph_root_id)
+        return json.dumps(labels) 
+    elif request.method == 'POST':
+        result = GDB.addSubgraph(incomingReq['uuid'], incomingReq['username'], incomingReq['email'], incomingReq['subgraphNodeUUIDs'], incomingReq['subgraphRootName'], incomingReq['label'], incomingReq['rootNodeFileName'], incomingReq['subgraphRootId'], incomingReq['subgraphNodesInfo'])
+    else:
         result = GDB.updateSubgraph(incomingReq['uuid'], incomingReq["oldLabel"], incomingReq["newLabel"], incomingReq['username'], incomingReq['email'], incomingReq['subgraphNodeUUIDs'])
     return get_subgraphs(incomingReq['uuid'])
 
-@app.route('/subgraph', methods=["PATCH"])
-def get_subgraph_label():
-    incomingReq = json.loads(request.get_json())
-    arguments = [GDB.getSubgraphNode(obs['uuid'], obs['kind']) for obs in incomingReq['selectedNodes']]
-    # send to the classifier in addition to list of props for observed files and bytesets, 
-    # we also want the content of each file in there as well
-    for node in arguments:
-        # we can only do classification tasks for those the upload bytes, can do local files as well by using the full paths
-        # but getting the contents from db is preferred 
-        md5 = node['ByteSet']['md5hash']
-        content_struct = GDB.getBytecontentStruct(md5)
-        if not content_struct['hasContent']:
-            full_path = node['ObservedFile']['filename']
-            if not Path(full_path).is_file():
-                #TODO: have some better error handling, unlikely to run into this when doing independent research
-                return []
-            content = codecs.encode(open(full_path, "rb").read(), "base64").decode("utf-8")
-        else:
-            content = content_struct['content']
-        node['content'] = content
-        
-    subgraph_root_id = incomingReq['subgraphRootId']
-    labels = apply_classifier(arguments, subgraph_root_id)
-    return json.dumps(labels)
 
 #
 # UPLOADS: Accept an upload of a set of file observations

@@ -5,7 +5,7 @@ import { readString } from 'react-papaparse';
 import { majorScale, Pre, Popover, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table, Badge } from 'evergreen-ui'
 import Tree from 'react-d3-tree'
 import MD5 from "crypto-js/md5";
-import { isValidSubgraphKnownLocations, getUUID, getUUIDsandKinds } from './Utils';
+import { isValidSubgraphKnownLocations, getUUID, getSelectedSubgraphInfo } from './Utils';
 import SubgraphLabel from './SubgraphLabel';
 
 
@@ -36,8 +36,8 @@ export type SubgraphNodeProps = {
   subgraphRootId: number;
   ownerEmail: string;
   fullRootFileName: string;
-  subgraphNodeKinds: string[];
   provenanceGraphRootId: string;
+  subgraphNodesInfo: string;
 }
 
 export type KnownLocationProps = {
@@ -97,6 +97,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
       // so we only high light if the user does not want to view a previously labeled subgraph
       let uuid = getUUID(nodeDatum);
       let kind = nodeDatum.kind;
+      let depth = nodeDatum.depth;
       let node = selectedSubgraphNodes.filter(nd => nd.uuid == uuid)[0];
       if (node) {
         setSelectedSubgraphNodes(
@@ -104,7 +105,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
         );
       } else {
         setSelectedSubgraphNodes(
-          [...selectedSubgraphNodes, {kind, uuid}]
+          [...selectedSubgraphNodes, {kind, uuid, depth}]
         )
       }
     }
@@ -122,7 +123,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
         setSelectedLabeledSubgraphRootNode(query.root);
         setSelectedLabeledSubgraphLabel(query.label);
         setSelectedLabeledSubgraphId(query.uuid.toString());
-        setSelectedSubgraphNodes(getUUIDsandKinds(node));
+        setSelectedSubgraphNodes(getSelectedSubgraphInfo(node));
       }
     }
   }, []);
@@ -266,7 +267,9 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
           <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller" x="40" dy="-20">        
             <tspan x="40" dy="-1 + .6em">Name: {nodeDatum.name}</tspan>
             <tspan x="40" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
-            <tspan x="40" dy="1.2em">Started on: {nodeDatum.startedOn}</tspan>          
+            <tspan x="40" dy="1.2em">Started on: {nodeDatum.startedOn}</tspan>   
+            {/* <tspan x="40" dy="1.2em">Depth: {nodeDatum.depth}</tspan>           */}
+       
           </text>
         </g> 
       }
@@ -286,6 +289,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
           <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller">
             <tspan x="70" dy="60+.6em">Source: {nodeDatum.source}</tspan>
             <tspan x="70" dy="1.2em">Received on/before: {new Date(nodeDatum.receivedOnOrBefore * 1000).toLocaleString()}</tspan>
+            {/* <tspan x="70" dy="1.2em">Depth: {nodeDatum.depth}</tspan>           */}
         </text>
         </g>
       }
@@ -366,6 +370,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
             <tspan x="40" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
             <tspan x="40" dy="1.2em">{nodeDatum.fileInputCount} known
             use(s), {nodeDatum.cloneCount} known copies</tspan>
+            {/* <tspan x="40" dy="1.2em">Depth: {nodeDatum.depth}</tspan>           */}
           </text>
           </g>
       </g>

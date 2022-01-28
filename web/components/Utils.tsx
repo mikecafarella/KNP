@@ -121,42 +121,42 @@ export const isValidSubgraphKnownLocations = (
     }
     let descendentData = dobj.descendentData;
     let visited = {}
-    let depth = 0;
-    let depths = {}
-    let queue = [descendentData];
-    while (queue.length > 0) {
-        let newQueue = [];
-        for (let node of queue) {
-            let nodeUUID = getUUID(node);
-            depths[nodeUUID] = depth;
-            for (let child of node.children) {
-                newQueue.push(child);
-            }
-        }
-        depth++;
-        queue = newQueue;
-    }
+    // let depth = 0;
+    // let depths = {}
+    // let queue = [descendentData];
+    // while (queue.length > 0) {
+    //     let newQueue = [];
+    //     for (let node of queue) {
+    //         let nodeUUID = getUUID(node);
+    //         depths[nodeUUID] = depth;
+    //         for (let child of node.children) {
+    //             newQueue.push(child);
+    //         }
+    //     }
+    //     depth++;
+    //     queue = newQueue;
+    // }
     let src = [];
-    let curMinDepth = depth+1;
-    for (let node of selectedSubgraphNodes) {
-        visited[node] = false;
-        if (depths[node] < curMinDepth) {
-            src = [node];
-            curMinDepth = depths[node];
-        } else if (depths[node] == curMinDepth) {
-            src.push(node);
+    let curMinDepth = Infinity;
+    for (let node of selectedSubgraphNodesObj) {
+        visited[node.uuid] = false;
+        if (node.depth < curMinDepth) {
+            src = [node.uuid];
+            curMinDepth = node.depth;
+        } else if (node.depth == curMinDepth) {
+            src.push(node.uuid);
         }
     }
     if (src.length > 1) {
         return {validSubgraph: false, rootNode: 'invalid', rootNodeLongName: 'invalid', rootId: 'invalid'};
     }
     let foundSrc = false;
-    queue = [descendentData];
+    let queue = [descendentData];
     let srcID = src[0];
     let rootNodeName;
     let rootNodeLongName;
     let rootId;
-    while (queue.length > 0) {        
+    while (queue.length > 0) {   
         let node  = queue.shift();
         let identifier = getUUID(node);
         if (identifier === srcID) {
@@ -195,14 +195,9 @@ export function arrayEquals(a: any[], b: any[]) {
         a.every((val, index) => val === b[index]);
 }
 
-export function getUUIDsandKinds(node: SubgraphNodeProps) {
-    let selectedNodes = [];
-    for (let i in node.subgraphNodeUUIDs) {
-      let kind = node.subgraphNodeKinds[i];
-      let uuid = node.subgraphNodeUUIDs[i];
-      selectedNodes.push({kind, uuid})
-    }
-    return selectedNodes;
+export function getSelectedSubgraphInfo(node: SubgraphNodeProps) {
+    console.log(JSON.parse(node.subgraphNodesInfo))
+    return JSON.parse(node.subgraphNodesInfo);
 }
 
 
