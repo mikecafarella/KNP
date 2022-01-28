@@ -162,7 +162,7 @@ const SubgraphLabel: React.FC<{
     const submitLabelButton = (label) ? 
         <Button 
             onClick={submitSubgraph}>
-            {(labeledInThePastObj.labeledInPast || selectedLabeledSubgraph) ? "Update Subgraph Label " : "Submit Subgraph Label"}
+            {(labeledInThePastObj.labeledInPast || selectedLabeledSubgraph) ? "Update Subgraph Operator " : "Submit Subgraph Operator"}
         </Button> : 
         <></>;
     const exitDialog = () => {
@@ -178,7 +178,7 @@ const SubgraphLabel: React.FC<{
     const labelComponent = (validSubgraph || selectedLabeledSubgraph) ? 
         <>
             <Autocomplete
-                title="Label"
+                title="Operator"
                 onChange={changedItem => setLabel(changedItem)}
                 items={autompleteItems}
                 >
@@ -187,7 +187,7 @@ const SubgraphLabel: React.FC<{
                     return (
                         <>
                             <TextInput
-                            placeholder="Label"
+                            placeholder="Operator"
                             value={inputValue}
                             ref={getRef}
                             {...getInputProps({
@@ -204,15 +204,15 @@ const SubgraphLabel: React.FC<{
             {submitLabelButton}
             <Dialog
                 isShown={makeOwnLabel}
-                title="Submit Your Own Label"
+                title="Submit Your Own Operator"
                 onCloseComplete={exitDialog}
-                confirmLabel="Submit Your Label"
+                confirmLabel="Submit Your Operator"
                 onConfirm={submitSubgraph}
                 width={350}
             >
                 <TextInput onChange={e => setCustomLabel(e.target.value)}/>
             </Dialog>
-            <Button appearance='minimal' onClick={()=>setMakeOwnLabel(true)}>{(labeledInThePastObj.labeledInPast || selectedLabeledSubgraph)? "Update Label with Your Own Label" : "Submit Your Own Label" }</Button>
+            <Button appearance='minimal' onClick={()=>setMakeOwnLabel(true)}>{(labeledInThePastObj.labeledInPast || selectedLabeledSubgraph)? "Update Operator with Your Own Operator" : "Submit Your Own Operator" }</Button>
 
         </>
         :
@@ -264,12 +264,12 @@ const SubgraphLabel: React.FC<{
     // only show this is the user chose which root node to view subgraphs for
     const subgraphLabelMenu = (selectedLabeledSubgraphRootNode) ?
     <SelectMenu 
-        title="Subgraph Label"
+        title="Subgraph Operator"
         options={Object.keys(labeledSubgraphs[selectedLabeledSubgraphRootNode]).map((label) => ({ label, value: label }))}
         selected={selectedLabeledSubgraphLabel}
         onSelect={handleSelectedLabelSelection}
     >
-        <Button>{selectedLabeledSubgraphLabel || "Select Label For Subgraph..."}</Button>
+        <Button>{selectedLabeledSubgraphLabel || "Select Operator For Subgraph..."}</Button>
     </SelectMenu> :
     <> </>;
 
@@ -286,7 +286,7 @@ const SubgraphLabel: React.FC<{
 
     const subgraphLabelId = (selectedLabeledSubgraphLabel && selectedLabeledSubgraphRootNode && (length > 1)) ? 
     <SelectMenu 
-        title="Subgraph Label Graph UUID"
+        title="Subgraph UUIDs"
         options={Object.keys(labeledSubgraphs[selectedLabeledSubgraphRootNode][selectedLabeledSubgraphLabel]).map((node)=> {
             let label = node;
     

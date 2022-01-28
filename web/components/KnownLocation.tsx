@@ -235,7 +235,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
         setAutocompleteItems={setAutocompleteItems}
         subgraphRootId={rootNodeId}/>
       <Paragraph>
-          Your Proposed Label for your selected subgraph: {labelBadge}
+          Your Proposed Operator for your selected subgraph: {labelBadge}
       </Paragraph>
     </Pane> :
     <> </>;
@@ -327,7 +327,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
           <g>
           <text font-family="Arial, Helvetica, sans-serif" 
             strokeWidth="1" y="-60" x="-20" fill="black">
-              Subgraph End File with Label: {selectedLabeledSubgraph.label} 
+              Subgraph End File with Operator: {selectedLabeledSubgraph.label} 
           </text>
           <text font-family="Arial, Helvetica, sans-serif" 
             strokeWidth="1" y="-40" x="-20" fill="black" fontSize='smaller'>
