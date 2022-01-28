@@ -1953,8 +1953,6 @@ def all_subgraphs():
 
 @app.route('/subgraphs/<id>', methods=["GET"])
 def get_subgraphs(id):
-    print("FUCK FUCK FUCK")
-    print(id)
     kl = GDB.getSubgraphsForOperator(id)
     return json.dumps(kl)
 
