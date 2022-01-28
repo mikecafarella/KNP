@@ -196,7 +196,6 @@ export function arrayEquals(a: any[], b: any[]) {
 }
 
 export function getSelectedSubgraphInfo(node: SubgraphNodeProps) {
-    console.log(JSON.parse(node.subgraphNodesInfo))
     return JSON.parse(node.subgraphNodesInfo);
 }
 
