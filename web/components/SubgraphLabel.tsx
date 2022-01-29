@@ -240,9 +240,10 @@ const SubgraphLabel: React.FC<{
             let node: SubgraphNodeProps = labeledSubgraphs[selectedLabeledSubgraphRootNode][item.value][uuid];
             setSelectedLabeledSubgraph(node);
             setSelectedSubgraphNodes(getSelectedSubgraphInfo(node));
+            setSelectedLabeledSubgraphId(node.uuid);
         }
-        // reset state dependency, more detailed comment on line 237
-        if (selectedLabeledSubgraphId) {
+        // reset state dependency, more detailed comment on line 65
+        else if (selectedLabeledSubgraphId) {
             setSelectedLabeledSubgraphId('');
         }
     }
