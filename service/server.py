@@ -640,7 +640,8 @@ class GraphDB:
             result = session.run("MATCH (a {uuid: $nodeId}) "
                                  "WHERE NOT EXISTS {MATCH (a)-[:HasSubgraph]->(b:Subgraph{subgraphNodeUUIDs: $subgraphNodes})} "
                                  "CREATE (a)-[r:HasSubgraph]->(b:Subgraph {uuid: apoc.create.uuid(), subgraphRootName: $subgraphRootName, subgraphNodeUUIDs: $subgraphNodeUUIDs, owner: $owner, modified: $modified, subgraphRootId: $subgraphRootId, ownerEmail: $ownerEmail, fullRootFileName: $fullRootFileName, provenanceGraphRootId: $provenanceGraphRootId, subgraphNodesInfo: apoc.convert.toJson($subgraphNodesInfo), label: $label}) "
-                                 "MERGE (c: Operator{label:$label})"
+                                 "MERGE (c: Operator{label:$label}) "
+                                 "ON CREATE SET c.uuid = apoc.create.uuid() "
                                  "MERGE (c)-[:OperatorLabel]->(b) "
                                  "RETURN properties(a), properties(c)",
                                  nodeId=nodeId,
@@ -668,6 +669,7 @@ class GraphDB:
                                  "SET b.label = $newLabel "
                                  "DELETE r "
                                  "MERGE (c:Operator {label: $newLabel}) "
+                                 "ON CREATE SET c.uuid = apoc.create.uuid() "
                                  "MERGE (c)-[:OperatorLabel]->(b) "
                                  "RETURN b",
                                  nodeId=nodeId,
@@ -700,15 +702,15 @@ class GraphDB:
             results = session.run("MATCH (a:Operator) "
                                   "RETURN properties(a) "
                                   "ORDER BY a.label DESC ")
-            ret = [x[0]['label'] for x in results]
+            ret = {x[0]['label']: x[0]['uuid'] for x in results}
             return {"labels": ret}
     
-    def getSubgraphsForOperator(self, operator):
+    def getSubgraphsForOperator(self, uuid):
         with self.driver.session() as session:
-            results = session.run("MATCH (a:Operator {label: $label})-[:OperatorLabel]-(b:Subgraph) "
+            results = session.run("MATCH (a:Operator {uuid: $uuid})-[:OperatorLabel]-(b:Subgraph) "
                                   "RETURN properties(b) "
                                   "ORDER BY b.modified DESC",
-                                  label=operator)
+                                  uuid=uuid)
             ret = [x[0] for x in results]
             emails = set()
             for node in ret:
@@ -1952,9 +1954,13 @@ def all_subgraphs():
     return json.dumps(kl)
 
 @app.route('/subgraphs/<id>', methods=["GET"])
-def get_subgraphs(id):
+def get_subgraphs_operator(id):
     kl = GDB.getSubgraphsForOperator(id)
     return json.dumps(kl)
+
+def get_subgraphs_node(id):
+    kl = GDB.getSubgraphsForNode(id)
+    return json.dumps({"subgraphs":kl})
 
 @app.route('/subgraph', methods=["POST", "PATCH", "PUT", "GET"])
 def add_subgraph():
@@ -1985,7 +1991,7 @@ def add_subgraph():
         result = GDB.addSubgraph(incomingReq['uuid'], incomingReq['username'], incomingReq['email'], incomingReq['subgraphNodeUUIDs'], incomingReq['subgraphRootName'], incomingReq['label'], incomingReq['rootNodeFileName'], incomingReq['subgraphRootId'], incomingReq['subgraphNodesInfo'])
     else:
         result = GDB.updateSubgraph(incomingReq['uuid'], incomingReq["oldLabel"], incomingReq["newLabel"], incomingReq['username'], incomingReq['email'], incomingReq['subgraphNodeUUIDs'])
-    return get_subgraphs(incomingReq['uuid'])
+    return get_subgraphs_node(incomingReq['uuid'])
 
 
 #

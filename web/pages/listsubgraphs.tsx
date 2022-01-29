@@ -2,11 +2,11 @@ import React, {useState, useEffect} from "react"
 import { GetServerSideProps } from "next"
 import Layout from "../components/Layout"
 import Router from 'next/router'
-import { Table, Heading, Combobox, Pane, Paragraph, Strong } from 'evergreen-ui'
+import { Table, Heading, Combobox, Pane, Paragraph, Strong, Badge } from 'evergreen-ui'
 import {SubgraphNodeProps} from '../components/KnownLocation'
 
 type Props = {
-    labels: string[]
+    labels: any[]
 }
 
 const SubGraphs: React.FC<Props> = (props) => {
@@ -26,15 +26,16 @@ const SubGraphs: React.FC<Props> = (props) => {
       return data;   
     }
 
-    useEffect(()=> {
-      if (label) {
-        fetcher(`${subgraphsUrl}/${label}`);
-      } 
-    }, [label])
-
     const handleEmailSelection = (selected) => {
       setEmail(selected);
     }
+
+    useEffect(()=> {
+      if (label) {
+        let uuid = props.labels[label];
+        fetcher(`${subgraphsUrl}/${uuid}`);
+      } 
+    }, [label]);
 
     let displayed = [];
 
@@ -50,19 +51,19 @@ const SubGraphs: React.FC<Props> = (props) => {
           <Pane display='flex' flexDirection='column'>
             <Paragraph marginY="0.5em"> <Strong>Select an Operator to View Labeled Subgraphs Of</Strong></Paragraph>
             <Combobox
-                items={props.labels}
+                items={Object.keys(props.labels)}
                 onChange={selected => setLabel(selected)}
-                placeholder="Choose a Operator to View Subgraphs of"
+                placeholder="Choose an Operator to View Subgraphs of"
                 autocompleteProps={{
                     // Used for the title in the autocomplete.
-                    title: 'label'
+                    title: 'Operator'
                 }}
                 marginBottom="0.5em"/>
 
             {(label) ? 
               (displayedSubgraphs.length > 0) ?
               <Pane>
-                <Paragraph marginY="0.5em"> Select an Email to View Operators Labeled by Specific Users</Paragraph>
+                <Paragraph marginY="0.5em"> Select an Email to view {<Badge color='blue'>{label}</Badge>} subgraphs labeled by Specific Users</Paragraph>
                   <Combobox
                     items={emails}
                     onChange={handleEmailSelection}
@@ -73,7 +74,7 @@ const SubGraphs: React.FC<Props> = (props) => {
                     }}
                     marginBottom="0.5em"/> 
                 </Pane>
-                : <Paragraph marginY="0.5em">There are no labeled subgraphs for Operator: {label}</Paragraph>
+                : <Paragraph marginY="0.5em">There are no labeled subgraphs for Operator: {<Badge color='blue'>{label}</Badge>}</Paragraph>
               : <></>}
           </Pane>
           <Table>

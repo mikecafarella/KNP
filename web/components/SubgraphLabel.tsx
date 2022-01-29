@@ -1,4 +1,4 @@
-import React, {useEffect , useState} from 'react'
+import React, {useEffect} from 'react'
 import { Autocomplete, TextInput, Button, Dialog, SelectMenu, Strong, Pane} from 'evergreen-ui'
 import { SubgraphProps, SubgraphNodeProps } from './KnownLocation';
 import { arrayEquals, getSelectedSubgraphInfo } from './Utils';
@@ -65,6 +65,10 @@ const SubgraphLabel: React.FC<{
     // labeled a set of nodes
     const haveLabeledInThePast = () => {
         // refactor to just being a list filter potentially, but this is a full stack change
+        if (selectedSubgraphNodes.length === 0 || !validSubgraph) {
+            return {labeledInPast: false, oldLabel: 'invalid', subgraphNode: null};
+        }
+
         let selectedNodes = selectedSubgraphNodes.map(nd=>nd.uuid).sort();
         for (let rootNodeName of Object.keys(labeledSubgraphs)) {
             for (let labelName of Object.keys(labeledSubgraphs[rootNodeName])) {
@@ -72,12 +76,12 @@ const SubgraphLabel: React.FC<{
                 for (let uuid of Object.keys(labeledSubgraphs[rootNodeName][labelName])) {
                     let subgraphNode : SubgraphNodeProps = labeledSubgraphs[rootNodeName][labelName][uuid];
                     if (arrayEquals(subgraphNode.subgraphNodeUUIDs, selectedNodes)) {
-                        return {labeledInPast: true, oldLabel: subgraphNode.label};
+                        return {labeledInPast: true, oldLabel: subgraphNode.label, subgraphNode};
                     }
                 }
             }
         }
-        return {labeledInPast: false, oldLabel: 'invalid'};
+        return {labeledInPast: false, oldLabel: 'invalid', subgraphNode: null,};
     }
 
     const fetcher = async (url) => {
@@ -101,10 +105,18 @@ const SubgraphLabel: React.FC<{
 
     const labeledInThePastObj = haveLabeledInThePast();
 
+    // do this so when you select a subgraph you labeled in the past you make it more apparent to the user it's been labeled in the past
+    if (labeledInThePastObj.labeledInPast) {
+        setSelectedLabeledSubgraphRootNode(labeledInThePastObj.subgraphNode.subgraphRootName);
+        setSelectedLabeledSubgraphLabel(labeledInThePastObj.subgraphNode.label);
+        setSelectedLabeledSubgraphId(labeledInThePastObj.subgraphNode.uuid);
+        setSelectedLabeledSubgraph(labeledInThePastObj.subgraphNode);
+    }
+
     const submitSubgraph = async () => {
         let subgraphLabel = (customLabel) ? customLabel: label;
         // this sort call is important, but we can just as easily do this in the backend
-
+        // it's important so nodes have a global ordering for going against duplicate nodes
         let sorted = selectedSubgraphNodes.sort((a, b) => {
             if (a.uuid < b.uuid) {
                 return -1
@@ -148,15 +160,15 @@ const SubgraphLabel: React.FC<{
                 }),
             }).then(res => res.json());
         }
-        setLabeledSubgraphs(res.subgraphs);
+        setLabel('');
+        setSelectedSubgraphNodes([]);
         if (selectedLabeledSubgraph && Object.keys(selectedLabeledSubgraph).length > 0) {
             handleResetLabeledSelection();
         }
-        setLabel('');
-        setSelectedSubgraphNodes([]);
         if (customLabel) {
             exitDialog();
         }
+        setLabeledSubgraphs(res.subgraphs);
     }
 
     const submitLabelButton = (label) ? 
@@ -181,6 +193,7 @@ const SubgraphLabel: React.FC<{
                 title="Operator"
                 onChange={changedItem => setLabel(changedItem)}
                 items={autompleteItems}
+                marginBottom="0.5em"
                 >
                 {props => {
                     const { getInputProps, getRef, inputValue, openMenu } = props
@@ -262,7 +275,7 @@ const SubgraphLabel: React.FC<{
     </SelectMenu> :
     <></>;
 
-    
+
     // only show this is the user chose which root node to view subgraphs for
     const subgraphLabelMenu = (selectedLabeledSubgraphRootNode) ?
     <SelectMenu 

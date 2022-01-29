@@ -168,15 +168,10 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   };
 
   const shouldHighlight = (nodeDatum) => {
-    if (!subgraphSelection) {
-      // check to see if nodeDatum is equal to highlightedNode
-      if (nodeDatum.uuid) {
-        return highlightedNode === nodeDatum.uuid;
-      } else {
-        return highlightedNode === MD5(nodeDatum.receivedOnOrBefore).toString();
-      }
+    if (nodeDatum.uuid) {
+      return highlightedNode === nodeDatum.uuid;
     } else {
-      return false;
+      return highlightedNode === MD5(nodeDatum.receivedOnOrBefore).toString();
     }
   }
   
@@ -185,13 +180,11 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   }
 
   const highLightNode = (nodeDatum) => {
-    if (!subgraphSelection) {
-      if (nodeDatum.uuid) {
-        setHighlightedNode(nodeDatum.uuid);
-      } else {
-        setHighlightedNode(MD5(nodeDatum.receivedOnOrBefore).toString());
+    if (nodeDatum.uuid) {
+      setHighlightedNode(nodeDatum.uuid);
+    } else {
+      setHighlightedNode(MD5(nodeDatum.receivedOnOrBefore).toString());
       }
-    }
   }
 
   const partOfSubgraph = (nodeDatum) => {
