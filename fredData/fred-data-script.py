@@ -12,8 +12,6 @@ from knps import hash_file, hash_file_lines, get_file_type, getShinglesFname, ge
 from settings import KNPS_SERVER_PROD, KNPS_SERVER_DEV 
 from io import StringIO
 import argparse
-from neo4j import GraphDatabase
-import uuid
 from pathlib import Path
 import socket 
 import requests

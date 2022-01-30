@@ -367,8 +367,6 @@ const orgChart = {
 
           </Pane>
         </Pane>          
-
-
         <Pane display="flex" padding={majorScale(1)} border>
           <Pane flex={1} >
             <Heading size={600}>Comments</Heading>
