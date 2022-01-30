@@ -7,10 +7,20 @@ import pickle
 import json
 import boto3
 import sys
-sys.path.append("../cli/src/knps")
+sys.path.insert(1, os.path.abspath("../cli/src/knps"))
+from knps import hash_file, hash_file_lines, get_file_type, getShinglesFname, get_version
+from settings import KNPS_SERVER_PROD, KNPS_SERVER_DEV 
 from io import StringIO
 import argparse
+from neo4j import GraphDatabase
+import uuid
+from pathlib import Path
+import socket 
+import requests
 
+
+NEO4J_HOST = os.getenv('NEO4J_HOST', 'localhost')
+NEO4J_PORT = int(os.getenv('NEO4J_PORT', '7687'))
 
 key_file = open('api_key.txt', 'r')
 API_KEY = key_file.readline()
@@ -29,7 +39,11 @@ os.environ["AWS_ACCESS_KEY_ID"] = ACCESS_KEY_ID
 os.environ["AWS_SECRET_ACCESS_KEY"] = SECRET_ACCESS_KEY
 BUCKET_NAME = 'knps-data'
 s3 = boto3.resource('s3')
+S3_SERIES_FOLDER = 'FRED'
+S3_METADATA_FOLDER = 'FRED-METADATA'
 # s3_client = boto3.client('s3')
+SERIES_METADATA_KEY = 'seriess'
+
 
 OUTPUT_FOLDER = 'output'
 LAST_PROCESSED_INDEX_FILE = 'last_processed_index.json'
@@ -142,49 +156,169 @@ def get_starting_point(index_file):
             starting_point = json.load(lpi)['index']
     return starting_point
 
+#mimics the same class as seen in knps.py but adapated specifically for this script
+class User:
+    def __init__(self, username):
+        self.username = username
+        self.access_token = "INSECURE_TOKEN_{}".format(username)
+        self.server_url = 'http://localhost:5000'
+        # this string was obtained by running str(uuid.uuid1()) 
+        self.install_id = '4cc0ee7a-814c-11ec-bd6c-aa665a53822f'
+
+# this file is directly imported from knps.py
+def observeFile(f):
+    file_hash = hash_file(f)
+    file_type = get_file_type(f)
+    line_hashes = hash_file_lines(f, file_type)
+    optionalFields = {}
+    optionalFields["filetype"] = file_type
+    if file_type.startswith("text/"):
+        shingles = getShinglesFname(f, file_type)
+        optionalFields["shingles"] = shingles
+    return (f, file_hash, file_type, line_hashes, optionalFields)
+
+# This is the same exact code as the identically named function in knps.py, just modified so it works with the scripts purposes better
+def send_synclist(user, observationList, file_loc=os.path.abspath('../cli/src/knps/knps.py')):
+    knps_version = get_version(file_loc)
+    install_id = user.install_id
+    hostname = socket.gethostname()
+    print("KNPS Version: ", knps_version)
+
+    url = "{}/synclist/{}".format(user.server_url, user.username)
+
+    login = {
+        'username': user.username,
+        'access_token': user.access_token
+    }
+
+    obsList = []
+    for file_name, file_hash, file_type, line_hashes, optionalItems in observationList:
+        p = Path(file_name)
+        info = p.stat()
+
+        metadata = {
+            'username': user.username,
+            'file_name': file_name,
+            'file_hash': file_hash,
+            'filetype': file_type,
+            'line_hashes': line_hashes,
+            'file_size': info.st_size,
+            'modified': info.st_mtime,
+            'knps_version': knps_version,
+            'install_id': install_id,
+            'hostname': hostname,
+            'optionalItems': optionalItems
+        }
+        obsList.append({'metadata': metadata})
+
+    fDict = {'observations': json.dumps(obsList)}
+
+    response = requests.post(url, files=fDict, data=login)
+    obj_data = response.json()
+    return obj_data
+
+def get_metadata_comment(f):
+    with open(f, 'rb') as metadata:
+        content = json.load(metadata)
+    ret = 'Series Url: {}\n'.format(content['url'])
+    for series_info_dict in content[SERIES_METADATA_KEY]:
+        title = series_info_dict['title']
+        ret += 'Series Title: {}\n'.format(title)
+        for k, v in series_info_dict.items():
+            if k == 'title':
+                continue
+            ret += '\t{}: {}\n'.format(k, v)
+    ret.rstrip()
+    return ret
+
+def download_from_s3(bucket, series_title):
+    try:
+        csv_out_path = "{}/{}.csv".format(OUTPUT_FOLDER, series_title)
+        json_out_path = "{}/{}.json".format(OUTPUT_FOLDER, series_title)
+        bucket.download_file("{}/{}.csv".format(S3_SERIES_FOLDER, series_title), csv_out_path)
+        bucket.download_file("{}/{}.json".format(S3_METADATA_FOLDER, series_title), json_out_path)
+        return csv_out_path, json_out_path
+    except Exception as e:
+        print(repr(e))
+        return False
+
+def send_commentlist(user, uuids, comments):
+    login = {
+        'username': user.username,
+        'access_token': user.access_token
+    }
+    url = "{}/commentlist/{}".format(user.server_url, user.username)
+    commentList = [[uuids[i], comments[i]] for i in range(len(comments))]
+    fDict = {'comments': json.dumps(commentList)}
+    response = requests.post(url, files=fDict, data=login)
+    obj_data = response.json()
+    return obj_data 
+
+def send_filenamelist(user, filenameList):
+    login = {
+    'username': user.username,
+    'access_token': user.access_token
+    }
+    url = "{}/createDatasetFromFileName/{}".format(user.server_url, user.username)
+    fDict = {'filenames': json.dumps(filenameList)}  
+    response = requests.post(url, files=fDict, data=login)
+    obj_data = response.json()
+    return obj_data['uuids'] 
+
 def download_series_from_s3(username):
-    os.system("python3 ../cli/src/knps/knps.py --login_temp {}".format(username))
-    os.system("python3 ../cli/src/knps/knps.py --store True")
+    if not os.path.isdir(OUTPUT_FOLDER):
+        os.mkdir(OUTPUT_FOLDER)
+
     with open(LAST_PROCESSED_INDEX_FILE, 'r') as epi:
         ending_point = json.load(epi)['index']
-
-    if not os.path.isdir(OUTPUT_FOLDER):
-        os.system("mkdir {dir}".format(dir=OUTPUT_FOLDER))
-        os.system("python3 ../cli/src/knps/knps.py --watch {dir}".format(dir=OUTPUT_FOLDER))
-
-    s3_series_folder = 'FRED'
-    s3_metadata_folder = 'FRED-METADATA'
+    
+    user = User(username)
     bucket = s3.Bucket(BUCKET_NAME)
     starting_point = get_starting_point(LAST_PROCESSED_AWS_INDEX_FILE)
-    batch_size = 100
+    batch_size = 10
+
     with open(SERIES_PICKLE_FILE, 'rb') as f:
         series_ids = pickle.load(f)
+
     print("{}/{} index start {}".format(starting_point+1, len(series_ids), starting_point))
+    
+    current_batch = []
     for i, (_, series_title) in enumerate(series_ids[starting_point:]):
-        print(series_title)
         try:
-            bucket.download_file("{}/{}.csv".format(s3_series_folder, series_title), "{}/{}.csv".format(OUTPUT_FOLDER, series_title))
-            bucket.download_file("{}/{}.json".format(s3_metadata_folder, series_title), "{}/{}.json".format(OUTPUT_FOLDER, series_title))
-            if (i+1) % batch_size == 0:
-                os.system("python3 ../cli/src/knps/knps.py --sync")
-            if (i+starting_point) == ending_point:
-                print("caught up")
+            download_res = download_from_s3(bucket, series_title)
+            if not download_res:
+                continue
+            csv_out_path, json_out_path = os.path.abspath(download_res[0]), os.path.abspath(download_res[1])
+            current_batch.append((csv_out_path, json_out_path)) 
+            if len(current_batch) == batch_size:
+                file_observations = []
+                file_names = []
+                file_comments = []
+                for csv_path, json_path in current_batch: 
+                    file_observations.append(observeFile(csv_path))
+                    file_names.append(csv_path)
+                    file_comments.append(get_metadata_comment(json_path))
+                send_synclist(user, file_observations)
+                uuids = send_filenamelist(user, file_names)
+                send_commentlist(user, uuids, file_comments)
+                current_batch = []
                 break
-        except Exception as e:
-            print(repr(e))
+        except KeyboardInterrupt:
             save_last_good_query_index(i+starting_point, LAST_PROCESSED_AWS_INDEX_FILE)
             break
     print('done {}/{} index : {}'.format(i+starting_point+1, len(series_ids), i+starting_point))
+    save_last_good_query_index(i+starting_point, LAST_PROCESSED_AWS_INDEX_FILE)
+
+
+
 
 if __name__ == "__main__":
-    testing = True
-    
     parser = argparse.ArgumentParser(description='KNPS fred-data-script command line')
     parser.add_argument("--ids", action='store_true', help="scrape series_ids and titles into local pickle file")
     parser.add_argument("--series", action="store_true", help="scrape series csvs into s3 bucket")
     parser.add_argument("--metadata", action="store_true", help="scrape series metadata into s3 bucket")
     parser.add_argument("--download",  help="download data from s3 and insert into KNPS db by supplying a username")
-    
+
     args = parser.parse_args()
 
     if args.ids:
@@ -193,8 +327,8 @@ if __name__ == "__main__":
         upload_series_to_s3()
     elif args.metadata:
         upload_series_metadata_to_s3()
+    elif args.download:
+        download_series_from_s3(args.download)
     else:
-        os.system("rm ~/.knpsdb") ##NEED TO DO THIS SO IT DOES NOT THINK THINGS R INACCURATELY PROCCESSED
-        # print(args.download)
-        download_series_from_s3(args.download, OUTPUT_FOLDER)
+        pass
     
