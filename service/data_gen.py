@@ -84,36 +84,37 @@ def get_data_set():
            y = data['y']
     return X, y
 
-def generate_data_set():
-    ending_point = 1500
-    successes = 0
-    s3_series_folder = 'FRED'
-    starting_point = get_starting_point(LAST_PROCESSED_INDEX_FILE)
-    X, y = get_data_set()
-    with open(SERIES_PICKLE_FILE, 'rb') as f:
-        series_ids = pickle.load(f)
-    bucket = s3.Bucket(BUCKET_NAME)
-    for i, (_, series_title) in enumerate(series_ids[starting_point:]):
-        print(successes, series_title)
-        try:
-            if (successes+starting_point) == ending_point:
-                print("caught up")
-                break
-            file_path = "{}/{}.csv".format(DATA_DIR, series_title)
-            bucket.download_file("{}/{}.csv".format(s3_series_folder, series_title), file_path)
-            num_cols = get_num_cols(file_path)
-            for func, label in OPERATION_LABEL_MAP.items():
-                X = np.append(X, func(num_cols), axis=0) 
-                y = np.append(y, [label], axis=0)
+# TODO: will be useful once more progress is made on the classifier
+# def generate_data_set():
+#     ending_point = 1500
+#     successes = 0
+#     s3_series_folder = 'FRED'
+#     starting_point = get_starting_point(LAST_PROCESSED_INDEX_FILE)
+#     X, y = get_data_set()
+#     with open(SERIES_PICKLE_FILE, 'rb') as f:
+#         series_ids = pickle.load(f)
+#     bucket = s3.Bucket(BUCKET_NAME)
+#     for i, (_, series_title) in enumerate(series_ids[starting_point:]):
+#         print(successes, series_title)
+#         try:
+#             if (successes+starting_point) == ending_point:
+#                 print("caught up")
+#                 break
+#             file_path = "{}/{}.csv".format(DATA_DIR, series_title)
+#             bucket.download_file("{}/{}.csv".format(s3_series_folder, series_title), file_path)
+#             num_cols = get_num_cols(file_path)
+#             for func, label in OPERATION_LABEL_MAP.items():
+#                 X = np.append(X, func(num_cols), axis=0) 
+#                 y = np.append(y, [label], axis=0)
             
-        except botocore.exceptions.ClientError:
-            continue
-        except FileNotFoundError:
-            continue
-        successes += 1
-    save_last_index(i+starting_point, LAST_PROCESSED_INDEX_FILE)
-    with open(DATASET_NPZ_FILE, 'wb') as f:
-        np.savez(f, X=X, y=y)
+#         except botocore.exceptions.ClientError:
+#             continue
+#         except FileNotFoundError:
+#             continue
+#         successes += 1
+#     save_last_index(i+starting_point, LAST_PROCESSED_INDEX_FILE)
+#     with open(DATASET_NPZ_FILE, 'wb') as f:
+#         np.savez(f, X=X, y=y)
 
 if __name__ == "__main__":
     # if not os.path.isdir(DATA_DIR):
