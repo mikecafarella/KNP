@@ -11,18 +11,18 @@ DATA_DIR = 'data'
 LAST_PROCESSED_INDEX_FILE = 'last_processed_index.json'
 DATASET_NPZ_FILE = 'data_set.npz'
 
-aws_credentials = open("aws_keys.json", 'r')
-aws_keys = json.load(aws_credentials)
-ACCESS_KEY_ID = aws_keys['access_key_id']
-SECRET_ACCESS_KEY = aws_keys['secret_access_key']
-aws_credentials.close()
-os.environ["AWS_DEFAULT_REGION"] = 'us-east-1'
-os.environ["AWS_ACCESS_KEY_ID"] = ACCESS_KEY_ID
-os.environ["AWS_SECRET_ACCESS_KEY"] = SECRET_ACCESS_KEY
-BUCKET_NAME = 'knps-data'
-s3 = boto3.resource('s3')
-SERIES_FOLDER = 'FRED'
-SERIES_PICKLE_FILE = "series_ids.pickle"
+# aws_credentials = open("aws_keys.json", 'r')
+# aws_keys = json.load(aws_credentials)
+# ACCESS_KEY_ID = aws_keys['access_key_id']
+# SECRET_ACCESS_KEY = aws_keys['secret_access_key']
+# aws_credentials.close()
+# os.environ["AWS_DEFAULT_REGION"] = 'us-east-1'
+# os.environ["AWS_ACCESS_KEY_ID"] = ACCESS_KEY_ID
+# os.environ["AWS_SECRET_ACCESS_KEY"] = SECRET_ACCESS_KEY
+# BUCKET_NAME = 'knps-data'
+# s3 = boto3.resource('s3')
+# SERIES_FOLDER = 'FRED'
+# SERIES_PICKLE_FILE = "series_ids.pickle"
 
 
 def save_last_index(index, file_name):
@@ -116,9 +116,9 @@ def generate_data_set():
         np.savez(f, X=X, y=y)
 
 if __name__ == "__main__":
-    if not os.path.isdir(DATA_DIR):
-        os.system("mkdir {}".format(DATA_DIR))
-    # drop_column('Book1.csv')
-    generate_data_set()
-    # get_data_set()
-    pass
+    # if not os.path.isdir(DATA_DIR):
+    #     os.system("mkdir {}".format(DATA_DIR))
+    # # drop_column('Book1.csv')
+    # generate_data_set()
+    # # get_data_set()
+    # pass
