@@ -634,6 +634,46 @@ class GraphDB:
                                   owner=username,
                                   modified=time.time())
             return results
+    @staticmethod
+    def _create_comments(tx, comments):
+        #this is specifically for uploading FRED data, specifically the metadata as a comment string
+        #which is why the comment owner is the owner of the file
+        for uuid, comment in comments:
+            txStr = ("MATCH (a{uuid: $uuid}) "
+                     "CREATE (a)-[:HasComment]->(b: Comment {uuid: apoc.create.uuid(), comment: $commentStr, owner: a.username, modified: $modified}) "
+                     "RETURN b")
+            result = tx.run(txStr,
+                            uuid = uuid,
+                            modified=time.time(),
+                            commentStr = comment)
+
+    
+    #comments is a tuple of filename (fullpath), comment
+    def addCommentsInBulk(self, comments):
+        with self.driver.session() as session:
+            result = session.write_transaction(self._create_comments, comments)
+    
+    @staticmethod
+    def _create_dataset_from_filename(tx, filenames):
+        res = []
+        for filename in filenames:
+            txStr = ("MATCH (a: ObservedFile{filename: $filename})-[:Contains]->(b:ByteSet) "
+                     "CREATE (new:Dataset {uuid: apoc.create.uuid(), title:$title, owner:a.username, modified:$modified, desc:$desc, latest:1})-[r:Contains]->(b) "
+                     "RETURN new.uuid"
+                    )
+            result = tx.run(txStr,
+                            filename = filename,
+                            title="Default Title",
+                            desc='Default Description',
+                            modified=time.time())
+            res.extend([x[0] for x in result])
+        return res
+
+    def createDatasetFromFileNames(self, filenames):
+        with self.driver.session() as session:
+            result = session.write_transaction(self._create_dataset_from_filename, filenames)
+            return result
+        
     
     def addSubgraph(self, nodeId, username, email, subgraphNodeUUIDs, subgraphRootName, label, fullRootFileName, subgraphRootId, subgraphNodesInfo):
         with self.driver.session() as session:
@@ -1940,6 +1980,55 @@ def add_comment(id):
     result = GDB.addComment(incomingReq["uuid"], incomingReq["value"], "")
     return get_comments(incomingReq["uuid"])
 
+
+#specifically for submitting metadata as a comment for a list of files
+@app.route('/commentlist/<username>', methods=["POST"])
+def meta_data(username):
+    access_token = request.form.get('access_token')
+    username = request.form.get('username')
+
+    login_file = 'data/login_info.json'.format(username)
+    p = Path(login_file)
+    if p.exists():
+        with open(login_file, 'rt') as f:
+            login_data = json.load(f)
+    else:
+        login_data = {}
+
+    if 'INSECURE_TOKEN_' not in access_token: # TODO: fix this!
+        if (not access_token or
+            not username or
+            username not in login_data or
+            access_token != login_data[username].get('access_token', None) or
+            not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
+            return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
+    comments = json.load(request.files['comments'])
+    GDB.addCommentsInBulk(comments)
+    return json.dumps('Successfully uploaded comments')
+
+@app.route('/createDatasetFromFileName/<username>', methods=["POST"])
+def create_dataset_from_filename(username):
+    access_token = request.form.get('access_token')
+    username = request.form.get('username')
+
+    login_file = 'data/login_info.json'.format(username)
+    p = Path(login_file)
+    if p.exists():
+        with open(login_file, 'rt') as f:
+            login_data = json.load(f)
+    else:
+        login_data = {}
+
+    if 'INSECURE_TOKEN_' not in access_token: # TODO: fix this!
+        if (not access_token or
+            not username or
+            username not in login_data or
+            access_token != login_data[username].get('access_token', None) or
+            not is_access_token_valid(access_token, config["issuer"], config["client_id"])):
+            return json.dumps({'error': 'Access token invalid. Please run: knps --login'})
+    filenames = json.load(request.files['filenames'])
+    kl = GDB.createDatasetFromFileNames(filenames)
+    return json.dumps({"uuids": kl})
 #
 # MANAGE SUBGRAPHS (subgraph selection for provenance graph)
 #
