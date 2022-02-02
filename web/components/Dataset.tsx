@@ -155,7 +155,7 @@ const orgChart = {
         <Pane display="flex" padding={majorScale(1)} border>
           <Pane flex={1} >
 
-            <Heading size={800}>Dataset '{data.title}'
+            <Heading size={800}>Curated Dataset '{data.title}'
             <Popover display="flex"
             alignItems="center" justifyContent="center"
             flexDirection="column" 
@@ -334,7 +334,7 @@ const orgChart = {
           <Pane flex={1} >
             <Heading size={600}>Content</Heading>
             <Paragraph size={300} color="muted">
-                This Dataset contains Content <a href={bytesetLink}>{dobj.md5hash}</a> 
+                This Curated Dataset contains Content <a href={bytesetLink}>{dobj.md5hash}</a> 
                 <Popover width={240} height={240} display="flex"
                 alignItems="center" justifyContent="center"
                 flexDirection="column" content={
@@ -349,11 +349,12 @@ const orgChart = {
           </Pane>
         </Pane>
 
-
+        {(1 == 0) && 
         <Pane display="flex" padding={majorScale(1)} border>
           <Pane flex={1} >
             <Heading size={600}>Provenance</Heading>
-           <div style={{ width: '100%', height:'25em' }} ref={containerRef}>
+
+      <div style={{ width: '100%', height:'25em' }} ref={containerRef}>
             
          <Tree
           data={data.descendentData}
@@ -366,7 +367,10 @@ const orgChart = {
 
 
           </Pane>
-        </Pane>          
+        </Pane>
+        }
+
+
         <Pane display="flex" padding={majorScale(1)} border>
           <Pane flex={1} >
             <Heading size={600}>Comments</Heading>
@@ -385,16 +389,12 @@ const orgChart = {
                   <Table.TextHeaderCell>
                     Date Posted
                   </Table.TextHeaderCell>                    
-                  <Table.TextHeaderCell>
-                    Author
-                  </Table.TextHeaderCell>                    
                 </Table.Head>
                 <Table.Body>
                 {commentData.comments.map(c => (
                   <Table.Row>
                     <Table.TextCell>{c.comment}</Table.TextCell>
                     <Table.TextCell>{new Date(c.modified * 1000).toLocaleString()}</Table.TextCell>
-                  <Table.TextCell>{c.author}</Table.TextCell>              
                 </Table.Row>
                 ))}
                 </Table.Body>
@@ -654,6 +654,8 @@ const orgChart = {
         <Pane display="flex" padding={majorScale(1)} border>
           <Pane flex={1} >
             <Heading size={600}>Usage</Heading>
+            {(1==0) &&
+            <Pane>
             <Paragraph size={300} color="muted">            
                 This Dataset has been used 9,485 times by 254 distinct
                 users and 134 distinct programs.
@@ -683,7 +685,8 @@ const orgChart = {
             </Table.Row>
             </Table.Body>
             </Table>
-
+            </Pane>
+            }
           </Pane>
         </Pane>
 
@@ -691,6 +694,9 @@ const orgChart = {
         <Pane display="flex" padding={majorScale(1)} border>
           <Pane flex={1} >
             <Heading size={600}>Embeddings and Featurization</Heading>
+            {(1==0) &&
+            <Pane>
+            
             <Paragraph size={300} color="muted">            
                 This Dataset has 2 available embedding(s).
             </Paragraph>
@@ -715,7 +721,8 @@ const orgChart = {
             </Table.Row>
             </Table.Body>
             </Table>
-
+            </Pane>
+            }
           </Pane>
         </Pane>
 

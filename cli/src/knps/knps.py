@@ -13,6 +13,7 @@ import csv
 import pandas as pd
 import PyPDF2
 import re
+import codecs
 import random
 import time
 import numpy as np
@@ -666,9 +667,9 @@ class Watcher:
                 try:
                     file_hashes[f] = hash_file(f)
 
-                    if self.file_already_processed(f):
-                        print(" -- Already processed")
-                        continue
+                    #if self.file_already_processed(f):
+                    #    print(" -- Already processed")
+                    #    continue
 
 
                     observationList.append(self._observeFile_(f))
@@ -734,9 +735,9 @@ class Watcher:
         optionalFields = {}
         optionalFields["filetype"] = file_type
 
-        #if self.user.get_store():
-        #    if os.stat(f).st_size < 10 * 1000 * 1000:
-        #        optionalFields["content"] = list(open(f, "rb").read())
+        if self.user.get_store():
+            if os.stat(f).st_size < 10 * 1000 * 1000:
+                optionalFields["content"] = codecs.encode(open(f, "rb").read(), "base64").decode("utf-8")
 
 
 

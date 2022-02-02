@@ -2,7 +2,8 @@ import React, { useState} from 'react'
 import Router from 'next/router'
 import ReactMarkdown from 'react-markdown'
 import { useSession } from 'next-auth/client'
-import { majorScale, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table } from 'evergreen-ui'
+import { readString } from 'react-papaparse';
+import { majorScale, Pre, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table } from 'evergreen-ui'
 
 export type FileProps = {
   fileid: string;
@@ -69,16 +70,58 @@ const Byteset: React.FC<{dobj: BytesetProps}> = ({dobj}) => {
             <Heading size={600}>Content</Heading>
             
             <Pane marginLeft={majorScale(1)}>
-            { ! dobj.hasContent &&
+            { ! dobj.content.hasContent &&
               <Paragraph size={300} color="muted">            
-                This data cannot be examined.
+                You do not have access to this content.
               </Paragraph>
             }
 
-            { dobj.hasContent &&
+            { dobj.content.hasContent &&
+              <Pane>
               <Paragraph size={300} color="muted">            
-                This data cannot be examined.
+                A copy of this content has been cached.
               </Paragraph>
+
+              { dobj.filetype == "text/plain" &&
+              <Pane display="flex" border>
+              <Pre>
+                {Buffer.from(dobj.content.content).toString()}
+              </Pre>
+              </Pane>
+              }
+
+
+              { dobj.filetype == "image/png" &&
+              <Pane display="flex" border>
+                <img width="600px" src={"data:image/png;base64," + dobj.content.content}/>
+              </Pane>
+              }
+
+
+              { dobj.filetype == "application/pdf" &&
+                 <Pane display="flex" >
+                     <embed src={"data:application/pdf;base64," + dobj.content.content} width="600" height="300"/>
+                 </Pane>
+              }
+
+
+              { dobj.filetype == "text/csv" &&
+             <Pane display="flex" border>
+               <Table border background="tint1">
+                   <Table.Body>
+                       {readString(Buffer.from(dobj.content.content).toString().trim(), {preview: 10}).data.map((row, idx) => (
+                           <Table.Row key={row + idx}>
+                               {row.map((cell, cellidx) => (
+                                   <Table.TextCell key={cell + cellidx}>{cell}</Table.TextCell>
+                               ))}
+                           </Table.Row>
+                       ))}
+                   </Table.Body>
+               </Table>
+             </Pane>
+             }
+
+              </Pane>              
               }
             </Pane>
           </Pane>
