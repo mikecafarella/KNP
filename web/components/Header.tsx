@@ -27,12 +27,15 @@ const Header: React.FC = () => {
           <Link href="/" marginLeft={12} color={isActive('/') ? "neutral" : "blue"}>
               Home
           </Link>
-          <Link href="/listdataobjects" marginLeft={12} color={isActive('/listdataobjects') ? "neutral" : "blue"}>
+          {/* <Link href="/listdataobjects" marginLeft={12} color={isActive('/listdataobjects') ? "neutral" : "blue"}>
               Data Objects
+          </Link> */}
+          <Link href="/listsubgraphs" marginLeft={12} color={isActive('/listsubgraphs') ? "neutral" : "blue"}>
+              Labeled Operators
           </Link>
-          <Link href="/listfunctions" marginLeft={12} color={isActive('/listfunctions') ? "neutral" : "blue"}>
+          {/* <Link href="/listfunctions" marginLeft={12} color={isActive('/listfunctions') ? "neutral" : "blue"}>
               Functions
-          </Link>
+          </Link> */}
           <Link href="/searchpage" marginLeft={12} color={isActive('/searchpage') ? "neutral" : "blue"}>
               Search Page
           </Link>
