@@ -652,19 +652,20 @@ class GraphDB:
     def addCommentsInBulk(self, comments):
         with self.driver.session() as session:
             result = session.write_transaction(self._create_comments, comments)
-    
+    # specifically for fred data
     @staticmethod
     def _create_dataset_from_filename(tx, filenames):
         res = []
-        for filename in filenames:
+        for filename, title, url, details in filenames:
             txStr = ("MATCH (a: ObservedFile{filename: $filename})-[:Contains]->(b:ByteSet) "
-                     "CREATE (new:Dataset {uuid: apoc.create.uuid(), title:$title, owner:a.username, modified:$modified, desc:$desc, latest:1})-[r:Contains]->(b) "
+                     "CREATE (new:Dataset {uuid: apoc.create.uuid(), title:$title, owner:a.username, modified:$modified, desc:$desc, latest:1, details:$details})-[r:Contains]->(b) "
                      "RETURN new.uuid"
                     )
             result = tx.run(txStr,
                             filename = filename,
-                            title="Default Title",
-                            desc='Default Description',
+                            title=title,
+                            desc=details,
+                            details=url,
                             modified=time.time())
             res.extend([x[0] for x in result])
         return res
