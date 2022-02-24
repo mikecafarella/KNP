@@ -163,10 +163,10 @@ def get_starting_point(index_file):
 
 #mimics the same class as seen in knps.py but adapated specifically for this script
 class User:
-    def __init__(self, username):
+    def __init__(self, username, prod):
         self.username = username
         self.access_token = "INSECURE_TOKEN_{}".format(username)
-        self.server_url = 'http://localhost:5000'
+        self.server_url = 'http://localhost:5000' if not prod else "http://ec2-3-224-14-41.compute-1.amazonaws.com:5000"
         # this string was obtained by running str(uuid.uuid1()) 
         self.install_id = '4cc0ee7a-814c-11ec-bd6c-aa665a53822f'
 
@@ -271,17 +271,16 @@ def send_filenamelist(user, filenameList):
     obj_data = response.json()
     return obj_data['uuids'] 
 
-def download_series_from_s3(username):
+def download_series_from_s3(username, prod, batch_size):
     if not os.path.isdir(OUTPUT_FOLDER):
         os.mkdir(OUTPUT_FOLDER)
 
     with open(LAST_PROCESSED_INDEX_FILE, 'r') as epi:
         ending_point = json.load(epi)['index']
     
-    user = User(username)
+    user = User(username, prod)
     bucket = s3.Bucket(BUCKET_NAME)
     starting_point = get_starting_point(LAST_PROCESSED_AWS_INDEX_FILE)
-    batch_size = 10
 
     with open(SERIES_PICKLE_FILE, 'rb') as f:
         series_ids = pickle.load(f)
@@ -314,7 +313,7 @@ def download_series_from_s3(username):
             save_last_good_query_index(i+starting_point, LAST_PROCESSED_AWS_INDEX_FILE)
             break
     print('done {}/{} index : {}'.format(i+starting_point+1, len(series_ids), i+starting_point))
-    # save_last_good_query_index(i+starting_point, LAST_PROCESSED_AWS_INDEX_FILE)
+    save_last_good_query_index(i+starting_point, LAST_PROCESSED_AWS_INDEX_FILE)
 
 
 
@@ -325,6 +324,8 @@ if __name__ == "__main__":
     parser.add_argument("--series", action="store_true", help="scrape series csvs into s3 bucket")
     parser.add_argument("--metadata", action="store_true", help="scrape series metadata into s3 bucket")
     parser.add_argument("--download",  help="download data from s3 and insert into KNPS db by supplying a username")
+    parser.add_argument("--prod", action='store_true', help='determine which server to use')
+    parser.add_argument("--batch_size", type=int, help='determine which batchsize to use')
 
     args = parser.parse_args()
 
@@ -334,8 +335,8 @@ if __name__ == "__main__":
         upload_series_to_s3()
     elif args.metadata:
         upload_series_metadata_to_s3()
-    elif args.download:
-        download_series_from_s3(args.download)
+    elif args.download and args.batch_size:
+        download_series_from_s3(args.download, args.prod, args.batch_size)
     else:
         pass
     
