@@ -98,14 +98,18 @@ def upload_series_to_s3():
             if (i+1)%batch_size == 0:
                 print('nap time!')
                 time.sleep(60)
+        except KeyError:
+            # fred deleted some series as of here: https://news.research.stlouisfed.org/2022/01/ice-benchmark-administration-ltd-iba-data-to-be-removed-from-fred/
+            continue
         # if I want to stop, this will let me know where the program needs to pick up again
         except KeyboardInterrupt:
             save_last_good_query_index(i+starting_point, LAST_PROCESSED_INDEX_FILE)
             break
         # handle any other exception, namely API limit reached 
-        except:
+        except Exception as e:
             save_last_good_query_index(i+starting_point, LAST_PROCESSED_INDEX_FILE)
             break
+
     print('done {}/{} index : {}'.format(i+starting_point+1, len(series_ids), i+starting_point))
 
 # upload series metadata to s3 bucket
@@ -118,8 +122,11 @@ def upload_series_metadata_to_s3():
     with open(SERIES_PICKLE_FILE, 'rb') as f:
         series_ids = pickle.load(f)
     print("{}/{} index start metadata scrape {}".format(starting_point+1, len(series_ids), starting_point))
+    print("{}/{}".format(starting_point, ending_point))
     for i, (series_id, series_title) in enumerate(series_ids[starting_point:]):
         try:
+            if i + starting_point == 338824:
+                continue
             series_metadata = fred.get_a_series(series_id)
             series_url = "{}/{}".format(FRED_URL_PREFIX_PATH, series_id)
             series_metadata.setdefault('url', series_url)
@@ -215,19 +222,20 @@ def send_synclist(user, observationList, file_loc=os.path.abspath('../cli/src/kn
     obj_data = response.json()
     return obj_data
 
-def get_metadata_comment(f):
+def get_metadata_info(f):
     with open(f, 'rb') as metadata:
         content = json.load(metadata)
-    ret = 'Series Url: {}\n'.format(content['url'])
-    for series_info_dict in content[SERIES_METADATA_KEY]:
-        title = series_info_dict['title']
-        ret += 'Series Title: {}\n'.format(title)
-        for k, v in series_info_dict.items():
-            if k == 'title':
-                continue
-            ret += '\t{}: {}\n'.format(k, v)
-    ret.rstrip()
-    return ret
+    # ret = ""
+    # # ret = 'Series Url: {}\n'.format(content['url'])
+    # for series_info_dict in content[SERIES_METADATA_KEY]:
+    #     title = series_info_dict['title']
+    #     ret += 'Series Title: {}\n'.format(title)
+    #     for k, v in series_info_dict.items():
+    #         if k == 'title':
+    #             continue
+    #         ret += '\t{}: {}\n'.format(k, v)
+    # ret.rstrip()
+    return content[SERIES_METADATA_KEY][0]["notes"], content[SERIES_METADATA_KEY][0]["title"], content['url']
 
 def download_from_s3(bucket, series_title):
     try:
@@ -291,21 +299,22 @@ def download_series_from_s3(username):
             if len(current_batch) == batch_size:
                 file_observations = []
                 file_names = []
-                file_comments = []
-                for csv_path, json_path in current_batch: 
+                # file_comments = []
+                for csv_path, json_path in current_batch:
+                    url, title, info = get_metadata_info(json_path)
                     file_observations.append(observeFile(csv_path))
-                    file_names.append(csv_path)
-                    file_comments.append(get_metadata_comment(json_path))
+                    file_names.append([csv_path, title, url, info])
+                    # file_comments.append(get_metadata_comment(json_path))
                 send_synclist(user, file_observations)
-                uuids = send_filenamelist(user, file_names)
-                send_commentlist(user, uuids, file_comments)
+                send_filenamelist(user, file_names)
+                # send_commentlist(user, uuids, file_comments)
                 current_batch = []
                 break
         except KeyboardInterrupt:
             save_last_good_query_index(i+starting_point, LAST_PROCESSED_AWS_INDEX_FILE)
             break
     print('done {}/{} index : {}'.format(i+starting_point+1, len(series_ids), i+starting_point))
-    save_last_good_query_index(i+starting_point, LAST_PROCESSED_AWS_INDEX_FILE)
+    # save_last_good_query_index(i+starting_point, LAST_PROCESSED_AWS_INDEX_FILE)
 
 
 
