@@ -1,3 +1,11 @@
+# Moved!
+
+We've moved the KNPS repository to: https://github.com/KNPSystem/knps-all
+
+---
+
+## The stuff below is old and defunct:
+
 ## Installation
 Requirements: python3, node (v10, v12 tested), npm 
 Recommended: Run this in a python virtual environment.
