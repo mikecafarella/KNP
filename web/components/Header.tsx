@@ -25,28 +25,24 @@ const Header: React.FC = () => {
         <Pane flex={1} alignItems="center" display="flex">
         <b>KNPS</b>
           <Link href="/" marginLeft={12} color={isActive('/') ? "neutral" : "blue"}>
-              Home
+              Home 
           </Link>
           {/* <Link href="/listdataobjects" marginLeft={12} color={isActive('/listdataobjects') ? "neutral" : "blue"}>
               Data Objects
           </Link> */}
-          <Link href="/listsubgraphs" marginLeft={12} color={isActive('/listsubgraphs') ? "neutral" : "blue"}>
+          {/* <Link href="/listsubgraphs" marginLeft={12} color={isActive('/listsubgraphs') ? "neutral" : "blue"}>
               Labeled Operators
-          </Link>
+          </Link>*/}
           {/* <Link href="/listfunctions" marginLeft={12} color={isActive('/listfunctions') ? "neutral" : "blue"}>
               Functions
           </Link> */}
           <Link href="/searchpage" marginLeft={12} color={isActive('/searchpage') ? "neutral" : "blue"}>
-              Search Page
+              Search
           </Link>
         </Pane>
         <Pane>
-          {/* Below you can see the marginRight property on a Button. */}
-          {/*<Button marginRight={16} onClick={() => router.push('/signup')}>*/}
-          {/* Login */}
-          {/*</Button>*/}
 
-          {button}
+          {/* button */}
 
         </Pane>
       </Pane>

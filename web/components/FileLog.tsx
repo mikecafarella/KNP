@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useEffect} from 'react'
 import Router, {useRouter} from 'next/router'
 import { readString } from 'react-papaparse';
-import { majorScale, Pre, Popover, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table, Badge, Small } from 'evergreen-ui'
+import { majorScale, Pre, Popover, Dialog, Spinner, Text, Code, Pane, Heading, Button, Link, Strong, Paragraph, Tablist, Tab, Card, Table, Badge, Small } from 'evergreen-ui'
 import Tree from 'react-d3-tree'
 import MD5 from "crypto-js/md5";
 import { isValidSubgraphKnownLocations, getUUID, getSelectedSubgraphInfo } from './Utils';
@@ -40,7 +40,7 @@ export type SubgraphNodeProps = {
   subgraphNodesInfo: string;
 }
 
-export type KnownLocationProps = {
+export type FileLogProps = {
   id: string;
   owner: string;
   filename: string;
@@ -50,15 +50,13 @@ export type KnownLocationProps = {
   nextId: string;
   isLatest: number;
   md5hash: string;
-  nearDuplicates: FileProps[];
-  subgraphs: SubgraphProps;
 }
 
-const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
+const FileLog: React.FC<{dobj: FileLogProps}> = ({dobj}) => {
   const bytesetLink = "/byteset/" + dobj.md5hash
   const datasetLink = "/dataset/" + (dobj.datasets.length > 0 ? dobj.datasets[0].uuid : "")
-  const previousLink = "/knownlocation/" + dobj.prevId
-  const nextLink = "/knownlocation/" + dobj.nextId
+  const previousLink = "/filelog/" + dobj.prevId
+  const nextLink = "/filelog/" + dobj.nextId
   const [highlightedNode, setHighlightedNode] = useState("")
   const [selectedNode, setSelectedNode] = useState("")
   // this is to let us know if in subgraph selection mode or not
@@ -83,7 +81,6 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   const {query} = useRouter();
 
   const selectNode = (nodeDatum) => {
-    if (!subgraphSelection) {
       if (nodeDatum.kind === 'SharingEvent') {
         return;
       }
@@ -92,61 +89,8 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
       } else {
         setSelectedNode(nodeDatum)
       }
-    } else if (subgraphSelection && !selectedLabeledSubgraphRootNode) {
-      // we want to make the view previous graph and select an new subgraph independent operations
-      // so we only high light if the user does not want to view a previously labeled subgraph
-      let uuid = getUUID(nodeDatum);
-      let kind = nodeDatum.kind;
-      let depth = nodeDatum.depth;
-      let node = selectedSubgraphNodes.filter(nd => nd.uuid == uuid)[0];
-      if (node) {
-        setSelectedSubgraphNodes(
-          selectedSubgraphNodes.filter(nd => nd.uuid !== uuid)
-        );
-      } else {
-        setSelectedSubgraphNodes(
-          [...selectedSubgraphNodes, {kind, uuid, depth}]
-        )
-      }
-    }
   }
 
-
-  useEffect(() => {
-    if (dobj.subgraphs) {
-      setLabeledSubgraphs(dobj.subgraphs);
-    }
-    if (query.root && query.label && query.uuid) {
-      setSubgraphSelection(true);
-      if (query.uuid && query.label && query.root) {
-        let node: SubgraphNodeProps = dobj.subgraphs[query.root][query.label][query.uuid];
-        setSelectedLabeledSubgraph(node);
-        setSelectedLabeledSubgraphRootNode(query.root);
-        setSelectedLabeledSubgraphLabel(query.label);
-        setSelectedLabeledSubgraphId(query.uuid.toString());
-        setSelectedSubgraphNodes(getSelectedSubgraphInfo(node));
-      }
-    }
-  }, []);
-
-
-
-  const toggleSubgraphSelection = () => {
-    let currentValue = subgraphSelection;
-    setSubgraphSelection(!currentValue);
-    if (!currentValue) {
-      //entering subgraph selection mode
-      setSelectedNode('');
-    } else {
-      //exiting subgraph selection mode
-      setSelectedSubgraphNodes([]);
-      setLabel('');
-      setSelectedLabeledSubgraphLabel('');
-      setSelectedLabeledSubgraphRootNode('');
-      setSelectedLabeledSubgraphId('');
-      setSelectedLabeledSubgraph(null);
-    }
-  }
 
   const isSelected = (nodeDatum) => {
     if (nodeDatum.uuid) {
@@ -161,10 +105,21 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
     const containerRef = useCallback((containerElem) => {
       if (containerElem !== null) {
         const { width, height } = containerElem.getBoundingClientRect();
-        setTranslate({ x: width * 0.5, y: height * 0.43 });
+        setTranslate({ x: width*.6,  y: height * 0.5 });
       }
     }, []);
     return [translate, containerRef];
+  };
+
+  const useCenteredTreeReversed = (defaultTranslate = { x: 100, y: 200 }) => {
+    const [translateRev, setTranslate] = useState(defaultTranslate);
+    const containerRef = useCallback((containerElem) => {
+      if (containerElem !== null) {
+        const { width, height } = containerElem.getBoundingClientRect();
+        setTranslate({ x: width*.1,  y: height * 0.5 });
+      }
+    }, []);
+    return [translateRev, containerRef];
   };
 
   const shouldHighlight = (nodeDatum) => {
@@ -193,15 +148,14 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
   }
 
   const [translate, containerRef] = useCenteredTree();
+  const [translateRev, containerRefRev] = useCenteredTreeReversed();
 
-  let isValidSubgraphObj = isValidSubgraphKnownLocations(selectedSubgraphNodes, dobj);
+  let isValidSubgraphObj = true //isValidSubgraphKnownLocations(selectedSubgraphNodes, dobj);
   let validSubgraph = isValidSubgraphObj.validSubgraph;
   let rootNodeName = isValidSubgraphObj.rootNode;
   let rootNodeLongName = isValidSubgraphObj.rootNodeLongName;
   let rootNodeId = isValidSubgraphObj.rootId;
   let labelBadge = (customLabel || label) ? <Badge color='blue'>{customLabel || label}</Badge> : '';
-
-  console.log(dobj.descendentData)
 
   const subGraphLabeling = (subgraphSelection) ?
     <Pane>
@@ -250,27 +204,24 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
       {(nodeDatum.kind == 'ProcessObservation') &&
         <g>
           { partOfSubgraph(nodeDatum) &&
-            <rect width="70" height="60" y="-30" x="-40" fill='cyan' stroke-width={"2"}></rect>
+            <rect width="70" height="60" y="-30" x="-40" fill='cyan' strokeWidth={"2"}></rect>
           }
           <svg height="50" y="-25" x="-25" width="50">
 
               <polygon points="0,0 0,50 50,25"
               fill={isSelected(nodeDatum) ? 'yellow' : 'lightgrey'}
-              stroke="black" stroke-width={(shouldHighlight(nodeDatum)) ? "5" : "1"}
+              stroke="black" strokeWidth={(shouldHighlight(nodeDatum)) ? "5" : "1"}
               onMouseOut={()=>setHighlightedNode("")}
               onMouseOver={()=>highLightNode(nodeDatum)} onClick={()=>selectNode(nodeDatum)}></polygon>
             </svg>
 
-        <text font-family="Arial, Helvetica, sans-serif"
-          fill="blue" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)} strokeWidth="1" y="-20" x="40">
-            Program '{nodeDatum.name}'
+        <text fontFamily="Arial, Helvetica, sans-serif"
+          fill="blue" onClick={()=>Router.push(`/filelog/${nodeDatum.uuid}`)} strokeWidth="1" y="-20" x="40">
+            Action: {nodeDatum.name  == 'PLOT_PAPER_DATA' ? 'CREATE_BAR_CHART' : nodeDatum.name}
           </text>
-          <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller" x="40" dy="-20">
-            <tspan x="40" dy="-1 + .6em">Name: {nodeDatum.name}</tspan>
+          <text fontFamily="Times New Roman, serif" fill="grey" strokeWidth="0.5" fontSize="smaller" x="40" dy="-20">
             <tspan x="40" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
             <tspan x="40" dy="1.2em">Started on: {nodeDatum.startedOn}</tspan>
-            {/* <tspan x="40" dy="1.2em">Depth: {nodeDatum.depth}</tspan>           */}
-
           </text>
         </g>
       }
@@ -278,20 +229,20 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
       {(nodeDatum.kind == 'SharingEvent') &&
         <g>
         { partOfSubgraph(nodeDatum) &&
-          <rect fill="cyan" width="100" height="50" y="-25" x="-25" stroke-width="2"></rect>
+          <rect fill="cyan" width="100" height="50" y="-25" x="-25" strokeWidth="2"></rect>
         }
 
         <svg height="50" width="100" x="-25" y="-25">
-          <ellipse cx="50" cy="25" rx="45" ry="20" fill="purple" stroke="black" stroke-width={(shouldHighlight(nodeDatum)) ? "5" : "1"}
+          <ellipse cx="50" cy="25" rx="45" ry="20" fill="purple" stroke="black" strokeWidth={(shouldHighlight(nodeDatum)) ? "5" : "1"}
           onMouseOut={()=>setHighlightedNode("")}
           onMouseOver={()=>highLightNode(nodeDatum)} onClick={()=>selectNode(nodeDatum)}>
           </ellipse >
         </svg>
-        <text font-family="Arial, Helvetica, sans-serif"
-          fill="blue" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)} strokeWidth="1" y="-20" x="77">
+        <text fontFamily="Arial, Helvetica, sans-serif"
+          fill="blue" onClick={()=>Router.push(`/filelog/${nodeDatum.uuid}`)} strokeWidth="1" y="-20" x="77">
             Likely sharing event
           </text>
-          <text font-family="Times New Roman, serif" fill="grey" strokeWidth="0.5" font-size="smaller">
+          <text fontFamily="Times New Roman, serif" fill="grey" strokeWidth="0.5" fontSize="smaller">
             <tspan x="77" dy="60+.6em">Source: {nodeDatum.source}</tspan>
             <tspan x="77" dy="1.2em">Received on/before: {new Date(nodeDatum.receivedOnOrBefore * 1000).toLocaleString()}</tspan>
         </text>
@@ -300,33 +251,29 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
 
       {(nodeDatum.kind == 'FileObservation') &&
         <g >
-        {(nodeDatum.curatedSets.length === 0) &&
-          (nodeDatum.rootNode == "True") &&
+        {(nodeDatum.rootNode) &&
         <g>
         { partOfSubgraph(nodeDatum) &&
-          <rect fill="cyan" width="60" height="60" y="-30" x="-20" stroke-width="2"></rect>
+          <rect fill="cyan" width="60" height="60" y="-30" x="-20" strokeWidth="2"></rect>
         }
-        <rect fill={isSelected(nodeDatum) ? 'yellow' : 'red'}
-        width="40" height="40" y="-20" stroke-width={(shouldHighlight(nodeDatum)) ? "5" : "1"}
+
+        <rect fill={isSelected(nodeDatum) ? 'yellow' : 'orange'}
+        width="40" height="40" y="-20" strokeWidth={(shouldHighlight(nodeDatum)) ? "5" : "1"}
         x="-10" onMouseOut={()=>setHighlightedNode("")}
         onMouseOver={()=>highLightNode(nodeDatum)} onClick={()=>selectNode(nodeDatum)}></rect>
-        <text font-family="Arial, Helvetica, sans-serif"
-          strokeWidth="1" y="-20" x="45" fill="blue" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
-            Uncurated data file
-          </text>
         </g>
-        }
+      }
         {(nodeDatum.curatedSets.length > 0) &&
           (nodeDatum.rootNode == "True") &&
         <g>
         { partOfSubgraph(nodeDatum) &&
-          <rect fill="cyan" width="60" height="60" y="-30" x="-20" stroke-width="2"></rect>
+          <rect fill="cyan" width="60" height="60" y="-30" x="-20" strokeWidth="2"></rect>
         }
-        <rect fill={isSelected(nodeDatum) ? 'yellow' : 'pink'} width="40" height="40" y="-20" stroke-width={(shouldHighlight(nodeDatum)) ? "5" : "1"}
+        <rect fill={isSelected(nodeDatum) ? 'yellow' : 'pink'} width="40" height="40" y="-20" strokeWidth={(shouldHighlight(nodeDatum)) ? "5" : "1"}
         x="-10" onMouseOut={()=>setHighlightedNode("")}
         onMouseOver={()=>highLightNode(nodeDatum)} onClick={()=>selectNode(nodeDatum)}></rect>
-        <text font-family="Arial, Helvetica, sans-serif"
-          strokeWidth="1" y="-20" x="45" fill="blue" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
+        <text fontFamily="Arial, Helvetica, sans-serif"
+          strokeWidth="1" y="-20" x="45" fill="blue" onClick={()=>Router.push(`/filelog/${nodeDatum.uuid}`)}>
             Curated data '{nodeDatum.curatedSets[0].title}'
           </text>
           </g>
@@ -335,31 +282,26 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
           (selectedLabeledSubgraph) &&
           (nodeDatum.longName === selectedLabeledSubgraph.fullRootFileName) &&
           <g>
-          <text font-family="Arial, Helvetica, sans-serif"
+          <text fontFamily="Arial, Helvetica, sans-serif"
             strokeWidth="1" y="-60" x="-20" fill="black">
               Subgraph End File with Operator: {selectedLabeledSubgraph.label}
           </text>
-          <text font-family="Arial, Helvetica, sans-serif"
+          <text fontFamily="Arial, Helvetica, sans-serif"
             strokeWidth="1" y="-40" x="-20" fill="black" fontSize='smaller'>
               Labeled By: {selectedLabeledSubgraph.ownerEmail}
           </text>
           </g>
         }
 
-
         {(nodeDatum.curatedSets.length === 0) &&
-          (nodeDatum.rootNode == "False") &&
+          (!nodeDatum.rootNode) &&
         <g>
         { partOfSubgraph(nodeDatum) &&
-        <rect fill="cyan" width="60" height="60" y="-30" x="-20" stroke-width="2"></rect>
+        <rect fill="cyan" width="60" height="60" y="-30" x="-20" strokeWidth="2"></rect>
         }
-        <rect fill={isSelected(nodeDatum) ? 'yellow' : 'green'} width="40" height="40" y="-20" stroke-width={(shouldHighlight(nodeDatum)) ? "5" : "1"}
+        <rect fill={isSelected(nodeDatum) ? 'yellow' : 'blue'} width="40" height="40" y="-20" strokeWidth={(shouldHighlight(nodeDatum)) ? "5" : "1"}
         x="-10" onMouseOut={()=>setHighlightedNode("")}
         onMouseOver={()=>highLightNode(nodeDatum)} onClick={()=>selectNode(nodeDatum)}></rect>
-        <text font-family="Arial, Helvetica, sans-serif"
-          strokeWidth="1" y="-20" x="45" fill="blue" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
-            Uncurated data file
-          </text>
         </g>
         }
 
@@ -367,25 +309,24 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
           (nodeDatum.rootNode == "False") &&
         <g>
         { partOfSubgraph(nodeDatum) &&
-          <rect fill="cyan" width="60" height="60" y="-30" x="-20" stroke-width="2"></rect>
+          <rect fill="cyan" width="60" height="60" y="-30" x="-20" strokeWidth="2"></rect>
         }
         <rect fill={isSelected(nodeDatum) ? 'yellow' :
-        'lightgreen'} width="40" height="40" y="-20" stroke-width={(shouldHighlight(nodeDatum)) ? "5" : "1"}
+        'lightgreen'} width="40" height="40" y="-20" strokeWidth={(shouldHighlight(nodeDatum)) ? "5" : "1"}
         x="-10" onMouseOut={()=>setHighlightedNode("")}
         onMouseOver={()=>highLightNode(nodeDatum)} onClick={()=>selectNode(nodeDatum)}></rect>
-        <text font-family="Arial, Helvetica, sans-serif"
-          strokeWidth="1" y="-20" x="45" fill="blue" onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
+        <text fontFamily="Arial, Helvetica, sans-serif"
+          strokeWidth="1" y="-20" x="45" fill="blue" onClick={()=>Router.push(`/filelog/${nodeDatum.uuid}`)}>
             Curated data '{nodeDatum.curatedSets[0].title}'
           </text>
           </g>
         }
 
-        <g onClick={()=>Router.push(`/knownlocation/${nodeDatum.uuid}`)}>
-          <text font-family="Times New Roman, serif" fill="blue" strokeWidth="0.5" font-size="smaller" x="40" dy="-20">
-            <tspan x="45" dy="-1 + 0.6em">Filename: {nodeDatum.shortName} </tspan>
-            <tspan x="45" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
-            <tspan x="45" dy="1.2em">{nodeDatum.fileInputCount} known
-            use(s), {nodeDatum.cloneCount} known copies</tspan>
+        <g onClick={()=>Router.push(`/filelog/${nodeDatum.uuid}`)}>
+          <text fontFamily="Times New Roman, serif" fill="blue" strokeWidth="0.5" fontSize="smaller" x="40" dy="-20">
+            <tspan x="45" dy="-0.5em">Filename: {nodeDatum.shortName} </tspan>
+            <tspan x="45" dy="1.6em">Owner: {nodeDatum.owner}</tspan>
+            {/* <tspan x="45" dy="1.2em">{nodeDatum.cloneCount} known {nodeDatum.cloneCount == 1 ? 'copy' : 'copies' }</tspan> */}
             {/* <tspan x="40" dy="1.2em">Depth: {nodeDatum.depth}</tspan>           */}
           </text>
           </g>
@@ -444,7 +385,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
             <Heading size={600}>Provenance</Heading>
             <Popover display="flex" alignItems="center" justifyContent="center" flexDirection="column"
             shouldCloseOnExternalClick='True' content={({close}) => (
-            <Pane width="100%" elevation="4" height="40em" display="flex" padding={majorScale(1)} border>
+            <Pane width="100%" elevation={4} height="40em" display="flex" padding={majorScale(1)} border>
             <Pane flex={1}>
 
             {(selectedNode && selectedNode.kind != 'ProcessObservation') &&
@@ -467,7 +408,7 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
                 Content hashcode: {selectedNode.md5hash}
             </Paragraph>
             <Paragraph size={300}>
-              <a href={"/knownlocation/" + selectedNode.uuid}>Click for more details</a>
+              <a href={"/filelog/" + selectedNode.uuid}>Click for more details</a>
             </Paragraph>
             </Pane>
             </Pane>
@@ -506,10 +447,10 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
             </Pane>
 
 
-            <Pane flex={1} border>
-            <Pane margin={majorScale(1)}>
+            <Pane width={800} border>
+            <Pane width={800} margin={majorScale(1)}>
             <Heading>Usage</Heading>
-            <Pane marginLeft={majorScale(1)}>
+            <Pane width={800} marginLeft={majorScale(1)}>
               <Paragraph size={300} color="muted"> Known uses anywhere on Earth:
                {selectedNode.fileInputCount} (<a href="/uses">Click for more details</a>)</Paragraph>
               <Paragraph size={300} color="muted"> Known copies
@@ -518,17 +459,19 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
             </Pane>
             </Pane>
 
-            <Pane flex={1} border>
+            <Pane width={800} border>
+
             <Pane margin={majorScale(1)}>
             <Heading>
-              Content
+              Content {selectedNode.filetype }
             </Heading>
 
-            <Pane marginLeft={majorScale(1)}>
+            <Pane marginLeft={majorScale(1)} overflowY="scroll" height={340}>
             { ! selectedNode.content.hasContent &&
               <Paragraph size={300} color="muted">
                 You do not have access to this content.
               </Paragraph>
+
             }
             { selectedNode.content.hasContent &&
               <Pane>
@@ -546,17 +489,19 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
 
               { selectedNode.filetype == "image/png" &&
               <Pane display="flex" border>
-                <img width="600px" src={"data:image/png;base64," + selectedNode.content.content}/>
+                <img height="300" src={"data:image/png;base64," + selectedNode.content.content}/>
               </Pane>
 
               }
 
-
               { selectedNode.filetype == "application/pdf" &&
-                 <Pane display="flex" >
-                     <embed src={"data:application/pdf;base64," + selectedNode.content.content} />
+                 <Pane>
+                 <embed src={"https://drive.google.com/viewerng/viewer?embedded=true&url="+selectedNode.longName} width="600" height="0" id="pdfDiv" onLoad={function () {document.getElementById('pdfSpinner').style.display='none'; document.getElementById('pdfDiv').style.height='300px'}}/>
+                 <br />
+                 <div id="pdfSpinner" display="block" clear="both">
+                 <Spinner/>
+                 </div>
                  </Pane>
-
               }
 
               { selectedNode.filetype == "text/csv" &&
@@ -576,9 +521,8 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
              }
 
               </Pane>
+
              }
-
-
 
 
             </Pane>
@@ -598,26 +542,23 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
             </Pane>
             </Pane>
             )}
-            shouldCloseOnExternalClick={false}>
+            shouldCloseOnExternalClick={true}>
             <Button disabled={subgraphSelection}>Current Selected Node details</Button>
             </Popover>
 
            <div style={{ width: '100%', height:'40em' }} ref={containerRef}>
-           <Button onClick={toggleSubgraphSelection} marginTop="1em">{getSelectSubgraphButtonText()}</Button>
-            {subGraphLabeling}
 
          <Tree
           data={dobj.descendentData}
-          separation={{nonSiblings: 0.6, siblings: 0.6}}
+          separation={{nonSiblings: 0.5, siblings: 0.5}}
           orientation="horizontal"
-          translate={translate}
-          depthFactor={-400}
-          zoom="2"
+          translate={dobj.reverseDirection ? translateRev : translate}
+          depthFactor={dobj.reverseDirection ? 400 : -400}
+          zoom="1"
           scaleExtent={{max:5,min:0.1}}
           renderCustomNodeElement={(rd3tProps) =>renderForeignObjectNode({ ...rd3tProps })}
         />
         </div>
-
 
           </Pane>
         </Pane>
@@ -662,4 +603,4 @@ const KnownLocation: React.FC<{dobj: KnownLocationProps}> = ({dobj}) => {
      )
   }
 
-  export default KnownLocation
+  export default FileLog
