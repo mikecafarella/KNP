@@ -567,7 +567,7 @@ const FileLog: React.FC<{dobj: FileLogProps}> = ({dobj}) => {
 
           <Pane>
           {(hasForwardData) &&
-            <div v-if={hasForwardData} align="right">
+            <div align="right">
               <div>
               <Button onClick={()=>Router.push(`${nextLink}`)}>Forward -> ({nextAction})</Button>
               </div>
