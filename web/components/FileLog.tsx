@@ -8,7 +8,6 @@ import MD5 from "crypto-js/md5";
 import { isValidSubgraphKnownLocations, getUUID, getSelectedSubgraphInfo } from './Utils';
 import SubgraphLabel from './SubgraphLabel';
 
-
 export type FileProps = {
   fileid: string;
   filename: string;
@@ -67,14 +66,13 @@ const FileLog: React.FC<{dobj: FileLogProps}> = ({dobj}) => {
     dobj.forwardData.children[0].children  && dobj.forwardData.children[0].children[0] && dobj.forwardData.children[0].children[0].id !== dobj.id
   )
 
-  console.log(dobj.id, dobj.forwardData.children[0].children[0].id )
-
-  const nextLink = hasForwardData ?  "/filelog/" + dobj.forwardData.children[0].children[0].id : ""
+  const nextLink = hasForwardData ?  "/filelog/" + dobj.id + "?forward=1": ""
   let nextAction = hasForwardData ? dobj.forwardData.children[0].name : ""
 
   if (hasForwardData && actionNameMap[nextAction]) {
     nextAction = actionNameMap[nextAction]
   }
+
 
   const [highlightedNode, setHighlightedNode] = useState("")
   const [selectedNode, setSelectedNode] = useState("")
@@ -98,6 +96,10 @@ const FileLog: React.FC<{dobj: FileLogProps}> = ({dobj}) => {
   const [autocompleteItems, setAutocompleteItems] = useState([]);
 
   const {query} = useRouter();
+
+  const forwardMode = !!query.forward
+
+
 
   const selectNode = (nodeDatum) => {
       if (nodeDatum.kind === 'SharingEvent') {
@@ -228,18 +230,16 @@ const FileLog: React.FC<{dobj: FileLogProps}> = ({dobj}) => {
           <svg height="50" y="-25" x="-25" width="50">
 
               <polygon points="0,0 0,50 50,25"
-              fill={isSelected(nodeDatum) ? 'yellow' : 'lightgrey'}
-              stroke="black" strokeWidth={(shouldHighlight(nodeDatum)) ? "5" : "1"}
-              onMouseOut={()=>setHighlightedNode("")}
-              onMouseOver={()=>highLightNode(nodeDatum)} onClick={()=>selectNode(nodeDatum)}></polygon>
+              fill={'lightgrey'}
+              stroke="black" strokeWidth={"1"}></polygon>
             </svg>
 
         <text fontFamily="Arial, Helvetica, sans-serif"
-          fill="blue" onClick={()=>Router.push(`/filelog/${nodeDatum.uuid}`)} strokeWidth="1" y="-20" x="40">
-            Action: {nodeDatum.name  == actionNameMap[nodeDatum.name] ? actionNameMap[nodeDatum.name] : nodeDatum.name}
+          fill="blue" onClick={()=>Router.push(`/filelog/${nodeDatum.uuid}`)} strokeWidth="1" y="-5" x="40">
+            Action: {actionNameMap[nodeDatum.name] ? actionNameMap[nodeDatum.name] : nodeDatum.name}
           </text>
-          <text fontFamily="Times New Roman, serif" fill="grey" strokeWidth="0.5" fontSize="smaller" x="40" dy="-20">
-            <tspan x="40" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
+          <text fontFamily="Times New Roman, serif" fill="grey" strokeWidth="0.5" fontSize="smaller" x="40" dy="-10">
+            <tspan x="40" dy="1.0em">Owner: {nodeDatum.owner}</tspan>
             <tspan x="40" dy="1.2em">Started on: {nodeDatum.startedOn}</tspan>
           </text>
         </g>
@@ -376,7 +376,7 @@ const FileLog: React.FC<{dobj: FileLogProps}> = ({dobj}) => {
             </Paragraph>
 
             <Paragraph size={300} color="muted">
-                Last modified on: {new Date(dobj.modified * 1000).toLocaleString()}
+                Last modified on: {new Date(dobj.synctime).toLocaleString()}
             </Paragraph>
 
             <Paragraph size={300} color="muted">
@@ -384,14 +384,6 @@ const FileLog: React.FC<{dobj: FileLogProps}> = ({dobj}) => {
             </Paragraph>
             <Paragraph size={300} color="muted">
                 Content hashcode: {dobj.md5hash}
-            </Paragraph>
-
-            <Paragraph size={300} color="muted">
-                This file contains {dobj.datasets.length > 0 &&
-                  <a href={datasetLink}>Dataset '{dobj.datasets[0].title}'</a>
-                }
-                {dobj.datasets.length == 0 && <a href={bytesetLink}>Raw Content {dobj.md5hash}</a>
-                }
             </Paragraph>
 
             </Pane>
@@ -543,7 +535,6 @@ const FileLog: React.FC<{dobj: FileLogProps}> = ({dobj}) => {
 
              }
 
-
             </Pane>
 
             </Pane>
@@ -562,14 +553,14 @@ const FileLog: React.FC<{dobj: FileLogProps}> = ({dobj}) => {
             </Pane>
             )}
             shouldCloseOnExternalClick={true}>
-            <Button disabled={subgraphSelection}>Current Selected Node details</Button>
+            <Button disabled={subgraphSelection}>Current Selected Node Details</Button>
             </Popover>
 
           <Pane>
-          {(hasForwardData) &&
+          {(hasForwardData && !forwardMode) &&
             <div align="right">
               <div>
-              <Button onClick={()=>Router.push(`${nextLink}`)}>Forward -> ({nextAction})</Button>
+              <Button onClick={()=>Router.push(`${nextLink}`)}>Show Outputs</Button>
               </div>
             </div>
           }
@@ -578,11 +569,11 @@ const FileLog: React.FC<{dobj: FileLogProps}> = ({dobj}) => {
            <div style={{ width: '100%', height:'40em' }} ref={containerRef}>
 
          <Tree
-          data={dobj.descendentData}
+          data={forwardMode ? dobj.forwardData : dobj.descendentData}
           separation={{nonSiblings: 0.5, siblings: 0.5}}
           orientation="horizontal"
-          translate={dobj.reverseDirection ? translateRev : translate}
-          depthFactor={dobj.reverseDirection ? 400 : -400}
+          translate={dobj.reverseDirection || forwardMode ? translateRev : translate}
+          depthFactor={dobj.reverseDirection || forwardMode ? 400 : -400}
           zoom="1"
           scaleExtent={{max:5,min:0.1}}
           renderCustomNodeElement={(rd3tProps) =>renderForeignObjectNode({ ...rd3tProps })}
