@@ -56,7 +56,26 @@ const FileLog: React.FC<{dobj: FileLogProps}> = ({dobj}) => {
   const bytesetLink = "/byteset/" + dobj.md5hash
   const datasetLink = "/dataset/" + (dobj.datasets.length > 0 ? dobj.datasets[0].uuid : "")
   const previousLink = "/filelog/" + dobj.prevId
-  const nextLink = "/filelog/" + dobj.nextId
+
+  const actionNameMap = {
+    'PLOT_PAPER_DATA': 'CREATE_BAR_CHART'
+  }
+
+  console.log(dobj)
+
+  const hasForwardData = (dobj.forwardData && dobj.forwardData.children && dobj.forwardData.children[0] &&
+    dobj.forwardData.children[0].children  && dobj.forwardData.children[0].children[0] && dobj.forwardData.children[0].children[0].id !== dobj.id
+  )
+
+  console.log(dobj.id, dobj.forwardData.children[0].children[0].id )
+
+  const nextLink = hasForwardData ?  "/filelog/" + dobj.forwardData.children[0].children[0].id : ""
+  let nextAction = hasForwardData ? dobj.forwardData.children[0].name : ""
+
+  if (hasForwardData && actionNameMap[nextAction]) {
+    nextAction = actionNameMap[nextAction]
+  }
+
   const [highlightedNode, setHighlightedNode] = useState("")
   const [selectedNode, setSelectedNode] = useState("")
   // this is to let us know if in subgraph selection mode or not
@@ -90,7 +109,7 @@ const FileLog: React.FC<{dobj: FileLogProps}> = ({dobj}) => {
         setSelectedNode(nodeDatum)
       }
   }
-
+  console.log(selectedNode)
 
   const isSelected = (nodeDatum) => {
     if (nodeDatum.uuid) {
@@ -217,7 +236,7 @@ const FileLog: React.FC<{dobj: FileLogProps}> = ({dobj}) => {
 
         <text fontFamily="Arial, Helvetica, sans-serif"
           fill="blue" onClick={()=>Router.push(`/filelog/${nodeDatum.uuid}`)} strokeWidth="1" y="-20" x="40">
-            Action: {nodeDatum.name  == 'PLOT_PAPER_DATA' ? 'CREATE_BAR_CHART' : nodeDatum.name}
+            Action: {nodeDatum.name  == actionNameMap[nodeDatum.name] ? actionNameMap[nodeDatum.name] : nodeDatum.name}
           </text>
           <text fontFamily="Times New Roman, serif" fill="grey" strokeWidth="0.5" fontSize="smaller" x="40" dy="-20">
             <tspan x="40" dy="1.2em">Owner: {nodeDatum.owner}</tspan>
@@ -545,6 +564,16 @@ const FileLog: React.FC<{dobj: FileLogProps}> = ({dobj}) => {
             shouldCloseOnExternalClick={true}>
             <Button disabled={subgraphSelection}>Current Selected Node details</Button>
             </Popover>
+
+          <Pane>
+          {(hasForwardData) &&
+            <div v-if={hasForwardData} align="right">
+              <div>
+              <Button onClick={()=>Router.push(`${nextLink}`)}>Forward -> ({nextAction})</Button>
+              </div>
+            </div>
+          }
+          </Pane>
 
            <div style={{ width: '100%', height:'40em' }} ref={containerRef}>
 
