@@ -492,7 +492,7 @@ const FileLog: React.FC<{dobj: FileLogProps}> = ({dobj}) => {
 
               { selectedNode.filetype == "text/plain" &&
               <Pane display="flex" border>
-              <Pre>
+              <Pre padding="5px">
                 {Buffer.from(selectedNode.content.content).toString()}
               </Pre>
               </Pane>
