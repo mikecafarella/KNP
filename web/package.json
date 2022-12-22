@@ -24,7 +24,7 @@
     "formidable": "^1.2.6",
     "micro": "^9.3.4",
     "next": "^10.2.3",
-    "next-auth": "^3.29.0",
+    "next-auth": "^4.18.7",
     "nextjs": "0.0.3",
     "prismjs": "^1.26.0",
     "react": "^17.0.2",
